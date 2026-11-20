@@ -20,6 +20,8 @@ import { COPY, STORY_COPY } from '../site/content';
 import { INFO } from '../site/info';
 import { ORG_CHART as SEATS } from '../shared/src/team/orgChart';
 import { OWNER_EN, OWNER_TR } from '../shared/src/i18n/owner';
+import { OFFICE_EN, OFFICE_TR } from '../shared/src/i18n/ownerOffice';
+import { TEAM_EN, TEAM_TR } from '../shared/src/i18n/ownerTeam';
 
 const ROOT = join(import.meta.dirname, '..');
 const en = dictionaries.en as Record<string, string>;
@@ -277,10 +279,51 @@ describe('Turkish register', () => {
     new RegExp(`(?<!${L})senin${L}+`, 'i'),
     new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at|yap|güncelle|iptal et|başlat|gör|koy|yolla|düzelt|belirt|daralt|grupla|eşleştir|yerleştir|kaydır|vurgula|ilişkilendir|abone ol|yenile|seçip|oluştur)[.!?;](?=\\s|$)`, 'i'),
   ];
+  // "Your …" on a noun looks like the third person or a genitive in Turkish ("raporların" is "your reports"
+  // and "of the reports"; "hesabına" is "to your account" and "to his account"). So these count only where the
+  // English says "you": then the Turkish must say "raporlarınız", "hesabınıza".
+  const YOUR = [
+    // Plural nouns and "what you did": "Raporların", "Görevlerin", "Sildiklerin", "favorilerinde", "Hesaplarını".
+    new RegExp(`(?<!${L})${L}{2,}(lar|ler)[ıi]n(ı|i|a|e|da|de|dan|den|daki|deki|la|le)?(?!${L})`, 'i'),
+    // Singular nouns with a case: "hesabına", "Cevabını", "Onayını", "şirketindeki", "sekmende", "verinden".
+    new RegExp(`(?<!${L})${L}{3,}([ıiuü]n|[aeıioöuü]n)(a|e|ı|i|u|ü|da|de|dan|den|daki|deki)(?!${L})`, 'i'),
+    // Bare "your" on a noun that opens a title or ends a phrase: "Haftan:", "Koltuğun …", "Görevlerin", "Önünde".
+    new RegExp(`(^|[.:;!?]\\s+)${L}{3,}([ıiuü]n|[ae]n)(?=[\\s:,.]|$)`, 'i'),
+    // "Your" closing a short label: "Sıradaki görevin", "Bu panoya önceki aktarımların".
+    new RegExp(`\\s${L}{3,}[ıiuü]n$`, 'i'),
+    // Words that read as "your" in any sentence: "Önünde bekleyen iş", "haberin olacak", "ekibinin kullandığı".
+    new RegExp(`(?<!${L})(önünde|haberin|ekibinin|ekibinde|şirketinin|şirketindeki|hesabına|koltuğun|haftan)(?!${L})`, 'i'),
+    // "You are …" on a noun or adjective: "Çevrimdışısın", "Çevrimiçisin".
+    new RegExp(`(?<!${L})${L}{4,}[ıiuü]s[ıiuü]n(?!${L})`, 'i'),
+  ];
+  const YOU_EN = /\byou(r|rs|'re|'ve|'ll)?\b/i;
+  // A sentence that already says "siz" somewhere uses the third person for the rest ("şirketinizin planında").
+  // So does one that ends a clause in the polite imperative ("… kopyalayın.", "Kaydetmeden önce görün").
+  const SIZ = new RegExp(`n[ıiuü]z|(?<!${L})siz|${L}{2,}[ıiuü]n([.!?:,]?(\\s|$))`, 'i');
+  // Read here as "your", these say "the" or "its": "Ücretsiz denemenin bitmesine" (until the trial ends),
+  // "Fırsatın CRM'deki kimliği" (the deal's id), "asistanına sormadan önce" (before asking the assistant).
+  const NOT_YOUR = new Set([
+    'sh.sync.mappingIncomplete.why', 'auto.paused', 'timport.peopleMissing', 'billing.bar.trial', 'demo.tour.curaai.4.title',
+    'agreements.title', 'assist.opt.contacts_customer', 'assistConsent.title', 'settings.about.departments', 'demo.tour.sprint.4.body',
+    'hooks.field.dealId', 'flow.draft.byAssistant', 'quick.unknownTitle', 'settings.roles.seeAsWho',
+  ]);
+  const sen = (text: string, english: string, key = '') =>
+    SEN.some((re) => re.test(text)) || (YOU_EN.test(english) && !NOT_YOUR.has(key) && !SIZ.test(text) && YOUR.some((re) => re.test(text)));
   it('no Turkish string says "sen"', () => {
     const tr = dict('tr');
-    const bad = Object.keys(tr).filter((k) => SEN.some((re) => re.test(tr[k])));
+    const en = dict('en');
+    const bad = Object.keys(tr).filter((k) => sen(tr[k], en[k] ?? '', k));
     expect(bad.map((k) => `${k}: ${tr[k].slice(0, 80)}`).join('\n')).toBe('');
+  });
+  // The owner's console speaks Turkish too, and "siz" there as everywhere (owner, 20 Nov 2026).
+  it('no Turkish string in the owner console says "sen"', () => {
+    const blocks: [Record<string, string>, Record<string, string>][] = [
+      [OWNER_TR, OWNER_EN],
+      [OFFICE_TR, OFFICE_EN],
+      [TEAM_TR, TEAM_EN],
+    ];
+    const bad = blocks.flatMap(([tr, en]) => Object.keys(tr).filter((k) => typeof tr[k] === 'string' && sen(tr[k], String(en[k] ?? ''), k)).map((k) => `${k}: ${tr[k].slice(0, 80)}`));
+    expect(bad.join('\n')).toBe('');
   });
   // The help centre and the sales site are first-contact surfaces too: a reader who meets "sen" in the
   // docs after "siz" in the app sees two products (owner, 20 Nov 2026). Line by line, so a failure names it.
