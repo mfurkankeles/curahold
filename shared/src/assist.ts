@@ -255,7 +255,8 @@ const CONNECT: Words = [
   '连接', '連接', '集成', '整合', '对接', '對接',
   '連携', '接続',
   '연결', '연동', '통합',
-  'कनेक्ट', 'जोड़', 'इंटीग्रेट', 'इंटीग्रेशन',
+  // Not "जोड़": in Hindi it is first of all "add" ("रिन्यूअल कैसे जोड़ूं?" asks how to add a renewal).
+  'कनेक्ट', 'इंटीग्रेट', 'इंटीग्रेशन',
   'sambung', 'menyambung', 'integrasi', 'penyepaduan', 'sepadukan', 'menyepadukan',
 ];
 const CONNECT_SAYS_WHICH: Words = [
