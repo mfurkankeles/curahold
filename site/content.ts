@@ -149,7 +149,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'Every renewal, every promise, every task, on time.',
       lead: 'See each customer’s health and the reasons behind it, turn a meeting’s next steps into tasks, and let renewals open themselves ninety days ahead.',
       note: '3 months free once approved, no card needed.',
-      works: 'Start beside the tools you have today, move over at your pace',
+      works: 'Works beside the tools you have today',
       pause: 'Pause',
       play: 'Play',
     },
@@ -271,7 +271,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'Her yenileme, her söz, her görev zamanında.',
       lead: 'Her müşterinin sağlığını nedenleriyle görün, toplantıdaki sonraki adımları göreve dönüştürün; yenilemeler doksan gün önceden kendiliğinden açılsın.',
       note: 'Onaydan sonra 3 ay ücretsiz, kart gerekmez.',
-      works: 'Bugünkü araçlarınızın yanında başlayın, kendi hızınızda geçin',
+      works: 'Bugünkü araçlarınızın yanında çalışır',
       pause: 'Durdur',
       play: 'Oynat',
     },
@@ -393,7 +393,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'كل تجديد وكل وعد وكل مهمة في موعدها.',
       lead: 'اعرف صحة كل عميل وأسبابها، وحوّل الخطوات التالية في كل اجتماع إلى مهام، ودع التجديدات تبدأ وحدها قبل موعدها بتسعين يومًا.',
       note: '3 أشهر مجانًا بعد الموافقة، دون بطاقة دفع.',
-      works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
+      works: 'يعمل بجانب أدواتك الحالية',
       pause: 'إيقاف مؤقت',
       play: 'تشغيل',
     },
@@ -515,7 +515,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'כל חידוש, כל הבטחה וכל משימה, בזמן.',
       lead: 'ראו את הבריאות של כל לקוח ואת הסיבות לה, הפכו את הצעדים הבאים מכל פגישה למשימות, ותנו לחידושים להיפתח מעצמם תשעים יום מראש.',
       note: '3 חודשים בחינם לאחר אישור, בלי כרטיס אשראי.',
-      works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
+      works: 'עובד לצד הכלים של היום',
       pause: 'השהיה',
       play: 'הפעלה',
     },
@@ -631,7 +631,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'هر تمدید، هر قول و هر وظیفه، سرِ وقت.',
       lead: 'سلامت هر مشتری را همراه با دلایلش ببینید، گام‌های بعدی هر جلسه را به وظیفه تبدیل کنید و بگذارید تمدیدها نود روز زودتر خودشان شروع شوند.',
       note: '۳ ماه رایگان پس از تأیید، بدون نیاز به کارت.',
-      works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
+      works: 'کنار ابزارهای امروزتان کار می‌کند',
       pause: 'توقف',
       play: 'پخش',
     },
@@ -748,7 +748,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hans': {
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '申请通过后 3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移', pause: '暂停', play: '播放' },
+    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '申请通过后 3 个月免费，无需信用卡。', works: '与你现有的工具并行工作', pause: '暂停', play: '播放' },
     tour: {
       label: '产品导览',
       steps: [
@@ -848,7 +848,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hant': {
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '申請核准後 3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換', pause: '暫停', play: '播放' },
+    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '申請核准後 3 個月免費，不需信用卡。', works: '與你現有的工具並行運作', pause: '暫停', play: '播放' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -948,7 +948,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ja: {
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '承認後3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます', pause: '一時停止', play: '再生' },
+    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '承認後3か月無料、カード登録は不要です。', works: '今のツールの横で動きます', pause: '一時停止', play: '再生' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -1048,7 +1048,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ko: {
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '승인 후 3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요', pause: '일시 정지', play: '재생' },
+    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '승인 후 3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 함께 일합니다', pause: '일시 정지', play: '재생' },
     tour: {
       label: '제품 둘러보기',
       steps: [
@@ -1162,7 +1162,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "हर रिन्यूअल, हर वादा, हर टास्क, समय पर।",
       lead: "हर ग्राहक की हेल्थ और उसकी वजहें देखें, मीटिंग के अगले स्टेप को टास्क में बदलें, और रिन्यूअल को नब्बे दिन पहले अपने आप खुलने दें।",
       note: "मंज़ूरी के बाद 3 महीने मुफ़्त, कार्ड की ज़रूरत नहीं।",
-      works: "आज के अपने टूल के साथ शुरू करें, अपनी रफ़्तार से आगे बढ़ें",
+      works: "आज के आपके टूल के साथ-साथ काम करता है",
       pause: "रोकें",
       play: "चलाएं",
     },
@@ -1350,7 +1350,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "Setiap pembaharuan, janji dan tugasan, tepat pada masa.",
       lead: "Lihat kesihatan setiap pelanggan dan sebab di sebaliknya, jadikan langkah seterusnya daripada mesyuarat sebagai tugasan, dan biarkan pembaharuan dibuka sendiri sembilan puluh hari lebih awal.",
       note: "3 bulan percuma selepas diluluskan, tiada kad diperlukan.",
-      works: "Mulakan bersama alat yang anda ada hari ini, beralih mengikut rentak anda",
+      works: "Bekerja di sebelah alat yang anda ada hari ini",
       pause: "Jeda",
       play: "Main",
     },

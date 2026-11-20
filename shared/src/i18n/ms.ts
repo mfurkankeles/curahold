@@ -6086,7 +6086,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'flow.settings.planAuto': "Satu yang namanya menyebut onboarding",
   'flow.settings.loopBoard': "Ke mana tugasan \"beritahu pelanggan\" pergi",
   'flow.settings.loopAuto': "Papan pertama Kejayaan Pelanggan",
-  'flow.settings.noCounters': "Tiada had: peraturan dan serahan tidak dikira atau dihadkan pada mana-mana pelan.",
+  'flow.settings.noCounters': "Larian peraturan dan serahan tidak dikira atau dijual mengikut pelan; had penggunaan saksama terpakai.",
   'me.batch': "Serta-merta hanya yang untuk saya (tugasan, sebutan, pelanggan yang diserahkan kepada saya); selebihnya dalam ringkasan pagi",
   'me.batchHint': "Ulasan, kerja yang diikuti dan dorongan masih ada dalam senarai anda serta-merta, tanpa mesej tersendiri.",
   'me.batchNeedsDigest': "Hidupkan ringkasan pagi untuk menggunakan ini.",

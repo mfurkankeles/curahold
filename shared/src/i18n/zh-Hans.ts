@@ -6214,7 +6214,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'flow.settings.planAuto': "名称包含“导入”的打法",
   'flow.settings.loopBoard': "“告知客户”任务放在哪里",
   'flow.settings.loopAuto': "客户成功的第一个看板",
-  'flow.settings.noCounters': "不设限：任何方案都不计数、不限制规则和交接。",
+  'flow.settings.noCounters': "规则运行和交接不按方案计数或另行收费；适用合理使用限制。",
   'me.batch': "仅即时通知与我相关的内容（分配、提及、交接给我的客户），其余放在早间汇总",
   'me.batchHint': "评论、关注的工作和提醒仍会立即出现在你的列表中，只是不单独发消息。",
   'me.batchNeedsDigest': "请先开启早间汇总。",

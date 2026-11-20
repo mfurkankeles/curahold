@@ -77,7 +77,7 @@ export const ms: InfoCopy = {
       name: "Jualan dalaman",
       short: "Panggilan, susulan dan urus niaga awal, tidak pernah dibiarkan tergantung.",
       title: "Setiap panggilan pertama, disusuli",
-      lead: "Jualan dalaman bekerja pada rekod pelanggan yang sama seperti setiap pasukan selepasnya: panggilan dan e-mel pada garis masa, susulan sebagai tugasan, urus niaga awal dalam saluran jualan.",
+      lead: "Jualan dalaman bekerja pada rekod pelanggan yang sama seperti setiap pasukan selepasnya: panggilan dan nota pada garis masa, susulan sebagai tugasan, urus niaga awal dalam saluran jualan.",
       points: [["Susulan yang tidak tercicir", "Setiap panggilan berakhir dengan langkah seterusnya dan tarikh: tugasan pada pelanggan, bukan nota lekat."], ["Catatan pantas", "Taip “friday @Ayşe #Acme !high” dan tugasan mengisi medannya sendiri."], ["Urus niaga awal kelihatan", "Peluang bermula pada peringkat pertama saluran jualan yang sama digunakan oleh jualan."]],
       forWho: "Pasukan jualan dalaman dan pembangunan perniagaan, dan sesiapa yang menempah mesyuarat pertama.",
     },
@@ -113,13 +113,13 @@ export const ms: InfoCopy = {
       short: "Sprint dan backlog yang dipautkan kepada apa yang dijanjikan kepada pelanggan.",
       title: "Keluarkan apa yang dijanjikan, dan tunjukkan ia sudah dikeluarkan",
       lead: "Backlog, sprint dengan burndown dan papan untuk semakan kod, dengan setiap kad yang datang daripada pelanggan dipautkan kembali kepada mereka.",
-      points: [["Sprint dengan burndown sebenar", "Rancang mengikut kapasiti, ikuti mata hari demi hari, dan lihat skop yang berubah di pertengahan sprint."], ["Janji pada kad", "Kad yang dibuat daripada janji pelanggan membawa pautan dua hala, supaya pasukan pelanggan melihatnya bergerak."], ["Datang daripada Jira? Beralih mengikut rentak anda", "Kad dan status kekal selaras semasa pasukan beralih; backlog dan sprint sudah ada di sini."]],
+      points: [["Sprint dengan burndown sebenar", "Rancang mengikut kapasiti, ikuti mata hari demi hari, dan lihat skop yang berubah di pertengahan sprint."], ["Janji pada kad", "Kad yang dibuat daripada janji pelanggan membawa pautan dua hala, supaya pasukan pelanggan melihatnya bergerak."], ["Penjejak kejuruteraan anda kekal", "Kad dan status kekal selaras dua hala, supaya pasukan produk dan pasukan pelanggan melihat keadaan yang sama."]],
       forWho: "Pengurus produk, ketua kejuruteraan dan pasukan yang membina.",
       next: ["Hasil di sebalik setiap cerita", "Lihat berapa ramai pelanggan meminta sesuatu cerita dan nilai mereka, sebelum anda merancang."],
     },
     finance: {
       name: "Kewangan",
-      short: "Nilai kontrak dan pembaharuan daripada program perakaunan anda.",
+      short: "Nilai kontrak dan pembaharuan; sambungan program perakaunan akan datang.",
       title: "Pembaharuan dan invois, pada satu rekod",
       lead: "Sambungan kepada program perakaunan sedang dibina: invois, pembayaran dan baki terbuka pada halaman pelanggan.",
       points: [["Pembayaran lewat dalam skor kesihatan", "Invois yang belum dibayar menjadi salah satu sebab pelanggan menjadi berisiko."], ["Nilai kontrak sebenar", "Pembaharuan menunjukkan amaun daripada program perakaunan, bukan tekaan."], ["Hanya untuk yang dibenarkan", "Angka kewangan mengikut kebenaran medan: peranan yang anda pilih melihatnya."]],
@@ -139,7 +139,7 @@ export const ms: InfoCopy = {
       short: "Langkah seterusnya menjadi tugasan dengan pemilik.",
       title: "Apa yang dikatakan dalam mesyuarat kekal sebagai kerja",
       lead: "Rekodkan mesyuarat dengan siapa yang hadir, tulis langkah seterusnya, simpan — setiap langkah kini tugasan dengan pemilik dan tarikh.",
-      points: [["Pada garis masa pelanggan", "Nota, panggilan, mesyuarat dan e-mel kekal pada rekod, untuk semua orang yang mengerjakannya."], ["Tugasan tanpa menaip semula", "Langkah seterusnya menjadi tugasan semasa disimpan, dipautkan kepada mesyuarat asalnya."], ["Dikongsi apabila anda memilih", "Tandakan satu kotak dan tugasan dipaparkan dalam portal pelanggan."]],
+      points: [["Pada garis masa pelanggan", "Nota, panggilan dan mesyuarat kekal pada rekod, untuk semua orang yang mengerjakannya."], ["Tugasan tanpa menaip semula", "Langkah seterusnya menjadi tugasan semasa disimpan, dipautkan kepada mesyuarat asalnya."], ["Dikongsi apabila anda memilih", "Tandakan satu kotak dan tugasan dipaparkan dalam portal pelanggan."]],
     },
     sprints: {
       name: "Papan dan sprint",
@@ -180,7 +180,7 @@ export const ms: InfoCopy = {
       name: "Penyegerakan dua hala",
       short: "CRM, hamparan dan alat sokongan anda, selaras.",
       title: "Jambatan daripada alat yang anda ada hari ini",
-      lead: "Sambungkan CRM, hamparan dan alat sokongan anda dan pasukan boleh beralih satu demi satu. Perubahan bergerak dua hala sementara itu; setelah semua orang bekerja dalam Curahold, alat lama menjadi pilihan.",
+      lead: "Sambungkan CRM, hamparan dan alat sokongan anda, dan Curahold bekerja di sebelahnya. Perubahan bergerak dua hala, supaya setiap pasukan melihat pelanggan yang sama.",
       points: [["Medan demi medan", "Petakan setiap medan sekali. Medan dan objek anda sendiri turut dibawa."], ["Kedua-dua arah", "Perubahan yang dibuat dalam Curahold ditulis balik serta-merta; pihak sebelah dibaca setiap jam."], ["Kesihatan yang kelihatan", "Setiap sambungan menunjukkan bila ia terakhir berjalan dan apa yang tidak dapat dibawanya."]],
     },
   },
@@ -193,8 +193,8 @@ export const ms: InfoCopy = {
     regions: [["Türkiye", "Bahasa Turki di seluruh produk, alat KVKK untuk permintaan data peribadi."], ["Timur Tengah", "Bahasa Arab, Ibrani dan Parsi, dengan seluruh antara muka dicerminkan dari kanan ke kiri."], ["Asia", "Bahasa Melayu, Hindi, Jepun, Korea dan kedua-dua tulisan Cina, ditulis secara asli."], ["Eropah", "⟦eu|Pangkalan data berjalan di Kesatuan Eropah; perjanjian pemprosesan data merangkumi GDPR.|Alat GDPR untuk permintaan data peribadi; perjanjian pemprosesan data merangkumi GDPR.⟧"]],
   },
   integrations: {
-    title: "Mulakan bersama alat anda, beralih mengikut rentak anda",
-    lead: "Sambungan memastikan Curahold selaras dengan apa yang digunakan pasukan anda hari ini, jadi tiada sesiapa perlu beralih pada hari yang sama. Curahold mempunyai saluran jualan, halaman pelanggan, backlog dan sprintnya sendiri, jadi jambatan itu boleh diturunkan bila-bila masa anda bersedia.",
+    title: "Di sebelah alat anda, bukan menggantikannya",
+    lead: "Sambungan memastikan Curahold selaras dengan alat yang digunakan pasukan anda hari ini. Curahold bekerja di sebelahnya dan menghimpunkan kerja bagi setiap pelanggan di satu tempat.",
     groups: {
       crm: {
         name: "CRM",
@@ -210,7 +210,7 @@ export const ms: InfoCopy = {
       },
       mail: {
         name: "E-mel",
-        text: "E-mel dengan pelanggan anda pada garis masa mereka.",
+        text: "Ringkasan harian pemberitahuan dalam e-mel anda. Curahold sendiri bukan peti masuk: tiada bebenang e-mel, dengan sengaja.",
       },
       sheets: {
         name: "Hamparan",
@@ -242,7 +242,7 @@ export const ms: InfoCopy = {
       },
       accounting: {
         name: "Perakaunan",
-        text: "Invois, pembayaran dan baki terbuka pada halaman pelanggan.",
+        text: "Akan datang: invois, pembayaran dan baki terbuka pada halaman pelanggan.",
       },
     },
     missing: ["Tiada dalam senarai?", "Mana-mana alat dengan API boleh berhubung dengan Curahold melalui API terbuka dan webhook."],
@@ -287,13 +287,13 @@ export const ms: InfoCopy = {
   why: {
     title: "Mengapa Curahold?",
     lead: "Kerana seorang pelanggan dijaga oleh banyak pasukan sekali gus — dan kebanyakan alat memberi setiap pasukan pulau tersendiri.",
-    proofs: [["Satu aliran, satu rekod pelanggan", "Jualan dalaman, jualan, onboarding, kejayaan pelanggan dan sokongan bekerja pada halaman pelanggan yang sama; produk dan kewangan kekal bersambung.", "Lihat aliran"], ["Tiada janji yang hilang", "Langkah seterusnya daripada mesyuarat menjadi tugasan dengan pemilik dan tarikh, dipautkan kepada pelanggan.", "Cara mesyuarat berfungsi"], ["Anda tahu sebabnya, bukan sekadar apa", "Skor kesihatan menyenaraikan sebabnya, jadi langkah seterusnya jelas sebelum pembaharuan berisiko.", "Skor kesihatan"], ["Sebelas bahasa, termasuk kanan-ke-kiri", "Setiap orang memilih bahasanya sendiri; seluruh antara muka mengikut, dicerminkan di mana perlu.", "Rantau yang kami layani"], ["Data anda kekal milik anda", "Syarikat diasingkan dalam pangkalan data itu sendiri, dan sokongan melihat ruang kerja anda hanya dengan persetujuan anda.", "Keselamatan dan privasi"], ["Mulakan bersama alat anda, beralih mengikut rentak anda", "Sambungan kepada CRM dan penjejak kejuruteraan anda memastikan kedua-dua pihak selaras semasa pasukan beralih. Curahold sudah mempunyai saluran jualan dan sprint, jadi mengekalkan alat lama adalah pilihan, bukan keperluan.", "Integrasi"]],
+    proofs: [["Satu aliran, satu rekod pelanggan", "Jualan dalaman, jualan, onboarding, kejayaan pelanggan dan sokongan bekerja pada halaman pelanggan yang sama; produk dan kewangan kekal bersambung.", "Lihat aliran"], ["Tiada janji yang hilang", "Langkah seterusnya daripada mesyuarat menjadi tugasan dengan pemilik dan tarikh, dipautkan kepada pelanggan.", "Cara mesyuarat berfungsi"], ["Anda tahu sebabnya, bukan sekadar apa", "Skor kesihatan menyenaraikan sebabnya, jadi langkah seterusnya jelas sebelum pembaharuan berisiko.", "Skor kesihatan"], ["Sebelas bahasa, termasuk kanan-ke-kiri", "Setiap orang memilih bahasanya sendiri; seluruh antara muka mengikut, dicerminkan di mana perlu.", "Rantau yang kami layani"], ["Data anda kekal milik anda", "Syarikat diasingkan dalam pangkalan data itu sendiri, dan sokongan melihat ruang kerja anda hanya dengan persetujuan anda.", "Keselamatan dan privasi"], ["Di sebelah alat anda, bukan menggantikannya", "Sambungan kepada CRM dan penjejak kejuruteraan anda memastikan kedua-dua pihak selaras, supaya setiap pasukan bekerja daripada rekod pelanggan yang sama.", "Integrasi"]],
     contrastTitle: "Alat yang berselerak, atau satu tempat",
     before: ["Janji ada dalam e-mel seseorang", "Tugasan ada dalam hamparan", "Risiko ada dalam bebenang sembang", "Pembaharuan ada dalam CRM berasingan"],
     after: ["Janji ialah tugasan dengan pemilik", "Tugasan dipautkan kepada pelanggan", "Risiko mempunyai skor dan sebab", "Pembaharuan dibuka sendiri tepat pada masanya"],
     forWho: ["Untuk jualan dalaman: setiap panggilan berakhir dengan langkah seterusnya dan tarikh.", "Untuk jualan: pembaharuan dan urus niaga dengan seluruh kisah di sebaliknya.", "Untuk onboarding: pelan bertarikh yang boleh diikuti pelanggan.", "Untuk kejayaan pelanggan dan sokongan: siapa yang memerlukan anda dahulu, dan mengapa.", "Untuk produk: apa yang dijanjikan, dipautkan kepada kad yang mengeluarkannya.", "Untuk kewangan: nilai kontrak dan pembayaran lewat pada rekod yang sama (akan datang)."],
     notForTitle: "Untuk siapa ia tidak sesuai", notForLead: "Jawapan yang jujur menjimatkan percubaan anda.",
-    notFor: [["Senarai tugasan peribadi", "Jika anda bekerja seorang diri, aplikasi yang lebih ringkas akan lebih sesuai. Curahold dibina untuk pasukan yang berkongsi pelanggan."], ["Meja bantuan", "Curahold membawa masuk tiket daripada alat sokongan anda dan mengiranya dalam kesihatan setiap pelanggan; ia tidak menggantikan alat itu."], ["Simpan kira dan pengebilan", "Curahold membaca angka daripada program perakaunan anda; ia tidak menyimpan akaun atau menghantar invois."], ["Jadual laluan kritikal", "Papan, sprint dan garis masa merangkumi kerja pelanggan dan penghantaran produk, bukan pelan laluan kritikal untuk projek besar sekali sahaja."]],
+    notFor: [["Senarai tugasan peribadi", "Jika anda bekerja seorang diri, aplikasi yang lebih ringkas akan lebih sesuai. Curahold dibina untuk pasukan yang berkongsi pelanggan."], ["Meja bantuan", "Curahold membawa masuk tiket daripada alat sokongan anda dan mengiranya dalam kesihatan setiap pelanggan; ia tidak menggantikan alat itu."], ["Simpan kira dan pengebilan", "Curahold akan membaca angka daripada program perakaunan anda (akan datang); ia tidak menyimpan akaun atau menghantar invois."], ["Jadual laluan kritikal", "Papan, sprint dan garis masa merangkumi kerja pelanggan dan penghantaran produk, bukan pelan laluan kritikal untuk projek besar sekali sahaja."]],
     more: "Lihat semua sebabnya",
   },
   about: {
@@ -304,7 +304,7 @@ export const ms: InfoCopy = {
   },
   seo: {
     home: ["Curahold: pengurusan kerja untuk pasukan kejayaan pelanggan", "Pembaharuan yang dibuka tepat pada masanya, mesyuarat yang langkahnya menjadi tugasan, dan skor kesihatan yang menjelaskan dirinya. 3 bulan percuma, tiada kad."],
-    inside: ["Jualan dalaman tanpa susulan yang tercicir | Curahold", "Panggilan dan e-mel pada garis masa pelanggan, setiap susulan menjadi tugasan dengan pemilik dan tarikh, dan urus niaga awal dalam saluran jualan yang sama."],
+    inside: ["Jualan dalaman tanpa susulan yang tercicir | Curahold", "Panggilan dan nota pada garis masa pelanggan, setiap susulan menjadi tugasan dengan pemilik dan tarikh, dan urus niaga awal dalam saluran jualan yang sama."],
     sales: ["Saluran jualan, pembaharuan dan sasaran | Curahold", "Urus niaga, pembaharuan dan sasaran suku tahun pada rekod pelanggan itu sendiri, dengan ramalan berwajaran dan playbook pembaharuan 90 hari lebih awal."],
     onboarding: ["Pelan onboarding pelanggan dengan tarikh | Curahold", "Playbook onboarding dengan langkah bertarikh dan pemilik, dikongsi dengan pelanggan dalam portal mereka, dan skor kesihatan yang memantau dari hari pertama."],
     success: ["Perisian kejayaan pelanggan, skor kesihatan | Curahold", "Lihat pelanggan yang senyap sebelum pembaharuan: skor kesihatan yang menyenaraikan sebabnya, mesyuarat yang menjadi tugasan, dan tiket sokongan yang kelihatan."],
@@ -317,7 +317,7 @@ export const ms: InfoCopy = {
     renewals: ["Pengurusan pembaharuan dan automasi playbook | Curahold", "Playbook pembaharuan membuka langkahnya 90 hari sebelum tarikh, dan peraturan yang ditulis sebagai ayat membuka tugasan, memaklumkan orang dan menukar medan."],
     assistant: ["Tanya Claude atau ChatGPT tentang pelanggan | Curahold", "Sambungkan Claude atau ChatGPT ke ruang kerja anda. Ia menjawab daripada data anda dengan kebenaran anda, dan boleh membuka tugasan atau mencatat nota."],
     reports: ["Laporan dan papan pemuka kejayaan pelanggan | Curahold", "Sasaran, saluran jualan berwajaran dan kesihatan seluruh portfolio dalam laporan dan papan pemuka yang anda bina, dengan eksport dan suapan gudang data."],
-    sync: ["Penyegerakan dua hala CRM dan hamparan | Curahold", "Pastikan CRM, hamparan dan alat sokongan anda selaras, medan demi medan dan kedua-dua arah, sementara pasukan beralih ke Curahold mengikut rentak sendiri."],
+    sync: ["Penyegerakan dua hala CRM dan hamparan | Curahold", "Pastikan CRM, hamparan dan alat sokongan anda selaras, medan demi medan dan kedua-dua arah, supaya setiap pasukan bekerja daripada rekod pelanggan yang sama."],
     solutions: ["Penyelesaian mengikut peranan, saiz dan wilayah | Curahold", "Bagaimana Curahold sesuai untuk pengasas, ketua pasukan dan orang yang berurusan dengan pelanggan, pasukan kecil dan syarikat besar, serta pasukan di Asia."],
     integrations: ["Integrasi: CRM, sembang, sokongan dan alat BI | Curahold", "Sambungkan Salesforce, HubSpot, Slack, Microsoft Teams, Jira, hamparan, meja sokongan dan gudang data, atau sebarang alat melalui API terbuka."],
     pricing: ["Harga Curahold: setiap tempat duduk, 3 bulan percuma", "⟦price|Team dari {team} dan Business dari {business} setiap tempat duduk sebulan dengan pelan tahunan. Pemerhati percuma, tiada yuran persediaan, percubaan tanpa kad.|Setiap tempat duduk, dengan semua ciri dalam pelan. Harga diumumkan semasa pelancaran; pemerhati percuma, tiada yuran persediaan, percubaan tanpa kad.⟧"],

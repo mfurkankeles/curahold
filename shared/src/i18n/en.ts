@@ -6228,7 +6228,7 @@ export const en = {
   'flow.settings.planAuto': "One whose name says onboarding",
   'flow.settings.loopBoard': "Where \"tell the customer\" tasks go",
   'flow.settings.loopAuto': "Customer Success's first board",
-  'flow.settings.noCounters': "No limits: rules and hand-overs are not counted or capped on any plan.",
+  'flow.settings.noCounters': "Rule runs and hand-overs are not counted or sold per plan; fair-use limits apply.",
   'me.batch': "Right away only what is for me (assignments, mentions, a customer handed to me); the rest in the morning summary",
   'me.batchHint': "Comments, followed work and nudges are still in your list at once, without a message of their own.",
   'me.batchNeedsDigest': "Turn on the morning summary to use this.",

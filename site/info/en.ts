@@ -41,7 +41,7 @@ export const en: InfoCopy = {
     inside: {
       name: 'Inside sales', short: 'Calls, follow-ups and early deals, never left hanging.',
       title: 'Every first call, followed up',
-      lead: 'Inside sales works on the same customer records as every team after it: calls and emails on the timeline, follow-ups as tasks, early deals in the pipeline.',
+      lead: 'Inside sales works on the same customer records as every team after it: calls and notes on the timeline, follow-ups as tasks, early deals in the pipeline.',
       points: [
         ['Follow-ups that do not slip', 'Each call ends with a next step and a date: a task on the customer, not a sticky note.'],
         ['Quick capture', 'Type “friday @Ayşe #Acme !high” and the task fills in its own fields.'],
@@ -93,13 +93,13 @@ export const en: InfoCopy = {
       points: [
         ['Sprints with a real burndown', 'Plan by capacity, follow the points day by day, and see scope that changed mid-sprint.'],
         ['Promises on the card', 'A card made from a customer promise carries the link both ways, so the customer team sees it move.'],
-        ['Coming from Jira? Move at your pace', 'Cards and statuses stay in step while the team switches; the backlog and sprints are already here.'],
+        ['Your engineering tracker stays', 'Cards and statuses stay in step both ways, so the product team and the customer team see the same state.'],
       ],
       forWho: 'Product managers, engineering leads and the teams that build.',
       next: ['The revenue behind each story', 'See how many customers asked for a story and what they are worth, before you plan.'],
     },
     finance: {
-      name: 'Finance', short: 'Contract value and renewals from your accounting program.',
+      name: 'Finance', short: 'Contract value and renewals; accounting connections coming soon.',
       title: 'The renewal and the invoice, on one record',
       lead: 'Connections to accounting programs are being built: invoices, payments and open balances on the customer page.',
       points: [
@@ -126,7 +126,7 @@ export const en: InfoCopy = {
       title: 'What is said in the meeting stays as work',
       lead: 'Log a meeting with who was there, write the next steps, save — each step is now a task with an owner and a date.',
       points: [
-        ['On the customer’s timeline', 'Notes, calls, meetings and emails stay on the record, for everyone who works on it.'],
+        ['On the customer’s timeline', 'Notes, calls and meetings stay on the record, for everyone who works on it.'],
         ['Tasks without retyping', 'Next steps turn into tasks on save, linked to the meeting they came from.'],
         ['Shared when you choose', 'Tick one box and the task shows in the customer’s portal.'],
       ],
@@ -184,7 +184,7 @@ export const en: InfoCopy = {
     sync: {
       name: 'Two-way sync', short: 'Your CRM, spreadsheets and support tools, in step.',
       title: 'A bridge from the tools you have today',
-      lead: 'Connect your CRM, spreadsheets and support tool and teams can move over one at a time. Changes travel both ways meanwhile; once everyone works in Curahold, the old tool is optional.',
+      lead: 'Connect your CRM, spreadsheets and support tool, and Curahold works beside them. Changes travel both ways, so every team sees the same customer.',
       points: [
         ['Field by field', 'Map each field once. Your own fields and objects come along too.'],
         ['Both directions', 'A change made in Curahold is written back at once; the other side is read every hour.'],
@@ -219,13 +219,13 @@ export const en: InfoCopy = {
     ],
   },
   integrations: {
-    title: 'Start beside your tools, switch at your pace',
-    lead: 'Connections keep Curahold in step with what your teams use today, so nobody has to switch on the same day. Curahold has its own pipeline, customer pages, backlog and sprints, so the bridge can be taken down whenever you are ready.',
+    title: 'Beside your tools, not instead of them',
+    lead: 'Connections keep Curahold in step with the tools your teams use today. Curahold works beside them and brings the work around each customer together in one place.',
     groups: {
       crm: { name: 'CRM', text: 'Two-way sync, field by field, including your own fields and objects.' },
       chat: { name: 'Chat', text: 'Assignments, mentions and the weekly summary where your team talks.' },
       support: { name: 'Support desks', text: 'Open support requests count in the customer’s health.' },
-      mail: { name: 'Email', text: 'Emails with your customers on their timeline.' },
+      mail: { name: 'Email', text: 'Your daily digest of notifications by email. Curahold is not an inbox: no email threads, on purpose.' },
       sheets: { name: 'Spreadsheets', text: 'Bring customers from a sheet and keep the sheet in step.' },
       data: { name: 'Data and BI', text: 'Your data in your own warehouse, for your own reports.' },
       dev: { name: 'Development', text: 'Cards and statuses in step with your engineering tracker.' },
@@ -233,7 +233,7 @@ export const en: InfoCopy = {
       signin: { name: 'Sign-in and users', text: 'Single sign-on and automatic user provisioning.' },
       api: { name: 'API and webhooks', text: 'Personal API keys and webhooks for tasks, customers and records.' },
       automation: { name: 'Automation platforms', text: 'Triggers and actions for no-code automation tools.' },
-      accounting: { name: 'Accounting', text: 'Invoices, payments and open balances on the customer page.' },
+      accounting: { name: 'Accounting', text: 'Coming soon: invoices, payments and open balances on the customer page.' },
     },
     missing: ['Not on the list?', 'Any tool with an API can talk to Curahold through the open API and webhooks.'],
   },
@@ -282,7 +282,7 @@ export const en: InfoCopy = {
       ['You know why, not just what', 'The health score lists its reasons, so the next step is clear before the renewal is at risk.', 'The health score'],
       ['Eleven languages, right to left included', 'Each person picks their own; the whole interface follows, mirrored where it should be.', 'Regions we serve'],
       ['Your data stays yours', 'Companies are kept apart in the database itself, and support sees your workspace only with your consent.', 'Security and privacy'],
-      ['Start beside your tools, move over at your pace', 'Connections to your CRM and engineering tracker keep both sides in step while teams switch. Curahold already has the pipeline and the sprints, so keeping the old tools is a choice, not a need.', 'Integrations'],
+      ['Beside your tools, not instead of them', 'Connections to your CRM and engineering tracker keep both sides in step, so every team works from the same customer record.', 'Integrations'],
     ],
     contrastTitle: 'Scattered tools, or one place',
     before: ['The promise is in someone’s email', 'The task is in a spreadsheet', 'The risk is in a chat thread', 'The renewal is in a separate CRM'],
@@ -296,7 +296,7 @@ export const en: InfoCopy = {
       'For finance: contract value and late payments on the same record (coming soon).',
     ],
     notForTitle: 'Who it is not for', notForLead: 'An honest answer saves you a trial.',
-    notFor: [['A personal to-do list', 'If you work alone, a simpler app will serve you better. Curahold is built for teams that share customers.'], ['A help desk', 'Curahold brings tickets in from your support tool and counts them in each customer’s health; it does not replace that tool.'], ['Bookkeeping and invoicing', 'Curahold reads figures from your accounting program; it does not keep the books or send invoices.'], ['A critical-path schedule', 'Boards, sprints and a timeline cover customer work and product delivery, not the critical-path plan of a large one-off project.']],
+    notFor: [['A personal to-do list', 'If you work alone, a simpler app will serve you better. Curahold is built for teams that share customers.'], ['A help desk', 'Curahold brings tickets in from your support tool and counts them in each customer’s health; it does not replace that tool.'], ['Bookkeeping and invoicing', 'Curahold will read figures from your accounting program (coming soon); it does not keep the books or send invoices.'], ['A critical-path schedule', 'Boards, sprints and a timeline cover customer work and product delivery, not the critical-path plan of a large one-off project.']],
     more: 'See all the reasons',
   },
   about: {
@@ -312,7 +312,7 @@ export const en: InfoCopy = {
   },
   seo: {
     home: ['Curahold: work management for customer success teams', 'Renewals that open on time, meetings whose next steps become tasks, and a health score that explains itself. 3 months free, no card needed.'],
-    inside: ['Inside sales follow-ups that never slip | Curahold', 'Calls and emails on the customer’s timeline, every follow-up a task with an owner and a date, and early deals in the same pipeline as sales.'],
+    inside: ['Inside sales follow-ups that never slip | Curahold', 'Calls and notes on the customer’s timeline, every follow-up a task with an owner and a date, and early deals in the same pipeline as sales.'],
     sales: ['Sales pipeline, renewals and targets | Curahold', 'Deals, renewals and quarter targets on the customer’s own record, with a weighted forecast and renewal playbooks that start ninety days ahead.'],
     onboarding: ['Customer onboarding plans with dates | Curahold', 'An onboarding playbook with dated steps and owners, shared with the customer in their portal, and a health score watching from the first day.'],
     success: ['Customer success software with a health score | Curahold', 'See the quiet customer before the renewal: a health score that lists its reasons, meetings that become tasks, and support tickets in view.'],
@@ -325,7 +325,7 @@ export const en: InfoCopy = {
     renewals: ['Renewal management and playbook automation | Curahold', 'Renewal playbooks open their steps ninety days before the date, and rules written as sentences open tasks, notify people and change fields.'],
     assistant: ['Ask Claude or ChatGPT about your customers | Curahold', 'Connect Claude or ChatGPT to your workspace. It answers from your own data with your permissions, and can open a task or log a note for you.'],
     reports: ['Customer success reports and dashboards | Curahold', 'Targets, the weighted pipeline and the health of the whole portfolio in reports and dashboards you build, with exports and a data warehouse feed.'],
-    sync: ['Two-way sync with your CRM and spreadsheets | Curahold', 'Keep your CRM, spreadsheets and support tool in step, field by field and both ways, while teams move over to Curahold at their own pace.'],
+    sync: ['Two-way sync with your CRM and spreadsheets | Curahold', 'Keep your CRM, spreadsheets and support tool in step, field by field and both ways, so every team works from the same customer record.'],
     solutions: ['Solutions by role, company size and region | Curahold', 'How Curahold fits founders, team leads and customer-facing people, small teams and larger companies, and teams in Türkiye, the Middle East and Asia.'],
     integrations: ['Integrations: CRM, chat, support and BI tools | Curahold', 'Connect Salesforce, HubSpot, Slack, Microsoft Teams, Jira, spreadsheets, support desks and data warehouses, or any tool through the open API.'],
     pricing: ['Curahold pricing: per seat, 3 months free to start', '⟦price|Team from {team} and Business from {business} per seat a month on a yearly plan. Viewer seats are free, there is no setup fee and the trial needs no card.|Per seat, with every feature in the plan. Prices are announced at launch; viewer seats are free, there is no setup fee and the trial needs no card.⟧'],

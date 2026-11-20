@@ -6214,7 +6214,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'flow.settings.planAuto': "이름에 온보딩이 들어간 것",
   'flow.settings.loopBoard': "“고객에게 알리기” 작업 위치",
   'flow.settings.loopAuto': "고객 성공팀의 첫 보드",
-  'flow.settings.noCounters': "제한 없음: 어떤 요금제에서도 규칙과 인계를 세거나 제한하지 않습니다.",
+  'flow.settings.noCounters': "규칙 실행과 인계는 요금제별로 세거나 따로 판매하지 않습니다. 공정 사용 한도는 적용됩니다.",
   'me.batch': "나에게 온 것(배정, 멘션, 인계받은 고객)만 바로 알리고 나머지는 아침 요약으로",
   'me.batchHint': "댓글, 팔로우한 작업, 알림은 목록에 바로 보이지만 따로 메시지를 보내지 않습니다.",
   'me.batchNeedsDigest': "사용하려면 아침 요약을 켜세요.",

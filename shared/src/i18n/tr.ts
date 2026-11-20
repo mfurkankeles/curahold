@@ -6214,7 +6214,7 @@ export const tr: Record<MessageKey, string> = {
   'flow.settings.planAuto': "Adında onboarding geçen",
   'flow.settings.loopBoard': "\"Müşteriye haber ver\" görevleri nereye düşer",
   'flow.settings.loopAuto': "Müşteri Başarısı'nın ilk panosu",
-  'flow.settings.noCounters': "Sınır yok: kurallar ve devirler hiçbir planda sayılmaz, tavanlanmaz.",
+  'flow.settings.noCounters': "Kural çalışmaları ve devirler plana göre sayılmaz, ayrıca satılmaz; adil kullanım sınırları geçerlidir.",
   'me.batch': "Yalnızca bana yönelik olanlar hemen gelsin (atamalar, bahsetmeler, bana devredilen müşteri); gerisi sabah özetinde",
   'me.batchHint': "Yorumlar, takip ettiğiniz işler ve hatırlatmalar listenizde hemen görünür, ayrı mesaj gelmez.",
   'me.batchNeedsDigest': 'Bunun için sabah özetinizi açın.',

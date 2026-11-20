@@ -6214,7 +6214,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   "flow.settings.planAuto": "名前にオンボーディングを含むもの",
   'flow.settings.loopBoard': "「顧客に連絡」タスクの置き場所",
   'flow.settings.loopAuto': "カスタマーサクセスの最初のボード",
-  'flow.settings.noCounters': "上限なし。どのプランでもルールと引き継ぎは数えず、制限しません。",
+  'flow.settings.noCounters': "ルールの実行と引き継ぎは、プランごとに数えたり販売したりしません。公正利用の上限は適用されます。",
   'me.batch': "自分宛てのもの（割り当て・メンション・引き継がれた顧客）だけすぐに通知し、それ以外は朝のまとめで",
   'me.batchHint': "コメント、フォロー中の作業、リマインダーはすぐ一覧に表示されますが、個別のメッセージは送られません。",
   'me.batchNeedsDigest': "使うには朝のまとめをオンにしてください。",

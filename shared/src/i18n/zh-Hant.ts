@@ -6214,7 +6214,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   "flow.settings.planAuto": "名稱包含「導入」的打法",
   'flow.settings.loopBoard': "「告知客戶」任務放在哪裡",
   'flow.settings.loopAuto': "客戶成功的第一個看板",
-  'flow.settings.noCounters': "不設限：任何方案都不計數、不限制規則和交接。",
+  'flow.settings.noCounters': "規則執行和交接不依方案計數或另行收費；適用合理使用限制。",
   'me.batch': "僅即時通知與我相關的內容（指派、提及、交接給我的客戶），其餘放在早間彙整",
   'me.batchHint': "留言、追蹤的工作和提醒仍會立即出現在你的清單中，只是不單獨傳訊息。",
   'me.batchNeedsDigest': "請先開啟早間彙整。",
