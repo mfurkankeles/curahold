@@ -22,6 +22,8 @@ import { ORG_CHART as SEATS } from '../shared/src/team/orgChart';
 import { OWNER_EN, OWNER_TR } from '../shared/src/i18n/owner';
 import { OFFICE_EN, OFFICE_TR } from '../shared/src/i18n/ownerOffice';
 import { TEAM_EN, TEAM_TR } from '../shared/src/i18n/ownerTeam';
+import { CONSENT_STRINGS } from '../shared/src/consent/strings';
+import { GROUPS, INTERNAL } from '../scripts/docs/catalogue';
 
 const ROOT = join(import.meta.dirname, '..');
 const en = dictionaries.en as Record<string, string>;
@@ -323,6 +325,19 @@ describe('Turkish register', () => {
       [TEAM_TR, TEAM_EN],
     ];
     const bad = blocks.flatMap(([tr, en]) => Object.keys(tr).filter((k) => typeof tr[k] === 'string' && sen(tr[k], String(en[k] ?? ''), k)).map((k) => `${k}: ${tr[k].slice(0, 80)}`));
+    expect(bad.join('\n')).toBe('');
+  });
+  // The cookie banner's words are the consent proof (their hash is stored with each choice), and the first thing a
+  // visitor reads; the public API reference is generated from the catalogue's Turkish column. Both say "siz" too.
+  it('no Turkish cookie-banner string or API reference line says "sen"', () => {
+    const tr = CONSENT_STRINGS.tr as unknown as Record<string, string>;
+    const enC = CONSENT_STRINGS.en as unknown as Record<string, string>;
+    const bad = Object.keys(tr).filter((k) => sen(tr[k], enC[k] ?? '', k)).map((k) => `consent ${k}: ${tr[k].slice(0, 80)}`);
+    const pairs: [string, string, string][] = [
+      ...GROUPS.flatMap((g) => g.routes.map(([route, e, t]) => [route, e, t] as [string, string, string])),
+      ...Object.entries(INTERNAL).map(([route, [e, t]]) => [route, e, t] as [string, string, string]),
+    ];
+    for (const [route, e, t] of pairs) if (sen(t, e)) bad.push(`api ${route}: ${t.slice(0, 80)}`);
     expect(bad.join('\n')).toBe('');
   });
   // The help centre and the sales site are first-contact surfaces too: a reader who meets "sen" in the

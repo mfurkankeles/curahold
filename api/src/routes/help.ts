@@ -336,7 +336,7 @@ helpRoutes.post('/help', async (c) => {
       if (req.impact === 'blocking')
         await pushToOwner(deps, `push:help:${req.ref}`, (l) => ({ title: ownerWord(l, 'help.push.title'), body: ownerWord(l, 'help.push.body', { ref: req.ref, company: org.name.slice(0, 80) }), url: `/support?r=${encodeURIComponent(req.ref)}`, urgency: 'high' }));
       // A first answer drafted from the docs, as a note only the desk sees (routes/assist.ts).
-      const draft = await deskFirstReply(deps, org, req as { id: string; subject: string; description: string }, locale).catch(() => null);
+      const draft = await deskFirstReply(deps, org, req as { id: string; subject: string; description: string }, locale, auth.userId).catch(() => null);
       if (draft) {
         const sources = draft.citations.map((s) => `- ${s.title}${s.section ? ` › ${s.section}` : ''}: ${s.url}`).join('\n');
         const note = `${translate('en', 'assist.desk.draft')}\n\n${draft.text}${sources ? `\n\n${sources}` : ''}`;

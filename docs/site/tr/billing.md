@@ -11,7 +11,7 @@ summary: Ücretsiz deneme, Team ve Business planları, kullanıcı sayısı, fat
 Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form açar (kodla doğrulanan iş e-postası, şirketiniz, istediğiniz ekipler ve koltuk sayısı). Her isteği kendimiz okur, genelde bir iş günü içinde döneriz. Onaylanınca şirketin seçtiğiniz ekiplerle açılır ve ilk yöneticiye giriş bağlantısı gider.
 
 - **Süre:** varsayılan üç ay; her şey açık, kart gerekmez. Süre onay sırasında belirlenir, daha büyük bir pilot daha uzun olabilir.
-- **Koltuklar:** deneme, onayda belirlenen tam koltukları içerir (genelde en fazla 25). İzleyici koltukları ücretsizdir ve sayılmaz.
+- **Koltuklar:** deneme, onayda belirlenen tam koltukları içerir (genelde en fazla 10). İzleyici koltukları ücretsizdir ve sayılmaz.
 - **İlk giriş:** yönetici hizmet koşullarını ve veri işleme sözleşmesini tek tıkla kabul eder; sonra ekip davet edilebilir.
 - **Hatırlatmalar:** yöneticilere bitişten 14, 7 ve 1 gün önce e-posta gider. Ayarlar → **Abonelik** kaç gün kaldığını gösterir; son haftada uygulamanın üstündeki bir satır da hatırlatır.
 
@@ -36,7 +36,7 @@ Bir yönetici Ayarlar → **Abonelik**’i açar, aylık ya da yıllığı seçe
 
 ## Kullanıcı sayısı
 
-Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir davet faturalanmaz. Birini eklerseniz ek kullanıcı dönemin kalanı için faturalanır; birini çıkarırsanız sonraki fatura düşer. Kimsenin kullanıcı sayısını elle değiştirmesi gerekmez.
+Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir davet faturalanmaz. Birini eklerseniz ek kullanıcı dönemin kalanı için faturalanır; birini çıkarırsanız sonraki fatura düşer. Kimsenin kullanıcı sayısını elle değiştirmesi gerekmez. Her plan en az birkaç tam kullanıcı üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla): Ayarlar → **Abonelik** bölgenizdeki sayıyı gösterir; bu sayıya kadar eklediğiniz kişiler ek ücrete yol açmaz.
 
 ## Faturalar, ödeme yöntemi, iptal
 

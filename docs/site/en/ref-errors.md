@@ -82,6 +82,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `email_taken` | 409 | Someone in your company already uses this email. |
 | `handover_confirmed` | 409 | This hand-over is already confirmed. |
 | `last_admin` | 409 | Your company needs at least one active administrator. |
+| `plan_limit_ai` | 409 | Your plan allows an AI limit of at most … USD a month. Choose a lower limit; more seats or a larger plan raise it. |
 | `plan_limit_connectors` | 409 | Your plan includes up to … connected tools. Remove one, or choose a larger plan. |
 | `plan_limit_seats` | 409 | Your plan includes up to … full seats and all of them are in use. Invite as a viewer (free), or choose a larger plan. |
 | `portal_email_taken` | 409 | That address already has portal access. |

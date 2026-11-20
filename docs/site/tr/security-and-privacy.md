@@ -51,7 +51,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 
 ### Kişisel veri talepleri
 
-**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK ve GDPR'de 30 gün, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
+**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK'da 30 gün, GDPR'de bir takvim ayı, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
 
 ## Saklama süreleri
 
@@ -66,6 +66,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 | Hata kayıtları (ne, nerede bozuldu — istek içeriği asla) | 30 gün |
 | İptal edilmiş API anahtarları | 30 gün |
 | Aktivite kaydı | 12 ay |
+| Kişisel veri talepleri (yanıtlandıktan ya da reddedildikten sonra) | Kapandıktan sonra 3 yıl |
 | Yardım talepleri, mesajları ve dosyaları | Son değişiklikten 24 ay sonra |
 | CuraAI'ye sorulanlar | Şirketinizin seçtiği süre (değiştirilmediyse 30 gün) |
 | Silinen bir şirket | Talepten 30 gün sonra silinir |

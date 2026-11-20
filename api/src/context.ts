@@ -4,7 +4,7 @@
 import { localDate } from '../../shared/src/days';
 import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
-import { accessOf, allows, planFor, planOf, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
+import { accessOf, allows, planFor, planOf, type Access, type Feature, type Interval, type MinSeatRules, type OrgBilling, type PlanKey } from '../../shared/src/billing';
 import type { Locale, Terms } from '../../shared/src/i18n';
 import type { AccountField, Perm, Seat, SetupState } from '../../shared/src/model';
 import type { Db, Q } from './db';
@@ -115,6 +115,8 @@ export interface BillingConfig {
   clientToken: string;
   /** Paddle price ids, by plan and how often it is paid. */
   prices: Record<PlanKey, Record<Interval, string>>;
+  /** The fewest seats a subscription is billed for (BILLING_MIN_SEATS; absent: MIN_SEATS_DEFAULT). */
+  minSeats?: MinSeatRules;
 }
 
 /** Curahold's own app registrations with the messaging services. */

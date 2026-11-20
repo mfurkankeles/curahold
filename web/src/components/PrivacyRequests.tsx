@@ -163,7 +163,7 @@ export function PrivacyRequests() {
           </div>
           <div className="form__row">
             <DateField label={t('privacyReq.received')} value={received} max={today} onChange={(v) => setReceived(v || today)} />
-            <p className="field__hint">{t('privacyReq.dueHint', { date: day(privacyDueOn(received, law)), days: PRIVACY_LAWS[law].days })}</p>
+            <p className="field__hint">{'months' in PRIVACY_LAWS[law] ? t('privacyReq.dueHintMonth', { date: day(privacyDueOn(received, law)) }) : t('privacyReq.dueHint', { date: day(privacyDueOn(received, law)), days: PRIVACY_LAWS[law].days })}</p>
           </div>
           <label className="field">
             <span className="field__label">{t('privacyReq.note')}</span>

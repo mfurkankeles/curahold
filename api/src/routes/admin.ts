@@ -756,6 +756,11 @@ adminRoutes.patch('/privacy-requests/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
+    // A due date before the day the request came in is the caller's mistake (400), not the table's check failing (500).
+    if (input.dueOn) {
+      const [was] = await q.query<{ received_on: unknown }>('select received_on from privacy_requests where id = $1', [id]);
+      if (was && input.dueOn < dayOf(was.received_on)) fail('validation', { fields: 'dueOn' }, { fields: ['dueOn'] });
+    }
     const [r] = await q.query<PrivacyRequestRow>(
       `update privacy_requests set
          status = coalesce($2, status),

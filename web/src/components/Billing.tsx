@@ -36,7 +36,8 @@ type CapKind = 'seats' | 'storage' | 'connectors' | 'ai';
 interface BillingInfo {
   enabled: boolean;
   access: Access;
-  plans: (PlanDef & { regional: Record<Interval, Regional> })[];
+  /** `minSeats`: the fewest seats the plan is billed for here (the server's BILLING_MIN_SEATS rule). */
+  plans: (PlanDef & { regional: Record<Interval, Regional>; minSeats?: Record<Interval, number> })[];
   catalogue: { version: string; status: 'draft' | 'final'; currency: string; trialMonths: number; graceDays: number };
   region: { key: string; currency: string; collect: string; tax: { name: string; rate: number | null; b2b: boolean } } | null;
   seats: number;
@@ -342,6 +343,7 @@ export function BillingSettings() {
           const r = p.regional[interval];
           const money = (n: number, cur = r.collect) => formatMoney(n, cur, locale);
           const extra = p.features.map((f) => FEATURE_POINT[f]).filter(Boolean);
+          const billed = Math.max(seats, p.minSeats?.[interval] ?? 1);
           return (
             <section key={p.key} className="sheet billing__plan" data-current={current || undefined} data-featured={p.key === featured || undefined}>
               <h3 className="billing__planname">{planName(p.key, p.name)}</h3>
@@ -350,8 +352,9 @@ export function BillingSettings() {
               </p>
               {r.currency !== r.collect && r.shown != null && <p className="billing__total muted">{t('billing.region.guide', { local: money(r.shown, r.currency), currency: r.collect })}</p>}
               <p className="billing__total muted">
-                {t(interval === 'year' ? 'billing.totalYear' : 'billing.totalMonth', { total: money(r.amount * seats * (interval === 'year' ? 12 : 1)), n: seats })}
+                {t(interval === 'year' ? 'billing.totalYear' : 'billing.totalMonth', { total: money(r.amount * billed * (interval === 'year' ? 12 : 1)), n: billed })}
               </p>
+              {billed > seats && <p className="billing__total muted">{t('billing.minSeats', { n: billed })}</p>}
               <ul className="billing__points">
                 {extra.length > 0 && <li className="billing__everything">{t('billing.point.everythingTeam')}</li>}
                 {(extra.length ? extra : BASE_POINTS).map((k) => (

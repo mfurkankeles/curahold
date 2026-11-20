@@ -6,7 +6,7 @@ summary: Kişiler, fırsatlar, destek kayıtları ve kendi tanımladığınız t
 ---
 # Başvuru: kayıtlar
 
-Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek kaydı ya da şirketinin tanımladığı bir tür (sözleşmeler, ürünler, riskler). Her türün kendi alanları vardır; kayıt bunları `fields` içinde taşır.
+Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek kaydı ya da şirketinizin tanımladığı bir tür (sözleşmeler, ürünler, riskler). Her türün kendi alanları vardır; kayıt bunları `fields` içinde taşır.
 
 > Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır. Biçimler şurada: [Nesneler](/docs/tr/ref-objects/).
 
@@ -25,7 +25,7 @@ Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek ka
 | `PATCH /records/:id` | Bir kaydı değiştirir; yalnızca gönderdiğiniz alanlar değişir. |
 | `DELETE /records/:id` | Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /records/:id/comments` | Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider. |
-| `DELETE /record-comments/:id` | Bir kayıttaki kendi yorumunu siler. |
+| `DELETE /record-comments/:id` | Bir kayıttaki kendi yorumunuzu siler. |
 | `POST /records/:id/files` | Bir kayda dosya ekler (multipart yükleme, istek başına bir dosya). |
 | `POST /records/:id/plans` | Bir anlaşmaya ya da herhangi bir kayda plan uygular: görevleri kayda ve müşterisine bağlanır. |
 | `PUT /tickets/:source/:externalId` | Kendi sisteminizin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. |
@@ -147,7 +147,7 @@ Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider.
 
 ### `DELETE /record-comments/:id`
 
-Bir kayıttaki kendi yorumunu siler.
+Bir kayıttaki kendi yorumunuzu siler.
 
 ### `POST /records/:id/files`
 

@@ -47,7 +47,7 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | `POST /onboarding-issues/:id/ticket` | Sorunu müşterinin destek talebine bağlar (`recordId`; bağı kaldırmak için `null`). |
 | `DELETE /onboarding-issues/:id` | Bir sorunu siler. |
 | `POST /onboarding-plans/:id/fields` | Veri eşleme tablosuna satır ekler: alan, hedef, tür, zorunluluk, örnek, gelen değer. |
-| `PATCH /onboarding-fields/:id` | Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin taraf kontrol etti). |
+| `PATCH /onboarding-fields/:id` | Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin tarafınız kontrol etti). |
 | `DELETE /onboarding-fields/:id` | Veri eşleme tablosundan bir satırı siler. |
 | `POST /onboarding-plans/:id/sites` | Yayılıma bir şube ekler (`name`, `region`, `stages`). |
 | `PATCH /onboarding-sites/:id` | Bir şubeyi ya da bir aşamadaki durumunu değiştirir (`stages: { "<aşama>": "todo\|doing\|done\|na" }`). |
@@ -364,7 +364,7 @@ Veri eşleme tablosuna satır ekler: alan, hedef, tür, zorunluluk, örnek, gele
 
 ### `PATCH /onboarding-fields/:id`
 
-Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin taraf kontrol etti).
+Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin tarafınız kontrol etti).
 
 **Gerekenler:** yazabilen bir koltuk
 

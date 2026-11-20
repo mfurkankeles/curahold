@@ -51,7 +51,7 @@ Pentadbir boleh memintanya dalam **Tetapan → Syarikat → Padam syarikat**, de
 
 ### Permintaan tentang data peribadi
 
-Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang mempunyai kebenaran privasi merekodkan setiap permintaan seseorang tentang data mereka, bersama undang-undang yang terpakai: akses, pembetulan, pemadaman, sekatan pemprosesan, bantahan, kemudahalihan atau penarikan balik persetujuan. Tarikh akhir dikira daripada undang-undang itu (contohnya 30 hari di bawah KVKK dan GDPR, 10 hari di bawah PIPA Korea), dan permintaan yang lewat ditanda merah dengan ikon. Tandakan permintaan sebagai sudah dijawab atau ditolak apabila selesai; setiap perubahan direkodkan dalam log aktiviti. Kerja sebenar dibuat melalui tindakan eksport dan padam pada orang itu.
+Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang mempunyai kebenaran privasi merekodkan setiap permintaan seseorang tentang data mereka, bersama undang-undang yang terpakai: akses, pembetulan, pemadaman, sekatan pemprosesan, bantahan, kemudahalihan atau penarikan balik persetujuan. Tarikh akhir dikira daripada undang-undang itu (contohnya 30 hari di bawah KVKK, satu bulan kalendar di bawah GDPR, 10 hari di bawah PIPA Korea), dan permintaan yang lewat ditanda merah dengan ikon. Tandakan permintaan sebagai sudah dijawab atau ditolak apabila selesai; setiap perubahan direkodkan dalam log aktiviti. Kerja sebenar dibuat melalui tindakan eksport dan padam pada orang itu.
 
 ## Berapa lama sesuatu disimpan
 
@@ -66,6 +66,7 @@ Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang 
 | Rekod ralat (apa yang rosak, di mana — tidak pernah kandungan permintaan) | 30 hari |
 | Kunci API yang dibatalkan | 30 hari |
 | Log aktiviti | 12 bulan |
+| Permintaan tentang data peribadi, setelah dijawab atau ditolak | 3 tahun selepas ditutup |
 | Permintaan bantuan, mesej dan failnya | 24 bulan selepas perubahan terakhir |
 | Soalan kepada CuraAI | Seperti yang dipilih oleh syarikat anda (30 hari melainkan diubah) |
 | Syarikat yang dipadam | 30 hari selepas permintaan, kemudian dihapuskan |

@@ -11,7 +11,7 @@ summary: Percubaan percuma, pelan Team dan Business, tempat duduk, invois, menuk
 Percubaan bermula dengan permintaan: **Cuba percuma** di laman web membuka borang ringkas (e-mel kerja dengan kod, syarikat anda, pasukan dan tempat duduk yang anda mahu). Kami membaca setiap permintaan dan menjawab, biasanya dalam tempoh satu hari bekerja. Setelah diluluskan, syarikat anda dicipta dengan pasukan yang anda pilih dan pentadbir pertamanya menerima pautan log masuk.
 
 - **Tempoh:** tiga bulan secara lalai, dengan semua ciri dihidupkan dan tanpa kad. Tempoh ditetapkan semasa permintaan diluluskan, jadi perintis yang lebih besar boleh mendapat tempoh lebih panjang.
-- **Tempat duduk:** percubaan merangkumi tempat duduk penuh yang dipersetujui semasa kelulusan (biasanya sehingga 25). Tempat duduk pemerhati adalah percuma dan tidak pernah dikira.
+- **Tempat duduk:** percubaan merangkumi tempat duduk penuh yang dipersetujui semasa kelulusan (biasanya sehingga 10). Tempat duduk pemerhati adalah percuma dan tidak pernah dikira.
 - **Log masuk pertama:** pentadbir menerima terma perkhidmatan dan perjanjian pemprosesan data dengan satu klik; kemudian pasukan boleh dijemput.
 - **Peringatan:** pentadbir menerima e-mel 14, 7 dan 1 hari sebelum tamat. Tetapan → **Pengebilan** menunjukkan berapa hari lagi; pada minggu terakhir, satu baris di bahagian atas aplikasi juga memaklumkannya.
 
@@ -36,7 +36,7 @@ Pentadbir membuka Tetapan → **Pengebilan**, memilih bulanan atau tahunan dan m
 
 ## Tempat duduk
 
-Bil mengikut orang yang telah **menyertai** dengan tempat duduk penuh: jemputan yang belum diterima tidak dibilkan. Tambah seseorang dan tempat duduk tambahan dibilkan untuk baki tempoh; buang seseorang dan bil seterusnya lebih rendah. Tiada sesiapa perlu mengubah bilangan tempat duduk secara manual.
+Bil mengikut orang yang telah **menyertai** dengan tempat duduk penuh: jemputan yang belum diterima tidak dibilkan. Tambah seseorang dan tempat duduk tambahan dibilkan untuk baki tempoh; buang seseorang dan bil seterusnya lebih rendah. Tiada sesiapa perlu mengubah bilangan tempat duduk secara manual. Setiap pelan dibilkan untuk sekurang-kurangnya beberapa tempat duduk penuh (biasanya 3; lebih di sesetengah rantau dan untuk bil tahunan): Tetapan → **Pengebilan** menunjukkan jumlah bagi rantau anda, dan orang sehingga jumlah itu tidak dikenakan kos tambahan.
 
 ## Invois, kaedah pembayaran, pembatalan
 

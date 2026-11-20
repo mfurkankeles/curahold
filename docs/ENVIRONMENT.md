@@ -105,6 +105,8 @@ customer is the controller of where it is.
 | `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies Paddle webhook signatures (`/api/inbound/billing/paddle`, also the older `/api/billing/webhook`) | For billing | |
 | `PADDLE_CLIENT_TOKEN` | Client-side token for Paddle.js (safe in browsers) | For billing | |
 | `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. |
+| `BILLING_MIN_SEATS` | The fewest seats a subscription is billed for, JSON by plan (or `*`), interval and price region key (or `*`): `{"*":{"month":{"*":3,"in":5},"year":{"*":3,"my":4,"in":6}}}`. Checkout, plan changes and the hourly seat sync never send fewer (`billedSeats`, api/src/billing/service.ts); the Billing screen counts the total with it | No | The JSON shown (pricing audit, option B; owner decision open, ADR 0022). Unreadable JSON keeps the defaults. |
+| Trial width | Not an environment key: the owner console's **trial.seatCap** (default `trial.autoApproveSeats` in shared/src/plans.json, now 10) and `trial.caps.storageGbPerSeat` in plans.json (1 GB a seat) | — | 10 seats, 1 GB a seat (was 25 seats and the Business plan's 10 GB; ADR 0022). |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |
 
 ## 3b. The assistant and the AI team (all optional; without a key nothing calls a model)
@@ -180,9 +182,13 @@ Google Sheets and Excel reuse the Google and Microsoft sign-in keys.
 | `ASSISTANT_MODEL` | Model for the assistant | No | `claude-sonnet-5-5` (`DEFAULT_MODEL`). |
 | `ASSISTANT_GLOBAL_MONTHLY_USD` | Cap for the whole install, USD a month | No | `100`. |
 | `ASSISTANT_COMPANY_MONTHLY_USD` | Default cap per company, USD a month | No | `5`. |
-| `ASSISTANT_COMPANY_MAX_USD` | Highest cap a company may choose | No | `50`. |
+| `ASSISTANT_COMPANY_MAX_USD` | Highest cap a company may choose where no plan applies (billing off) | No | `50`. |
+| `ASSISTANT_USD_PER_SEAT` | With billing on, a paying company's ceiling: full seats × this rate per plan, `team:0.55,business:1.1`. Its administrator can set a lower limit, never a higher one (`plan_limit_ai`), and the model stops at the ceiling whatever is stored | No | `team:0.55,business:1.1` (a plan without a rate gets the lowest; ADR 0022). |
+| `ASSISTANT_TRIAL_USD` | With billing on, a company in its trial: one fixed ceiling, USD a month | No | `5`. |
+| `ASSISTANT_PUBLIC_MONTHLY_USD` | The public docs and site chat's own cap, USD a month, counted apart from customers (migration 0253), so it can never use up the installation cap | No | `10`. |
 | `ASSISTANT_BLOCKED_NAMES` | Other products' names the assistant declines to discuss, comma-separated (kept out of the code) | No | Empty. |
 | `ASSISTANT_PUBLIC_CHAT` | `0` closes the public chat on the docs and sales site | No | Open (rate-limited, inside the global cap). |
+| `ASSISTANT_DESK_FIRST_REPLY_BASIS` | What lets a new help request's words reach the model for support's draft first reply: `consent` = only when the person who wrote it accepted CuraAI's notice; `company` = the company's switch alone | No | `consent` (the safe default; `company` needs the owner's and a lawyer's decision, see ADR 0021). |
 | `TEAM_MONTHLY_USD` | Cap for all AI-team model spend, USD a month | No | `40`. |
 | `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per seat profile, and the golden-task judge | No | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`, `claude-opus-5-5`. |
 
@@ -207,6 +213,7 @@ periods the privacy notice and the records of processing state (docs/compliance/
 | `RETENTION_CONSENT_DAYS` | Consent and withdrawal records, cookie choices; a "yes" still in force is kept as long as it is relied on | No | `1095` (floor 365). |
 | `RETENTION_SUPPORT_DAYS` | Help requests, their messages and files, the support desk's log (from the last change) | No | `730` (floor 90). |
 | `RETENTION_AUDIT_DAYS` | The activity log (`audit_log`) | No | `365` (floor 90; the database refuses to delete newer rows, migration 0242). |
+| `RETENTION_PRIVACY_REQUEST_DAYS` | Requests about personal data (`privacy_requests`), counted from when the request was answered or refused; open requests are never purged | No | `1095` (floor 365). 3 years: the proof the request was answered on time, for the usual limitation period. Owner/lawyer to confirm. |
 | `COMPANY_DELETE_GRACE_DAYS` | Days between an administrator's request to delete the company and the purge | No | `30` (floor 7). |
 
 ## 7. Self-host only (`api/src/selfhost.ts`, `docker-compose.yml`, `selfhost.env.example`)

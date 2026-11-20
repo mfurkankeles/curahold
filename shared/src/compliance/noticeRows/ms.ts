@@ -117,6 +117,13 @@ const text: NoticeText = {
       kvkk: 'KVKK perkara 5/2-ç (kewajipan undang-undang)',
       retention: '5 tahun selepas pelanggaran ditutup [peguam untuk mengesahkan]',
     },
+    privacyRequests: {
+      purpose: 'Merekodkan bahawa setiap permintaan telah dijawab, dan tepat pada masanya (rekod pelanggan sendiri)',
+      data: 'Nama, e-mel (pilihan), jenis permintaan, undang-undang yang terpakai, tarikh, status, nota, siapa yang merekodkan dan menutupnya',
+      subjects: 'Orang yang membuat permintaan tentang data peribadi mereka kepada syarikat pelanggan',
+      basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses). Teluk: Pemproses. Rantau lain: Penyerahan.',
+      retention: '3 tahun selepas permintaan dijawab atau ditolak [peguam untuk mengesahkan]; permintaan terbuka sehingga ditutup; bersama syarikat jika ia dipadam',
+    },
     website: {
       purpose: 'Mengendalikan laman web; dengan persetujuan, mengukurnya dan pengiklanan kami',
       data: 'Halaman yang dilawati, bahasa yang dipilih; dengan persetujuan sahaja: pengecam analitis dan pengiklanan (lihat halaman Kuki)',

@@ -146,6 +146,16 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Stored with / received by:** Supabase, Inc.
 - **VERBİS categories:** İşlem güvenliği
 
+### privacyRequests — Recording that each request was answered, and on time (the customer’s own log)
+
+- **Role:** Curahold is the processor (the customer is the controller)
+- **Data subjects:** People who make a request about their personal data to a customer company
+- **Personal data:** Name, e-mail (optional), kind of request, the law, dates, status, a note, who logged and who closed it
+- **Legal basis:** Türkiye — On the customer's behalf (processor); EU/UK — Art. 28 — the customer's basis; Gulf — Processor; elsewhere — Entrustment
+- **Retention:** 3 years after the request is answered or refused [lawyer to confirm]; open requests until they are closed; with the company if it is deleted
+- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc.
+- **VERBİS categories:** Kimlik, İletişim, Hukuki işlem
+
 ### website — Running the website; with consent, measuring it and our advertising
 
 - **Role:** Curahold is the controller

@@ -14,6 +14,8 @@ interface View {
   usage: { questions: number; modelQuestions: number; costUsd: number };
   engine: { available: boolean; model: string | null; maxMonthlyCapUsd: number };
   retentionChoices: number[];
+  /** The draft first reply goes to the model only for requesters who accepted CuraAI's notice (operator setting). */
+  deskNeedsConsent?: boolean;
 }
 
 /**
@@ -92,6 +94,7 @@ export function AssistantSettings() {
         <input type="checkbox" checked={s.deskFirstReply === 'note'} onChange={(e) => void save({ deskFirstReply: e.target.checked ? 'note' : 'off' })} />
         <span>
           <strong>{t('assist.settings.desk')}</strong>
+          {view.deskNeedsConsent && <span className="muted"> {t('assist.settings.deskHint')}</span>}
         </span>
       </label>
     </section>

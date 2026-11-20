@@ -22,7 +22,7 @@ Bir müşteriyi, kaydı, görevi, zaman çizelgesi girişini, sayfayı, kayıtl�
 
 ### `GET /trash`
 
-Hâlâ geri alınabilenleri en yenisi önce, 50'şer listeler. `kind` tek bir türe indirir (`account`, `record`, `task`, `activity`, `page`, `report`, `automation`), `q` adlarda arar, `before` (elindeki son öğenin `deletedAt` değeri) sonraki 50'yi verir. Cevaptaki `manage`, bu kişinin kalıcı silip silemeyeceğini söyler.
+Hâlâ geri alınabilenleri en yenisi önce, 50'şer listeler. `kind` tek bir türe indirir (`account`, `record`, `task`, `activity`, `page`, `report`, `automation`), `q` adlarda arar, `before` (elinizdeki son öğenin `deletedAt` değeri) sonraki 50'yi verir. Cevaptaki `manage`, bu kişinin kalıcı silip silemeyeceğini söyler.
 
 **Sorgu:** `kind`, `q`, `before`
 

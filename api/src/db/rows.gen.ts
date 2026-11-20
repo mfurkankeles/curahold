@@ -282,6 +282,7 @@ export interface AssistantGlobalRow {
   questions: number;
   model_questions: number;
   cost_micros: number | string;
+  public_cost_micros: number | string;
 }
 
 /** Table `assistant_log`. */

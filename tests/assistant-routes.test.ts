@@ -153,4 +153,33 @@ describe('the desk’s first reply', () => {
     const mine = await ada.get(`/api/help/${r.json.request.id}`);
     expect(JSON.stringify(mine.json)).not.toContain('CuraAI');
   });
+
+  it('sends a request’s words to the model only when the person who wrote it accepted the notice', async () => {
+    const notes = async (id: string) => env.db.system((q) => q.query(`select 1 from help_messages where request_id = $1 and staff = 'CuraAI'`, [id]));
+    const zeynep = await login(env, 'acme', 'zeynep@demo.example');
+    const before = provider.calls.length;
+    const r = await zeynep.post('/api/help', { category: 'question', subject: 'Inviting my team', description: 'Private words that never saw the notice.' });
+    expect(r.status).toBe(201);
+    await env.settle();
+    expect(provider.calls.length).toBe(before);
+    expect(await notes(r.json.request.id)).toHaveLength(0);
+    // A "no" is no better than no answer.
+    await zeynep.post('/api/assist/consent', { granted: false });
+    const no = await zeynep.post('/api/help', { category: 'question', subject: 'Inviting my team', description: 'Still private.' });
+    await env.settle();
+    expect(provider.calls.length).toBe(before);
+    expect(await notes(no.json.request.id)).toHaveLength(0);
+    // The operator may make the company's switch the basis instead (ASSISTANT_DESK_FIRST_REPLY_BASIS=company).
+    const cfg = env.deps.config.assistant;
+    env.deps.config.assistant = { ...(cfg ?? (await import('../api/src/assistant/cost')).assistantConfigFrom({})), deskFirstReplyBasis: 'company' };
+    try {
+      const yes = await zeynep.post('/api/help', { category: 'question', subject: 'Inviting my team', description: 'The company decides here.' });
+      await env.settle();
+      expect(await notes(yes.json.request.id)).toHaveLength(1);
+    } finally {
+      env.deps.config.assistant = cfg;
+    }
+    // And the settings card says which rule holds.
+    expect((await ada.get('/api/assist/settings')).json.deskNeedsConsent).toBe(true);
+  });
 });

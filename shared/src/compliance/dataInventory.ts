@@ -445,6 +445,22 @@ export const ACTIVITIES: Activity[] = [
     verbis: ['İşlem güvenliği'],
   },
   {
+    // The customer's own log of requests people make about their data (0250). Kept past closing as the proof the
+    // request was answered on time; the period (RETENTION_PRIVACY_REQUEST_DAYS) is an owner/lawyer question.
+    id: 'privacyRequests',
+    role: 'processor',
+    subjects: { en: 'People who make a request about their personal data to a customer company', tr: 'Bir müşteri şirkete kişisel verileriyle ilgili talepte bulunan kişiler' },
+    data: { en: 'Name, e-mail (optional), kind of request, the law, dates, status, a note, who logged and who closed it', tr: 'Ad, e-posta (isteğe bağlı), talep türü, ilgili yasa, tarihler, durum, not, talebi kaydeden ve kapatan kişi' },
+    purpose: { en: 'Recording that each request was answered, and on time (the customer’s own log)', tr: 'Her talebin yanıtlandığının ve süresinde yanıtlandığının kaydı (müşterinin kendi kaydı)' },
+    basis: { tr: { tr: 'Müşteri adına (veri işleyen)', en: "On the customer's behalf (processor)" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
+    retention: {
+      en: '3 years after the request is answered or refused [lawyer to confirm]; open requests until they are closed; with the company if it is deleted',
+      tr: 'Talep yanıtlandıktan ya da reddedildikten sonra 3 yıl [avukat teyit edecek]; açık talepler kapanana kadar; şirket silinirse onunla birlikte',
+    },
+    processors: ['cloudflare', 'supabase'],
+    verbis: ['Kimlik', 'İletişim', 'Hukuki işlem'],
+  },
+  {
     id: 'website',
     role: 'controller',
     subjects: { en: 'Website visitors', tr: 'Web sitesi ziyaretçileri' },

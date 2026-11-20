@@ -193,6 +193,49 @@ export function regionalPrice(region: Region | null, plan: PlanKey, interval: In
   return { collect: region.collect, amount, currency: region.currency, shown };
 }
 
+/**
+ * The fewest seats a subscription is billed for, by plan (or "*"), interval and price region key (or "*"). Below it a
+ * small company costs more than it pays: the fixed cost of a company (its trial, support, the payment fee) is spread
+ * over too few seats (pricing audit, 20 Nov: 1 Team seat loses money). The company still uses only the seats it has;
+ * the bill counts at least this many.
+ */
+export type MinSeatRules = Record<string, Partial<Record<Interval, Record<string, number>>>>;
+
+/**
+ * The defaults from the audit's table for option B with today's trial: 3 seats, India 5 (6 a year), Malaysia 4 a year.
+ * Draft until the owner decides (owner-questions, "minimum seats"); the operator changes them with BILLING_MIN_SEATS.
+ */
+export const MIN_SEATS_DEFAULT: MinSeatRules = { '*': { month: { '*': 3, in: 5 }, year: { '*': 3, my: 4, in: 6 } } };
+
+/** The fewest seats `plan` paid by `interval` is billed for in `region` (a price region key; null: the fallback). */
+export function minSeatsFor(rules: MinSeatRules, plan: PlanKey, interval: Interval, region: string | null): number {
+  const table = rules[plan]?.[interval] ?? rules['*']?.[interval] ?? {};
+  const n = (region ? table[region] : undefined) ?? table['*'] ?? 1;
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
+/** Reads BILLING_MIN_SEATS (JSON in the shape of MIN_SEATS_DEFAULT); anything unreadable keeps the defaults. */
+export function minSeatRulesFrom(raw: string | undefined): MinSeatRules {
+  if (!raw?.trim()) return MIN_SEATS_DEFAULT;
+  try {
+    const v = JSON.parse(raw) as unknown;
+    if (!v || typeof v !== 'object') return MIN_SEATS_DEFAULT;
+    const out: MinSeatRules = {};
+    for (const [plan, byInterval] of Object.entries(v as Record<string, unknown>)) {
+      if (!byInterval || typeof byInterval !== 'object') continue;
+      for (const i of INTERVALS) {
+        const t = (byInterval as Record<string, unknown>)[i];
+        if (!t || typeof t !== 'object') continue;
+        const ok = Object.entries(t as Record<string, unknown>).filter(([, n]) => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 1000);
+        if (ok.length) (out[plan] ??= {})[i] = Object.fromEntries(ok) as Record<string, number>;
+      }
+    }
+    return Object.keys(out).length ? out : MIN_SEATS_DEFAULT;
+  } catch {
+    return MIN_SEATS_DEFAULT;
+  }
+}
+
 /** How long a new company may use everything before a plan is paid for. */
 export const TRIAL_MONTHS = CATALOGUE.trial.months;
 

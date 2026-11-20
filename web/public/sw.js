@@ -128,7 +128,8 @@ self.addEventListener('fetch', (event) => {
 
 // Alerts for the platform owner (owner console → Plan & targets → Monday summary → Phones): urgent help requests,
 // system alerts, the Monday summary. The message arrives encrypted for this browser alone (RFC 8291) and the
-// browser decrypts it before this runs; it carries a title, one short line and a console address to open.
+// browser decrypts it before this runs; it carries a title, one short line, a console address to open and the alert's
+// own key as its tag (a notification replaces only one with the same tag, so two alerts on one screen both stay).
 self.addEventListener('push', (event) => {
   let m = {};
   try {
@@ -138,7 +139,8 @@ self.addEventListener('push', (event) => {
   }
   const title = typeof m.title === 'string' && m.title ? m.title.slice(0, 120) : 'Curahold';
   const url = typeof m.url === 'string' && m.url.startsWith('/') && !m.url.startsWith('//') ? m.url : '/';
-  event.waitUntil(self.registration.showNotification(title, { body: typeof m.body === 'string' ? m.body.slice(0, 240) : '', icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: url, data: { url } }));
+  const tag = typeof m.tag === 'string' && m.tag ? m.tag.slice(0, 64) : url;
+  event.waitUntil(self.registration.showNotification(title, { body: typeof m.body === 'string' ? m.body.slice(0, 240) : '', icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag, data: { url } }));
 });
 
 // A tap opens the console where the alert points, in a window already open when there is one.
