@@ -1414,6 +1414,8 @@ export const en = {
   'sync.errorCode.auth': "{app} no longer accepts Curahold's sign-in or key. Choose Reconnect at the top of this page.",
   'sync.errorCode.permission': "The {app} account Curahold connects with may not read or change this. Ask your {app} administrator to give it access, then choose Sync now.",
   'sync.errorCode.unreachable': "{app} could not be reached. Curahold tries again by itself in the next hourly run.",
+  'sync.errorCode.other': "{app} reported a problem. Its own message is below; if it keeps happening, write to us from Help.",
+  'sync.rateWait': "Paused, resumes automatically",
   'sync.status.schedule': 'Changes made here go out right away. Everything is also checked every hour, and read in full once a day.',
   'sync.stat.created': 'Added',
   'sync.stat.updated': 'Updated',

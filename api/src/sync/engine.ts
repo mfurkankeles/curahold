@@ -1360,6 +1360,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   let r: RunCtx | null = null;
   let fatal: string | null = null;
   let authFailed = false;
+  let rateLimited = false;
   try {
     r = await prepare(deps, conn, opts.budgetMs ?? 10 * 60_000);
     // Mailboxes attach mail to customers as activities instead of mapping objects, and send replies from a route,
@@ -1389,6 +1390,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
       // The service asked us to slow down: not a fault. The run stops with its place kept and the next one carries on.
       status = 'partial';
       more = true;
+      rateLimited = true;
       if (r) r.errors.unshift({ object: '', message: fatal, code: 'rate' });
       fatal = null;
     } else {
@@ -1406,7 +1408,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   }
   // The service said the credentials no longer work (a CrmError marked so), or its message says as much: someone has to reconnect.
   const authLost = authFailed || (fatal !== null && /reconnect|invalid_grant|expired|revoked|unauthori/i.test(fatal));
-  const lastRun = { id: runId, status, more, at: nowOf(deps).toISOString(), stats: r?.stats ?? {} };
+  const lastRun = { id: runId, status, more, at: nowOf(deps).toISOString(), stats: r?.stats ?? {}, ...(rateLimited ? { rateLimited: true } : {}) };
   // Let the admins know when a sync keeps failing — once per episode, never every cycle.
   const { alertedAt, kind: alertKind, stamp: alertStamp } = syncAlert(conn.state ?? {}, status, authLost, nowOf(deps).toISOString());
   await deps.db.system(async (q) => {

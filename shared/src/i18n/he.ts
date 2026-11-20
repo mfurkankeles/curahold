@@ -1457,6 +1457,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'sync.errorCode.auth': "{app} כבר לא מקבל את הכניסה או המפתח של Curahold. בחרו 'חבר מחדש' בראש העמוד.",
   'sync.errorCode.permission': "לחשבון {app} ש-Curahold מתחבר דרכו אין הרשאה לקרוא או לשנות את זה. בקשו ממנהל {app} לתת לו גישה, ואז בחרו 'סנכרן עכשיו'.",
   'sync.errorCode.unreachable': "לא הצלחנו להגיע אל {app}. Curahold ינסה שוב מעצמו בהרצה השעתית הבאה.",
+  'sync.errorCode.other': "{app} דיווח על בעיה. ההודעה שלו מופיעה למטה; אם זה חוזר, כתבו לנו דרך עזרה.",
+  'sync.rateWait': "מושהה, ימשיך מעצמו",
   'sync.status.schedule': "שינויים שנעשו כאן יוצאים מיד. הכול נבדק גם בכל שעה, ונקרא במלואו פעם ביום.",
   'sync.stat.created': "נוספו",
   'sync.stat.updated': "עודכנו",

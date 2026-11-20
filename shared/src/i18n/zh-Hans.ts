@@ -1658,6 +1658,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'sync.errorCode.auth': "{app} 不再接受 Curahold 的登录或密钥。请在本页顶部选择“重新连接”。",
   'sync.errorCode.permission': "Curahold 所连接的 {app} 帐户无权读取或修改此项。请让 {app} 管理员授予访问权限，然后选择“立即同步”。",
   'sync.errorCode.unreachable': "无法连接到 {app}。Curahold 会在下一次每小时运行时自动重试。",
+  'sync.errorCode.other': "{app} 报告了一个问题，其原始消息见下方；如果反复出现，请通过“帮助”联系我们。",
+  'sync.rateWait': "已暂停，会自动继续",
   'sync.status.schedule': "在这里所做的更改会立即发出。所有内容每小时检查一次，每天完整读取一次。",
   'sync.stat.created': "新增",
   'sync.stat.updated': "更新",

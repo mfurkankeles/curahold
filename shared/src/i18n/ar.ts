@@ -1658,6 +1658,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'sync.errorCode.auth': "لم يعد {app} يقبل تسجيل دخول Curahold أو مفتاحه. اختر «إعادة الربط» في أعلى هذه الصفحة.",
   'sync.errorCode.permission': "لا يملك حساب {app} الذي يتصل به Curahold صلاحية قراءة هذا أو تغييره. اطلب من مسؤول {app} منحه الوصول، ثم اختر «زامن الآن».",
   'sync.errorCode.unreachable': "تعذّر الوصول إلى {app}. يعيد Curahold المحاولة تلقائيًا في التشغيل التالي كل ساعة.",
+  'sync.errorCode.other': "أبلغ {app} عن مشكلة. رسالته كما وردت أدناه؛ وإذا تكررت فاكتب إلينا من المساعدة.",
+  'sync.rateWait': "متوقف مؤقتًا، ويُستأنف تلقائيًا",
   'sync.status.schedule': "تُرسل التغييرات التي تجريها هنا فورًا. ويُفحص كل شيء أيضًا كل ساعة، ويُقرأ بالكامل مرة في اليوم.",
   'sync.stat.created': "أُضيفت",
   'sync.stat.updated': "حُدّثت",

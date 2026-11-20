@@ -45,7 +45,7 @@ const toConnection = (r: any, linked: number): Connection => ({
         sync: {
           startedAt: r.config?.sync?.startedAt ?? null,
           objects: (r.config?.sync?.objects ?? []).filter((o: any) => o.enabled).length,
-          lastRun: r.state?.lastRun ? { id: r.state.lastRun.id, status: r.state.lastRun.status, at: r.state.lastRun.at } : null,
+          lastRun: r.state?.lastRun ? { id: r.state.lastRun.id, status: r.state.lastRun.status, at: r.state.lastRun.at, ...(r.state.lastRun.rateLimited ? { rateLimited: true } : {}) } : null,
           pending: Number(r.pending ?? 0),
           failing: Number(r.failing ?? 0),
           file: r.config?.sync?.file ? { name: r.config.sync.file.name, url: r.config.sync.file.url } : null,

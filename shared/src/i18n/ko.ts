@@ -1658,6 +1658,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'sync.errorCode.auth': "{app}에서 더 이상 Curahold의 로그인이나 키를 받지 않습니다. 이 페이지 위쪽에서 다시 연결을 선택하세요.",
   'sync.errorCode.permission': "Curahold가 연결한 {app} 계정에는 이 항목을 읽거나 바꿀 권한이 없습니다. {app} 관리자에게 권한을 요청한 다음 지금 동기화를 선택하세요.",
   'sync.errorCode.unreachable': "{app}에 연결할 수 없었습니다. Curahold가 다음 매시간 실행 때 저절로 다시 시도합니다.",
+  'sync.errorCode.other': "{app}에서 문제를 알렸습니다. {app}의 메시지는 아래에 있습니다. 계속 발생하면 도움말에서 문의하세요.",
+  'sync.rateWait': "일시중지됨, 자동으로 다시 시작됩니다",
   'sync.status.schedule': "이곳에서 변경한 내용은 즉시 전송됩니다. 또한 매시간 전체를 확인하고 하루에 한 번 전체를 다시 읽습니다.",
   'sync.stat.created': "추가됨",
   'sync.stat.updated': "업데이트됨",

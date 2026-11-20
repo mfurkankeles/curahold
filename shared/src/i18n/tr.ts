@@ -1399,6 +1399,8 @@ export const tr: Record<MessageKey, string> = {
   'sync.errorCode.auth': '{app}, Curahold\'un girişini ya da anahtarını artık kabul etmiyor. Bu sayfanın üstünden Yeniden bağla\'yı seçin.',
   'sync.errorCode.permission': 'Curahold\'un bağlandığı {app} hesabının bunu okuma ya da değiştirme izni yok. {app} yöneticinizden bu hesaba erişim vermesini isteyin, sonra Şimdi eşitle\'yi seçin.',
   'sync.errorCode.unreachable': "{app} adresine ulaşılamadı. Curahold bir sonraki saatlik çalışmada kendiliğinden yeniden dener.",
+  'sync.errorCode.other': "{app} bir sorun bildirdi. Kendi mesajı aşağıda; sürerse Yardım'dan bize yazın.",
+  'sync.rateWait': "Duraklatıldı, kendiliğinden devam edecek",
   'sync.status.schedule': 'Burada yapılan değişiklikler hemen gider. Her şey ayrıca saatte bir kontrol edilir, günde bir kez de baştan okunur.',
   'sync.stat.created': 'Eklenen',
   'sync.stat.updated': 'Güncellenen',

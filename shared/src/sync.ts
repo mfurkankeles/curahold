@@ -312,6 +312,22 @@ export interface SyncRun {
  */
 export type SyncErrorCode = 'rate' | 'auth' | 'permission' | 'unreachable';
 
+/**
+ * Which of the four plain explanations a service's own error text belongs to, or null when it is none of them.
+ * Connections keep the vendor's message as it came (often English, sometimes a raw OAuth error such as
+ * "expired access/refresh token"); screens show the plain sentence in the reader's language and the vendor
+ * text under it, never the vendor text alone. Order matters: a 429 that also says "token" is a rate limit.
+ */
+export function troubleOf(message: string | null | undefined): SyncErrorCode | null {
+  const m = (message ?? '').toLowerCase();
+  if (!m.trim()) return null;
+  if (/\b429\b|rate.?limit|too many requests|slow down|throttl|retry.?after|quota/.test(m)) return 'rate';
+  if (/\b401\b|unauthori|invalid_grant|invalid.?token|expired|revoked|re-?connect|access.?token|refresh.?token|sign.?in|log.?in|credential|not authenticated|app removed|bad api key|invalid api key/.test(m)) return 'auth';
+  if (/\b403\b|forbidden|permission|insufficient|not allowed|access denied|scope|kicked|not a member|not enough rights/.test(m)) return 'permission';
+  if (/fetch failed|enotfound|econnrefused|etimedout|econnreset|getaddrinfo|network|timed? ?out|\b50[0234]\b|unavailable|unreachable|bad gateway/.test(m)) return 'unreachable';
+  return null;
+}
+
 export interface SyncPreviewObject {
   remote: string;
   label: string;

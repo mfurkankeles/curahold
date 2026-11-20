@@ -400,7 +400,11 @@ export interface Connection {
   sync?: {
     startedAt: string | null;
     objects: number;
-    lastRun: { id: string; status: 'running' | 'ok' | 'partial' | 'error'; at: string } | null;
+    /**
+     * `rateLimited`: the service asked Curahold to slow down, so the run stopped with its place kept and the
+     * next one carries on by itself. Not a fault: screens show a calm "paused" state, not "needs a look".
+     */
+    lastRun: { id: string; status: 'running' | 'ok' | 'partial' | 'error'; at: string; rateLimited?: boolean } | null;
     /** Changes made here still waiting to reach the other side. */
     pending: number;
     /** Of those, how many failed at least once. */

@@ -118,6 +118,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- A connection that stopped working now says why in your language (sign-in no longer accepted, no permission, could not
+  be reached, or a neutral "reported a problem"), with the service's own message under it, in the reconnect banner and the
+  connection lists; before, the raw service message (often English) stood alone. A sync that only waits out a service's
+  rate limit shows "Paused, resumes automatically" instead of "Needs a look".
+
 - Importing a Turkish task file with a "Liste" column now offers the Boards step.
 - The renewals view no longer adds amounts in other currencies one to one under the company's currency sign: amounts
   with a rate are converted (marked ≈), others are totalled in their own currency.

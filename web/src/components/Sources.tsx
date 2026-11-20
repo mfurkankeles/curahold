@@ -3,6 +3,7 @@
 // Everything an administrator needs, without anyone writing a mapping file.
 import { Icon } from './icons';
 import '../surfaces/admin.css';
+import { ConnectionTrouble } from './ConnectionTrouble';
 import { SkeletonRows } from './Empty';
 import { DemoConnect, DemoCrmConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -59,6 +60,8 @@ export function SyncBadge({ c }: { c: Connection }) {
   if (c.status === 'disabled') return <span className="badge">{t('conn.paused')}</span>;
   if (c.status === 'error' || c.sync?.lastRun?.status === 'error') return <span className="badge badge--disabled">{t('conn.problem')}</span>;
   if (!c.sync?.startedAt) return <span className="badge badge--invited">{t('sync.notStarted')}</span>;
+  // A service that asked us to slow down is not a fault: the next run carries on by itself, so say so calmly.
+  if (!c.sync.failing && c.sync.lastRun?.rateLimited) return <span className="badge">{t('sync.rateWait')}</span>;
   if (c.sync.failing || c.sync.lastRun?.status === 'partial') return <span className="badge badge--invited">{t('sync.needsLook')}</span>;
   return <span className="badge badge--active">{t('conn.working')}</span>;
 }
@@ -168,8 +171,7 @@ export function Sources() {
                   </span>
                   {c.status === 'error' && (
                     <span className="error-text">
-                      {t('conn.reconnectNeeded')}
-                      {c.lastError ? ` · ${c.lastError}` : ''}
+                      <ConnectionTrouble app={appName(c)} message={c.lastError} code="auth" />
                     </span>
                   )}
                 </span>
@@ -717,8 +719,7 @@ export function SourceDetail({ id }: { id: string }) {
       {d.connection.status === 'error' && (
         <div className="notice notice--error u-m-12-0 u-display-flex u-gap-12 u-align-items-center u-flex-wrap-wrap" role="alert">
           <span className="u-flex-1 u-min-width-200">
-            <strong>{t('conn.reconnectNeeded')}</strong> {t('conn.reconnectBody', { app: name })}
-            {d.connection.lastError && <span className="muted"> · {d.connection.lastError}</span>}
+            <strong>{t('conn.reconnectNeeded')}</strong> <ConnectionTrouble app={name} message={d.connection.lastError} code="auth" />
           </span>
           {d.connection.reconnect && (
             <button

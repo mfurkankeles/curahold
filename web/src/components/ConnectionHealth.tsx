@@ -1,5 +1,5 @@
 // Settings → Connections: the health of every connection on one list (see the comment below).
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { Connection } from '../../../shared/src/model';
 import type { WebhookInfo } from '../../../shared/src/developer';
@@ -8,6 +8,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES } from './Connections';
+import { ConnectionTrouble } from './ConnectionTrouble';
 import '../surfaces/admin.css';
 
 /**
@@ -23,7 +24,7 @@ export function ConnectionHealth({ list }: { list: Connection[] }) {
       .then((r) => setDev(r.webhooks))
       .catch(() => setDev([]));
   }, []);
-  type Row = { id: string; name: string; kind: string; state: 'ok' | 'bad' | 'off'; line: string; to: string };
+  type Row = { id: string; name: string; kind: string; state: 'ok' | 'bad' | 'off'; line: ReactNode; to: string };
   const when = (at: string | null) => (at ? t('conn.health.lastOk', { when: relativeTime(at, t) }) : t('conn.health.never'));
   const rows: Row[] = [
     ...list.map((c): Row => {
@@ -35,7 +36,18 @@ export function ConnectionHealth({ list }: { list: Connection[] }) {
         name,
         kind: t(`conn.health.kind.${c.provider === 'webhook' ? 'channel' : c.kind}` as MessageKey),
         state: c.status === 'disabled' ? 'off' : bad ? 'bad' : 'ok',
-        line: c.status === 'error' && c.lastError ? c.lastError : failing > 0 ? t('conn.health.failing', { n: failing }) : when(c.lastOkAt ?? c.sync?.lastRun?.at ?? null),
+        // A stopped connection says why in plain words, the vendor's text under it; a sync that is only waiting
+        // out the service's rate limit says it resumes by itself.
+        line:
+          c.status === 'error' && c.lastError ? (
+            <ConnectionTrouble app={name} message={c.lastError} code={c.kind === 'source' ? 'auth' : null} />
+          ) : failing > 0 ? (
+            t('conn.health.failing', { n: failing })
+          ) : c.sync?.lastRun?.rateLimited ? (
+            t('sync.rateWait')
+          ) : (
+            when(c.lastOkAt ?? c.sync?.lastRun?.at ?? null)
+          ),
         to: c.kind === 'source' ? `/settings/sources/${c.id}` : '/settings/connections',
       };
     }),
@@ -69,8 +81,15 @@ export function ConnectionHealth({ list }: { list: Connection[] }) {
               <span className="health-list__text">
                 <span className="health-list__name">{r.name}</span>
                 <span className="health-list__meta">
-                  {r.kind} · <span className="health-list__line">{r.line}</span>
+                  {r.kind}
+                  {typeof r.line === 'string' && (
+                    <>
+                      {' · '}
+                      <span className="health-list__line">{r.line}</span>
+                    </>
+                  )}
                 </span>
+                {typeof r.line !== 'string' && <span className="health-list__meta health-list__line">{r.line}</span>}
               </span>
               <span className="health-list__state">{r.state === 'bad' ? t('conn.problem') : r.state === 'off' ? t('conn.health.off') : t('conn.working')}</span>
               <a

@@ -1658,6 +1658,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'sync.errorCode.auth': "{app} が Curahold のログインまたはキーを受け付けなくなりました。このページ上部の「再接続」を選んでください。",
   'sync.errorCode.permission': "Curahold が接続している {app} アカウントには、これを読み取る権限または変更する権限がありません。{app} の管理者にアクセス権を付与してもらい、「今すぐ同期」を選んでください。",
   'sync.errorCode.unreachable': "{app} に接続できませんでした。Curahold は次の 1 時間ごとの実行で自動的に再試行します。",
+  'sync.errorCode.other': "{app} から問題が報告されました。{app} からのメッセージは下に表示されています。繰り返し起きる場合は、ヘルプからご連絡ください。",
+  'sync.rateWait': "一時停止中（自動で再開します）",
   'sync.status.schedule': "こちらでの変更はすぐに送信されます。すべての内容は1時間ごとに確認され、1日1回、全件が再読み込みされます。",
   'sync.stat.created': "追加",
   'sync.stat.updated': "更新",
