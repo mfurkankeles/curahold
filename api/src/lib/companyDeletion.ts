@@ -26,6 +26,7 @@ import type { Deps } from '../context';
 import type { Q } from '../db';
 import { sha256Hex } from './crypto';
 import { retentionOf } from './retention';
+import { normalizeLocale, translate } from '../../../shared/src/i18n';
 
 /** An open or finished request, as the settings card shows it. */
 export interface CompanyDeletion {
@@ -113,7 +114,15 @@ export async function purgeCompany(deps: Deps, deletionId: string, now: Date = n
   const keys = await deps.db.system((q) => storageKeys(q, orgId));
   for (const k of keys) await deps.storage.delete(k);
 
+  // Who is told: the company's administrators, read now — after the delete there is nobody left to ask.
+  let admins: { email: string; name: string; locale: string }[] = [];
+  let hash = '';
   const cert = await deps.db.system(async (q) => {
+    admins = await q.query<{ email: string; name: string; locale: string }>(
+      `select u.email, u.name, coalesce(u.locale, o.locale) as locale from users u join roles r on r.id = u.role_id join orgs o on o.id = u.org_id
+        where u.org_id = $1 and u.status = 'active' and 'org.manage' = any(r.perms)`,
+      [orgId],
+    );
     const removed = await countsOf(q, orgId);
     const tokens = removed.connections ?? 0;
     const tokenRows = (removed.api_tokens ?? 0) + (removed.chat_identities ?? 0) + (removed.sso_configs ?? 0) + (removed.oauth_clients ?? 0) + (removed.webhooks ?? 0);
@@ -156,11 +165,38 @@ export async function purgeCompany(deps: Deps, deletionId: string, now: Date = n
         'connector apps: Curahold no longer holds their tokens; the customer may also remove the app at the provider',
       ],
     };
-    const hash = await sha256Hex(JSON.stringify(body));
+    hash = await sha256Hex(JSON.stringify(body));
     await q.query(`update company_deletions set purged_at = $2, certificate = $3::jsonb, certificate_hash = $4 where id = $1`, [deletionId, now.toISOString(), JSON.stringify(body), hash]);
     return body;
   });
   // The company's live room, if anyone is still in it, hears that it is gone.
   await deps.live?.poke?.(orgId).catch(() => undefined);
+  // The certificate and its SHA-256 go to each administrator once the delete has committed. Straight through the
+  // mailer, not the company outbox: the outbox is a company table and went with the company. A failed send does not
+  // undo the deletion; the operator can still read the certificate (desk/owner/company-deletions).
+  const text = JSON.stringify(cert, null, 2);
+  for (const a of admins) {
+    const locale = normalizeLocale(a.locale);
+    await deps.email
+      .send({ to: a.email, subject: translate(locale, 'email.companyDeleted.subject', { org: cert.company.name }), text: translate(locale, 'email.companyDeleted.body', { name: a.name, org: cert.company.name, hash, certificate: text }) })
+      .catch(() => undefined);
+  }
   return cert;
+}
+
+/** Every company deletion, newest first, for the operator: where each stands and the certificate's hash. */
+export async function listCompanyDeletions(deps: Deps) {
+  const rows = await deps.db.system((q) =>
+    q.query<{ id: string; org_slug: string; org_name: string; requested_at: Date | string; purge_after: Date | string; cancelled_at: Date | string | null; purged_at: Date | string | null; certificate_hash: string | null }>(
+      `select id, org_slug, org_name, requested_at, purge_after, cancelled_at, purged_at, certificate_hash from company_deletions order by requested_at desc limit 200`,
+    ),
+  );
+  const at = (v: Date | string | null) => (v == null ? null : new Date(v).toISOString());
+  return rows.map((r) => ({ id: r.id, slug: r.org_slug, name: r.org_name, requestedAt: at(r.requested_at), purgeAfter: at(r.purge_after), cancelledAt: at(r.cancelled_at), purgedAt: at(r.purged_at), certificateHash: r.certificate_hash }));
+}
+
+/** One deletion's certificate and hash (null while the company is not purged yet, or for an unknown id). */
+export async function companyDeletionCertificate(deps: Deps, id: string): Promise<{ certificate: DeletionCertificate; hash: string } | null> {
+  const [r] = await deps.db.system((q) => q.query<{ certificate: DeletionCertificate | null; certificate_hash: string | null }>(`select certificate, certificate_hash from company_deletions where id = $1`, [id]));
+  return r?.certificate && r.certificate_hash ? { certificate: r.certificate, hash: r.certificate_hash } : null;
 }

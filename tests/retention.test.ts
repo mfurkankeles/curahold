@@ -6,7 +6,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createOrg } from '../api/src/lib/orgs';
 import { purgeExpired, retentionFrom, RETENTION_DEFAULTS } from '../api/src/lib/retention';
-import { purgeDueCompanies } from '../api/src/lib/companyDeletion';
+import { companyDeletionCertificate, listCompanyDeletions, purgeDueCompanies } from '../api/src/lib/companyDeletion';
 import { login, setup, type Env } from './helpers';
 
 let env: Env;
@@ -163,6 +163,15 @@ describe('deleting a company', () => {
     expect(cert.certificate.files).toBe(1);
     expect(cert.certificate.kept.invoices).toBe(1);
     expect(JSON.stringify(cert.certificate)).not.toContain('dora@demo.example');
+    // The administrator gets the certificate and its hash after the delete (the mailer, not the company outbox, which went with it).
+    const mail = env.email.last('dora@demo.example');
+    expect(mail.subject).toContain('Doomed Co');
+    expect(mail.text).toContain(cert.certificate_hash);
+    expect(mail.text).toContain('"slug": "doomed"');
+    // The operator can read it back.
+    const listed = (await listCompanyDeletions(env.deps)).find((d) => d.slug === 'doomed' && d.purgedAt);
+    expect(listed?.certificateHash).toBe(cert.certificate_hash);
+    expect((await companyDeletionCertificate(env.deps, listed!.id))?.hash).toBe(cert.certificate_hash);
     // The other companies are untouched.
     expect(await acmeTasks()).toBe(before);
   });

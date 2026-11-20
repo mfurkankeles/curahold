@@ -6948,4 +6948,6 @@ export const tr: Record<MessageKey, string> = {
   'errors.country_not_offered': 'Curahold bu ülkede sunulmuyor.',
   'billing.profile.country': 'Fatura ülkesi',
   'billing.profile.countryNone': 'Belirtilmedi',
+  'email.companyDeleted.subject': '{org} Curahold’dan silindi',
+  'email.companyDeleted.body': 'Merhaba {name},\n\nİsteğiniz üzerine {org} ve içindeki her şey Curahold’dan silindi. Aşağıda silme sertifikası var: neyin kaldırıldığı, neyin neden saklandığı.\n\nSertifikanın SHA-256 değeri: {hash}\n\n{certificate}\n\nBu e-postayı kaydınız olarak saklayın. Yedekler, sertifikada yazdığı gibi kendi takvimlerine göre silinir.',
 };

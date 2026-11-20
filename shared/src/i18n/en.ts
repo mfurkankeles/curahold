@@ -6963,6 +6963,8 @@ export const en = {
   'errors.country_not_offered': 'Curahold is not available in this country.',
   'billing.profile.country': 'Billing country',
   'billing.profile.countryNone': 'Not set',
+  'email.companyDeleted.subject': '{org} has been deleted from Curahold',
+  'email.companyDeleted.body': 'Hello {name},\n\nAs requested, {org} and everything in it have been deleted from Curahold. Below is the deletion certificate: what was removed, and what is kept and why.\n\nSHA-256 of the certificate: {hash}\n\n{certificate}\n\nKeep this e-mail as your record. Backups roll off on their own schedule, as the certificate says.',
 } as const;
 
 export type MessageKey = keyof typeof en;

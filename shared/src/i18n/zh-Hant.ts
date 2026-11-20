@@ -6948,4 +6948,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold 在該國家/地區不提供服務。',
   'billing.profile.country': '帳單國家/地區',
   'billing.profile.countryNone': '未設定',
+  'email.companyDeleted.subject': '{org} 已從 Curahold 刪除',
+  'email.companyDeleted.body': '{name}，您好：\n\n依照申請，{org} 及其中的所有內容已從 Curahold 刪除。以下是刪除證明：刪除了什麼、保留了什麼以及原因。\n\n證明的 SHA-256：{hash}\n\n{certificate}\n\n請保留此郵件作為紀錄。備份會依其自身的週期自動清除，詳見證明。',
 };

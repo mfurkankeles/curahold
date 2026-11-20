@@ -6948,4 +6948,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold는 이 국가에서 제공되지 않습니다.',
   'billing.profile.country': '청구 국가',
   'billing.profile.countryNone': '설정 안 함',
+  'email.companyDeleted.subject': '{org}이(가) Curahold에서 삭제되었습니다',
+  'email.companyDeleted.body': '{name}님, 안녕하세요.\n\n요청에 따라 {org}와 그 안의 모든 데이터가 Curahold에서 삭제되었습니다. 아래는 삭제 증명서로, 무엇이 삭제되었고 무엇이 왜 보관되는지 적혀 있습니다.\n\n증명서의 SHA-256: {hash}\n\n{certificate}\n\n이 이메일을 기록으로 보관해 주세요. 백업은 증명서에 적힌 대로 정해진 일정에 따라 삭제됩니다.',
 };

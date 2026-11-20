@@ -6894,4 +6894,6 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold इस देश में उपलब्ध नहीं है।',
   'billing.profile.country': 'बिलिंग देश',
   'billing.profile.countryNone': 'सेट नहीं है',
+  'email.companyDeleted.subject': '{org} को Curahold से हटा दिया गया है',
+  'email.companyDeleted.body': 'नमस्ते {name},\n\nअनुरोध के अनुसार, {org} और उसमें मौजूद सब कुछ Curahold से हटा दिया गया है। नीचे हटाने का प्रमाणपत्र है: क्या हटाया गया, और क्या रखा गया और क्यों।\n\nप्रमाणपत्र का SHA-256: {hash}\n\n{certificate}\n\nइस ईमेल को अपने रिकॉर्ड के तौर पर रखें। बैकअप, जैसा प्रमाणपत्र में लिखा है, अपने तय समय पर हट जाते हैं।',
 };

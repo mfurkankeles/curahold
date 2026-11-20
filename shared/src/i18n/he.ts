@@ -6948,4 +6948,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold אינו זמין במדינה זו.',
   'billing.profile.country': 'מדינת החיוב',
   'billing.profile.countryNone': 'לא הוגדרה',
+  'email.companyDeleted.subject': '{org} נמחקה מ-Curahold',
+  'email.companyDeleted.body': 'שלום {name},\n\nכפי שהתבקש, {org} וכל מה שבה נמחקו מ-Curahold. למטה תעודת המחיקה: מה הוסר, ומה נשמר ולמה.\n\nSHA-256 של התעודה: {hash}\n\n{certificate}\n\nשמרו את ההודעה הזו לתיעוד. הגיבויים נמחקים לפי לוח הזמנים שלהם, כפי שכתוב בתעודה.',
 };

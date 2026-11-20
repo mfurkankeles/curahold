@@ -6894,4 +6894,6 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold tidak ditawarkan di negara ini.',
   'billing.profile.country': 'Negara pengebilan',
   'billing.profile.countryNone': 'Belum ditetapkan',
+  'email.companyDeleted.subject': '{org} telah dipadam daripada Curahold',
+  'email.companyDeleted.body': 'Hai {name},\n\nSeperti yang diminta, {org} dan semua kandungannya telah dipadam daripada Curahold. Di bawah ialah sijil pemadaman: apa yang dibuang, dan apa yang disimpan serta sebabnya.\n\nSHA-256 sijil: {hash}\n\n{certificate}\n\nSimpan e-mel ini sebagai rekod anda. Sandaran dipadam mengikut jadual sendiri, seperti yang dinyatakan dalam sijil.',
 };

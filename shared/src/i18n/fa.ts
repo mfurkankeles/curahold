@@ -6948,4 +6948,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold در این کشور ارائه نمی‌شود.',
   'billing.profile.country': 'کشور صورت‌حساب',
   'billing.profile.countryNone': 'تعیین نشده',
+  'email.companyDeleted.subject': '{org} از Curahold حذف شد',
+  'email.companyDeleted.body': 'سلام {name}،\n\nبنا بر درخواست، {org} و همهٔ داده‌های آن از Curahold حذف شد. گواهی حذف در ادامه آمده است: چه چیزی حذف شد و چه چیزی و چرا نگه داشته شد.\n\nمقدار SHA-256 گواهی: {hash}\n\n{certificate}\n\nاین ایمیل را به‌عنوان سابقه نگه دارید. نسخه‌های پشتیبان، همان‌طور که در گواهی آمده، طبق زمان‌بندی خودشان پاک می‌شوند.',
 };

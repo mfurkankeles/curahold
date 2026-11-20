@@ -6948,4 +6948,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold はこの国ではご利用いただけません。',
   'billing.profile.country': '請求先の国',
   'billing.profile.countryNone': '未設定',
+  'email.companyDeleted.subject': '{org} を Curahold から削除しました',
+  'email.companyDeleted.body': '{name} 様\n\nご依頼に基づき、{org} とそのすべてのデータを Curahold から削除しました。以下は削除証明書です。削除したもの、保持しているものとその理由を記載しています。\n\n証明書の SHA-256：{hash}\n\n{certificate}\n\nこのメールは記録として保管してください。バックアップは証明書に記載のとおり、所定のスケジュールで消去されます。',
 };

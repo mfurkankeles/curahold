@@ -6948,4 +6948,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'errors.country_not_offered': 'Curahold غير متاح في هذا البلد.',
   'billing.profile.country': 'بلد الفوترة',
   'billing.profile.countryNone': 'غير محدد',
+  'email.companyDeleted.subject': 'حُذفت {org} من Curahold',
+  'email.companyDeleted.body': 'مرحبًا {name}،\n\nبناءً على الطلب، حُذفت {org} وكل ما فيها من Curahold. ستجدون أدناه شهادة الحذف: ما الذي أُزيل، وما الذي احتُفظ به ولماذا.\n\nقيمة SHA-256 للشهادة: {hash}\n\n{certificate}\n\nاحتفظوا بهذه الرسالة سجلًّا لديكم. تُحذف النسخ الاحتياطية وفق جدولها الخاص، كما تذكر الشهادة.',
 };
