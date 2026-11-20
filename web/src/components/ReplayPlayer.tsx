@@ -36,6 +36,37 @@ function withoutHeadIcons(events: unknown[]): unknown[] {
   return events;
 }
 
+/**
+ * Stylesheets the recorded page loaded after its first snapshot (a screen's own CSS, fetched when the screen opens)
+ * are recorded as links to the company's host, which the desk's content policy refuses (style-src 'self'). The desk
+ * serves the same build, so a link to one of our hashed /assets/ files is played from the desk's own address and
+ * the replay keeps its look; any other outside stylesheet loses its address instead of being fetched. Security: the
+ * policy stays as strict as it is; only the recording is rewritten, in this tab.
+ */
+function stylesFromHere(events: unknown[]): unknown[] {
+  const fix = (n: SnapNode) => {
+    if (n.tagName === 'link' && /(^|\s)stylesheet(\s|$)/i.test(String(n.attributes?.rel ?? '')) && typeof n.attributes?.href === 'string') {
+      let url: URL | null = null;
+      try {
+        url = new URL(n.attributes.href, location.origin);
+      } catch {
+        url = null;
+      }
+      if (!url || url.origin !== location.origin) {
+        if (url?.pathname.startsWith('/assets/') && url.pathname.endsWith('.css')) n.attributes.href = url.pathname;
+        else delete n.attributes.href;
+      }
+    }
+    n.childNodes?.forEach(fix);
+  };
+  for (const e of events as { type?: number; data?: { node?: SnapNode; source?: number; adds?: { node?: SnapNode }[] } }[]) {
+    if (e.type === 2 && e.data?.node) fix(e.data.node);
+    // Incremental snapshot (3), DOM mutation (source 0): nodes added later, such as a screen's stylesheet.
+    if (e.type === 3 && e.data?.source === 0) for (const a of e.data.adds ?? []) if (a.node) fix(a.node);
+  }
+  return events;
+}
+
 /** The desk's player for a help request's session recording (loaded on demand). */
 export default function ReplayPlayer({ reference, replay, onClose }: { reference: string; replay: ReplayMeta; onClose: () => void }) {
   const { t } = useI18n();
@@ -55,7 +86,7 @@ export default function ReplayPlayer({ reference, replay, onClose }: { reference
           throw new Error(String(res.status));
         }
         const data = (await res.json()) as { chunks: string[] };
-        events = withoutHeadIcons(data.chunks.flatMap((b) => JSON.parse(strFromU8(gunzipSync(fromBase64url(b)))) as unknown[]));
+        events = stylesFromHere(withoutHeadIcons(data.chunks.flatMap((b) => JSON.parse(strFromU8(gunzipSync(fromBase64url(b)))) as unknown[])));
       } catch {
         if (live) setError(true);
         return;
