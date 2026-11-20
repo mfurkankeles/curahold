@@ -499,9 +499,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/timeline', t('nav.timeline'), path === '/timeline', 'timeline')}
               </>,
               canWrite && depts.canOpenBoards ? (
-                <button className="sidebar__add" onClick={() => setNewBoard(true)} aria-label={t('nav.newBoard')} title={t('nav.newBoard')}>
+                <button className="sidebar__add" onClick={() => setNewBoard(true)}>
                   <Icon name="plus" size={16} />
-                  <span>{t('common.new')}</span>
+                  <span>{t('nav.newBoard')}</span>
                 </button>
               ) : undefined,
             )}

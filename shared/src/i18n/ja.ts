@@ -6982,7 +6982,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': '企業',
   'settings.unused.title': 'このワークスペースでは{topic}を使っていません',
   'settings.unused.body': 'ここで設定することはありません。この機能はあなただけでなく、ワークスペース全体でオフになっています。そのほかの設定は「設定」にあります。',
-  'common.new': '新規',
   'board.settingsShort': '設定',
   'board.importShort': 'インポート',
   'home.load.accountsN.one': '{account_l}{n}件',

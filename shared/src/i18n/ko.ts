@@ -6982,7 +6982,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': '기업',
   'settings.unused.title': '이 워크스페이스에서는 {topic}을(를) 사용하지 않습니다',
   'settings.unused.body': '여기서 설정할 것은 없습니다. 이 기능은 본인만이 아니라 워크스페이스 전체에서 꺼져 있습니다. 나머지 설정은 모두 설정에 있습니다.',
-  'common.new': '새로 만들기',
   'board.settingsShort': '설정',
   'board.importShort': '가져오기',
   'home.load.accountsN.one': '{n}개 {account_l}',

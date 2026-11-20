@@ -6982,7 +6982,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': '企业',
   'settings.unused.title': '此工作区未使用{topic}',
   'settings.unused.body': '这里没有需要设置的内容：这部分对整个工作区都已关闭，并非只对你。其他设置都在“设置”中。',
-  'common.new': '新建',
   'board.settingsShort': '设置',
   'board.importShort': '导入',
   'home.load.accountsN.one': '{n} 个{account_l}',

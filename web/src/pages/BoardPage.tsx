@@ -158,7 +158,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     </button>
   );
   const settingsButton = board.canManage && (
-    <button className="btn" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
+    // The name read out is the label shown (WCAG 2.5.3); the longer wording is the tooltip.
+    <button className="btn" onClick={() => setSettings(true)} title={t('board.settings')}>
       <Icon name="sliders" size={16} />
       <span className={phone ? 'sr-only' : undefined}>{t('board.settingsShort')}</span>
     </button>
@@ -190,7 +191,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           {!phone && view === 'list' && exportMenu}
           {!phone && formButton}
           {view !== 'archive' && canWrite && (
-            <button className="btn hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
+            <button className="btn hide-phone" onClick={() => setImporting(true)} title={t('timport.title')}>
               <Icon name="upload" size={16} />
               {t('board.importShort')}
             </button>

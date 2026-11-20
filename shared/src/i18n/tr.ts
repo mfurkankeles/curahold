@@ -6982,7 +6982,6 @@ export const tr: Record<MessageKey, string> = {
   'settings.vocab.company.other': 'Firmalar',
   'settings.unused.title': '{topic} bu çalışma alanında kullanılmıyor',
   'settings.unused.body': 'Burada ayarlanacak bir şey yok: bu bölüm yalnızca sizin için değil, bütün çalışma alanı için kapalı. Diğer her şey Ayarlar\'da.',
-  'common.new': 'Yeni',
   'board.settingsShort': 'Ayarlar',
   'board.importShort': 'İçe aktar',
   'home.load.accountsN.one': '{n} {account_l}',

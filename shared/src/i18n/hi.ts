@@ -6928,7 +6928,6 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'कंपनियाँ',
   'settings.unused.title': 'इस वर्कस्पेस में {topic} इस्तेमाल नहीं होता',
   'settings.unused.body': 'यहां सेट करने को कुछ नहीं है: यह हिस्सा सिर्फ़ आपके लिए नहीं, पूरे वर्कस्पेस के लिए बंद है। बाकी सब सेटिंग में है।',
-  'common.new': 'नया',
   'board.settingsShort': 'सेटिंग',
   'board.importShort': 'इंपोर्ट',
   'home.load.accountsN.one': '{n} {account_l}',
