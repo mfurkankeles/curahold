@@ -232,9 +232,39 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
 .ochealthy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 0; font-size: var(--fs-s); color: var(--ink-2); }
 .ochealthy > svg { color: var(--done-ink, var(--done)); }
 
+/* ------------------------------------------------------------------ approval queue */
+/* The queue beside the proposal being decided, the latest decisions after; one column on a phone (card first). */
+.ocq { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(240px, 320px); grid-template-areas: 'list card recent'; gap: 16px; align-items: start; }
+.ocq:not(:has(.ocq__list)) { grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); grid-template-areas: 'card recent'; }
+.ocq__list { grid-area: list; position: sticky; top: 72px; gap: 8px; }
+.ocq__list ol { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ocq__item { display: grid; gap: 4px; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid transparent; border-radius: var(--r-s); background: transparent; color: var(--ink); font: inherit; text-align: start; cursor: pointer; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
+.ocq__item:hover { background: var(--sunk); }
+.ocq__item[aria-current='true'] { background: var(--brand-wash); border-color: var(--brand); }
+.ocq__title { font-size: var(--fs-s); font-weight: 600; line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.ocq__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--fs-xs); color: var(--ink-3); }
+.ocq__card { grid-area: card; display: grid; gap: 8px; min-width: 0; }
+.ocq__keys { font-size: var(--fs-xs); }
+.ocq__recent { grid-area: recent; }
+.ocnote { margin: 0 0 12px; }
+/* A key's letter on its button. */
+.ockey { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; margin-inline-start: 4px; border: 1px solid currentColor; border-radius: var(--r-xs); font: inherit; font-size: var(--fs-2xs); font-weight: 650; line-height: 1; opacity: .7; }
+/* The decision just made, with its countdown and Undo, at the bottom of the page until it is sent. */
+.ocundo { position: fixed; bottom: 24px; inset-inline: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; width: fit-content; max-width: calc(100vw - 32px); margin-inline: auto; padding: 8px 8px 8px 16px; border-radius: var(--r-m); background: var(--ink); color: var(--on-ink); box-shadow: var(--shadow-2); animation: ocundo-in var(--dur) var(--ease); }
+.ocundo > svg { color: var(--toast-icon); flex: none; }
+.ocundo__text { display: grid; gap: 0; min-width: 0; font-size: var(--fs-s); }
+.ocundo__text strong { font-weight: 600; overflow-wrap: anywhere; }
+.ocundo__text span { font-size: var(--fs-xs); opacity: .85; }
+.ocundo__btn { min-height: var(--tap); background: transparent; border-color: currentColor; color: var(--toast-action); }
+.ocundo__btn:hover { text-decoration: underline; }
+@keyframes ocundo-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .ocundo { animation: none; } }
+
 /* ------------------------------------------------------------------ narrower desktops */
 @media (max-width: 1100px) {
   .occols, .occols--2, .occols--card, .occols--plan { grid-template-columns: minmax(0, 1fr); }
+  .ocq, .ocq:not(:has(.ocq__list)) { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'card' 'list' 'recent'; }
+  .ocq__list { position: static; }
   .ocsplit { grid-template-columns: minmax(240px, 1fr) minmax(0, 1.6fr); }
   .ocreqgrid, .ocareas { grid-template-columns: minmax(0, 1fr); }
 }
@@ -257,6 +287,8 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
   .ocsplit[data-open] .ocreqs { display: none; }
   .ocsplit:not([data-open]) .ocreqdetail { display: none; }
   .ocback { display: inline-flex; }
+  /* Above the bottom tabs. */
+  .ocundo { bottom: calc(72px + env(safe-area-inset-bottom)); }
   .ocreqcard, .ocap, .ocnext { padding: 16px; }
   .ocdl div, .ocapfacts div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .ocnext__form { grid-template-columns: minmax(0, 1fr); }

@@ -574,7 +574,8 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     const keys: Record<string, Section> = { a: 'approvals', r: 'requests', c: 'checklist', o: 'today', p: 'plan', g: 'office' };
     const on = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      if (e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
+      // A section that answered the key itself (the approval queue's A and R) has the last word.
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
       // The Office has its own keys (A there opens its approval panel).
       if (location.pathname === '/office') return;
       const to = keys[e.key.toLowerCase()];

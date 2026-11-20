@@ -5,7 +5,7 @@
 // time, support at a glance, the system and everything staff did.
 // Desktop first (a command layout with a top bar), phone stacked.
 // Turkish and English only, by the owner's choice (words: shared/src/i18n/owner.ts).
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CHECKLIST_AREAS, CHECKLIST_PRIORITIES, type ChecklistEntry } from '../../../shared/src/checklist';
 import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
@@ -19,6 +19,7 @@ import { Icon, type IconName } from '../components/icons';
 import { formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
+import { typingIn } from '../lib/undo';
 import { ConsoleChart, periodOf } from './ConsoleChart';
 import '../surfaces/owner.css';
 
@@ -32,8 +33,8 @@ class OwnerError extends Error {
     super(String(status));
   }
 }
-async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+async function api<T>(method: string, path: string, body?: unknown, keepalive = false): Promise<T> {
+  const res = await fetch(`/api/desk${path}`, { method, keepalive, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new OwnerError(res.status, json);
   return json as T;
@@ -1204,6 +1205,26 @@ function ReplyDraft({ to, subject, body }: { to: string; subject: string; body: 
 
 // ================================================================ approvals
 
+/** How long a decision waits in this tab before it is sent, so it can be taken back (Undo or Z). */
+export const HOLD_MS = 7000;
+type Verdict = { decision: 'approve'; edits?: Record<string, string> } | { decision: 'reject'; note: string | null } | { decision: 'meeting' };
+interface Held {
+  a: Approval;
+  body: Verdict;
+  until: number;
+  timer: number;
+}
+
+/**
+ * The approval queue: the waiting proposals on one side, the one being decided beside them, the latest decisions
+ * after. Keys: A approve, R reject, E edit, M meeting, J / K next and previous, Z undo.
+ *
+ * AI approval gate (ADR 0011, api/src/team/gate.ts): a decision is still only the owner's own act in his own
+ * session, sent to the same /decide route with the same body. What changes is when: the decision waits HOLD_MS in
+ * this tab and can be taken back before it leaves, because once the server has it an approved action may already
+ * have run (there is no "unapprove"). Leaving the page sends what is waiting; closing the tab sends it too
+ * (keepalive). Nothing here can decide without the owner's key press or click.
+ */
 export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const pending = useData<{ approvals: Approval[] }>('/office/approvals?status=open', beat, failed);
@@ -1214,13 +1235,90 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
     return x ? [x.agent?.name, x.title].filter(Boolean).join(' · ') : seat;
   };
   const recent = useData<{ approvals: Approval[] }>('/office/approvals?status=all', beat, failed);
-  const [i, setI] = useState(0);
-  const list = pending.data?.approvals ?? [];
-  const cur = list[Math.min(i, Math.max(0, list.length - 1))];
+  const [held, setHeld] = useState<Held[]>([]);
+  const heldRef = useRef<Held[]>([]);
+  heldRef.current = held;
+  const [curId, setCurId] = useState<string | null>(null);
+  const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
+  const [, tick] = useState(0);
+  const list = (pending.data?.approvals ?? []).filter((a) => !held.some((h) => h.a.id === a.id));
+  const at = Math.max(0, list.findIndex((a) => a.id === curId));
+  const cur = list[at];
   const decidedList = (recent.data?.approvals ?? []).filter((a) => a.status !== 'pending').slice(0, 12);
-  const done = () => {
-    pending.reload();
-    recent.reload();
+
+  const send = useCallback(
+    (h: Held, keepalive = false) => {
+      window.clearTimeout(h.timer);
+      setHeld((x) => x.filter((y) => y !== h));
+      api('POST', `/office/approvals/${h.a.id}/decide`, h.body, keepalive)
+        .catch((e) => {
+          failed(e);
+          setNote({ text: o('approvals.sendFailed', { title: h.a.title }), bad: true });
+        })
+        .finally(() => {
+          pending.reload();
+          recent.reload();
+        });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload functions change identity each render; the latest is read when it runs
+    [failed, o],
+  );
+  /** The owner decided: the card leaves the queue now, the decision leaves the tab after HOLD_MS. */
+  const hold = (a: Approval, body: Verdict) => {
+    const next = list[at + 1] ?? list[at - 1];
+    setCurId(next?.id ?? null);
+    setNote(null);
+    const h: Held = { a, body, until: Date.now() + HOLD_MS, timer: 0 };
+    h.timer = window.setTimeout(() => send(h), HOLD_MS);
+    setHeld((x) => [...x, h]);
+  };
+  const undo = useCallback(() => {
+    const h = heldRef.current[heldRef.current.length - 1];
+    if (!h) return;
+    window.clearTimeout(h.timer);
+    setHeld((x) => x.filter((y) => y !== h));
+    setCurId(h.a.id);
+    setNote({ text: o('approvals.undone', { title: h.a.title }) });
+  }, [o]);
+  // The countdown on the undo bar, once a second while something waits.
+  useEffect(() => {
+    if (!held.length) return;
+    const id = window.setInterval(() => tick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [held.length]);
+  // Leaving the section or closing the tab sends what the owner already decided (once, on the way out: a change
+  // of language must not send early, so the latest `send` is read through a ref).
+  const sendRef = useRef(send);
+  sendRef.current = send;
+  useEffect(() => {
+    const out = () => heldRef.current.forEach((h) => sendRef.current(h, true));
+    window.addEventListener('pagehide', out);
+    return () => {
+      window.removeEventListener('pagehide', out);
+      out();
+    };
+  }, []);
+  // Z (or Ctrl/⌘+Z) takes back the latest, while the focus is not in a text.
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      if (e.altKey || e.key.toLowerCase() !== 'z' || typingIn(e.target) || !heldRef.current.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      undo();
+    };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+  }, [undo]);
+  const step = (d: number) => {
+    const next = list[at + d];
+    if (next) setCurId(next.id);
+  };
+  const last = held[held.length - 1];
+  const resultText = (a: Approval) => {
+    if (!a.result || a.status === 'failed') return null;
+    if (a.result === 'Decision recorded.') return o('approvals.result.recorded');
+    const q = /^Queued for ([^:]+): (.*)$/s.exec(a.result);
+    return q ? o('approvals.result.queued', { seat: who(q[1]), title: q[2] }) : a.result;
   };
   return (
     <Page
@@ -1230,11 +1328,11 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
       tools={
         list.length > 1 ? (
           <div className="ocpager">
-            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.previous')} disabled={i === 0} onClick={() => setI(i - 1)}>
+            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.previous')} aria-keyshortcuts="k" disabled={at === 0} onClick={() => step(-1)}>
               <Icon name="chevronLeft" size={16} />
             </button>
-            <span>{o('approvals.counter', { i: formatNumber(Math.min(i, list.length - 1) + 1, locale), n: formatNumber(list.length, locale) })}</span>
-            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.next')} disabled={i >= list.length - 1} onClick={() => setI(i + 1)}>
+            <span>{o('approvals.counter', { i: formatNumber(at + 1, locale), n: formatNumber(list.length, locale) })}</span>
+            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.next')} aria-keyshortcuts="j" disabled={at >= list.length - 1} onClick={() => step(1)}>
               <Icon name="chevronRight" size={16} />
             </button>
           </div>
@@ -1243,40 +1341,118 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
     >
       <Loading data={pending.data} error={pending.error} reload={pending.reload}>
         {() => (
-          <div className="occols occols--card">
-            {cur ? <ApprovalCard key={cur.id} a={cur} who={who} failed={failed} onDone={done} go={go} /> : <EmptyState icon="checkCircle" tone="done" title={o('approvals.none')} body={o('approvals.noneBody')} />}
-            <section className="ccard" aria-labelledby="oc-decided">
-              <h2 className="ccard__title" id="oc-decided">{o('approvals.recent')}</h2>
-              {decidedList.length === 0 ? (
-                <p className="oc__muted">{o('approvals.noRecent')}</p>
-              ) : (
-                <ul className="oclist oclist--decided">
-                  {decidedList.map((a) => (
-                    <li key={a.id}>
-                      <Pill tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>
-                        {o(`ap.status.${a.status}` as OwnerKey)}
-                      </Pill>
-                      <span className="oclist__main">
-                        <strong>{a.title}</strong>
-                        <span className="oc__muted">
-                          {a.ref} · {a.decidedAt ? formatDate(a.decidedAt, locale, { day: 'numeric', month: 'short' }) : ''}
-                          {a.result ? ` · ${a.result}` : ''}
+          <>
+            {note ? (
+              <p className={note.bad ? 'flag flag--late ocnote' : 'flag ocnote'} role={note.bad ? 'alert' : 'status'}>
+                <Icon name={note.bad ? 'alert' : 'undo'} size={14} />
+                {note.text}
+              </p>
+            ) : null}
+            <div className="ocq" data-empty={cur ? undefined : ''}>
+              {list.length > 1 ? (
+                <nav className="ocq__list ccard" aria-label={o('approvals.queueLabel')}>
+                  <h2 className="ccard__title">
+                    {o('approvals.queue')}
+                    <span className="ccard__count">{formatNumber(list.length, locale)}</span>
+                  </h2>
+                  <ol>
+                    {list.map((a) => (
+                      <li key={a.id}>
+                        <button type="button" className="ocq__item" aria-current={a.id === cur?.id ? 'true' : undefined} onClick={() => setCurId(a.id)}>
+                          <span className="ocq__title">{a.title}</span>
+                          <span className="ocq__meta">
+                            {a.priority === 'urgent' ? <Pill tone="late">{o('ap.priority.urgent')}</Pill> : null}
+                            <span>{who(a.proposedBy)}</span>
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
+              ) : null}
+              <div className="ocq__card">
+                {cur ? (
+                  <ApprovalCard key={cur.id} a={cur} who={who} failed={failed} onDone={() => undefined} go={go} onDecide={(body) => hold(cur, body)} keys={{ next: () => step(1), prev: () => step(-1) }} />
+                ) : (
+                  <EmptyState icon="checkCircle" tone="done" title={o('approvals.none')} body={o('approvals.noneBody')}>
+                    <button type="button" className="btn" onClick={() => go({ section: 'today' })}>
+                      <Icon name="gauge" size={16} />
+                      {o('nav.overview')}
+                    </button>
+                  </EmptyState>
+                )}
+                {cur ? <p className="oc__muted ocq__keys">{o('approvals.keys')}</p> : null}
+              </div>
+              <section className="ccard ocq__recent" aria-labelledby="oc-decided">
+                <h2 className="ccard__title" id="oc-decided">{o('approvals.recent')}</h2>
+                {decidedList.length === 0 ? (
+                  <p className="oc__muted">{o('approvals.noRecentBody')}</p>
+                ) : (
+                  <ul className="oclist oclist--decided">
+                    {decidedList.map((a) => (
+                      <li key={a.id}>
+                        <Pill tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>{o(`ap.status.${a.status}` as OwnerKey)}</Pill>
+                        <span className="oclist__main">
+                          <strong>{a.title}</strong>
+                          <span className="oc__muted" title={a.status === 'failed' && a.result ? a.result : undefined}>
+                            {a.ref} · {a.decidedAt ? formatDate(a.decidedAt, locale, { day: 'numeric', month: 'short' }) : ''}
+                            {resultText(a) ? ` · ${resultText(a)}` : ''}
+                          </span>
                         </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="oc__muted oc__gap">{o('approvals.rule')}</p>
-            </section>
-          </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="oc__muted oc__gap">{o('approvals.rule')}</p>
+              </section>
+            </div>
+            {last ? (
+              <div className="ocundo" role="status">
+                <Icon name={last.body.decision === 'approve' ? 'checkCircle' : last.body.decision === 'reject' ? 'close' : 'people'} size={16} />
+                <span className="ocundo__text">
+                  <strong>{o(`approvals.held.${last.body.decision}` as OwnerKey, { title: last.a.title })}</strong>
+                  <span>
+                    {o('approvals.held.when', { s: formatNumber(Math.max(1, Math.ceil((last.until - Date.now()) / 1000)), locale) })}
+                    {held.length > 1 ? ` · ${o('approvals.held.more', { n: formatNumber(held.length - 1, locale) })}` : ''}
+                  </span>
+                </span>
+                <button type="button" className="btn ocundo__btn" onClick={undo} aria-keyshortcuts="z">
+                  <Icon name="undo" size={16} />
+                  {o('approvals.undo')}
+                  <kbd className="ockey" aria-hidden="true">
+                    Z
+                  </kbd>
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </Loading>
     </Page>
   );
 }
 
-export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval; who: (seat: string) => string; failed: (e: unknown) => void; onDone: () => void; go: OwnerGo }) {
+/**
+ * One proposal and the owner's choices on it. In the Office it sends the decision at once; in the console queue
+ * (`onDecide`) it hands the decision to the queue, which holds it for Undo, and answers the queue's keys (`keys`).
+ */
+export function ApprovalCard({
+  a,
+  who: name,
+  failed,
+  onDone,
+  go,
+  onDecide,
+  keys,
+}: {
+  a: Approval;
+  who: (seat: string) => string;
+  failed: (e: unknown) => void;
+  onDone: () => void;
+  go: OwnerGo;
+  onDecide?: (body: Verdict) => void;
+  keys?: { next: () => void; prev: () => void };
+}) {
   const { o, locale } = useOwnerWords();
   const [mode, setMode] = useState<'view' | 'edit' | 'reject'>('view');
   const [title, setTitle] = useState(a.title);
@@ -1284,7 +1460,8 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
   const [changes, setChanges] = useState(a.whatChanges);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
-  const decide = async (body: Record<string, unknown>) => {
+  const decide = async (body: Verdict) => {
+    if (onDecide) return onDecide(body);
     setBusy(true);
     try {
       await api('POST', `/office/approvals/${a.id}/decide`, body);
@@ -1297,6 +1474,44 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
   };
   const who = a.discussedWith.length ? o('ap.talked', { a: name(a.proposedBy), b: a.discussedWith.map(name).join(', ') }) : o('ap.proposed', { a: name(a.proposedBy) });
   void go;
+  const approveEdited = () => {
+    const edits: Record<string, string> = {};
+    if (title.trim() !== a.title) edits.title = title.trim();
+    if (summary.trim() !== a.summary) edits.summary = summary.trim();
+    if (changes.trim() !== a.whatChanges) edits.whatChanges = changes.trim();
+    void decide({ decision: 'approve', edits });
+  };
+  // The queue's keys (console only). Capture phase, so the console's own section keys (A approvals, R requests)
+  // do not fire while a proposal is open; a key typed into a field stays with the field.
+  const live = useRef({ mode, note, busy });
+  live.current = { mode, note, busy };
+  useEffect(() => {
+    if (!keys) return;
+    const on = (e: KeyboardEvent) => {
+      const { mode: m, note: n, busy: b } = live.current;
+      if (b || e.altKey) return;
+      const done = () => (e.preventDefault(), e.stopPropagation());
+      if (m === 'reject' && (e.ctrlKey || e.metaKey) && e.key === 'Enter') return done(), void decide({ decision: 'reject', note: n.trim() || null });
+      if (m !== 'view' && e.key === 'Escape') return done(), setMode('view');
+      if (e.ctrlKey || e.metaKey || typingIn(e.target) || m !== 'view') return;
+      const k = e.key.toLowerCase();
+      if (k === 'a') done(), void decide({ decision: 'approve' });
+      else if (k === 'r') done(), setMode('reject');
+      else if (k === 'e') done(), setMode('edit');
+      else if (k === 'm') done(), void decide({ decision: 'meeting' });
+      else if (k === 'j') done(), keys.next();
+      else if (k === 'k') done(), keys.prev();
+    };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- decide reads the latest state through `live`
+  }, [keys]);
+  const kbd = (k: string) =>
+    keys ? (
+      <kbd className="ockey" aria-hidden="true">
+        {k}
+      </kbd>
+    ) : null;
   return (
     <article className="ccard ocap" data-priority={a.priority} aria-labelledby="oc-ap-h">
       <p className="oc__ref">
@@ -1374,42 +1589,37 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
       {mode === 'reject' ? (
         <label className="ocfield ocfield--wide">
           <span>{o('ap.rejectNote')}</span>
-          <textarea className="textarea" rows={2} value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} />
+          <textarea className="textarea" rows={2} value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} autoFocus={!!keys} />
+          {keys ? <span className="oc__muted">{o('approvals.rejectKeys')}</span> : null}
         </label>
       ) : null}
       <div className="ocbuttons ocap__buttons">
         {mode === 'view' ? (
           <>
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => void decide({ decision: 'approve' })}>
+            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => void decide({ decision: 'approve' })} aria-keyshortcuts={keys ? 'a' : undefined}>
               <Icon name="check" size={16} />
               {o('ap.approve')}
+              {kbd('A')}
             </button>
-            <button type="button" className="btn" disabled={busy} onClick={() => setMode('edit')}>
+            <button type="button" className="btn" disabled={busy} onClick={() => setMode('edit')} aria-keyshortcuts={keys ? 'e' : undefined}>
               <Icon name="edit" size={16} />
               {o('ap.edit')}
+              {kbd('E')}
             </button>
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => setMode('reject')}>
+            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => setMode('reject')} aria-keyshortcuts={keys ? 'r' : undefined}>
+              <Icon name="close" size={16} />
               {o('ap.reject')}
+              {kbd('R')}
             </button>
-            <button type="button" className="btn btn--quiet" disabled={busy} onClick={() => void decide({ decision: 'meeting' })}>
+            <button type="button" className="btn btn--quiet" disabled={busy} onClick={() => void decide({ decision: 'meeting' })} aria-keyshortcuts={keys ? 'm' : undefined}>
               <Icon name="people" size={16} />
               {o('ap.meeting')}
+              {kbd('M')}
             </button>
           </>
         ) : mode === 'edit' ? (
           <>
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={busy || !title.trim()}
-              onClick={() => {
-                const edits: Record<string, string> = {};
-                if (title.trim() !== a.title) edits.title = title.trim();
-                if (summary.trim() !== a.summary) edits.summary = summary.trim();
-                if (changes.trim() !== a.whatChanges) edits.whatChanges = changes.trim();
-                void decide({ decision: 'approve', edits });
-              }}
-            >
+            <button type="button" className="btn btn--primary" disabled={busy || !title.trim()} onClick={approveEdited}>
               <Icon name="check" size={16} />
               {o('ap.approveEdited')}
             </button>
@@ -1419,7 +1629,8 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
           </>
         ) : (
           <>
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void decide({ decision: 'reject', note: note || null })}>
+            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void decide({ decision: 'reject', note: note.trim() || null })} aria-keyshortcuts={keys ? 'Control+Enter' : undefined}>
+              <Icon name="close" size={16} />
               {o('ap.rejectNow')}
             </button>
             <button type="button" className="btn btn--quiet" onClick={() => setMode('view')}>

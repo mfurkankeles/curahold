@@ -16,6 +16,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
   its words, not only a colour.
+- Owner console: the overview starts with what waits for your decision (proposals, new trial requests, failed payments)
+  and shows each business figure with its change on the period before; figures at zero are left out. The approval queue
+  lists every waiting proposal beside the one being decided and takes keys (A approve, R reject, E edit, M meeting,
+  J / K next and previous); a decision waits 7 seconds with **Undo** (or Z) before it is sent.
 
 ### Added
 
