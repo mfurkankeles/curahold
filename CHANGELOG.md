@@ -12,6 +12,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Sales site: a small content hub in all nine languages (/resources/): a renewal playbook template, a business review (QBR)
+  agenda template, and plain definitions of customer health score, churn, contract renewal and customer portal, each saying
+  only what Curahold does today. Linked from the Resources menu and the footer.
 - Engineering foundation for new owners: GitHub Actions CI (`.github/workflows/ci.yml`) with typecheck, lint, the full test suite on
   PGlite and on Postgres 16, build, Docker image build check, and required guards for row-level-security isolation, the repository leak
   scan and i18n completeness; a nightly end-to-end workflow; a pull request template.

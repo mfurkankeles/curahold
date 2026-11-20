@@ -18,6 +18,7 @@ import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type Messa
 import { FAVICON, MARK } from '../site/brand';
 import { SITE_LANGS } from '../site/locales';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
+import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
@@ -25,6 +26,7 @@ import { AB } from '../site/ab/config';
 import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
 import { classesIn, minifyCss, pruneCss } from './site-css';
+import { hubPages } from './site-hub';
 import { innerPages, type InnerPage, type PageUrls } from './site-pages';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -519,6 +521,7 @@ function footerHtml(locale: SiteLocale): string {
           ${li(u.docs, n.nav.help[0])}
           ${li(u.devDocs, n.nav.developers[0])}
           ${li(u.blog, n.nav.blog[0])}
+          ${li(`${base}resources/`, hubCopy(locale).nav[0])}
           ${li(`${base}${PAGE.faq}`, n.nav.faq[0])}
           ${li(`${base}${PAGE.why}`, n.nav.why)}
           ${li(`${base}${PAGE.about}`, n.nav.about)}
@@ -1392,6 +1395,10 @@ function build() {
       mkdirSync(join(dir, p.path), { recursive: true });
       emit(join(dir, p.path, 'index.html'), innerDoc(locale, p));
     }
+    for (const p of hubPages(locale, urlsOf(locale), ORIGIN)) {
+      mkdirSync(join(dir, p.path), { recursive: true });
+      emit(join(dir, p.path, 'index.html'), innerDoc(locale, p));
+    }
     for (const [which, path] of [['a', PAGE.ai], ['c', PAGE.orbit]] as const) {
       mkdirSync(join(dir, path), { recursive: true });
       writeFileSync(join(dir, path, 'index.html'), conceptDoc(locale, which));
@@ -1448,7 +1455,7 @@ function build() {
     const links = [...alternates.map((l) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${pathOf(l)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${pathOf('en')}"/>`].join('\n');
     return `  <url>\n    <loc>${loc}</loc>\n${mod ? `    <lastmod>${mod}</lastmod>\n` : ''}${links}\n  </url>`;
   };
-  const indexedPaths = ['', ...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd, fill: (t) => t }).map((p) => p.path)];
+  const indexedPaths = ['', ...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd, fill: (t) => t }).map((p) => p.path), ...hubPages('en', urlsOf('en'), ORIGIN).map((p) => p.path)];
   const sitemaps: string[] = [];
   for (const l of SITE_LOCALES) {
     const entries = indexedPaths.map((path) => sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, lastmod, SITE_LOCALES, (x) => `${localeBase(x)}${path}`));

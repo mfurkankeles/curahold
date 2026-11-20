@@ -16,6 +16,7 @@ import { A_COPY } from '../site/concepts/a-copy';
 import { C_COPY } from '../site/concepts/c-copy';
 import { siteBlog, blogPosts, siteCopy, siteStory } from '../site/content';
 import { infoCopy } from '../site/info';
+import { hubCopy } from '../site/hub-content';
 
 /** Every string leaf of a value, with its dotted path. */
 function leaves(v: unknown, path = ''): [string, string][] {
@@ -33,6 +34,7 @@ const SOURCES: Record<string, unknown> = {
   info: infoCopy('tr'),
   conceptA: A_COPY.tr,
   conceptC: C_COPY.tr,
+  hub: hubCopy('tr'),
 };
 
 /** Paths whose text sits inside a picture of the product, not addressed to the reader. */

@@ -52,7 +52,8 @@ const RELATED: Record<DeptKey, FeatureKey[]> = {
   finance: ['reports', 'health', 'sync'],
 };
 
-function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls; compact?: boolean }): string {
+/** An inner page's header: the Back crumb, its title and lead, and (unless compact) the two calls to action. */
+export function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls; compact?: boolean }): string {
   const c = infoCopy(locale);
   // The first crumb is the page's Back, in the same place on every inner page.
   const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}"><a class="ip__back" href="${localeBase(locale)}">${ICON_BACK}<span>${esc(c.common.home)}</span></a>${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
@@ -71,7 +72,8 @@ function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: stri
 const points = (list: Point[], cls = '') =>
   `<ul class="ip__points${cls}">${list.map(([h, p]) => `<li><h2>${esc(h)}</h2><p>${esc(p)}</p></li>`).join('')}</ul>`;
 
-function closing(locale: SiteLocale, urls: PageUrls): string {
+/** The closing call to action every inner page ends with. */
+export function closing(locale: SiteLocale, urls: PageUrls): string {
   const c = infoCopy(locale);
   return `<section class="cta">
     <div class="wrap">

@@ -5,6 +5,7 @@
 import { LOCALE_INFO, bcp47Of } from '../shared/src/i18n';
 import { MARK } from '../site/brand';
 import { SITE_LOCALES, type SiteLocale } from '../site/content';
+import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
 import type { DeptKey, FeatureKey, IntegrationGroup } from '../site/info/types';
 
@@ -167,7 +168,7 @@ export function headerHtml(o: HeaderOpts): string {
     n.resources,
     // The animated version lives here, not as a button in the bar: as a top-level switch it competed
     // with the free trial and its name did not say what it opens.
-    col(n.learn, [item(o.urls.docs, GLYPH.help, ...n.help), item(o.urls.quickstart, GLYPH.releases, ...n.quickstart), item(o.urls.blog, GLYPH.blog, ...n.blog), item(href(PAGE.faq), GLYPH.faq, ...n.faq), item(href(o.aiVersion === 'a' ? PAGE.ai : PAGE.orbit), GLYPH.assistant, n.toAi, n.toAiHint)].join('')) +
+    col(n.learn, [item(o.urls.docs, GLYPH.help, ...n.help), item(o.urls.quickstart, GLYPH.releases, ...n.quickstart), item(o.urls.blog, GLYPH.blog, ...n.blog), item(href(PAGE.faq), GLYPH.faq, ...n.faq), item(href('resources/'), GLYPH.releases, ...hubCopy(o.locale).nav), item(href(o.aiVersion === 'a' ? PAGE.ai : PAGE.orbit), GLYPH.assistant, n.toAi, n.toAiHint)].join('')) +
       `<div class="hx__stack">${col(n.build, [item(o.urls.devDocs, GLYPH.developers, ...n.developers), item(o.urls.selfHost, GLYPH.product, ...n.selfHost)].join(''))}${col(n.trustGroup, [item(href(PAGE.trust), GLYPH.trust, ...n.trust), item(o.urls.legal, GLYPH.about, ...n.legal)].join(''))}</div>` +
       feat(n.news, n.releases[1], `${news}<a class="hx__more" href="${esc(o.urls.releases)}">${esc(n.releases[0])}</a>`),
     'wide',
