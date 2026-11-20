@@ -4,7 +4,7 @@
 // and answer tickets, and reconnecting a connection whose key stopped working.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { READ_ONLY_PROVIDERS } from '../shared/src/sync';
-import { freshdesk, front, intercom, jsm, zendesk } from '../api/src/sync/adapters/support';
+import { freshdesk, front, intercom, jsm, zendesk, zohodesk } from '../api/src/sync/adapters/support';
 import { CrmError, type CrmAdapter, type CrmCtx } from '../api/src/sync/adapters/types';
 import { login, setup, type Client, type Env } from './helpers';
 
@@ -156,11 +156,11 @@ describe('Front', () => {
 });
 
 describe('which sources take changes', () => {
-  it('Jira Service Management and BigQuery only read; the four support tools write', () => {
-    expect(READ_ONLY_PROVIDERS).toEqual(['jsm', 'bigquery', 'snowflake', 'segment']);
+  it('Jira Service Management, the warehouses and the event/calendar/WhatsApp feeds only read; the five support tools write', () => {
+    expect(READ_ONLY_PROVIDERS).toEqual(['jsm', 'bigquery', 'snowflake', 'segment', 'whatsapp', 'gcal', 'outlookcal']);
     expect(jsm.readOnly).toBe(true);
-    for (const a of [zendesk, freshdesk, intercom, front] as CrmAdapter[]) expect(a.readOnly).toBeFalsy();
-    for (const a of [zendesk, freshdesk, intercom, front] as CrmAdapter[]) expect(typeof a.reply).toBe('function');
+    for (const a of [zendesk, freshdesk, intercom, front, zohodesk] as CrmAdapter[]) expect(a.readOnly).toBeFalsy();
+    for (const a of [zendesk, freshdesk, intercom, front, zohodesk] as CrmAdapter[]) expect(typeof a.reply).toBe('function');
     expect(jsm.reply).toBeUndefined();
   });
 });

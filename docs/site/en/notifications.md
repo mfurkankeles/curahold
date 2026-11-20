@@ -49,3 +49,7 @@ In your settings → Calendar, make a personal calendar address and add it to Go
 ## Onboarding reminders
 
 When it is your turn on an onboarding plan, or a step of yours stalls, you are reminded in the app. To get these by e-mail too, tick **Onboarding reminders by e-mail** under **What you want to hear about**. It is off until you turn it on; quiet hours and the morning summary apply.
+
+## Mute one task
+
+Open the task and click **Stop comment notices for this task** under its fields. You still hear when you are assigned or @mentioned. **Turn comment notices back on** undoes it.

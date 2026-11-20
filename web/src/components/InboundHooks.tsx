@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { HOOK_TARGETS, type HookDelivery, type HookMapping, type HookRecipe, type HookTarget, type InboundHook } from '../../../shared/src/inboundHooks';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
+import { formatDateTime } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
@@ -20,7 +21,7 @@ const FIELDS: Record<HookTarget, (keyof HookMapping)[]> = {
 };
 
 export function InboundHooks() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
   const [hooks, setHooks] = useState<InboundHook[] | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -64,7 +65,7 @@ export function InboundHooks() {
                     <span className="badge badge--active">{h.counts.ok}</span> <span className="badge">{h.counts.skipped}</span>{' '}
                     <span className={h.counts.failed ? 'badge badge--disabled' : 'badge'}>{h.counts.failed}</span>
                   </td>
-                  <td className="muted">{h.lastDeliveryAt ? new Date(h.lastDeliveryAt).toLocaleString() : t('hooks.never' as MessageKey)}</td>
+                  <td className="muted">{h.lastDeliveryAt ? formatDateTime(h.lastDeliveryAt, locale) : t('hooks.never' as MessageKey)}</td>
                   <td>
                     <button className="btn btn--small" onClick={() => setOpen(h.id)} data-tour="hook-open">
                       {t('hooks.open' as MessageKey)}
@@ -190,7 +191,7 @@ function AddHook({ recipes, onClose, onMade }: { recipes: Recipe[]; onClose: () 
 }
 
 function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; recipe?: Recipe; onClose: () => void; onChanged: () => Promise<void> }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
   const [tab, setTab] = useState<'setup' | 'map' | 'test' | 'log'>('setup');
   const [mapping, setMapping] = useState<HookMapping>(hook.mapping);
@@ -376,7 +377,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
               <tbody>
                 {log.map((d) => (
                   <tr key={d.id}>
-                    <td className="muted">{new Date(d.receivedAt).toLocaleString()}</td>
+                    <td className="muted">{formatDateTime(d.receivedAt, locale)}</td>
                     <td>
                       <span className={d.status === 'ok' ? 'badge badge--active' : d.status === 'skipped' ? 'badge' : 'badge badge--disabled'}>{t(`hooks.status.${d.status}` as MessageKey)}</span>
                       {d.test && <span className="badge u-ms-4">{t('hooks.log.test' as MessageKey)}</span>}

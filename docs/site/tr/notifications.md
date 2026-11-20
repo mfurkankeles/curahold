@@ -49,3 +49,7 @@ Ayarların → Takvim'den kişisel bir takvim adresi oluştur ve Google Takvim, 
 ## Başlangıç planı hatırlatmaları
 
 Bir başlangıç planında sıra sana geldiğinde ya da bir adımın beklediğinde uygulamada hatırlatılırsın. Bunları e-postayla da almak için **Neler için haber almak istersin** altında **Başlangıç planı hatırlatmaları e-postayla** kutusunu işaretle. Sen açana kadar kapalıdır; sessiz saatler ve sabah özeti geçerlidir.
+
+## Tek bir görevi sessize al
+
+Görevi aç ve alanlarının altındaki **Bu görevin yorum bildirimlerini durdur**'a tıkla. Atandığında ya da @ ile anıldığında yine haber alırsın. **Yorum bildirimlerini yeniden aç** bunu geri alır.
