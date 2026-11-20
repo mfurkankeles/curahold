@@ -42,16 +42,17 @@ export const LAW_NAME: Record<ConsentRegion, string | null> = {
  */
 export const NOT_OFFERED = ['IR', 'EG', 'CN'];
 
-/** ISO 3166-1 alpha-2 codes; names come from Intl.DisplayNames in the reader's language. */
-export const COUNTRIES = (
+/** Every ISO 3166-1 alpha-2 code; names come from Intl.DisplayNames in the reader's language. */
+export const ALL_COUNTRIES = (
   'AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ ' +
   'DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IS IT JE JM JO JP ' +
   'KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ ' +
   'OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ ' +
   'UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW'
-)
-  .split(' ')
-  .filter((c) => !NOT_OFFERED.includes(c));
+).split(' ');
+
+/** The countries a trial can be asked for from: every code except those not offered yet. */
+export const COUNTRIES = ALL_COUNTRIES.filter((c) => !NOT_OFFERED.includes(c));
 
 // ------------------------------------------------------------------ choices
 

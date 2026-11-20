@@ -6945,4 +6945,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "修改了传入 Webhook",
   "audit.inbound_hook.rotated": "为传入 Webhook 生成了新密钥",
   "audit.inbound_hook.deleted": "删除了传入 Webhook",
+  'errors.country_not_offered': 'Curahold 在该国家/地区不提供服务。',
+  'billing.profile.country': '账单国家/地区',
+  'billing.profile.countryNone': '未设置',
 };

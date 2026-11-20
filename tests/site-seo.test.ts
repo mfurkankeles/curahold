@@ -108,6 +108,11 @@ describe('languages and indexing', () => {
     expect(canon.filter((u) => !locs.has(u))).toEqual([]);
     expect(locs.size).toBe(canon.length);
   });
+  it('never ties Persian to Iran (Curahold is never offered there): no fa_IR or fa-IR on any built page', () => {
+    const tied = pages().filter((p) => /fa[_-]IR/i.test(p.html)).map((p) => p.path);
+    expect(tied).toEqual([]);
+  });
+
   it('shares a PNG picture, not an SVG', () => {
     expect(readFileSync(join(out, 'index.html'), 'utf8')).toMatch(/<meta property="og:image" content="[^"]+\.png">/);
     expect(existsSync(join(out, 'assets', 'og.png'))).toBe(true);

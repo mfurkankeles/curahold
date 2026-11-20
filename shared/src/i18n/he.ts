@@ -6945,4 +6945,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "שינה webhook נכנס",
   "audit.inbound_hook.rotated": "נתן ל-webhook נכנס סוד חדש",
   "audit.inbound_hook.deleted": "הסיר webhook נכנס",
+  'errors.country_not_offered': 'Curahold אינו זמין במדינה זו.',
+  'billing.profile.country': 'מדינת החיוב',
+  'billing.profile.countryNone': 'לא הוגדרה',
 };

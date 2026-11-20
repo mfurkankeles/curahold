@@ -6960,6 +6960,9 @@ export const en = {
   "audit.inbound_hook.updated": "changed an incoming webhook",
   "audit.inbound_hook.rotated": "gave an incoming webhook a new secret",
   "audit.inbound_hook.deleted": "removed an incoming webhook",
+  'errors.country_not_offered': 'Curahold is not available in this country.',
+  'billing.profile.country': 'Billing country',
+  'billing.profile.countryNone': 'Not set',
 } as const;
 
 export type MessageKey = keyof typeof en;

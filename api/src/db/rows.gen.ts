@@ -1307,6 +1307,7 @@ export interface OrgsRow {
   tax_number: string | null;
   billing_email: string | null;
   trial_seat_cap: number | null;
+  billing_country: string | null;
 }
 
 /** Table `pages`. */

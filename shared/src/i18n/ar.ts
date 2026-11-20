@@ -6945,4 +6945,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "غيّر webhook واردًا",
   "audit.inbound_hook.rotated": "أعطى webhook واردًا سرًّا جديدًا",
   "audit.inbound_hook.deleted": "أزال webhook واردًا",
+  'errors.country_not_offered': 'Curahold غير متاح في هذا البلد.',
+  'billing.profile.country': 'بلد الفوترة',
+  'billing.profile.countryNone': 'غير محدد',
 };

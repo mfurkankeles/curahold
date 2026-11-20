@@ -6945,4 +6945,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "یک webhook ورودی را تغییر داد",
   "audit.inbound_hook.rotated": "به یک webhook ورودی رمز تازه داد",
   "audit.inbound_hook.deleted": "یک webhook ورودی را حذف کرد",
+  'errors.country_not_offered': 'Curahold در این کشور ارائه نمی‌شود.',
+  'billing.profile.country': 'کشور صورت‌حساب',
+  'billing.profile.countryNone': 'تعیین نشده',
 };

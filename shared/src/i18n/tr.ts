@@ -6945,4 +6945,7 @@ export const tr: Record<MessageKey, string> = {
   "audit.inbound_hook.updated": "gelen webhook'u değiştirdi",
   "audit.inbound_hook.rotated": "gelen webhook'a yeni gizli anahtar verdi",
   "audit.inbound_hook.deleted": "gelen webhook'u kaldırdı",
+  'errors.country_not_offered': 'Curahold bu ülkede sunulmuyor.',
+  'billing.profile.country': 'Fatura ülkesi',
+  'billing.profile.countryNone': 'Belirtilmedi',
 };

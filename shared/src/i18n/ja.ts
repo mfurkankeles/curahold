@@ -6945,4 +6945,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "受信 Webhook を変更した",
   "audit.inbound_hook.rotated": "受信 Webhook のシークレットを再発行した",
   "audit.inbound_hook.deleted": "受信 Webhook を削除した",
+  'errors.country_not_offered': 'Curahold はこの国ではご利用いただけません。',
+  'billing.profile.country': '請求先の国',
+  'billing.profile.countryNone': '未設定',
 };

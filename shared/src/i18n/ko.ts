@@ -6945,4 +6945,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "수신 웹훅을 변경함",
   "audit.inbound_hook.rotated": "수신 웹훅에 새 비밀 키를 발급함",
   "audit.inbound_hook.deleted": "수신 웹훅을 삭제함",
+  'errors.country_not_offered': 'Curahold는 이 국가에서 제공되지 않습니다.',
+  'billing.profile.country': '청구 국가',
+  'billing.profile.countryNone': '설정 안 함',
 };

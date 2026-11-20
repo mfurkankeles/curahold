@@ -6891,4 +6891,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "mengubah webhook masuk",
   "audit.inbound_hook.rotated": "memberikan rahsia baharu kepada webhook masuk",
   "audit.inbound_hook.deleted": "mengalih keluar webhook masuk",
+  'errors.country_not_offered': 'Curahold tidak ditawarkan di negara ini.',
+  'billing.profile.country': 'Negara pengebilan',
+  'billing.profile.countryNone': 'Belum ditetapkan',
 };

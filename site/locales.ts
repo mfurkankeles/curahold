@@ -5,13 +5,16 @@
 // TypeScript lists every place still missing it. tests/site-copy.test.ts holds the list to the app's languages.
 import type { Locale } from '../shared/src/i18n';
 
-/** Each site language and its Open Graph locale (language_TERRITORY; ar_AR is the generic Arabic code social networks use). */
+/**
+ * Each site language and its Open Graph locale (language_TERRITORY; ar_AR is the generic Arabic code social networks use).
+ * Persian is the bare language, never tied to Iran: Curahold is never offered there (NEVER_OFFERED, MASTER-RULES).
+ */
 export const SITE_LANGS = {
   en: 'en_US',
   tr: 'tr_TR',
   ar: 'ar_AR',
   he: 'he_IL',
-  fa: 'fa_IR',
+  fa: 'fa',
   'zh-Hans': 'zh_CN',
   'zh-Hant': 'zh_TW',
   ja: 'ja_JP',

@@ -6891,4 +6891,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   "audit.inbound_hook.updated": "ने एक इनकमिंग वेबहुक बदला",
   "audit.inbound_hook.rotated": "ने एक इनकमिंग वेबहुक को नया सीक्रेट दिया",
   "audit.inbound_hook.deleted": "ने एक इनकमिंग वेबहुक हटाया",
+  'errors.country_not_offered': 'Curahold इस देश में उपलब्ध नहीं है।',
+  'billing.profile.country': 'बिलिंग देश',
+  'billing.profile.countryNone': 'सेट नहीं है',
 };
