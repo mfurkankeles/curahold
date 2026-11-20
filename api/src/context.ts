@@ -115,6 +115,8 @@ export interface BillingConfig {
   clientToken: string;
   /** Paddle price ids, by plan and how often it is paid. */
   prices: Record<PlanKey, Record<Interval, string>>;
+  /** Days before a yearly plan renews that its administrators get the renewal notice (RENEWAL_NOTICE_DAYS; 7–90, default 30). */
+  renewalNoticeDays?: number;
 }
 
 /** Curahold's own app registrations with the messaging services. */

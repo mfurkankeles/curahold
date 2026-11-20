@@ -611,6 +611,8 @@ export const tr: Record<MessageKey, string> = {
   'notify.test': 'Curahold\'dan deneme mesajı',
   'notify.testBody': 'Bunu görüyorsanız {org} bağlandı.',
   'notify.syncFailed': 'Eşitleme sorunu: {app}',
+  'notify.renewal': "{org}: yıllık planınız {date} tarihinde yenilenecek",
+  'notify.renewalBody': "{plan} planınız ({seats} koltuk) {date} tarihinde bir yıl daha yenilenecek. Planı ya da koltuk sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Plan ve ödeme sayfasını açın: planı sona erdirmek yenilemeyi durdurur, plan {date} tarihine kadar etkin kalır. İadeler İade politikasına göre yapılır.",
   'notify.syncFailedReconnect': 'Curahold artık {app} bağlantısına ulaşamıyor. Eşitlemeyi sürdürmek için yeniden bağlayın.',
   'notify.syncFailedRepeated': '{app} birkaç kez eşitlenemedi. Bağlantılar sayfasını açıp göz atın.',
   'notify.syncRecovered': '{app} yeniden eşitleniyor.',

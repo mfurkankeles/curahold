@@ -1087,6 +1087,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'notify.test': "رسالة اختبار من Curahold",
   'notify.testBody': "إذا كنت تقرأ هذا، فإن {org} متصل.",
   'notify.syncFailed': "مشكلة في المزامنة: {app}",
+  'notify.renewal': "{org}: تتجدد خطتك السنوية في {date}",
+  'notify.renewalBody': "تتجدد خطة {plan} ({seats} مقاعد) لسنة أخرى في {date}. لتغيير الخطة أو عدد المقاعد، أو لإيقاف التجديد، افتح «الخطة والفوترة» قبل ذلك التاريخ: إنهاء الخطة يوقف التجديد، وتبقى فعّالة حتى {date}. ويخضع الاسترداد لسياسة الاسترداد.",
   'notify.syncFailedReconnect': "لم يعد بإمكان Curahold الوصول إلى {app}. أعد ربطه لاستئناف المزامنة.",
   'notify.syncFailedRepeated': "تعثّرت مزامنة {app} عدة مرات. افتح الاتصالات لإلقاء نظرة.",
   'notify.syncRecovered': "عادت مزامنة {app} إلى العمل.",

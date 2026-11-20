@@ -10,6 +10,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ## [Unreleased]
 
+### Added
+
+- Yearly plans: every administrator gets an e-mail 30 days before the plan renews (the date, the plan and seats, and
+  where to change or stop it), as the terms and the refund policy promise. It comes even with other notifications
+  turned off; operators can set the window with `RENEWAL_NOTICE_DAYS` (7–90).
+
 ### Changed
 
 - Legal drafts (all eleven languages): the terms cover monthly and yearly plans, renewal, plan and seat changes and

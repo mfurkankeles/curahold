@@ -1087,6 +1087,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'notify.test': "來自 Curahold 的測試訊息",
   'notify.testBody': "如果你看到這則訊息，表示 {org} 已連線。",
   'notify.syncFailed': '同步發生問題：{app}',
+  'notify.renewal': "{org}：你的年繳方案將於 {date} 續約",
+  'notify.renewalBody': "你的 {plan} 方案（{seats} 個席位）將於 {date} 再續約一年。如需變更方案或席位數，或停止續約，請在該日期前開啟「方案與帳單」：終止方案會停止續約，方案在 {date} 前仍然有效。退款依退款政策辦理。",
   'notify.syncFailedReconnect': 'Curahold 已無法連線到 {app}。請重新連線以恢復同步。',
   'notify.syncFailedRepeated': '{app} 已多次同步失敗。請開啟「連線」頁面查看。',
   'notify.syncRecovered': '{app} 已恢復同步。',

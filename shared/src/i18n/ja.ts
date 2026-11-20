@@ -1087,6 +1087,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'notify.test': "Curahold からのテストメッセージ",
   'notify.testBody': "このメッセージが読めていれば、{org} は接続されています。",
   'notify.syncFailed': '同期の問題：{app}',
+  'notify.renewal': "{org}：年払いのプランは {date} に更新されます",
+  'notify.renewalBody': "{plan} プラン（{seats} 席）は {date} にさらに 1 年更新されます。プランや席数を変更する場合、または更新を止める場合は、この日付までに「プランと請求」を開いてください。プランを終了すると更新は止まり、プランは {date} まで有効です。返金は返金ポリシーに従います。",
   'notify.syncFailedReconnect': 'Curahold から {app} に接続できなくなりました。同期を再開するには、再接続してください。',
   'notify.syncFailedRepeated': '{app} の同期が何度か失敗しています。連携ページを開いて確認してください。',
   'notify.syncRecovered': '{app} の同期が再開しました。',

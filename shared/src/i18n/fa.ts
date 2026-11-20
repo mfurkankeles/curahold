@@ -1087,6 +1087,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'notify.test': "پیام آزمایشی از Curahold",
   'notify.testBody': "اگر این پیام را می‌خوانید، {org} متصل است.",
   'notify.syncFailed': "مشکل در همگام‌سازی: {app}",
+  'notify.renewal': "{org}: طرح سالانهٔ شما در {date} تمدید می‌شود",
+  'notify.renewalBody': "طرح {plan} شما ({seats} صندلی) در {date} برای یک سال دیگر تمدید می‌شود. برای تغییر طرح یا تعداد صندلی‌ها، یا توقف تمدید، پیش از این تاریخ «طرح و صورتحساب» را باز کنید: پایان دادن به طرح تمدید را متوقف می‌کند و طرح تا {date} فعال می‌ماند. بازپرداخت طبق سیاست بازپرداخت است.",
   'notify.syncFailedReconnect': "Curahold دیگر به {app} دسترسی ندارد. برای ادامه همگام‌سازی، آن را دوباره وصل کنید.",
   'notify.syncFailedRepeated': "همگام‌سازی {app} چند بار ناموفق بوده است. برای بررسی، اتصالات را باز کنید.",
   'notify.syncRecovered': "همگام‌سازی {app} دوباره برقرار شد.",

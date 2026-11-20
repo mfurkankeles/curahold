@@ -1087,6 +1087,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'notify.test': "הודעת בדיקה מ-Curahold",
   'notify.testBody': "אם אתה קורא את זה, {org} מחובר.",
   'notify.syncFailed': "בעיה בסנכרון: {app}",
+  'notify.renewal': "{org}: התוכנית השנתית שלכם מתחדשת ב־{date}",
+  'notify.renewalBody': "תוכנית {plan} ({seats} מושבים) מתחדשת לשנה נוספת ב־{date}. כדי לשנות את התוכנית או את מספר המושבים, או כדי לעצור את החידוש, פתחו את „תוכנית וחיוב” לפני התאריך הזה: סיום התוכנית עוצר את החידוש, והיא נשארת פעילה עד {date}. החזרים כפופים למדיניות ההחזרים.",
   'notify.syncFailedReconnect': "ל-Curahold כבר אין גישה אל {app}. חבר אותו מחדש כדי לחדש את הסנכרון.",
   'notify.syncFailedRepeated': "הסנכרון עם {app} נכשל כמה פעמים. פתח את החיבורים כדי לבדוק.",
   'notify.syncRecovered': "הסנכרון עם {app} חזר לפעול.",

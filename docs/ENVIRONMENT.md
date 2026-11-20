@@ -106,6 +106,7 @@ customer is the controller of where it is.
 | `PADDLE_CLIENT_TOKEN` | Client-side token for Paddle.js (safe in browsers) | For billing | |
 | `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |
+| `RENEWAL_NOTICE_DAYS` | Days before a yearly plan renews that every administrator gets the renewal notice e-mail (`api/src/billing/renewalNotice.ts`; the terms §5 and the refund policy promise it) | No | `30`. Whole days, kept within 7–90; anything else means 30. Keep it in step with the number in the terms and the refund policy. |
 
 ## 3b. The assistant and the AI team (all optional; without a key nothing calls a model)
 

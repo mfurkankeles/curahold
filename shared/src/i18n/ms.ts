@@ -593,6 +593,8 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'notify.test': "Mesej ujian daripada Curahold",
   'notify.testBody': "Jika anda boleh membaca ini, {org} telah disambungkan.",
   'notify.syncFailed': "Masalah penyegerakan: {app}",
+  'notify.renewal': "{org}: pelan tahunan anda diperbaharui pada {date}",
+  'notify.renewalBody': "Pelan {plan} anda ({seats} tempat duduk) diperbaharui untuk setahun lagi pada {date}. Untuk menukar pelan atau bilangan tempat duduk, atau menghentikan pembaharuan, buka Pelan dan pengebilan sebelum tarikh itu: menamatkan pelan menghentikan pembaharuan dan pelan kekal aktif sehingga {date}. Bayaran balik mengikut Dasar bayaran balik.",
   'notify.syncFailedReconnect': "Curahold tidak dapat menghubungi {app} lagi. Sambungkannya semula untuk meneruskan penyegerakan.",
   'notify.syncFailedRepeated': "{app} gagal disegerakkan beberapa kali. Buka Sambungan untuk melihatnya.",
   'notify.syncRecovered': "{app} disegerakkan semula.",

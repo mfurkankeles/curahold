@@ -593,6 +593,8 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'notify.test': "Curahold से टेस्ट मैसेज",
   'notify.testBody': "अगर आप इसे पढ़ पा रहे हैं, तो {org} कनेक्ट है।",
   'notify.syncFailed': "सिंक में समस्या: {app}",
+  'notify.renewal': "{org}: आपका वार्षिक प्लान {date} को रिन्यू होगा",
+  'notify.renewalBody': "आपका {plan} प्लान ({seats} सीटें) {date} को एक और साल के लिए रिन्यू होगा। प्लान या सीटें बदलने, या रिन्यूअल रोकने के लिए उस तारीख से पहले “प्लान और बिलिंग” खोलें: प्लान खत्म करने से रिन्यूअल रुक जाता है और प्लान {date} तक चालू रहता है। रिफ़ंड, रिफ़ंड नीति के अनुसार होते हैं।",
   'notify.syncFailedReconnect': "Curahold अब {app} तक नहीं पहुंच पा रहा। सिंक फिर से शुरू करने के लिए इसे दोबारा कनेक्ट करें।",
   'notify.syncFailedRepeated': "{app} कई बार सिंक नहीं हो पाया। देखने के लिए कनेक्शन खोलें।",
   'notify.syncRecovered': "{app} फिर से सिंक हो रहा है।",

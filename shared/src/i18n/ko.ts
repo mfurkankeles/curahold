@@ -1087,6 +1087,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'notify.test': "Curahold 테스트 메시지",
   'notify.testBody': "이 메시지가 보인다면 {org}이(가) 연결된 것입니다.",
   'notify.syncFailed': '동기화 문제: {app}',
+  'notify.renewal': "{org}: 연간 요금제가 {date}에 갱신됩니다",
+  'notify.renewalBody': "{plan} 요금제({seats}석)가 {date}에 1년 더 갱신됩니다. 요금제나 좌석 수를 바꾸거나 갱신을 멈추려면 그 전에 ‘요금제 및 결제’를 여세요. 요금제를 종료하면 갱신이 멈추고, 요금제는 {date}까지 유지됩니다. 환불은 환불 정책을 따릅니다.",
   'notify.syncFailedReconnect': 'Curahold가 더 이상 {app}에 접속할 수 없습니다. 동기화를 다시 시작하려면 다시 연결하세요.',
   'notify.syncFailedRepeated': '{app} 동기화가 여러 번 실패했습니다. 연결 페이지에서 확인해 보세요.',
   'notify.syncRecovered': '{app} 동기화가 다시 진행되고 있습니다.',

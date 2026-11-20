@@ -38,6 +38,10 @@ An administrator opens Settings → **Billing**, picks monthly or yearly and pre
 
 The bill follows the people who have **joined** with a full seat: an invitation not yet accepted is not billed. Add someone and the extra seat is billed for the rest of the period; remove someone and the next bill is lower. Nobody needs to change the seat count by hand.
 
+## Yearly plans: the renewal notice
+
+A yearly plan renews by itself for another year. **30 days before** it does, every administrator gets an e-mail with the date, the plan and the seats, and a link to Settings → **Billing**. It comes by e-mail even if you turned other notifications off, because it is a notice under the terms. To change the plan or the seats, or to stop the renewal, do it on the Billing page before that date: cancelling stops the renewal, and the plan keeps working until the end of the year paid for. What is refunded and when is in the [refund policy](/docs/en/legal-refunds/).
+
 ## Invoices, payment method, cancelling
 
 **Invoices, payment and cancelling** on the Billing page opens Paddle's customer portal, already signed in: download invoices, change the card, cancel. A cancelled plan keeps working until the end of the period paid for.

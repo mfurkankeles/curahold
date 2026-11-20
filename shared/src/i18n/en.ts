@@ -625,6 +625,8 @@ export const en = {
   'notify.test': 'Test message from Curahold',
   'notify.testBody': 'If you can read this, {org} is connected.',
   'notify.syncFailed': 'Sync problem: {app}',
+  'notify.renewal': "{org}: your yearly plan renews on {date}",
+  'notify.renewalBody': "Your {plan} plan ({seats} seats) renews for another year on {date}. To change the plan or the seats, or to stop the renewal, open Plan and billing before that date: ending the plan stops the renewal and keeps it active until {date}. Refunds follow the Refund policy.",
   'notify.syncFailedReconnect': 'Curahold can’t reach {app} anymore. Reconnect it to resume syncing.',
   'notify.syncFailedRepeated': '{app} has failed to sync several times. Open Connections to take a look.',
   'notify.syncRecovered': '{app} is syncing again.',
