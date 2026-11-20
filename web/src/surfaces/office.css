@@ -1298,7 +1298,7 @@
      sheet, it sat low with an empty band above it. */
   .of {
     grid-template: 'top' auto 'stage' minmax(0, 1fr) / minmax(0, 1fr);
-    padding-bottom: 140px;
+    padding-bottom: 112px;
   }
   .of-top {
     gap: 8px;
@@ -1366,7 +1366,8 @@
     right: 0;
     bottom: 0;
     z-index: 3;
-    height: 140px;
+    /* Folded, the sheet holds its title and the legend line and nothing under them (it left a blank band at 140). */
+    height: 112px;
     border: 0;
     border-radius: var(--r-l) var(--r-l) 0 0;
     box-shadow: var(--shadow-3);
