@@ -73,6 +73,22 @@ describe('busy state on every save', () => {
     expect('data-done' in save.attrs).toBe(true);
   });
 
+  it('a second save on the same button during the 300 ms hold keeps its ring and gets no early tick', async () => {
+    const save = button(['btn']);
+    notePress(save);
+    trackChange(later(200, 1));
+    // The first save is back at 200 ms and holds the ring until 450 ms; the person saves again at 250 ms.
+    await vi.advanceTimersByTimeAsync(250);
+    notePress(save);
+    trackChange(later(500, 2));
+    await vi.advanceTimersByTimeAsync(210);
+    expect(save.attrs['aria-busy']).toBe('true');
+    expect('data-done' in save.attrs).toBe(false);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(save.attrs['aria-busy']).toBeUndefined();
+    expect('data-done' in save.attrs).toBe(true);
+  });
+
   it('leaves menus, toggles, own-state buttons and late changes alone', async () => {
     for (const b of [button(['btn'], { 'aria-expanded': 'false' }), button(['btn'], { role: 'switch' }), button(['btn'], { 'data-busy-own': '' }), button(['linkbtn'])]) {
       notePress(b);
