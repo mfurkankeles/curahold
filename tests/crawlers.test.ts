@@ -120,7 +120,7 @@ describe('the legal notice', () => {
     expect(copyrightYears(new Date('2028-01-02T12:00:00Z'))).toBe('2026–2028');
   });
 
-  it('is in all nine languages with the years filled in, the ™ sign, and nothing untrue', () => {
+  it('is in all eleven languages with the years filled in, the ™ sign, and nothing untrue', () => {
     for (const l of LOCALES) {
       const n = legalNotice((k, v) => translate(l, k, v), new Date('2027-03-01T00:00:00Z'));
       expect(n.rights).toContain('© 2026–2027 Curahold');

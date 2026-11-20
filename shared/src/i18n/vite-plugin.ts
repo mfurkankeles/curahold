@@ -2,7 +2,7 @@
 // app, the portal and the demo). Used only by the vite configs; never shipped.
 //
 // 1. Swap: with `swap` on, every import of `shared/src/i18n` (index, which
-//    pulls in all nine dictionaries) resolves to `./core` instead — same names,
+//    pulls in all eleven dictionaries) resolves to `./core` instead — same names,
 //    no dictionary. Nothing in the app's code has to know. The demo leaves it
 //    off: it runs the API in the tab, and the API needs every language at once.
 // 2. Serve: `virtual:curahold-dict/<locale>` is one language as a module of its

@@ -1,6 +1,6 @@
 // The owner console's own words, in Turkish and English only: the owner chose
 // to keep his console to these two (STATE 17 Nov 23:10). Everything else in the
-// console (support desk, customers) keeps the nine dictionaries. Any other
+// console (support desk, customers) keeps the eleven dictionaries. Any other
 // language reads English here. Placeholders are {name}; the two sides must
 // carry the same ones (tests/owner-console-words.test.ts).
 import type { Locale } from './core';

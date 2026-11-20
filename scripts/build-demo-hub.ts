@@ -79,7 +79,7 @@ function copyOf(l: Locale) {
     foot: { home: say('foot.home'), privacy: say('foot.privacy'), terms: say('foot.terms'), made: say('foot.made') },
     // © with the right years, Curahold™ and the copyright/trade-secret line (shared/src/compliance/notice.ts).
     notice: legalNotice((k, v) => translate(l, k, v)),
-    /** The site's page in this language (it has all nine). */
+    /** The site's page in this language (it has all eleven). */
     words: { one: say('count.one'), many: say('count.many') },
     lang: { title: say('lang.title'), note: say('lang.note'), close: say('lang.close'), button: (name: string) => say('lang.button', { name }) },
   };

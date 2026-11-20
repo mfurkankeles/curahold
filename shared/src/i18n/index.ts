@@ -11,6 +11,8 @@ import { zhHans } from './zh-Hans';
 import { zhHant } from './zh-Hant';
 import { ja } from './ja';
 import { ko } from './ko';
+import { hi } from './hi';
+import { ms } from './ms';
 import { registerDictionary } from './core';
 
 // Fully written dictionaries first, then the ones that fall back to English.
@@ -23,5 +25,7 @@ registerDictionary('zh-Hans', zhHans);
 registerDictionary('zh-Hant', zhHant);
 registerDictionary('ja', ja);
 registerDictionary('ko', ko);
+registerDictionary('hi', hi);
+registerDictionary('ms', ms);
 
 export * from './core';

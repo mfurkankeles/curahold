@@ -37,6 +37,8 @@ const LOADERS: Record<Locale, Part> = {
   'zh-Hant': () => import('virtual:curahold-dict/zh-Hant'),
   ja: () => import('virtual:curahold-dict/ja'),
   ko: () => import('virtual:curahold-dict/ko'),
+  hi: () => import('virtual:curahold-dict/hi'),
+  ms: () => import('virtual:curahold-dict/ms'),
 };
 const REST_LOADERS: Record<Locale, Part> = {
   en: () => import('virtual:curahold-dict/en/rest'),
@@ -48,6 +50,8 @@ const REST_LOADERS: Record<Locale, Part> = {
   'zh-Hant': () => import('virtual:curahold-dict/zh-Hant/rest'),
   ja: () => import('virtual:curahold-dict/ja/rest'),
   ko: () => import('virtual:curahold-dict/ko/rest'),
+  hi: () => import('virtual:curahold-dict/hi/rest'),
+  ms: () => import('virtual:curahold-dict/ms/rest'),
 };
 const pending = new Map<Locale, Promise<void>>();
 const restPending = new Map<Locale, Promise<void>>();

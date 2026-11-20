@@ -1,5 +1,5 @@
 // Writes every setup check into the help page "Setup health" in each of the
-// nine languages, from the dictionaries themselves (sh.<id>.problem / .why /
+// eleven languages, from the dictionaries themselves (sh.<id>.problem / .why /
 // .fix): what we notice, why it matters, and the button that fixes it, grouped
 // by area. A check cannot ship without its help text: tests/setup-health.test.ts
 // fails until this has been run and the page holds the block word for word.

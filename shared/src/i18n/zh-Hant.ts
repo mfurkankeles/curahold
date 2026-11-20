@@ -5240,7 +5240,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': '開始導覽',
   'demo.hub.card.meta': '{m} 分鐘 · {s} 步',
   "demo.hub.band.title": "了解得差不多了嗎？用你自己的客戶試試看。",
-  "demo.hub.band.text": "為你的團隊申請一個工作區：免費三個月，不需信用卡，支援九種語言。",
+  "demo.hub.band.text": "為你的團隊申請一個工作區：免費三個月，不需信用卡，支援十一種語言。",
   'demo.hub.band.primary': '免費開始',
   'demo.hub.band.secondary': '閱讀說明文件',
   'demo.hub.foot.home': 'Curahold 首頁',

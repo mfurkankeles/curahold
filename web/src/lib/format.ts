@@ -165,7 +165,7 @@ export function weekStart(locale: Locale): number {
   } catch {
     /* older engines: the table below */
   }
-  return ({ en: 1, tr: 1, ar: 6, he: 0, fa: 6, 'zh-Hans': 1, 'zh-Hant': 0, ja: 0, ko: 0 } as Record<Locale, number>)[locale] ?? 1;
+  return ({ en: 1, tr: 1, ar: 6, he: 0, fa: 6, 'zh-Hans': 1, 'zh-Hant': 0, ja: 0, ko: 0, hi: 0, ms: 1 } as Record<Locale, number>)[locale] ?? 1;
 }
 /** The weekday names in calendar order, starting at the week's first day: short and full. */
 export function weekdayNames(locale: Locale): { short: string; long: string }[] {

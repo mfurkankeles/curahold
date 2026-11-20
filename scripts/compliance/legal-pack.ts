@@ -5,7 +5,7 @@
 //   npx tsx scripts/compliance/legal-pack.ts --pdf <built docs dir> <out dir>
 //        print a PDF copy of every legal page (headless Chrome, at release time)
 //
-// Writes: docs/site/<lang>/legal-subprocessors.md (nine languages); the tables
+// Writes: docs/site/<lang>/legal-subprocessors.md (eleven languages); the tables
 // between <!-- inventory --> and <!-- /inventory --> in the privacy notice and the
 // KVKK notice (English, Turkish); docs/compliance/data-inventory.md (records of
 // processing); docs/compliance/verbis-hazirlik.md (VERBİS preparation sheet); and

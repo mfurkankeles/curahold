@@ -5240,7 +5240,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': 'ابدأ الجولة',
   'demo.hub.card.meta': '{m} د · {s} خطوات',
   "demo.hub.band.title": "هل رأيت ما يكفي؟ جرّبه مع عملائك أنت.",
-  "demo.hub.band.text": "اطلب مساحة عمل لفريقك: ثلاثة أشهر مجانًا، دون بطاقة، وبتسع لغات.",
+  "demo.hub.band.text": "اطلب مساحة عمل لفريقك: ثلاثة أشهر مجانًا، دون بطاقة، وبإحدى عشرة لغة.",
   'demo.hub.band.primary': 'ابدأ مجانًا',
   'demo.hub.band.secondary': 'اقرأ الوثائق',
   'demo.hub.foot.home': 'الصفحة الرئيسية لـ Curahold',

@@ -298,14 +298,14 @@ The rules every connector keeps:
    cap the body, and keep each event once.
 4. **Data the company did not ask for is not kept**: calendars read title, time, length and guests only; WhatsApp
    messages from unknown numbers are counted, not stored. Disconnecting deletes the credentials; what came over stays.
-5. **Strings**: every word on screen in all nine dictionaries (`support.what.<id>`, `support.how.<id>`,
+5. **Strings**: every word on screen in all eleven dictionaries (`support.what.<id>`, `support.how.<id>`,
    `support.field.<id>.<key>`, `fin.what/steps.<id>`), the name in `PROVIDER_NAMES`.
 6. **Tests the way a customer uses it**: a mock of the vendor in `tests/vendors/<vendor>.ts` (the `VendorMock`
    contract in `tests/vendors/kit.ts`: hosts, `handle`, `consent`, `remoteEdit`, `remoteRow`, the four faults),
    then a flow in `tests/connectors-b19.test.ts` (or the onboarding suite): connect → map → first data → both ways →
    a change there → conflict → expired / revoked / rate limit / bad field → reconnect → disconnect. Timed run:
    `B19_LATENCY=1 B19_TIMINGS=out.json npx vitest run tests/connectors-b19.test.ts`.
-7. **Docs**: a help page in nine languages (one action per numbered step, a picture per step from
+7. **Docs**: a help page in eleven languages (one action per numbered step, a picture per step from
    `scripts/docs/shots.ts`, values in copy blocks), an assistant case in `tests/assistant-eval/cases.ts`, setup checks
    where a silent failure is possible (`shared/src/setupHealth.ts` + `api/src/lib/setupHealth.ts`), the route in
    `scripts/docs/catalogue.ts`, and a row in `INTEGRATIONS.md` and in `/orch/out/w3-integrations-real.md`.
@@ -327,7 +327,7 @@ evaluation cases that ask about it; `tests/docs-coverage.test.ts` fails for a ne
    (`npm run build:demo`) and run `npx tsx scripts/docs/shots.ts` (`ONLY=<prefix>-` takes only those, the
    languages as arguments). Anything to type or paste goes in a fenced block: the docs give it a Copy button.
 3. Add the place to `shared/src/helpLinks.ts`, and at least one case to `tests/assistant-eval/cases.ts` in all
-   nine languages with `cite: '<page>'`. Run `EVAL_ONLY=how_to EVAL_LANGS=en,tr npx tsx tests/assistant-eval/run.ts`:
+   eleven languages with `cite: '<page>'`. Run `EVAL_ONLY=how_to EVAL_LANGS=en,tr npx tsx tests/assistant-eval/run.ts`:
    without a key the docs search must find your page for the English and Turkish questions.
 4. Something no customer ever sees (the operator's console, a page a link lands on and leaves) goes in
    `NOT_FOR_HELP` with the reason; an API area that belongs to the browser goes under `INTERNAL` in
@@ -351,7 +351,7 @@ links to the one screen that fixes it.
    (the panel) and with owner access (the daily run). No model, no outside
    call, nothing written. A check that reads the server's configuration goes
    in `CONFIG_CHECKS` instead.
-3. Write `sh.<id>.problem`, `.why` and `.fix` in all nine dictionaries (add
+3. Write `sh.<id>.problem`, `.why` and `.fix` in all eleven dictionaries (add
    `.problem.one` when `{n}` can be 1). Plain words: what we noticed, why it
    matters, the button's label.
 4. Run `npx tsx scripts/docs/setup-health-page.ts`: it writes the check into
@@ -379,8 +379,8 @@ lists (`onboarding_issues`, `source = 'setup_test'`, `source_ref` = the step);
 ### a sales-site language
 
 The site (curahold.com) publishes a language only when all of its copy exists: no half-English
-pages, no hreflang to a page that is not there (ADR 0020). Hindi and Malay are next; they are in
-`SITE_PENDING` today. To add one:
+pages, no hreflang to a page that is not there (ADR 0020). All eleven app languages are site
+languages now (Hindi and Malay were the last, added this way); `SITE_PENDING` is empty. To add one:
 
 1. `site/locales.ts`: add it to `SITE_LANGS` with its Open Graph locale (`hi_IN`, `ms_MY`), to
    `SITE_FONTS` (`ms: ['latin']`; `hi: []`, it reads the system's Devanagari face), and take it
@@ -590,7 +590,7 @@ the endings in `PORTAL_FILE_ENDINGS`, first bytes, `PORTAL_FILE_MB` per file and
 (`portal_file`). No malware scan yet (RUNBOOK, go-live checklist).
 
 **Adding a signal:** an entry in `SIGNALS`, its fact in `lib/onboarding.ts` (`companyFacts`,
-`customerFacts` or `planFacts`), `ob.signal.<id>` in the nine dictionaries, and a test in
+`customerFacts` or `planFacts`), `ob.signal.<id>` in the eleven dictionaries, and a test in
 `tests/onboarding-hub.test.ts`.
 
 ## Departments and the flow between them
@@ -662,5 +662,5 @@ instant sign-up is `SIGNUP_MODE=instant`. After approval the company's administr
 once per version (`routes/agreements.ts`, append-only `agreement_evidence`). Consent texts are versioned rule sets in
 `shared/src/compliance/consentTexts.ts`; every surface uses one consent library (`shared/src/consent/`), and
 `scripts/compliance/inventory.ts` scans the code for anything stored in a browser and fails when a key is not in the
-inventory, which also writes the cookie policy in nine languages. Crawlers: one list in
+inventory, which also writes the cookie policy in eleven languages. Crawlers: one list in
 `shared/src/compliance/crawlers.ts` drives every robots.txt and the Worker's refusals (`lib/botGuard.ts`).

@@ -62,7 +62,7 @@ describe('no text or check that assumes two languages', () => {
       expect(typeLabel(BUILTIN_TYPES.contact, l), l).not.toBe('');
       expect(pick(REPORT_LIBRARY[0].name, l), l).not.toBe('');
     }
-    // Written into a company's data, the server keeps all nine.
+    // Written into a company's data, the server keeps all eleven.
     const stored = JSON.parse(JSON.stringify(tpl.accountFields[0].label));
     expect(Object.keys(stored).sort()).toEqual([...LOCALES].sort());
   });

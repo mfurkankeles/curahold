@@ -16,7 +16,7 @@
 //
 // Outputs: docs/compliance/storage-inventory.json (machine-readable, with the
 // files each item was found in) and docs/site/<lang>/legal-cookies.md in all
-// nine languages. Both are deterministic: the date is the policy version's.
+// eleven languages. Both are deterministic: the date is the policy version's.
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';

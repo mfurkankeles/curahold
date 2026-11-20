@@ -1,4 +1,4 @@
-// The demo hub's tours speak all nine languages, the product and sales roles
+// The demo hub's tours speak every language, the product and sales roles
 // have tours of their own, and the three-question picker answers every
 // combination with real tours.
 import { describe, expect, it } from 'vitest';
@@ -9,15 +9,17 @@ import { fa } from '../shared/src/i18n/fa';
 import { he } from '../shared/src/i18n/he';
 import { ja } from '../shared/src/i18n/ja';
 import { ko } from '../shared/src/i18n/ko';
+import { hi } from '../shared/src/i18n/hi';
+import { ms } from '../shared/src/i18n/ms';
 import { tr } from '../shared/src/i18n/tr';
 import { zhHans } from '../shared/src/i18n/zh-Hans';
 import { zhHant } from '../shared/src/i18n/zh-Hant';
 import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_GOALS, TOUR_ROLES, intentTable, pickTours, tourById } from '../shared/src/tours';
 
-const DICTS: Record<string, Record<string, string>> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko } as any;
+const DICTS: Record<string, Record<string, string>> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko, hi, ms } as any;
 
 describe('the tours', () => {
-  it('every tour and role has its words in all nine languages', () => {
+  it('every tour and role has its words in every language', () => {
     expect(Object.keys(DICTS).sort()).toEqual([...LOCALES].sort());
     for (const t of TOURS) {
       const keys = [`demo.tour.${t.id}.title`, `demo.tour.${t.id}.blurb`, ...t.steps.flatMap((_, i) => [`demo.tour.${t.id}.${i + 1}.title`, `demo.tour.${t.id}.${i + 1}.body`])];

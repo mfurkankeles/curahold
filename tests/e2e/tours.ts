@@ -121,7 +121,7 @@ const t0 = Date.now();
   if (tr.errors.length) fail(`hub tr: ${tr.errors.join(' | ')}`);
   await tr.page.close();
   // Every other language: its own page, the right direction, its own picture of the product, a phone's width.
-  for (const l of ['ar', 'he', 'fa', 'ja', 'zh-Hans', 'zh-Hant', 'ko']) {
+  for (const l of ['ar', 'he', 'fa', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'hi', 'ms']) {
     const x = await open(`${l}/`, 390, 844);
     await x.page.waitForSelector('.hub-card');
     await x.page.waitForFunction(() => [...document.images].every((i) => i.complete), { timeout: 10000 }).catch(() => undefined);
@@ -152,7 +152,7 @@ const t0 = Date.now();
     if (e.length) fail(`hub chooser: ${e.join(' | ')}`);
     await p.close();
   }
-  console.log(`hub: ${TOURS.length} tours, filters, nine languages, the language chooser — ${failures.length ? 'problems above' : 'fine'}`);
+  console.log(`hub: ${TOURS.length} tours, filters, eleven languages, the language chooser — ${failures.length ? 'problems above' : 'fine'}`);
 }
 
 // ----------------------------------------------------------------- the tours

@@ -41,7 +41,7 @@ Soldaki **+ Yeni** düğmesi her şeyi tek yerden ekler: görev, müşteri, gör
 
 ## Dil
 
-Curahold dokuz dil konuşur: İngilizce, Türkçe, Arapça, İbranice, Farsça, Basitleştirilmiş ve Geleneksel Çince, Japonca ve Korece. Dil iki yerden seçilir:
+Curahold on bir dil konuşur: İngilizce, Türkçe, Arapça, İbranice, Farsça, Basitleştirilmiş ve Geleneksel Çince, Japonca, Korece, Hintçe ve Malayca. Dil iki yerden seçilir:
 
 - **Kendin için:** Ayarların → Dil. Seçimin her cihazda seninle gelir.
 - **Şirket için:** bir yönetici Ayarlar → Şirket sayfasından belirler. Yeni gelenler o dilde başlar, şirketin tamamına giden e-postalar o dilde yazılır.
