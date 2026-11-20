@@ -6739,7 +6739,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "رمز الوصول (مستخدم النظام)",
   "support.field.whatsapp.appSecret": "سرّ التطبيق",
   "whatsapp.title": "إعدادات webhook في Meta",
-  "whatsapp.how": "في تطبيق Meta لديك: WhatsApp ← Configuration ← Webhook ← Edit. الصق عنوان الاستدعاء ورمز التحقق أدناه، وانقر Verify and save، ثم اشترك في الحقل «messages».",
+  "whatsapp.how": "في تطبيق Meta لديك: WhatsApp ← Configuration ← Webhook ← Edit. الصق عنوان الاستدعاء ورمز التحقق أدناه، وأكّد بالزر الموجود أسفلها، ثم اشترك في الحقل «messages».",
   "whatsapp.url": "عنوان الاستدعاء",
   "whatsapp.verify": "رمز التحقق",
   "whatsapp.cost": "تمرّ كل رسالة عبر حساب Meta الخاص بك وتحاسبك Meta عليها. الردود نص حر خلال 24 ساعة من آخر رسالة للعميل؛ بعدها لا يقبل WhatsApp إلا قالبًا وافقت عليه.",

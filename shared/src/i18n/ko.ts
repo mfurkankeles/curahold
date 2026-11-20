@@ -6739,7 +6739,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "액세스 토큰(시스템 사용자)",
   "support.field.whatsapp.appSecret": "앱 시크릿",
   "whatsapp.title": "Meta 웹훅 설정",
-  "whatsapp.how": "Meta 앱에서: WhatsApp → Configuration → Webhook → Edit. 아래 콜백 주소와 확인 토큰을 붙여 넣고 Verify and save를 누른 다음 “messages” 필드를 구독하세요.",
+  "whatsapp.how": "Meta 앱에서: WhatsApp → Configuration → Webhook → Edit. 아래 콜백 주소와 확인 토큰을 붙여 넣고 아래 버튼으로 확인한 다음 “messages” 필드를 구독하세요.",
   "whatsapp.url": "콜백 주소",
   "whatsapp.verify": "확인 토큰",
   "whatsapp.cost": "모든 메시지는 회사의 Meta 계정을 거치며 요금은 Meta가 청구합니다. 고객의 마지막 메시지 후 24시간 안에는 자유롭게 답할 수 있고, 그 뒤에는 승인받은 템플릿만 보낼 수 있습니다.",

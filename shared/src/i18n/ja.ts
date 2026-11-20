@@ -6739,7 +6739,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "アクセストークン（システムユーザー）",
   "support.field.whatsapp.appSecret": "App Secret",
   "whatsapp.title": "Meta の Webhook 設定",
-  "whatsapp.how": "Meta アプリで：WhatsApp → Configuration → Webhook → Edit。下のコールバック URL と認証トークンを貼り付けて Verify and save をクリックし、「messages」フィールドを登録します。",
+  "whatsapp.how": "Meta アプリで：WhatsApp → Configuration → Webhook → Edit。下のコールバック URL と認証トークンを貼り付けて 下のボタンで確定し、「messages」フィールドを登録します。",
   "whatsapp.url": "コールバック URL",
   "whatsapp.verify": "認証トークン",
   "whatsapp.cost": "すべてのメッセージは自社の Meta アカウントを通り、料金は Meta から請求されます。顧客の最後のメッセージから 24 時間以内は自由に返信でき、それ以降は承認済みのテンプレートしか送れません。",

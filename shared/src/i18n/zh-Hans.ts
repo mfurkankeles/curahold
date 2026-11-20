@@ -6739,7 +6739,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "访问令牌（系统用户）",
   "support.field.whatsapp.appSecret": "应用密钥",
   "whatsapp.title": "Meta Webhook 设置",
-  "whatsapp.how": "在你的 Meta 应用中：WhatsApp → Configuration → Webhook → Edit。粘贴下面的回调地址和验证令牌，点击 Verify and save，然后订阅“messages”字段。",
+  "whatsapp.how": "在你的 Meta 应用中：WhatsApp → Configuration → Webhook → Edit。粘贴下面的回调地址和验证令牌，用下方的按钮确认，然后订阅“messages”字段。",
   "whatsapp.url": "回调地址",
   "whatsapp.verify": "验证令牌",
   "whatsapp.cost": "每条消息都通过你自己的 Meta 账号发送，并由 Meta 向你收费。在客户最后一条消息后的 24 小时内可以自由回复；之后 WhatsApp 只接受你已获批准的模板。",

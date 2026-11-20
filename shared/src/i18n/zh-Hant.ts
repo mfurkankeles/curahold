@@ -6739,7 +6739,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "存取權杖（系統使用者）",
   "support.field.whatsapp.appSecret": "應用程式密鑰",
   "whatsapp.title": "Meta Webhook 設定",
-  "whatsapp.how": "在你的 Meta 應用程式中：WhatsApp → Configuration → Webhook → Edit。貼上下方的回呼位址和驗證權杖，點選 Verify and save，然後訂閱「messages」欄位。",
+  "whatsapp.how": "在你的 Meta 應用程式中：WhatsApp → Configuration → Webhook → Edit。貼上下方的回呼位址和驗證權杖，用下方的按鈕確認，然後訂閱「messages」欄位。",
   "whatsapp.url": "回呼位址",
   "whatsapp.verify": "驗證權杖",
   "whatsapp.cost": "每則訊息都透過你自己的 Meta 帳號傳送，並由 Meta 向你收費。在客戶最後一則訊息後的 24 小時內可以自由回覆；之後 WhatsApp 只接受你已獲核准的範本。",

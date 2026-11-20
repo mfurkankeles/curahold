@@ -6754,7 +6754,7 @@ export const en = {
   "support.field.whatsapp.accessToken": "Access token (system user)",
   "support.field.whatsapp.appSecret": "App secret",
   "whatsapp.title": "Meta webhook settings",
-  "whatsapp.how": "In your Meta app: WhatsApp → Configuration → Webhook → Edit. Paste the callback address and the verify token below, click Verify and save, then subscribe to the “messages” field.",
+  "whatsapp.how": "In your Meta app: WhatsApp → Configuration → Webhook → Edit. Paste the callback address and the verify token below, confirm with the button under them, then subscribe to the “messages” field.",
   "whatsapp.url": "Callback address",
   "whatsapp.verify": "Verify token",
   "whatsapp.cost": "Every message goes through your own Meta account and is billed by Meta to you. Replies are free text within 24 hours of the customer's last message; after that WhatsApp only accepts a template you had approved.",

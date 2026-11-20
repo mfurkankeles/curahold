@@ -6739,7 +6739,7 @@ export const tr: Record<MessageKey, string> = {
   "support.field.whatsapp.accessToken": "Erişim anahtarı (sistem kullanıcısı)",
   "support.field.whatsapp.appSecret": "Uygulama gizli anahtarı",
   "whatsapp.title": "Meta webhook ayarları",
-  "whatsapp.how": "Meta uygulamanda: WhatsApp → Configuration → Webhook → Edit. Aşağıdaki geri arama adresini ve doğrulama anahtarını yapıştır, Verify and save'e tıkla, sonra “messages” alanına abone ol.",
+  "whatsapp.how": "Meta uygulamanda: WhatsApp → Configuration → Webhook → Edit. Aşağıdaki geri arama adresini ve doğrulama anahtarını yapıştır, altındaki düğmeyle onayla, sonra “messages” alanına abone ol.",
   "whatsapp.url": "Geri arama adresi",
   "whatsapp.verify": "Doğrulama anahtarı",
   "whatsapp.cost": "Her mesaj kendi Meta hesabından geçer ve ücretini Meta sana keser. Müşterinin son mesajından sonraki 24 saat içinde serbest metinle cevap verilir; sonrasında WhatsApp yalnızca onaylattığın bir şablonu kabul eder.",

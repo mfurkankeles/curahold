@@ -6739,7 +6739,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "توکن دسترسی (کاربر سیستم)",
   "support.field.whatsapp.appSecret": "رمز برنامه",
   "whatsapp.title": "تنظیمات webhook در Meta",
-  "whatsapp.how": "در برنامهٔ Meta خود: WhatsApp ← Configuration ← Webhook ← Edit. نشانی callback و توکن تأیید زیر را بچسبانید، روی Verify and save بزنید و سپس در فیلد «messages» مشترک شوید.",
+  "whatsapp.how": "در برنامهٔ Meta خود: WhatsApp ← Configuration ← Webhook ← Edit. نشانی callback و توکن تأیید زیر را بچسبانید، با دکمهٔ زیر آن تأیید کنید و سپس در فیلد «messages» مشترک شوید.",
   "whatsapp.url": "نشانی callback",
   "whatsapp.verify": "توکن تأیید",
   "whatsapp.cost": "هر پیام از حساب Meta خودتان می‌گذرد و Meta هزینهٔ آن را از شما می‌گیرد. تا ۲۴ ساعت پس از آخرین پیام مشتری می‌توانید متن آزاد بفرستید؛ پس از آن WhatsApp فقط قالب تأییدشده را می‌پذیرد.",

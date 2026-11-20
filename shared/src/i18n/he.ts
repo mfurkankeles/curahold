@@ -6739,7 +6739,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   "support.field.whatsapp.accessToken": "אסימון גישה (משתמש מערכת)",
   "support.field.whatsapp.appSecret": "סוד האפליקציה",
   "whatsapp.title": "הגדרות ה-webhook ב-Meta",
-  "whatsapp.how": "באפליקציית Meta שלך: WhatsApp ← Configuration ← Webhook ← Edit. מדביקים את כתובת ה-callback ואת אסימון האימות שלמטה, לוחצים Verify and save ונרשמים לשדה “messages”.",
+  "whatsapp.how": "באפליקציית Meta שלך: WhatsApp ← Configuration ← Webhook ← Edit. מדביקים את כתובת ה-callback ואת אסימון האימות שלמטה, מאשרים בכפתור שמתחתם ונרשמים לשדה “messages”.",
   "whatsapp.url": "כתובת callback",
   "whatsapp.verify": "אסימון אימות",
   "whatsapp.cost": "כל הודעה עוברת דרך חשבון Meta שלך ו-Meta מחייבת אותך עליה. תשובה בטקסט חופשי אפשרית בתוך 24 שעות מההודעה האחרונה של הלקוח; אחר כך WhatsApp מקבל רק תבנית שאושרה.",
