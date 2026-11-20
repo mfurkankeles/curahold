@@ -11,7 +11,6 @@ import { EmptyState } from './Empty';
 import { Icon } from './icons';
 import { intlTag } from '../../../shared/src/i18n';
 import { currencySign, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
-import { Icon } from './icons';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** How many chart slots the palette has (styles.css --series-1 … --series-8). */
