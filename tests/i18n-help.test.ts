@@ -1,8 +1,9 @@
 // The help centre speaks every language: help links, help search and
 // CuraAI's docs answers use the person's own language, never English by
-// fallback. A page a language has no translation of (developer pages, legal
-// texts outside English and Turkish) is built there as the English page with
-// a note (scripts/build-docs.ts), so every link the product makes resolves.
+// fallback. A page a language has no translation of (developer pages outside
+// English and Turkish) is built there as the English page with a note
+// (scripts/build-docs.ts), so every link the product makes resolves. Legal
+// pages exist in every language (shared/src/helpLinks.ts LEGAL_PAGES).
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

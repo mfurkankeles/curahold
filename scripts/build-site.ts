@@ -45,8 +45,11 @@ const AI_VERSION: 'a' | 'c' = process.env.SITE_AI_VERSION === 'c' ? 'c' : 'a';
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Which languages the help pages and demo hub are built in. The site falls
-// back to English for any locale they do not cover yet.
-const DOCS_LANGS = new Set<SiteLocale>(['en', 'tr']);
+// back to English for any locale they do not cover yet. Every site language has
+// its docs folder now (user guide and legal pages in all eleven, 20 Nov 2026); a
+// page a language lacks is built there as the English page with a note, so the
+// links stay in the reader's language.
+const DOCS_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => existsSync(join(ROOT, 'docs', 'site', l))));
 const DEMO_LANGS = new Set<SiteLocale>(['en', 'tr']);
 
 

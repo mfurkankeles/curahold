@@ -281,6 +281,7 @@ export const ms: InfoCopy = {
   trust: {
     title: "Keselamatan dan privasi",
     lead: "Bagaimana data anda disimpan, siapa boleh melihatnya, dan apa yang boleh anda lakukan dengannya. Ditulis dengan jelas, dengan dokumen dipautkan di bawah.",
+    pack: "Kami menjawab soal selidik keselamatan standard dan berkongsi dasar keselamatan kami dengan pelanggan dan bakal pelanggan atas permintaan — tulis kepada kami melalui pusat bantuan.",
     points: [["Setiap syarikat diasingkan", "Setiap baris membawa syarikatnya, dan pangkalan data itu sendiri menentukan siapa melihatnya — pepijat pada skrin masih tidak dapat menunjukkan data syarikat lain kepada satu syarikat."], ["Data di Kesatuan Eropah", "Pangkalan data berjalan di EU. Perjanjian pemprosesan data merangkumi GDPR dan KVKK Türkiye."], ["Log masuk tanpa kata laluan", "Pautan e-mel, Google atau Microsoft, dan log masuk tunggal. Peranti baharu juga mesti memasukkan kod yang dihantar melalui e-mel."], ["Siapa melihat apa", "Peranan menentukan pelanggan mana yang dilihat setiap orang; akses medan menentukan siapa membaca dan siapa mengubah setiap medan."], ["Sokongan hanya dengan persetujuan anda", "Pasukan sokongan kami boleh melihat ke dalam ruang kerja anda hanya apabila anda membenarkannya, untuk masa terhad, dan setiap lawatan direkodkan."], ["Permintaan data peribadi", "Muat turun semua yang dipegang tentang seseorang, atau hapuskannya, daripada kawasan pentadbir; log aktiviti menyimpan rekodnya."]],
   },
   why: {

@@ -12,6 +12,14 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- The legal pages — terms, privacy notice, data processing agreement, acceptable use, SLA, order form, accessibility
+  statement and the KVKK notice — are now in all eleven languages, each marked as a draft for the lawyer and saying that
+  the English text prevails (for the KVKK notice, the Turkish). The privacy notice adds notes for India (grievance
+  officer, Data Protection Board), Malaysia (Data Protection Officer, transfer safeguard, Malay and English), Singapore,
+  the Gulf, Israel and East Asia, and says plainly that Curahold is not for anyone under 18.
+- The sales site's links to help and legal pages now open in the reader's language instead of English, and the trust
+  page lists the SLA, acceptable use policy, order form and the page for reporting a security issue.
+
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with

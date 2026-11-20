@@ -260,6 +260,7 @@ export const en: InfoCopy = {
   trust: {
     title: 'Security and privacy',
     lead: 'How your data is kept, who can see it, and what you can do with it. Written plainly, with the documents linked below.',
+    pack: "We answer standard security questionnaires and share our security policies with customers and prospects on request — write to us through the help centre.",
     points: [
       ['Every company kept apart', 'Each row carries its company, and the database itself decides who sees it — a bug in a screen still cannot show one company another’s data.'],
       ['Data in the European Union', 'The database runs in the EU. The data processing agreement covers GDPR and Türkiye’s KVKK.'],
