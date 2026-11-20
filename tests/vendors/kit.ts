@@ -40,6 +40,8 @@ export interface Ctl {
 export interface VendorMock {
   /** Curahold's provider id (shared/src/sync CrmProvider), or a family id for our own surfaces. */
   id: string;
+  /** Other products served by the same mock (Microsoft Graph serves Excel and Outlook). */
+  ids?: string[];
   /** Hosts this vendor answers for. */
   hosts: RegExp;
   /** What a non-technical admin types or pastes to connect with a key (absent: OAuth sign-in). */
@@ -70,9 +72,10 @@ export class TokenBook {
     return c;
   }
   /** authorization_code grant; PKCE checked when a challenge was sent. Returns null for an unknown or reused code. */
+  /** `vendor` '*': a sign-in service shared by several products (Microsoft, Google) takes any of their codes. */
   async redeem(vendor: string, code: string, verifier?: string) {
     const c = this.codes.get(code);
-    if (!c || c.vendor !== vendor) return null;
+    if (!c || (vendor !== '*' && c.vendor !== vendor)) return null;
     this.codes.delete(code);
     if (c.challenge) {
       if (!verifier) return null;
@@ -80,7 +83,7 @@ export class TokenBook {
       const b64 = btoa(String.fromCharCode(...d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       if (b64 !== c.challenge) return null;
     }
-    return { ...this.issue(vendor), extra: c.extra };
+    return { ...this.issue(c.vendor), extra: c.extra };
   }
   issue(vendor: string, ttl = 3600) {
     const a = `at-${vendor}-${++this.n}`;
@@ -91,9 +94,10 @@ export class TokenBook {
   }
   /** refresh_token grant, rotating the refresh token (the old one stops working). */
   rotate(vendor: string, token: string) {
-    if (this.refresh.get(token) !== vendor) return null;
+    const owner = this.refresh.get(token);
+    if (!owner || (vendor !== '*' && owner !== vendor)) return null;
     this.refresh.delete(token);
-    return this.issue(vendor);
+    return this.issue(owner);
   }
   valid(vendor: string, bearer: string | null) {
     const t = bearer?.replace(/^(Bearer|Zoho-oauthtoken)\s+/i, '') ?? '';
@@ -134,8 +138,12 @@ export function vendorWorld(mocks: VendorMock[], opts: { latencyMs?: (vendor: st
   const now = opts.now ?? (() => new Date());
   const tokens = new TokenBook(now);
   const faults = new Map<string, Map<Fault, number>>();
+  // A product served by another product's mock (Outlook by the Graph mock) shares its faults and controls.
+  const own = (vendor: string) => mocks.find((m) => m.id === vendor || m.ids?.includes(vendor))?.id ?? vendor;
   const calls: CallLog[] = [];
-  const ctlFor = (vendor: string): Ctl => ({
+  const ctlFor = (asked: string): Ctl => {
+    const vendor = own(asked);
+    return {
     take(kind) {
       const f = faults.get(vendor);
       const left = f?.get(kind) ?? 0;
@@ -146,7 +154,8 @@ export function vendorWorld(mocks: VendorMock[], opts: { latencyMs?: (vendor: st
     revoked: () => (faults.get(vendor)?.get('revoked') ?? 0) > 0,
     now,
     tokens,
-  });
+    };
+  };
   const fetcher = (async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const req = input instanceof Request ? input : null;
     const url = new URL(req ? req.url : String(input));
@@ -176,17 +185,18 @@ export function vendorWorld(mocks: VendorMock[], opts: { latencyMs?: (vendor: st
     fetch: fetcher,
     calls,
     tokens,
-    arm(vendor, kind, times = 1) {
+    arm(asked, kind, times = 1) {
+      const vendor = own(asked);
       const f = faults.get(vendor) ?? new Map<Fault, number>();
       f.set(kind, kind === 'revoked' ? Number.MAX_SAFE_INTEGER : (f.get(kind) ?? 0) + times);
       faults.set(vendor, f);
     },
     clear(vendor) {
-      faults.delete(vendor);
+      faults.delete(own(vendor));
     },
     ctl: ctlFor,
     mock(vendor) {
-      const m = mocks.find((x) => x.id === vendor);
+      const m = mocks.find((x) => x.id === vendor || x.ids?.includes(vendor));
       if (!m) throw new Error(`no mock ${vendor}`);
       return m;
     },

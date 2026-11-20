@@ -3,8 +3,8 @@
 // each side, both at once, an expired token, a rate limit, a refused field, withdrawn access,
 // reconnect and disconnect. scripts/integrations/onboard.ts times the same flow.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { runAccountingFlow, runFlow, type Http } from './vendors/flow';
-import { ACCOUNTING_SPECS, SPECS } from './vendors/specs';
+import { runAccountingFlow, runFlow, runJiraFlow, runMailboxFlow, runSupportFlow, type Http } from './vendors/flow';
+import { ACCOUNTING_SPECS, JIRA_SPECS, MAILBOX_SPECS, SPECS, SUPPORT_SPECS } from './vendors/specs';
 import { VENDOR_MOCKS } from './vendors';
 import { vendorWorld, type VendorWorld } from './vendors/kit';
 import { BASE, Client, login, setup, type Env } from './helpers';
@@ -49,6 +49,27 @@ describe('integrations, customer-style, against the vendor mocks', () => {
       const { steps } = await runFlow(httpFor(env, ada), world, spec);
       const failed = steps.filter((s) => !s.ok).map((s) => `${s.step}: ${s.note}`);
       expect(failed).toEqual([]);
+    });
+  }
+
+  for (const spec of SUPPORT_SPECS) {
+    it(`${spec.provider} (support tickets): every step of the run works`, async () => {
+      const { steps } = await runSupportFlow(httpFor(env, ada), world, spec);
+      expect(steps.filter((s) => !s.ok).map((s) => `${s.step}: ${s.note}`)).toEqual([]);
+    });
+  }
+
+  for (const spec of JIRA_SPECS) {
+    it(`${spec.provider} (board sync): every step of the run works`, async () => {
+      const { steps } = await runJiraFlow(httpFor(env, ada), world, spec);
+      expect(steps.filter((s) => !s.ok).map((s) => `${s.step}: ${s.note}`)).toEqual([]);
+    });
+  }
+
+  for (const spec of MAILBOX_SPECS) {
+    it(`${spec.provider} (mailbox): every step of the run works`, async () => {
+      const { steps } = await runMailboxFlow(httpFor(env, ada), world, spec);
+      expect(steps.filter((s) => !s.ok).map((s) => `${s.step}: ${s.note}`)).toEqual([]);
     });
   }
 
