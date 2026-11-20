@@ -150,6 +150,7 @@ export interface Env {
   RETENTION_CONSENT_DAYS?: string;
   RETENTION_SUPPORT_DAYS?: string;
   RETENTION_AUDIT_DAYS?: string;
+  RETENTION_PRIVACY_REQUEST_DAYS?: string;
   COMPANY_DELETE_GRACE_DAYS?: string;
 }
 

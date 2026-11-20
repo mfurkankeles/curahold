@@ -66,6 +66,7 @@ In **Settings → Company → Requests about personal data**, people with the pr
 | Error records (what broke, where — never request contents) | 30 days |
 | Revoked API keys | 30 days |
 | Activity log | 12 months |
+| Requests about personal data, once answered or refused | 3 years after closing |
 | Help requests, their messages and files | 24 months after the last change |
 | Questions to CuraAI | As your company chose (30 days unless changed) |
 | A deleted company | 30 days after the request, then erased |

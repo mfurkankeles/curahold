@@ -66,6 +66,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 | Hata kayıtları (ne, nerede bozuldu — istek içeriği asla) | 30 gün |
 | İptal edilmiş API anahtarları | 30 gün |
 | Aktivite kaydı | 12 ay |
+| Kişisel veri talepleri (yanıtlandıktan ya da reddedildikten sonra) | Kapandıktan sonra 3 yıl |
 | Yardım talepleri, mesajları ve dosyaları | Son değişiklikten 24 ay sonra |
 | CuraAI'ye sorulanlar | Şirketinizin seçtiği süre (değiştirilmediyse 30 gün) |
 | Silinen bir şirket | Talepten 30 gün sonra silinir |

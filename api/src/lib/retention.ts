@@ -19,6 +19,8 @@ export interface RetentionConfig {
   supportDays: number;
   /** The activity log (audit_log): security and administration records. */
   auditDays: number;
+  /** Requests about personal data (privacy_requests, 0250), counted from when the request was answered or refused. */
+  privacyRequestsDays: number;
   /** Days between a company's deletion request and the purge (it can be cancelled meanwhile). */
   companyDeleteGraceDays: number;
 }
@@ -26,24 +28,31 @@ export interface RetentionConfig {
 /**
  * The stated periods. Trial requests 12 months, consent proof 3 years (the
  * usual limitation period for a claim about it), support 24 months, the
- * activity log 12 months, company deletion after 30 days.
+ * activity log 12 months, company deletion after 30 days. A closed request
+ * about personal data is kept 3 years after it was closed: it is the proof that
+ * the request was answered on time, and 3 years is the same limitation reasoning
+ * as consent proof. An open one is never purged. The period is an owner/lawyer
+ * question (orch owner-questions, privacy request log): shorter is better for
+ * minimisation, longer for evidence.
  */
 export const RETENTION_DEFAULTS: RetentionConfig = {
   trialRequestsDays: 365,
   consentDays: 1095,
   supportDays: 730,
   auditDays: 365,
+  privacyRequestsDays: 1095,
   companyDeleteGraceDays: 30,
 };
 
 /** The lowest value a setting may take: below it the default is used instead. */
-const FLOORS: RetentionConfig = { trialRequestsDays: 30, consentDays: 365, supportDays: 90, auditDays: 90, companyDeleteGraceDays: 7 };
+const FLOORS: RetentionConfig = { trialRequestsDays: 30, consentDays: 365, supportDays: 90, auditDays: 90, privacyRequestsDays: 365, companyDeleteGraceDays: 7 };
 
 const ENV_KEYS: Record<keyof RetentionConfig, string> = {
   trialRequestsDays: 'RETENTION_TRIAL_REQUEST_DAYS',
   consentDays: 'RETENTION_CONSENT_DAYS',
   supportDays: 'RETENTION_SUPPORT_DAYS',
   auditDays: 'RETENTION_AUDIT_DAYS',
+  privacyRequestsDays: 'RETENTION_PRIVACY_REQUEST_DAYS',
   companyDeleteGraceDays: 'COMPANY_DELETE_GRACE_DAYS',
 };
 
@@ -72,6 +81,8 @@ export interface RetentionResult {
   helpRequests: number;
   deskLog: number;
   auditLog: number;
+  /** Closed requests about personal data past their period (open ones always stay). */
+  privacyRequests: number;
   files: number;
 }
 
@@ -132,6 +143,10 @@ export async function purgeExpired(deps: Deps, now: Date = (deps.now ?? (() => n
     helpRequests: await count(`delete from help_requests where updated_at < $1::timestamptz - make_interval(days => $2)`, [at, r.supportDays]),
     deskLog: await count(`delete from desk_log where at < $1::timestamptz - make_interval(days => $2)`, [at, r.supportDays]),
     auditLog: await count(`delete from audit_log where at < $1::timestamptz - make_interval(days => $2)`, [at, r.auditDays]),
+    privacyRequests: await count(
+      `delete from privacy_requests where status <> 'open' and closed_at < $1::timestamptz - make_interval(days => $2)`,
+      [at, r.privacyRequestsDays],
+    ),
     files: keys.length,
   };
 }

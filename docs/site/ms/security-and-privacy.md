@@ -66,6 +66,7 @@ Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang 
 | Rekod ralat (apa yang rosak, di mana — tidak pernah kandungan permintaan) | 30 hari |
 | Kunci API yang dibatalkan | 30 hari |
 | Log aktiviti | 12 bulan |
+| Permintaan tentang data peribadi, setelah dijawab atau ditolak | 3 tahun selepas ditutup |
 | Permintaan bantuan, mesej dan failnya | 24 bulan selepas perubahan terakhir |
 | Soalan kepada CuraAI | Seperti yang dipilih oleh syarikat anda (30 hari melainkan diubah) |
 | Syarikat yang dipadam | 30 hari selepas permintaan, kemudian dihapuskan |

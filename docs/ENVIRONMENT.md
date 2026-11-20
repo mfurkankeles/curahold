@@ -207,6 +207,7 @@ periods the privacy notice and the records of processing state (docs/compliance/
 | `RETENTION_CONSENT_DAYS` | Consent and withdrawal records, cookie choices; a "yes" still in force is kept as long as it is relied on | No | `1095` (floor 365). |
 | `RETENTION_SUPPORT_DAYS` | Help requests, their messages and files, the support desk's log (from the last change) | No | `730` (floor 90). |
 | `RETENTION_AUDIT_DAYS` | The activity log (`audit_log`) | No | `365` (floor 90; the database refuses to delete newer rows, migration 0242). |
+| `RETENTION_PRIVACY_REQUEST_DAYS` | Requests about personal data (`privacy_requests`), counted from when the request was answered or refused; open requests are never purged | No | `1095` (floor 365). 3 years: the proof the request was answered on time, for the usual limitation period. Owner/lawyer to confirm. |
 | `COMPANY_DELETE_GRACE_DAYS` | Days between an administrator's request to delete the company and the purge | No | `30` (floor 7). |
 
 ## 7. Self-host only (`api/src/selfhost.ts`, `docker-compose.yml`, `selfhost.env.example`)
