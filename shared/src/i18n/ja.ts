@@ -7002,4 +7002,13 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': '請求をクローズしました',
   'audit.privacy.request_logged': '個人データに関する請求を記録しました',
   'audit.privacy.request_updated': '個人データに関する請求を更新しました',
+  'change.by': '{period}比 {delta}',
+  'change.same': '{period}と同じ',
+  'change.period.days': '直前{n}日間',
+  'change.period.week': '前週',
+  'change.period.month': '前月',
+  'change.period.quarter': '前四半期',
+  'change.period.year': '前年',
+  'change.better': '改善',
+  'change.worse': '悪化',
 };

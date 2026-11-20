@@ -2226,6 +2226,11 @@ strong, b { font-weight: 700; }
 .stat__value { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat__sub { font-size: var(--fs-xs); color: var(--ink-3); }
 .stat__note { color: var(--late); font-weight: 600; }
+/* A figure's change since the period before (components/Change.tsx): words and arrow; colour only where "better" is known. */
+.change { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.change svg { flex: none; }
+.change[data-good='yes'] { color: var(--done-ink, var(--done)); }
+.change[data-good='no'] { color: var(--late-ink, var(--late)); }
 .page--board { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
 .page--board .board { padding: 0 0 20px; margin: 0; }
 .board--records .column { flex-basis: 280px; }

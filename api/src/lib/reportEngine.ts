@@ -451,15 +451,16 @@ export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, 
   const agg = (p: Params) => (def.measure.fn === 'count' ? 'count(*)' : `${def.measure.fn}(${mf!.expr(p, env)})`);
   const format = def.format ?? (def.groups.length >= 2 && def.chart === 'table' ? 'matrix' : def.groups.length ? 'summary' : 'tabular');
 
-  const build = (p: Params, need: Set<string>) => {
+  // `shift` evaluates one filter as if today were another day: the same report one period earlier (previousOf).
+  const build = (p: Params, need: Set<string>, shift?: { index: number; env: Env }) => {
     const conds = [src.where(p, env)];
-    for (const x of def.filters) {
+    for (const [i, x] of def.filters.entries()) {
       const f = src.fields.get(x.field);
       if (!f) continue;
       // A filter on people never spreads the rows out: it tests the row's own list.
       if (f.need && !f.array) need.add(f.need);
       const at = p.mark();
-      const sql = filterSql(f, x, p, env, ctx.viewer.userId);
+      const sql = filterSql(f, x, p, shift && shift.index === i ? shift.env : env, ctx.viewer.userId);
       if (sql) conds.push(`(${sql})`);
       else p.back(at);
     }
@@ -476,6 +477,22 @@ export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, 
   const matched = Number(tot?.matched ?? 0);
   const total = scale(tot?.total);
   const base = { kind: 'ok' as const, unit, moneyField: unit === 'money' ? (mf?.def.key ?? null) : null, total, matched, format };
+
+  // ---- the figure one period earlier: the first date filter that names a period (this/last week…year, last N days)
+  // is moved back one period, everything else stays; same query, same rights (the reader's `q`, row security).
+  async function previousOf(): Promise<NonNullable<Extract<ReportResult, { kind: 'ok' }>['previous']> | null> {
+    const index = def.filters.findIndex((x) => src.fields.get(x.field)?.def.type === 'date' && (x.op === 'this' || x.op === 'last' || (x.op === 'last_days' && Number(x.value) > 0)));
+    if (index < 0) return null;
+    const x = def.filters[index];
+    const days = Math.min(3650, Math.max(1, Math.round(Number(x.value) || 0)));
+    const period = x.op === 'last_days' ? ('days' as const) : (x.period ?? 'month');
+    const earlier = period === 'days' ? addDays(env.today, -days) : periodBounds(env.today, period, -1)[0];
+    const p = new Params();
+    const from = build(p, new Set(), { index, env: { ...env, today: earlier } });
+    const aggSql = agg(p);
+    const [row] = await q.query<{ total: string | null }>(`select ${aggSql} as total ${from()}`, p.list);
+    return { total: scale(row?.total), period, ...(period === 'days' ? { days } : {}) };
+  }
 
   // ---- rows: the columns, readable, with the groups each row falls in
   const listRows = async (cols: F[], keyExprs: ((p: Params) => string)[], need: Set<string>, limit: number) => {
@@ -515,8 +532,11 @@ export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, 
       .slice(0, 10);
 
   if (!def.groups.length) {
-    // One figure (or a gauge of it): no rows to list.
-    if (def.chart === 'number' || def.chart === 'gauge') return { ...base, groups: [], series: [], bucket: null, table: null };
+    // One figure (or a gauge of it): no rows to list, and the same figure one period earlier when the report names one.
+    if (def.chart === 'number' || def.chart === 'gauge') {
+      const previous = await previousOf();
+      return { ...base, groups: [], series: [], bucket: null, table: null, ...(previous ? { previous } : {}) };
+    }
     const table = await listRows(columnsOf(), [], new Set(), opts.chart ? 50 : MAX_ROWS);
     return { ...base, groups: [], series: [], bucket: null, table };
   }

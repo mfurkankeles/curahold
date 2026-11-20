@@ -1,6 +1,7 @@
 // Draws a report's result: one figure, bars, columns, a line, a ring, or a
 // table. Plain HTML and SVG (no chart library): the shapes are simple, they
 // take the palette's colours, and they grow in when the data lands.
+import { Change } from './Change';
 import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import type { OptionColor } from '../../../shared/src/model';
 import type { Bucket, ChartKind, ReportGroupRow, ReportResult, ReportUnit } from '../../../shared/src/reports';
@@ -207,6 +208,9 @@ export function ReportChart({ result, chart, compact, goal, apart }: { result: R
         <strong className="kpi__value num">
           <CountUp value={r.total} format={(v) => f.value(v, r.unit, true)} />
         </strong>
+        {r.previous && (
+          <Change now={r.total} before={r.previous.total} show={(v) => f.value(v, r.unit, true)} {...(r.previous.period === 'days' ? { period: 'days' as const, days: r.previous.days ?? 30 } : { period: r.previous.period })} />
+        )}
         <span className="kpi__sub">{t('rb.fromRows', { n: f.num(r.matched, 0) })}</span>
       </div>
     );

@@ -7017,6 +7017,15 @@ export const en = {
   'privacyReq.closed': 'Request closed',
   'audit.privacy.request_logged': 'logged a request about personal data',
   'audit.privacy.request_updated': 'updated a request about personal data',
+  'change.by': '{delta} on {period}',
+  'change.same': 'Same as {period}',
+  'change.period.days': 'the previous {n} days',
+  'change.period.week': 'the week before',
+  'change.period.month': 'the month before',
+  'change.period.quarter': 'the quarter before',
+  'change.period.year': 'the year before',
+  'change.better': 'better',
+  'change.worse': 'worse',
 } as const;
 
 export type MessageKey = keyof typeof en;

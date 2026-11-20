@@ -7002,4 +7002,13 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': 'تم إغلاق الطلب',
   'audit.privacy.request_logged': 'سجّل طلبًا يتعلق بالبيانات الشخصية',
   'audit.privacy.request_updated': 'حدّث طلبًا يتعلق بالبيانات الشخصية',
+  'change.by': '{delta} مقارنةً مع {period}',
+  'change.same': 'دون تغيير مقارنةً مع {period}',
+  'change.period.days': 'الأيام الـ{n} السابقة',
+  'change.period.week': 'الأسبوع السابق',
+  'change.period.month': 'الشهر السابق',
+  'change.period.quarter': 'الربع السابق',
+  'change.period.year': 'السنة السابقة',
+  'change.better': 'تحسّن',
+  'change.worse': 'تراجع',
 };

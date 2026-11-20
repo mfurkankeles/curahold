@@ -137,6 +137,11 @@ export type ReportResult =
       /** The first grouping is time: the keys are the first day of each bucket. */
       bucket: Bucket | null;
       format?: ReportFormat;
+      /**
+       * One figure (number, gauge) whose filters name a period — this or last week/month/quarter/year, or the last N
+       * days: the same figure one period earlier, so the change can be shown. Absent when the report names no period.
+       */
+      previous?: { total: number; period: 'week' | 'month' | 'quarter' | 'year' | 'days'; days?: number } | null;
       /** The rows; in a summary, `keys` says which group (and inner group) each row is in. */
       table: { columns: { key: string; label: string; type: ReportFieldType }[]; rows: (string | number | null)[][]; keys?: string[][]; more: boolean } | null;
     };

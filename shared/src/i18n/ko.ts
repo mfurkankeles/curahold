@@ -7002,4 +7002,13 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': '요청이 종료되었습니다',
   'audit.privacy.request_logged': '개인정보 관련 요청을 기록했습니다',
   'audit.privacy.request_updated': '개인정보 관련 요청을 업데이트했습니다',
+  'change.by': '{period} 대비 {delta}',
+  'change.same': '{period} 대비 변동 없음',
+  'change.period.days': '이전 {n}일',
+  'change.period.week': '지난주',
+  'change.period.month': '지난달',
+  'change.period.quarter': '지난 분기',
+  'change.period.year': '작년',
+  'change.better': '개선',
+  'change.worse': '악화',
 };

@@ -7002,4 +7002,13 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': '請求已關閉',
   'audit.privacy.request_logged': '記錄了一項個人資料請求',
   'audit.privacy.request_updated': '更新了一項個人資料請求',
+  'change.by': '較{period} {delta}',
+  'change.same': '與{period}持平',
+  'change.period.days': '前 {n} 天',
+  'change.period.week': '上一週',
+  'change.period.month': '上個月',
+  'change.period.quarter': '上一季',
+  'change.period.year': '上一年',
+  'change.better': '向好',
+  'change.worse': '變差',
 };

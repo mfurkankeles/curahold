@@ -7002,4 +7002,13 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': '请求已关闭',
   'audit.privacy.request_logged': '记录了一项个人数据请求',
   'audit.privacy.request_updated': '更新了一项个人数据请求',
+  'change.by': '较{period} {delta}',
+  'change.same': '与{period}持平',
+  'change.period.days': '前 {n} 天',
+  'change.period.week': '上一周',
+  'change.period.month': '上个月',
+  'change.period.quarter': '上一季度',
+  'change.period.year': '上一年',
+  'change.better': '向好',
+  'change.worse': '变差',
 };

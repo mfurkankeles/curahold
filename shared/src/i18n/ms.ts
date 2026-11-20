@@ -6948,4 +6948,13 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': 'Permintaan ditutup',
   'audit.privacy.request_logged': 'merekodkan permintaan tentang data peribadi',
   'audit.privacy.request_updated': 'mengemas kini permintaan tentang data peribadi',
+  'change.by': '{delta} berbanding {period}',
+  'change.same': 'Sama seperti {period}',
+  'change.period.days': '{n} hari sebelumnya',
+  'change.period.week': 'minggu sebelumnya',
+  'change.period.month': 'bulan sebelumnya',
+  'change.period.quarter': 'suku sebelumnya',
+  'change.period.year': 'tahun sebelumnya',
+  'change.better': 'lebih baik',
+  'change.worse': 'lebih teruk',
 };

@@ -7002,4 +7002,13 @@ export const he: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': 'הבקשה נסגרה',
   'audit.privacy.request_logged': 'תיעד בקשה בנושא מידע אישי',
   'audit.privacy.request_updated': 'עדכן בקשה בנושא מידע אישי',
+  'change.by': '{delta} לעומת {period}',
+  'change.same': 'ללא שינוי לעומת {period}',
+  'change.period.days': '{n} הימים הקודמים',
+  'change.period.week': 'השבוע הקודם',
+  'change.period.month': 'החודש הקודם',
+  'change.period.quarter': 'הרבעון הקודם',
+  'change.period.year': 'השנה הקודמת',
+  'change.better': 'שיפור',
+  'change.worse': 'הרעה',
 };

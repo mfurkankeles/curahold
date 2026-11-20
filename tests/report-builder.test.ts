@@ -142,6 +142,29 @@ describe('running a report', () => {
     expect(one.total).toBe(res.matched);
   });
 
+  it('gives one figure its value one period earlier, under the same rights, and nothing without a period', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const [thisMonth] = periodBounds(today, 'month');
+    const [lastMonth] = periodBounds(today, 'month', -1);
+    const [twoBack] = periodBounds(today, 'month', -2);
+    const board = env.a.boards.csBoard;
+    // Three tasks due this month, one last month, one the month before: the figure and its previous month.
+    for (const [title, due] of [['Delta now 1', thisMonth], ['Delta now 2', thisMonth], ['Delta now 3', thisMonth], ['Delta before', lastMonth], ['Delta long ago', twoBack]])
+      expect((await ada.post('/api/tasks', { boardId: board, title, dueDate: due })).status).toBe(201);
+    const only = { field: 'title', op: 'contains' as const, value: 'Delta ' };
+    const now = await run(ada, { ...blankDef('tasks'), chart: 'number', filters: [only, { field: 'due', op: 'this', period: 'month' }] });
+    expect(now.total).toBe(3);
+    expect(now.previous).toEqual({ total: 1, period: 'month' });
+    const last = await run(ada, { ...blankDef('tasks'), chart: 'gauge', filters: [only, { field: 'due', op: 'last', period: 'month' }] });
+    expect(last.total).toBe(1);
+    expect(last.previous).toEqual({ total: 1, period: 'month' });
+    // No period named: no comparison is made up.
+    expect((await run(ada, { ...blankDef('tasks'), chart: 'number', filters: [only] })).previous).toBeUndefined();
+    // A person who sees less gets a smaller previous figure too (it runs as the asker).
+    const seen = await run(sofia, { ...blankDef('tasks'), chart: 'number', filters: [only, { field: 'due', op: 'this', period: 'month' }] });
+    expect(seen.previous!.total).toBeLessThanOrEqual(1);
+  });
+
   it('refuses what it does not know instead of guessing', async () => {
     const bad = await ada.post('/api/reports/run', { def: { ...blankDef('tasks'), groups: [{ field: 'title; drop table tasks' }] } });
     expect(bad.status).toBe(400);

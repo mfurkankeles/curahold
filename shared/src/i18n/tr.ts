@@ -7002,4 +7002,13 @@ export const tr: Record<MessageKey, string> = {
   'privacyReq.closed': 'Talep kapatıldı',
   'audit.privacy.request_logged': 'bir kişisel veri talebini kaydetti',
   'audit.privacy.request_updated': 'bir kişisel veri talebini güncelledi',
+  'change.by': '{period} göre {delta}',
+  'change.same': '{period} göre değişiklik yok',
+  'change.period.days': 'önceki {n} güne',
+  'change.period.week': 'önceki haftaya',
+  'change.period.month': 'önceki aya',
+  'change.period.quarter': 'önceki çeyreğe',
+  'change.period.year': 'önceki yıla',
+  'change.better': 'iyiye gidiş',
+  'change.worse': 'kötüye gidiş',
 };

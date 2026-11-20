@@ -192,7 +192,7 @@ const STAT_ICON = { late: 'alert', soon: 'clock', done: 'checkCircle' } as const
  * A figure tile. A `tone` (late, soon, done) shows as an icon beside the label and a side mark, and is said in words
  * to a screen reader: the state is never told by colour alone (WCAG 1.4.1). Without a tone the tile has no mark.
  */
-export function Stat({ label, value, sub, tone, note, n, fmt }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string; n?: number | null; fmt?: (n: number) => string }) {
+export function Stat({ label, value, sub, tone, note, n, fmt, change }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string; n?: number | null; fmt?: (n: number) => string; change?: React.ReactNode }) {
   const { t } = useI18n();
   return (
     <div className="stat" data-tone={tone}>
@@ -202,6 +202,7 @@ export function Stat({ label, value, sub, tone, note, n, fmt }: { label: string;
         {tone ? <span className="sr-only">{`, ${t(`stat.tone.${tone}`)}`}</span> : null}
       </span>
       <strong className="stat__value num">{n == null ? value : <CountUp value={n} format={fmt ?? String} />}</strong>
+      {change}
       {(sub || note) && (
         <span className="stat__sub">
           {sub}

@@ -6948,4 +6948,13 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': 'अनुरोध बंद हो गया',
   'audit.privacy.request_logged': 'निजी डेटा से जुड़ा एक अनुरोध दर्ज किया',
   'audit.privacy.request_updated': 'निजी डेटा से जुड़ा एक अनुरोध अपडेट किया',
+  'change.by': '{period} के मुकाबले {delta}',
+  'change.same': '{period} जितना ही',
+  'change.period.days': 'पिछले {n} दिनों',
+  'change.period.week': 'पिछले हफ़्ते',
+  'change.period.month': 'पिछले महीने',
+  'change.period.quarter': 'पिछली तिमाही',
+  'change.period.year': 'पिछले साल',
+  'change.better': 'सुधार',
+  'change.worse': 'गिरावट',
 };

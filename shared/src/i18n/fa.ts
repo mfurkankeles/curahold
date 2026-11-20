@@ -7002,4 +7002,13 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'privacyReq.closed': 'درخواست بسته شد',
   'audit.privacy.request_logged': 'یک درخواست مربوط به دادهٔ شخصی را ثبت کرد',
   'audit.privacy.request_updated': 'یک درخواست مربوط به دادهٔ شخصی را به‌روز کرد',
+  'change.by': '{delta} نسبت به {period}',
+  'change.same': 'بدون تغییر نسبت به {period}',
+  'change.period.days': '{n} روز پیش از آن',
+  'change.period.week': 'هفتهٔ قبل',
+  'change.period.month': 'ماه قبل',
+  'change.period.quarter': 'فصل قبل',
+  'change.period.year': 'سال قبل',
+  'change.better': 'بهبود',
+  'change.worse': 'افت',
 };
