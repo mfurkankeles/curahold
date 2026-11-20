@@ -8,7 +8,7 @@ import { TRIAL_DEFAULTS } from '../shared/src/trialRequest';
 import { assistantConfigFrom, planAiCeilingUsd } from '../api/src/assistant/cost';
 import { overCap } from '../api/src/assistant/core';
 import { dbStore } from '../api/src/assistant/store';
-import { billedSeats } from '../api/src/billing/service';
+import { billedSeats, syncSeats } from '../api/src/billing/service';
 import { CONSOLE_SETTING_DEFAULTS } from '../api/src/lib/trialRequests';
 import { login, setup, type Client, type Env } from './helpers';
 
@@ -121,6 +121,41 @@ describe('the fewest seats a subscription is billed for', () => {
     const overview = (await ada.get('/api/billing')).json;
     expect(overview.plans.find((p: { key: string }) => p.key === 'team').minSeats).toEqual({ month: 5, year: 6 });
     await env.db.system((q) => q.query(`update orgs set billing_country = null where id = $1`, [env.a.orgId]));
+  });
+});
+
+describe('seats added during a period', () => {
+  it('are billed at once, prorated for the rest of the period; seats removed are credited at the next bill', async () => {
+    const want = Math.max(3, await fullSeats());
+    const calls: { items: { quantity: number }[]; proration_billing_mode: string }[] = [];
+    env.fetchHolder.impl = async (_url, init) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      calls.push(body);
+      return new Response(JSON.stringify({ data: { id: 'sub_seats', status: 'active', customer_id: 'ctm_seats', items: [{ price: { id: 'pri_team_m' }, quantity: body.items[0].quantity }], current_billing_period: { starts_at: '2026-11-01T00:00:00Z', ends_at: '2099-01-01T00:00:00Z' }, scheduled_change: null } }), { status: 200 });
+    };
+    const subscribe = (seats: number) =>
+      env.db.system((q) =>
+        q.query(
+          `insert into subscriptions (org_id, provider, provider_customer_id, provider_subscription_id, plan, status, billing_interval, seats)
+           values ($1, 'paddle', 'ctm_seats', 'sub_seats', 'team', 'active', 'month', $2)
+           on conflict (org_id) do update set provider_subscription_id = 'sub_seats', plan = 'team', status = 'active', billing_interval = 'month', seats = $2`,
+          [env.a.orgId, seats],
+        ),
+      );
+    // People joined since the last bill: the extra seats are charged now, for the rest of the period.
+    await subscribe(want - 1);
+    expect(await syncSeats(env.deps)).toBe(1);
+    expect(calls.at(-1)).toEqual({ items: [{ price_id: 'pri_team_m', quantity: want }], proration_billing_mode: CATALOGUE.proration.seatsUp });
+    expect(CATALOGUE.proration.seatsUp).toBe('prorated_immediately');
+    // People left: the next bill is lower, nothing is refunded mid-period.
+    await subscribe(want + 2);
+    expect(await syncSeats(env.deps)).toBe(1);
+    expect(calls.at(-1)).toEqual({ items: [{ price_id: 'pri_team_m', quantity: want }], proration_billing_mode: 'prorated_next_billing_period' });
+    // Nothing changed: nothing is sent.
+    const n = calls.length;
+    expect(await syncSeats(env.deps)).toBe(0);
+    expect(calls.length).toBe(n);
+    await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.a.orgId]));
   });
 });
 
