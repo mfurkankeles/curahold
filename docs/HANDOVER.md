@@ -5,7 +5,7 @@ success, product), multi-tenant SaaS on Cloudflare Workers + Postgres, also ship
 server. This page is the order to read things in, the map, how to run, test and ship, the risks you inherit and who
 decides what. It links to the detailed docs instead of repeating them.
 
-Last checked against the code: 20 November 2026 (main `552b957` plus the handover phase-2 commits on `tur3/cto2`).
+Last checked against the code: 20 November 2026 (main `bf23b32` plus the handover phase-2 commits on `tur3/cto2`).
 
 ## Your first week, day by day
 
@@ -39,7 +39,7 @@ shared/src/         pure TypeScript for both sides: model.ts (types), i18n/ (one
                     billing, departments, onboarding, setupHealth, consent/, compliance/, team/ …
 web/src/            the React app: App.tsx (routing), pages/, components/, lib/ (api client, store, i18n), office/ (3D)
 web/portal/         the customer portal app (own bundle, own domain);  web/demo/ the in-browser demo page
-db/migrations/      the schema and row-security policies, append-only (0001 … 0245)
+db/migrations/      the schema and row-security policies, append-only (0001 … 0246)
 db/rollback/        hand-run undo scripts for big recent migrations (not migrations);  db/ops/ role separation template
 docs/site/<lang>/   the help centre — also what the assistant knows;  scripts/docs/ builds pictures and API reference
 site/               the sales site and demo hub generators (scripts/build-site.ts)
@@ -61,7 +61,7 @@ imports `routes/`.
 | How a request flows | `web/src/lib/api.ts` → `app.ts` (security headers, robot guard, company from host, forgery-header check, session) → route validates with zod → `run(c, q => …)` opens a transaction as `curahold_app` with the company and person set → mappers → JSON; errors via `fail('code')`. Side effects go to an outbox in the same transaction. | DEVELOPER 3; ARCHITECTURE 6 |
 | Jobs and schedulers | One hourly entry, `runScheduled` in `lib/scheduler.ts` (Cloudflare cron, or `setInterval` on Node): digests, automations, outbox drain, health scores, syncs, onboarding sweep, trial reminders, 03:00 clean-up, 05:00 renewals, seat sync. Each job isolated, idempotent. The AI team has its own 10-minute cron (`team/schedule.ts`): off without a model key or with `TEAM_SCHEDULER=off`, and stops at the monthly cap. | ARCHITECTURE 8 |
 | Assistant and AI team | One core for every chat surface; free rules and cache first; read-only tools as the asker; caps $100/month install, $5 per company (up to $50); docs search when no key. The AI team only proposes; the operator's own yes runs anything outside, through server-held runners; a monitor pauses misbehaving seats; team cap $40/month. | ADR 0010, 0011; ARCHITECTURE 11 |
-| i18n | Nine complete languages, eleven once Hindi and Malay land (in progress on their own branch); one dictionary per language, glossary per concept, RTL for Arabic, Hebrew, Persian. Tests fail on any missing key or inline language pair. `npm run strings` writes a key to every dictionary at once. | ARCHITECTURE 9a; ADR 0008 |
+| i18n | Eleven complete languages (Hindi and Malay added 20 Nov); one dictionary per language, glossary per concept, RTL for Arabic, Hebrew, Persian. Tests fail on any missing key or inline language pair. `npm run strings` writes a key to every dictionary at once. | ARCHITECTURE 9a; ADR 0008 |
 | Billing | Paddle as merchant of record, per-seat plans with caps from `shared/src/plans.json` (the price list as data), three-month trial on approval, dunning grace, regional prices; off entirely unless configured. One code path (`api/src/billing`); both webhook addresses reach one handler. | README "Billing"; ADR 0002, 0017, 0019 |
 | Integrations | 29 vendor integrations (CRMs, sheets, support desks, accounting, warehouses, calendars, mailboxes and more) plus an incoming-webhook receiver with recipes. Each has a vendor mock and passes a full customer-style run; real sandboxes where a vendor offers one. | INTEGRATIONS.md; DEVELOPER "add an integration" |
 | Privacy and accessibility | AI is off until a company turns it on, and every AI chat asks for consent first; retention periods are enforced nightly (`lib/retention.ts`); erasure and company deletion with a certificate. WCAG 2.2 AA: 0 findings across 527 states, kept by `npm run test:a11y`. | ADR 0014; docs/compliance/; docs/design/tokens.md |
@@ -173,7 +173,8 @@ is in `scripts/quality/cost.inputs.json` with its source or "assumption".
 - **Accessibility**: WCAG 2.2 A/AA, 0 findings across 527 states; `npm run test:a11y` is the gate; statement in EN and TR.
 - **Design system**: a colour-blind-safe chart palette with status icons, motion tokens (`--dur-1` … `--dur-4`, easing)
   and exit animations, one Close and one Back everywhere, a loading system (route bar, skeletons, busy buttons).
-- **Languages**: nine complete; Hindi and Malay are being added (eleven). Turkish says "siz" everywhere.
+- **Languages**: eleven complete: Hindi and Malay joined as full product, help, site and demo languages. Turkish says
+  "siz" everywhere.
 - **Integrations**: nine more native connectors and an incoming-webhook receiver; all 29 vendor integrations pass a
   customer-style run against vendor mocks (`scripts/integrations/`).
 - **Go-live readiness**: free-tier monitoring and alerts, upload content checks and optional ClamAV, scripted encrypted
