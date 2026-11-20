@@ -23,6 +23,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   least a few seats (3 by default; more in India and for some yearly plans), shown on the Billing page. A new trial is
   10 seats and 1 GB a seat by default. All of these are operator settings (ADR 0022); prices are not final.
 - Turkish: the in-app cookie banner and the API reference address the reader as "siz", like the rest of the product.
+- Trial limits are where the terms say they are: during a trial, Settings → **Billing** shows the seats approved for the
+  trial and the file space per full seat, and its seat row counts against the trial's seats (it said "no limit" before).
+  The trial request form names the file space next to the seats, and the billing help says 10 seats by default and 1 GB
+  a seat, in all eleven languages.
 - Legal drafts (all eleven languages): the terms cover monthly and yearly plans, renewal, plan and seat changes and
   refer to a new **Refund policy** page (draft for the lawyer, linked from the site footer and the trust page); the
   privacy notice and DPA give the AI question retention the product really applies (none, 7, 30 by default, 90 or 365

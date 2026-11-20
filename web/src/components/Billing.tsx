@@ -18,7 +18,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useUnsaved } from '../lib/unsaved';
-import { formatMoney } from '../lib/format';
+import { formatMoney, formatNumber } from '../lib/format';
 import { Icon } from './icons';
 import { Confirm } from './ui';
 import { ALL_COUNTRIES } from '../../../shared/src/trialForm';
@@ -42,6 +42,8 @@ interface BillingInfo {
   region: { key: string; currency: string; collect: string; tax: { name: string; rate: number | null; b2b: boolean } } | null;
   seats: number;
   usage: Record<CapKind, { used: number; cap: number | null }>;
+  /** During the trial only: the seats approved for it (null: none set) and the file space per full seat. */
+  trialLimits?: { seats: number | null; storageGbPerSeat: number | null } | null;
   subscription: Subscription | null;
   profile: { taxNumber: string | null; billingEmail: string | null; country?: string | null };
   checkout?: { env: 'sandbox' | 'live'; clientToken: string; email: string };
@@ -256,6 +258,15 @@ export function BillingSettings() {
           : a.state === 'ending'
             ? t('billing.state.ending', { date: when(a.periodEnd) })
             : t('billing.state.locked');
+  // The trial limits the terms point to (legal-terms §4: "shown at sign-up and on the Billing page").
+  const tl = a.state === 'trial' ? info.trialLimits : null;
+  const gb = tl?.storageGbPerSeat != null ? formatNumber(tl.storageGbPerSeat, locale) : null;
+  const trialLine =
+    tl && gb != null
+      ? tl.seats != null
+        ? t('billing.trialLimits', { seats: formatNumber(tl.seats, locale), gb })
+        : t('billing.trialLimitsSpace', { gb })
+      : null;
   const canExit = !!sub && LIVE.includes(sub.status) && !!sub.providerSubscriptionId && !sub.cancelAtPeriodEnd;
   const canResume = !!sub && sub.cancelAtPeriodEnd;
   // The cheapest plan's yearly saving, worked out from the price list rather than written into a sentence.
@@ -277,6 +288,7 @@ export function BillingSettings() {
         <div className="billing-manage__body">
           <h2 className="billing__title">{t('billing.title')}</h2>
           <p>{statusLine}</p>
+          {trialLine && <p className="field__hint">{trialLine}</p>}
           <div className="billing-manage__actions">
             {sub?.providerCustomerId && (
               <button className="btn" disabled={busy === 'portal'} onClick={() => void act('portal')}>

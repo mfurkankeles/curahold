@@ -7047,4 +7047,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'change.better': '向好',
   'change.worse': '变差',
   'sync.keyed.noteMessages': '令牌经加密存储，可随时移除。下一步会给出回调地址和验证令牌，请粘贴到你的 {app} 应用中；不涉及字段匹配，也不会回写。',
+  'billing.trialLimits': '试用限制：最多 {seats} 个完整席位，每个完整席位 {gb} GB 文件空间。',
+  'billing.trialLimitsSpace': '试用限制：每个完整席位 {gb} GB 文件空间。',
+  'trial.hint.space': '试用期间，每个完整席位含 {gb} GB 文件空间。',
 };

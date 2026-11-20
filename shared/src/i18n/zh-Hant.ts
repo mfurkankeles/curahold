@@ -7047,4 +7047,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'change.better': '向好',
   'change.worse': '變差',
   'sync.keyed.noteMessages': '權杖經加密儲存，可隨時移除。下一步會提供回呼網址和驗證權杖，請貼到你的 {app} 應用程式中；不涉及欄位對應，也不會回寫。',
+  'billing.trialLimits': '試用限制：最多 {seats} 個完整席次，每個完整席次 {gb} GB 檔案空間。',
+  'billing.trialLimitsSpace': '試用限制：每個完整席次 {gb} GB 檔案空間。',
+  'trial.hint.space': '試用期間，每個完整席位含 {gb} GB 檔案空間。',
 };

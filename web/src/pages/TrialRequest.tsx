@@ -311,6 +311,14 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
     return COUNTRIES.map((c) => ({ code: c, name: names?.of(c) ?? c })).sort((a, b) => a.name.localeCompare(b.name, bcp47Of(locale)));
   }, [locale]);
   const blocks = useMemo(() => trialConsent(d.country, config?.ipCountry ?? null, locale).blocks, [d.country, config?.ipCountry, locale]);
+  // The trial limits the terms point to (legal-terms §4: "shown at sign-up"): seats and file space per full seat.
+  const seatsHint = [
+    t('trial.hint.seats', { cap: TRIAL_DEFAULTS.seatCap }),
+    TRIAL_DEFAULTS.storageGbPerSeat != null ? t('trial.hint.space', { gb: TRIAL_DEFAULTS.storageGbPerSeat }) : '',
+    t('trial.hint.viewers'),
+  ]
+    .filter(Boolean)
+    .join(' ');
   const totalSeats = d.split ? d.departments.reduce((n, dep) => n + (Number(d.seatsByDepartment[dep]) || 0), 0) : Number(d.seats) || 0;
 
   function check(s: number): Errors {
@@ -678,7 +686,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
               {!d.split &&
                 input('seats', t('trial.f.seats'), {
                   type: 'number',
-                  hint: `${t('trial.hint.seats', { cap: TRIAL_DEFAULTS.seatCap })} ${t('trial.hint.viewers')}`,
+                  hint: seatsHint,
                 })}
               {d.departments.length > 1 && (
                 <label className="checkbox">
@@ -705,6 +713,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
                       </Field>
                     ))}
                   </div>
+                  <span className="field__hint">{seatsHint}</span>
                   {errors.seats && (
                     <span className="trial__error" id="trial-seats">
                       {errors.seats}

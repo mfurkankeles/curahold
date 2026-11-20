@@ -6992,4 +6992,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'change.better': 'lebih baik',
   'change.worse': 'lebih teruk',
   'sync.keyed.noteMessages': 'Token disimpan secara tersulit dan boleh dibuang bila-bila masa. Pada skrin seterusnya anda mendapat alamat panggil balik dan token pengesahan untuk ditampal dalam aplikasi {app} anda; tiada padanan medan atau penulisan semula.',
+  'billing.trialLimits': 'Had percubaan: sehingga {seats} tempat duduk penuh dan {gb} GB ruang fail bagi setiap tempat duduk penuh.',
+  'billing.trialLimitsSpace': 'Had percubaan: {gb} GB ruang fail bagi setiap tempat duduk penuh.',
+  'trial.hint.space': 'Sepanjang percubaan, setiap tempat duduk penuh disertakan {gb} GB ruang fail.',
 };

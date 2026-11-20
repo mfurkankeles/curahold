@@ -7047,4 +7047,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'change.better': 'שיפור',
   'change.worse': 'הרעה',
   'sync.keyed.noteMessages': 'האסימון נשמר מוצפן ואפשר להסיר אותו בכל עת. במסך הבא תקבלו את כתובת הקריאה החוזרת ואת אסימון האימות להדבקה באפליקציית {app}; אין התאמת שדות ואין כתיבה חזרה.',
+  'billing.trialLimits': 'מגבלות הניסיון: עד {seats} מושבים מלאים, ו־{gb} GB שטח קבצים לכל מושב מלא.',
+  'billing.trialLimitsSpace': 'מגבלת הניסיון: {gb} GB שטח קבצים לכל מושב מלא.',
+  'trial.hint.space': 'במהלך הניסיון כל מושב מלא כולל {gb} GB שטח קבצים.',
 };

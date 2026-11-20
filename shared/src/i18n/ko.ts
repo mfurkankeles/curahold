@@ -7047,4 +7047,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'change.better': '개선',
   'change.worse': '악화',
   'sync.keyed.noteMessages': '토큰은 암호화되어 저장되며 언제든지 삭제할 수 있습니다. 다음 화면에서 {app} 앱에 붙여 넣을 콜백 주소와 확인 토큰을 받습니다. 필드 매칭이나 역방향 쓰기는 없습니다.',
+  'billing.trialLimits': '체험 한도: 전체 권한 좌석 최대 {seats}개, 전체 권한 좌석당 파일 공간 {gb}GB입니다.',
+  'billing.trialLimitsSpace': '체험 한도: 전체 권한 좌석당 파일 공간 {gb}GB입니다.',
+  'trial.hint.space': '체험 기간에는 정규 좌석마다 파일 공간 {gb}GB가 제공됩니다.',
 };

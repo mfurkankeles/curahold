@@ -7047,4 +7047,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'change.better': '改善',
   'change.worse': '悪化',
   'sync.keyed.noteMessages': 'トークンは暗号化して保存され、いつでも削除できます。次の画面で、{app} のアプリに貼り付けるコールバック URL と確認トークンが表示されます。項目の対応付けや書き戻しはありません。',
+  'billing.trialLimits': 'トライアルの上限：フルシートは最大 {seats} 席、ファイル容量はフルシート 1 席あたり {gb} GB です。',
+  'billing.trialLimitsSpace': 'トライアルの上限：ファイル容量はフルシート 1 席あたり {gb} GB です。',
+  'trial.hint.space': 'トライアル中は、フル席 1 席につき {gb} GB のファイル容量があります。',
 };

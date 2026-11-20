@@ -7047,4 +7047,7 @@ export const tr: Record<MessageKey, string> = {
   'change.better': 'iyiye gidiş',
   'change.worse': 'kötüye gidiş',
   'sync.keyed.noteMessages': 'Erişim anahtarı şifreli saklanır ve istediğiniz an kaldırılabilir. Sonraki ekranda {app} uygulamanıza yapıştıracağınız geri çağırma adresini ve doğrulama anahtarını alırsınız; alan eşleme ya da geri yazma yoktur.',
+  'billing.trialLimits': 'Deneme sınırları: en fazla {seats} tam kullanıcı ve tam kullanıcı başına {gb} GB dosya alanı.',
+  'billing.trialLimitsSpace': 'Deneme sınırı: tam kullanıcı başına {gb} GB dosya alanı.',
+  'trial.hint.space': 'Deneme boyunca her tam koltuk için {gb} GB dosya alanı vardır.',
 };

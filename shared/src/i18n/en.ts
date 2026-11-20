@@ -7061,6 +7061,9 @@ export const en = {
   'change.better': 'better',
   'change.worse': 'worse',
   'sync.keyed.noteMessages': 'The token is stored encrypted and can be removed any time. On the next screen you get the callback address and verify token to paste into your {app} app; nothing is matched or written back.',
+  'billing.trialLimits': 'Trial limits: up to {seats} full seats and {gb} GB of file space per full seat.',
+  'billing.trialLimitsSpace': 'Trial limit: {gb} GB of file space per full seat.',
+  'trial.hint.space': 'During the trial, each full seat comes with {gb} GB of file space.',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -52,11 +52,22 @@ async function overview(c: C) {
     const caps = await capsForOrg(q, org.id, access);
     return {
       sub: await readSubscription(q, nowOf(deps)),
-      profile: (await q.query<{ tax_number: string | null; billing_email: string | null; billing_country: string | null }>('select tax_number, billing_email, billing_country from orgs where id = $1', [org.id]))[0],
+      profile: (
+        await q.query<{ tax_number: string | null; billing_email: string | null; billing_country: string | null; trial_seat_cap: number | null }>(
+          'select tax_number, billing_email, billing_country, trial_seat_cap from orgs where id = $1',
+          [org.id],
+        )
+      )[0],
       caps,
       usage: await usageOf(q, org.id, caps),
     };
   });
+  // The terms promise the trial limits "shown at sign-up and on the Billing page" (legal-terms §4): during the trial
+  // the seat row counts against the seats approved for the trial (orgs.trial_seat_cap, enforced by lib/trial.ts
+  // seatGuard), not the plan's seatsMax, which would otherwise read "no limit" for a Business trial.
+  const trialSeatCap = access.state === 'trial' && profile?.trial_seat_cap != null ? Number(profile.trial_seat_cap) : null;
+  if (trialSeatCap != null) usage.seats = { ...usage.seats, cap: trialSeatCap };
+  const trialLimits = access.state === 'trial' ? { seats: trialSeatCap, storageGbPerSeat: CATALOGUE.trial.caps.storageGbPerSeat ?? null } : null;
   // The buyer's region for the prices shown (Cloudflare's country header; Paddle decides the real one at checkout).
   const region = regionFor(c.req.header('cf-ipcountry') ?? null);
   // The fewest seats each plan is billed for here (billedSeats): the screen counts the total with it.
@@ -75,6 +86,7 @@ async function overview(c: C) {
     seats: caps.fullSeats,
     caps,
     usage,
+    trialLimits,
     subscription: sub,
     profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null },
     // Public values Paddle.js needs, for the people who may pay. Never a secret: the API key and webhook secret stay on the server.

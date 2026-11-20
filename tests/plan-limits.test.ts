@@ -170,4 +170,26 @@ describe('the trial', () => {
     // A paying Business company keeps its plan's space.
     expect(capsOf({ state: 'active', plan: 'business' }, 3).storageGbPerSeat).toBe(10);
   });
+
+  it('the Billing screen shows the trial limits the terms point to: the approved seats and the space a seat', async () => {
+    const org = (set: string) => env.db.system((q) => q.query(`update orgs set ${set} where id = $1`, [env.a.orgId]));
+    await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.a.orgId]));
+    await org(`billing = '{}'::jsonb, trial_ends_at = now() + interval '30 days', trial_seat_cap = 10`);
+    const inTrial = (await ada.get('/api/billing')).json;
+    expect(inTrial.access.state).toBe('trial');
+    expect(inTrial.trialLimits).toEqual({ seats: 10, storageGbPerSeat: 1 });
+    // The seat row counts against the trial's seats, not "no limit" from the Business plan behind the trial.
+    expect(inTrial.usage.seats.cap).toBe(10);
+    // An older trial without a seat cap still shows the space a seat.
+    await org(`trial_seat_cap = null`);
+    const noCap = (await ada.get('/api/billing')).json;
+    expect(noCap.trialLimits).toEqual({ seats: null, storageGbPerSeat: 1 });
+    expect(noCap.usage.seats.cap).toBeNull();
+    // A paying company has no trial limits on the screen.
+    await org(`billing = '{"status":"active","plan":"team","interval":"month"}'::jsonb, trial_seat_cap = 10`);
+    const paying = (await ada.get('/api/billing')).json;
+    expect(paying.trialLimits).toBeNull();
+    expect(paying.usage.seats.cap).toBe(CATALOGUE.plans.find((p) => p.key === 'team')!.caps.seatsMax);
+    await org(`billing = '{}'::jsonb, trial_seat_cap = null`);
+  });
 });
