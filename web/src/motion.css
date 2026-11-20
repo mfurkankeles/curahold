@@ -13,9 +13,25 @@
 @keyframes sweep { from { stroke-dasharray: 0 999; } }
 @keyframes pop-dot { from { opacity: 0; scale: .2; } }
 
+/* Moving between screens (lib/pageMotion.ts): one View Transition. The shell stays still; the main area
+   cross-fades with an 8 px shift that follows the direction — forward from the end side, Back from the
+   start side — and an item opened from a list grows into its page title (the "hero", 280 ms). */
+:root[data-nav] .main { view-transition-name: page; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(page) { animation: fade-out var(--dur-1) var(--ease-in) both; }
+::view-transition-new(page) { animation: page-from-end var(--dur-2) var(--ease-out) both; }
+:root[data-nav='back']::view-transition-new(page) { animation-name: page-from-start; }
+::view-transition-group(hero) { animation-duration: var(--dur-4); animation-timing-function: var(--ease-move); }
+::view-transition-old(hero), ::view-transition-new(hero) { height: 100%; animation-duration: var(--dur-4); }
+@keyframes page-from-end { from { opacity: 0; transform: translateX(calc(var(--side) * var(--dist-2))); } }
+@keyframes page-from-start { from { opacity: 0; transform: translateX(calc(var(--side) * -1 * var(--dist-2))); } }
 /* A page arriving: the heading first, the body a beat later. */
 .main > .topbar { animation: fade-in var(--dur) ease backwards; }
 .main > .page, .main > .tabs { animation: page-in var(--dur) var(--ease) backwards; }
+/* Where the browser moves screens itself, the page does not also rise in on arrival. */
+@supports (view-transition-name: none) {
+  .main > .page, .main > .tabs, .main > .topbar { animation: none; }
+}
 
 /* Tiles and cards land one after another, left to right. */
 :is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > * { animation: rise-in var(--dur) var(--ease) backwards; animation-delay: calc(var(--n, 0) * var(--stagger)); }
@@ -47,7 +63,7 @@
 .btn { transition: background-color var(--dur-1) ease, border-color var(--dur-1) ease, color var(--dur-1) ease, box-shadow var(--dur-1) ease, transform var(--dur-1) ease, filter var(--dur-1) ease; }
 .btn:active:not(:disabled) { transform: scale(.97); }
 .btn--primary { background: var(--grad, var(--brand)); background-origin: border-box; }
-.btn--primary:hover { background: var(--grad, var(--brand-ink)); filter: brightness(1.08); }
+.btn--primary:hover { background: var(--grad, var(--brand-ink)); filter: var(--hover-shift); }
 .sidebar__new { transition: transform var(--dur-fast) ease, filter var(--dur-fast) ease, box-shadow var(--dur-fast) ease; }
 .sidebar__new:active { transform: scale(.98); }
 .navlink .icon { transition: transform var(--dur-fast) var(--ease); }
@@ -76,6 +92,10 @@
   0% { opacity: 1; box-shadow: 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand); }
   100% { opacity: 0; box-shadow: 0 -20px 0 0 var(--done), 15px -14px 0 0 var(--brand), 21px 0 0 0 var(--soon), 15px 14px 0 0 var(--done), 0 20px 0 0 var(--brand), -15px 14px 0 0 var(--soon), -21px 0 0 0 var(--done), -15px -14px 0 0 var(--brand); }
 }
+
+/* The server refused a tick: it turns back with a small shake (200 ms), the error toast says why. */
+.tick[data-back] { animation: tick-back var(--dur-3) var(--ease-move); }
+@keyframes tick-back { 30% { transform: translateX(-2px) scale(.94); } 70% { transform: translateX(2px); } }
 
 /* Rows that are links: the arrow of attention, not a jump. */
 .rowlink, .table tbody tr { transition: background-color var(--dur-fast) ease; }
@@ -126,6 +146,9 @@
 .filtersheet[data-leaving] > .filtersheet__box { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
 @media (max-width: 600px) {
   .datepop[data-leaving] { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
+  /* On a phone the task and record panels are a whole screen that rises from the bottom. */
+  .panel { animation: sheet-in var(--dur-4) var(--ease-move) backwards; }
+  .panel[data-leaving] { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
 }
 
 /* Reduce motion: nothing moves, but what opens and closes still fades (100 ms), so a change of state is

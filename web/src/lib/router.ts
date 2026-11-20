@@ -1,6 +1,7 @@
 // A small router on the History API — the app has few screens and they all
 // live in the URL, so a shared link opens the same board and task.
 import { useEffect, useState } from 'react';
+import { moveScreens } from './pageMotion';
 
 // ---- the trail --------------------------------------------------------------
 // Where this tab has been inside the app, in order. It lets every screen that
@@ -76,6 +77,7 @@ export function navigate(to: string, replace = false, fresh = false) {
   if (to === here()) return;
   if (beforeLeave && !beforeLeave(to)) return;
   sync();
+  lastMove = replace ? 'none' : 'forward';
   if (replace) {
     history.replaceState({ i: at }, '', to);
     trail[at] = { url: to, fresh: trail[at]?.fresh ?? false };
@@ -135,6 +137,7 @@ function onPop(e: PopStateEvent) {
     return;
   }
   passing = false;
+  const was = at;
   if (typeof i === 'number' && trail[i]) {
     at = i;
     trail[at] = { ...trail[at], url };
@@ -144,9 +147,39 @@ function onPop(e: PopStateEvent) {
     trail = [{ url, fresh: true }];
     at = 0;
   }
+  lastMove = at < was ? 'back' : at > was ? 'forward' : 'none';
   keep();
 }
 window.addEventListener('popstate', onPop);
+
+// ---- moving between screens ---------------------------------------------------
+// Which way the last move went (Back reverses the page transition, lib/pageMotion.ts),
+// and a key for the step of history on show: what a screen keeps for "Back" (its
+// filters, where it was scrolled) is filed under it, so returning finds it again
+// and a fresh visit to the same screen starts clean.
+let lastMove: 'forward' | 'back' | 'none' = 'none';
+/** The direction of the last move: forward (a link, the menu), back (Back, the browser's back) or none. */
+export const moveDirection = () => lastMove;
+/** This step of the history, for state kept for "Back" (lib/kept.ts). */
+export const historyKey = () => `${at}`;
+
+// Every useLocation hears a change at once, in one render, so a change of screen can run as one
+// page transition. The window events stay for code outside React (the demo bar).
+const listeners = new Set<() => void>();
+let shownUrl = here();
+let shownKey = historyKey();
+function deliver() {
+  const from = shownUrl;
+  const fromKey = shownKey;
+  shownUrl = here();
+  shownKey = historyKey();
+  const run = () => listeners.forEach((f) => f());
+  // Same address (a place got its name, a fresh visit marked): a re-render, no transition.
+  if (from === shownUrl) return run();
+  moveScreens(screenOf(from) !== screenOf(shownUrl) ? lastMove : null, run, { from: fromKey, to: shownKey });
+}
+window.addEventListener('popstate', deliver);
+window.addEventListener('app:navigate', deliver);
 
 export interface WayBack {
   /** The address back leads to. */
@@ -197,17 +230,16 @@ export function nameIt(key: string, name: string | null | undefined) {
 }
 export const nameOf = (key: string) => names.get(key) ?? null;
 
+/** Where the app is (path, query, hash); re-renders on every move. */
 export function useLocation() {
   const [loc, setLoc] = useState(() => ({ path: location.pathname, search: location.search, hash: location.hash, n: 0 }));
   useEffect(() => {
     const on = () => setLoc((l) => ({ path: location.pathname, search: location.search, hash: location.hash, n: l.n + 1 }));
-    window.addEventListener('popstate', on);
-    window.addEventListener('app:navigate', on);
-    return () => {
-      window.removeEventListener('popstate', on);
-      window.removeEventListener('app:navigate', on);
-    };
-  }, []);
+    listeners.add(on);
+    // A move made between the first render and this effect.
+    if (location.pathname !== loc.path || location.search !== loc.search) on();
+    return () => void listeners.delete(on);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return loc;
 }
 
