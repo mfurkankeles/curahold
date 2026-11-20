@@ -141,6 +141,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- A crawler with a made-up `Authorization: Bearer` header is refused like any other crawler; the bearer must be a live key
+  or app token of the company. Scanners without a session now count towards the unknown-address limit (they saw 401,
+  never 404); webhook receivers stay out of that count.
+
 - _Nothing yet._
 
 ### Known issues
