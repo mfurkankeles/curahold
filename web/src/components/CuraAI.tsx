@@ -6,6 +6,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { Icon } from './icons';
+import { CloseButton } from './ui';
 
 // The answering engine loads the first time the panel opens, not with the app.
 const Ask = lazy(() => import('./Ask').then((m) => ({ default: m.Ask })));
@@ -40,6 +41,21 @@ export function CuraAI({
   const wasOpen = useRef(open);
   useEffect(() => {
     if (open) setMade(true);
+  }, [open]);
+  // Closing plays a short exit (motion.css rules: exits are shorter than entries) before the chat is hidden;
+  // the timer is the fallback for a browser that never reports the animation's end (reduced motion included).
+  const [closing, setClosing] = useState(false);
+  const shownBefore = useRef(open);
+  useEffect(() => {
+    if (open) {
+      setClosing(false);
+    } else if (shownBefore.current) {
+      setClosing(true);
+      const id = setTimeout(() => setClosing(false), 400);
+      shownBefore.current = open;
+      return () => clearTimeout(id);
+    }
+    shownBefore.current = open;
   }, [open]);
   useEffect(() => {
     if (open) {
@@ -81,15 +97,11 @@ export function CuraAI({
       el.style.removeProperty('height');
     };
   }, [open, made]);
-  // On a phone the button never sits on what the person is working with: it steps aside while they type
-  // (the keyboard is up, the field is what matters) and while they scroll down through a page or a list,
-  // and it is back as soon as they scroll up, reach the end of the page (which ends above it) or stop typing.
+  // The button never sits on what the person is working with, on a phone or a desktop: it steps aside while
+  // they type (the field is what matters) and while they scroll down through a page or a list, and it is back
+  // as soon as they scroll up, reach the end of the page (which ends above it, .page padding) or stop typing.
   const [away, setAway] = useState(false);
   useEffect(() => {
-    if (!lifted) {
-      setAway(false);
-      return;
-    }
     const seen = new WeakMap<Element, number>();
     const typing = () => {
       const a = document.activeElement;
@@ -121,7 +133,7 @@ export function CuraAI({
       window.removeEventListener('popstate', onMove);
       window.removeEventListener('app:navigate', onMove);
     };
-  }, [lifted]);
+  }, []);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -147,7 +159,16 @@ export function CuraAI({
         </button>
       )}
       {made && (
-        <section ref={box} className="cura" data-lifted={lifted || undefined} hidden={!open} role="dialog" aria-label={t('cura.name')}>
+        <section
+          ref={box}
+          className="cura"
+          data-lifted={lifted || undefined}
+          data-closing={(!open && closing) || undefined}
+          hidden={!open && !closing}
+          role="dialog"
+          aria-label={t('cura.name')}
+          onAnimationEnd={(e) => e.target === box.current && !open && setClosing(false)}
+        >
           <header className="cura__head">
             <span className="cura__mark cura__mark--head">
               <Icon name="spark" size={18} />
@@ -156,13 +177,11 @@ export function CuraAI({
               <strong>{t('cura.name')}</strong>
               <span>{t(model ? 'cura.sub.ai' : 'cura.sub')}</span>
             </div>
-            <button type="button" className="cura__tool" aria-label={t('help.tab.mine')} title={t('help.tab.mine')} onClick={onMine}>
-              <Icon name="inbox" size={18} />
-              {unread > 0 && <span className="cura__badge cura__badge--tool">{unread}</span>}
-            </button>
+            {/* Minimize and Close both keep the conversation; Close is the one every popup has (44 x 44, end corner, Esc). */}
             <button type="button" className="cura__tool" aria-label={t('cura.minimize')} title={t('cura.minimize')} onClick={onClose}>
-              <Icon name="chevronDown" size={18} />
+              <Icon name="chevronDown" size={20} />
             </button>
+            <CloseButton onClick={onClose} />
           </header>
           <Suspense fallback={<div className="cura__wait" />}>
             <Ask onWrite={onWrite} onEngine={setModel} />
@@ -172,6 +191,11 @@ export function CuraAI({
             <button type="button" className="cura__write" onClick={() => onWrite('')}>
               <Icon name="send" size={15} />
               {t('ask.write')}
+            </button>
+            <button type="button" className="cura__write cura__mine" onClick={onMine}>
+              <Icon name="inbox" size={15} />
+              {t('help.tab.mine')}
+              {unread > 0 && <span className="cura__badge cura__badge--tool">{unread}</span>}
             </button>
           </footer>
         </section>

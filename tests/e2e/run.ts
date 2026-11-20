@@ -892,9 +892,9 @@ await step('help: a request with a screenshot and consent; support visits read o
   await p.reload({ waitUntil: 'networkidle0' });
   await p.waitForSelector('.cura__fab .cura__badge');
   await p.click('.cura__fab');
-  await p.waitForSelector('.cura__tool');
-  expect((await text(p, '.cura__tool .cura__badge')) === '1', 'the chat does not show the waiting answer');
-  await p.click('.cura__tool');
+  await p.waitForSelector('.cura__mine');
+  expect((await text(p, '.cura__mine .cura__badge')) === '1', 'the chat does not show the waiting answer');
+  await p.click('.cura__mine');
   await p.waitForSelector('.help__req[data-unread]');
   expect((await text(p, '.help__req[data-unread] .help__turn')).includes('Cevabınız bekleniyor'), 'the list does not say it is her turn');
   await p.click('.help__req[data-unread] .help__reqopen');
