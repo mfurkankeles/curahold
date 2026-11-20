@@ -37,16 +37,21 @@ export const PAGE = {
 /**
  * The integrations, by group, with the names as each vendor writes them (never
  * translated). Only connectors the product has; `soon` groups are built but not
- * yet published, and are labelled so.
+ * yet published, and are labelled so. Groups whose tools compete with Curahold
+ * (CRM, support desks, engineering trackers) carry no brand names on the public
+ * site (MASTER rule 9, legal audit #32): the menu and the page show the group's
+ * own sentence instead. Mail lists no mailbox brands, because the site promises
+ * only the e-mail digest there (claim #30). Owner question: whether integration
+ * partners may be named on the integrations page alone.
  */
 export const INTEGRATION_GROUPS: { key: IntegrationGroup; names: string[]; soon?: boolean }[] = [
-  { key: 'crm', names: ['Salesforce', 'HubSpot', 'Dynamics 365', 'Pipedrive', 'Zoho CRM', 'Bitrix24', 'Freshsales', 'Zendesk Sell'] },
+  { key: 'crm', names: [] },
   { key: 'chat', names: ['Slack', 'Microsoft Teams', 'Google Chat'] },
-  { key: 'support', names: ['Zendesk', 'Freshdesk', 'Intercom', 'Jira Service Management', 'Front'] },
-  { key: 'mail', names: ['Gmail', 'Outlook'] },
+  { key: 'support', names: [] },
+  { key: 'mail', names: [] },
   { key: 'sheets', names: ['Google Sheets', 'Excel'] },
   { key: 'data', names: ['Google BigQuery', 'Snowflake', 'Segment'] },
-  { key: 'dev', names: ['Jira'] },
+  { key: 'dev', names: [] },
   { key: 'ai', names: ['Claude', 'ChatGPT'] },
   { key: 'signin', names: ['Google', 'Microsoft', 'SAML 2.0', 'OpenID Connect', 'SCIM'] },
   { key: 'api', names: ['REST API', 'Webhooks'] },
