@@ -15,6 +15,7 @@
 // holds the subscription, or a signed checkout id), so one company's billing can
 // never spill into another's. By-hand changes an administrator makes go through
 // the request role and row-level security, in the route.
+import type { BillingEventsRow, SubscriptionsRow } from '../db/rows.gen';
 import { CATALOGUE, PLANS, planOf, trialEndsAt, type Interval, type PlanKey, type Subscription, type SubscriptionStatus } from '../../../shared/src/billing';
 import { fetchOf, nowOf, type Deps } from '../context';
 import type { Q } from '../db';
@@ -97,7 +98,7 @@ export async function applyWebhook(deps: Deps, provider: string, event: WebhookE
 
 /** Records the event in the ledger; false when it was already applied. */
 async function firstTime(q: Q, provider: string, event: WebhookEvent, orgId: string): Promise<boolean> {
-  const fresh = await q.query(`insert into billing_events (id, org_id, kind, provider) values ($1, $2, $3, $4) on conflict (id) do nothing returning id`, [
+  const fresh = await q.query<Pick<BillingEventsRow, 'id'>>(`insert into billing_events (id, org_id, kind, provider) values ($1, $2, $3, $4) on conflict (id) do nothing returning id`, [
     event.id.slice(0, 120),
     orgId,
     event.type.slice(0, 80),
@@ -251,7 +252,7 @@ export async function syncSeats(deps: Deps): Promise<number> {
 
 /** This company's subscription (read inside a tenant transaction; RLS scopes it), or null. */
 export async function readSubscription(q: Q, now: Date): Promise<Subscription | null> {
-  const [r] = await q.query(`select * from subscriptions limit 1`);
+  const [r] = await q.query<SubscriptionsRow>(`select * from subscriptions limit 1`);
   if (!r) return null;
   const until = r.cancel_at_period_end ? r.current_period_end : r.status === 'trialing' ? r.trial_ends_at : null;
   const daysLeft = until ? Math.max(0, Math.ceil((Date.parse(iso(until)!) - now.getTime()) / DAY)) : null;

@@ -1,5 +1,6 @@
 // Accounts (customers) and their fields; importing from a file with undo;
 // bulk changes. Works the same whether or not a CRM is connected.
+import type { AccountsRow, ImportBatchesRow, RecordTypesRow, TeamsRow, UsersRow } from '../db/rows.gen';
 import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { foldText } from '../../../shared/src/text';
 import { allowedCurrency } from '../lib/fx';
@@ -147,7 +148,7 @@ accountRoutes.get('/accounts/whitespace', async (c) => {
   const field = c.req.query('field') ?? '';
   if (!uuid.safeParse(typeId).success || !/^[a-z][a-z0-9_]{0,40}$/.test(field)) fail('validation', { fields: 'type, field' }, { fields: ['type', 'field'] });
   const out = await run(c, async (q) => {
-    const [type] = await q.query('select id, fields from record_types where id = $1 and archived_at is null', [typeId]);
+    const [type] = await q.query<Pick<RecordTypesRow, 'id' | 'fields'>>('select id, fields from record_types where id = $1 and archived_at is null', [typeId]);
     if (!type) fail('not_found');
     const def = (type.fields as AccountField[]).find((f) => f.key === field && f.type === 'select');
     // A field hidden from this person is not counted for them either.
@@ -158,7 +159,7 @@ accountRoutes.get('/accounts/whitespace', async (c) => {
         group by 1, 2`,
       [typeId, field],
     );
-    const accounts = await q.query(`select a.id, a.name, a.owner_id from accounts a where a.archived_at is null order by sort_key(a.name_fold, a.name_tr) limit 1000`);
+    const accounts = await q.query<Pick<AccountsRow, 'id' | 'name' | 'owner_id'>>(`select a.id, a.name, a.owner_id from accounts a where a.archived_at is null order by sort_key(a.name_fold, a.name_tr) limit 1000`);
     const have = new Map<string, Record<string, number>>();
     for (const r of cells) have.set(r.account_id, { ...(have.get(r.account_id) ?? {}), [r.v]: r.n });
     return {
@@ -193,7 +194,7 @@ accountRoutes.post('/accounts', async (c) => {
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.created', entity: 'account', entityId: id });
     await queueSync(q, org.id, 'account', [id], null, { created: true });
-    const [r] = await q.query('select * from accounts where id = $1', [id]);
+    const [r] = await q.query<AccountsRow>('select * from accounts where id = $1', [id]);
     // Given to someone outside this person's reach: it is saved, they just no longer see it.
     return r ?? { id, name: input.name, owner_id: input.ownerId ?? null, team_id: input.teamId ?? null, fields, source: 'manual', created_at: new Date(), updated_at: new Date() };
   });
@@ -263,7 +264,7 @@ accountRoutes.patch('/accounts/:id', async (c) => {
   if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     // Locked until this change is written, so the version check and the write are one step.
-    const [a] = await q.query('select * from accounts where id = $1 for update', [id]);
+    const [a] = await q.query<AccountsRow>('select * from accounts where id = $1 for update', [id]);
     if (!a) fail('not_found');
     if (input.ownerId !== undefined) await checkOwner(q, input.ownerId);
     const cleaned = input.fields ? cleanFields(org.account_fields, input.fields, org.locale) : {};
@@ -327,7 +328,7 @@ accountRoutes.delete('/accounts/:id', async (c) => {
     if (!a) fail('not_found');
     // It stays in the trash for 30 days, with its records, timeline and portal people.
     const trashId = await toTrash(q, 'account', [id], a.name);
-    const rows = await q.query('delete from accounts where id = $1 returning name', [id]);
+    const rows = await q.query<Pick<AccountsRow, 'name'>>('delete from accounts where id = $1 returning name', [id]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.deleted', entity: 'account', entityId: id, meta: { name: rows[0].name, trashId } });
     return trashId;
@@ -346,7 +347,7 @@ accountRoutes.post('/accounts/bulk', async (c) => {
   const auth = c.get('auth');
   const n = await run(c, async (q) => {
     if (input.ownerId) await checkOwner(q, input.ownerId);
-    const rows = await q.query('select id, owner_id, team_id, archived_at from accounts where id = any($1::uuid[])', [input.ids]);
+    const rows = await q.query<Pick<AccountsRow, 'id' | 'owner_id' | 'team_id' | 'archived_at'>>('select id, owner_id, team_id, archived_at from accounts where id = any($1::uuid[])', [input.ids]);
     const ids = rows.map((r) => r.id);
     const undoId = await saveUndo(q, org.id, auth.userId, 'accounts', rows);
     if (input.archived !== undefined) {
@@ -449,10 +450,10 @@ accountRoutes.post('/accounts/import', async (c) => {
     const fieldsChanged = JSON.stringify(defs) !== JSON.stringify(org.account_fields ?? []);
     if (fieldsChanged) await q.query('select app_set_account_fields($1::jsonb)', [JSON.stringify(defs)]);
 
-    const users = await q.query(`select id, email, name from users where status in ('active', 'invited')`);
+    const users = await q.query<Pick<UsersRow, 'id' | 'email' | 'name'>>(`select id, email, name from users where status in ('active', 'invited')`);
     const byEmail = new Map(users.map((u) => [u.email.toLowerCase(), u.id]));
     const byName = new Map(users.map((u) => [fold(u.name), u.id]));
-    const teams = await q.query('select id, name from teams');
+    const teams = await q.query<Pick<TeamsRow, 'id' | 'name'>>('select id, name from teams');
     const teamByName = new Map(teams.map((t) => [fold(t.name), t.id]));
     const existing = await q.query('select * from accounts where archived_at is null');
     const byExt = new Map(existing.filter((a) => a.external_id).map((a) => [`${a.source}:${a.external_id}`, a]));
@@ -587,17 +588,17 @@ accountRoutes.post('/imports/:id/undo', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [b] = await q.query(`select * from import_batches where id = $1 and kind = 'accounts' for update`, [id]);
+    const [b] = await q.query<ImportBatchesRow>(`select * from import_batches where id = $1 and kind = 'accounts' for update`, [id]);
     if (!b || b.undone_at) fail('not_found');
     if (Date.now() - new Date(b.created_at).getTime() > 30 * 86400_000) fail('not_found');
     // What the import added goes to the trash as one item: people may have worked on those customers since.
     const there = await q.query<{ id: string; name: string }>('select id, name from accounts where id = any($1::uuid[]) order by name', [b.created_ids]);
     const trashId = await toTrash(q, 'account', there.map((r) => r.id), there[0]?.name ?? '', { via: 'import' });
-    const removed = await q.query('delete from accounts where id = any($1::uuid[]) returning id', [there.map((r) => r.id)]);
+    const removed = await q.query<Pick<AccountsRow, 'id'>>('delete from accounts where id = any($1::uuid[]) returning id', [there.map((r) => r.id)]);
     if (removed.length !== there.length) fail('forbidden');
     let restored = 0;
     for (const p of (b.previous ?? []) as Row[]) {
-      const r = await q.query(
+      const r = await q.query<Pick<AccountsRow, 'id'>>(
         `update accounts set name = $2, owner_id = $3, team_id = $4, fields = $5, external_id = $6, source = $7, updated_at = now() where id = $1 returning id`,
         [p.id, p.name, p.owner_id, p.team_id, JSON.stringify(p.fields ?? {}), p.external_id, p.source],
       );

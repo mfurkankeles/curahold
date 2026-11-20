@@ -12,6 +12,7 @@
 // effect outside the company — outside actions are proposals only, and they
 // pass the approval gate (gate.ts). What the agent writes passes the output
 // checks before it is stored or shown.
+import type { AgentPausesRow, AgentThreadsRow, AgentUsageRow, CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { Q } from '../db';
 import { nowOf } from '../context';
@@ -183,8 +184,8 @@ async function dataTool(q: Q, id: ToolId, now: Date): Promise<unknown> {
       );
     case 'data.security':
       return {
-        pauses: await q.query(`select scope, target, reason, paused_at from agent_pauses where resumed_at is null`),
-        alerts: await q.query(`select at, body from company_log where kind = 'alert' order by id desc limit 10`),
+        pauses: await q.query<Pick<AgentPausesRow, 'scope' | 'target' | 'reason' | 'paused_at'>>(`select scope, target, reason, paused_at from agent_pauses where resumed_at is null`),
+        alerts: await q.query<Pick<CompanyLogRow, 'at' | 'body'>>(`select at, body from company_log where kind = 'alert' order by id desc limit 10`),
         refused24h: await q.query(`select seat, count(*)::int as n from agent_audit where action like 'refused.%' and at > now() - interval '24 hours' group by seat`),
       };
     default:
@@ -363,7 +364,7 @@ export async function teamSpendThisMonth(q: Q, now: Date): Promise<number> {
 }
 
 async function history(q: Q, thread: string): Promise<{ summary: string | null; messages: LlmMessage[] }> {
-  const [t] = await q.query('select summary, summarized_to from agent_threads where id = $1', [thread]);
+  const [t] = await q.query<Pick<AgentThreadsRow, 'summary' | 'summarized_to'>>('select summary, summarized_to from agent_threads where id = $1', [thread]);
   const rows = await q.query<{ role: string; body: string }>(
     `select role, body from (select id, role, body from agent_messages where thread = $1 and id > $2 and role <> 'system' order by id desc limit ${HISTORY}) x order by id`,
     [thread, Number(t?.summarized_to ?? 0)],
@@ -389,7 +390,7 @@ export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
     const policy = await seatPolicy(q, input.seat);
     if (!policy) return { stop: result('no-seat', 'No such seat.') };
     if (input.context !== 'eval' && (await isPaused(q, input.seat))) return { stop: result('paused', 'Bu koltuk duraklatıldı; devam ettirmek için Ekip ekranından açın.') };
-    const [u] = await q.query('select tokens from agent_usage where seat = $1 and week = $2::date', [input.seat, weekOf(now)]);
+    const [u] = await q.query<Pick<AgentUsageRow, 'tokens'>>('select tokens from agent_usage where seat = $1 and week = $2::date', [input.seat, weekOf(now)]);
     if (input.context !== 'eval' && policy.weeklyBudget > 0 && Number(u?.tokens ?? 0) >= policy.weeklyBudget)
       return { stop: result('budget', 'Bu haftaki token bütçem doldu; COO’ya haber verdim. Bütçeyi Ekip ekranından artırabilirsiniz.') };
     if ((await teamSpendThisMonth(q, now)) >= teamConfig(deps).monthlyUsd) return { stop: result('cap', 'Ekibin bu ayki model harcama sınırına ulaşıldı.') };
@@ -505,7 +506,7 @@ export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
 // ------------------------------------------------------------ the owner's chat
 
 export async function chat(deps: Deps, thread: string, text: string): Promise<{ reply: RunResult; ownerMessage: number; agentMessage: number }> {
-  const [th] = await deps.db.system((q) => q.query('select seat from agent_threads where id = $1', [thread]));
+  const [th] = await deps.db.system((q) => q.query<Pick<AgentThreadsRow, 'seat'>>('select seat from agent_threads where id = $1', [thread]));
   if (!th) throw new HttpError('not_found');
   // His words are kept even if the model fails.
   const [m] = await deps.db.system((q) =>
@@ -530,7 +531,7 @@ export async function chat(deps: Deps, thread: string, text: string): Promise<{ 
 /** Older messages fold into the thread's summary and the seat's own rolling summary (one light-model call). */
 export async function summarizeIfLong(deps: Deps, thread: string, seat: string) {
   const data = await deps.db.system(async (q) => {
-    const [t] = await q.query('select summary, summarized_to from agent_threads where id = $1', [thread]);
+    const [t] = await q.query<Pick<AgentThreadsRow, 'summary' | 'summarized_to'>>('select summary, summarized_to from agent_threads where id = $1', [thread]);
     const rows = await q.query<{ id: number; role: string; body: string }>(`select id, role, body from agent_messages where thread = $1 and id > $2 and role <> 'system' order by id`, [thread, Number(t?.summarized_to ?? 0)]);
     const mem = await readMemory(q, seat);
     return { t, rows, mem };

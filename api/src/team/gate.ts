@@ -11,6 +11,7 @@
 //    one its proposer decided, with its review still valid, through a runner
 //    registered by the server. Runners hold the credentials; agents never do —
 //    no agent tool, key or route reaches a runner.
+import type { CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { Q } from '../db';
 import type { Approval, ApprovalProposal } from '../../../shared/src/office';
@@ -54,7 +55,7 @@ async function reviewOk(q: Q, proposer: string, kind: ExternalKind, action: Appr
   if (!need.reviewers.includes(by)) return { ok: false as const, why: `${by} may not review ${kind}` };
   const reviewer = await seatPolicy(q, by);
   if (!reviewer || !reviewer.reviews.has(kind)) return { ok: false as const, why: `${by} may not review ${kind}` };
-  const [log] = await q.query(`select seat, meta from company_log where id = $1 and kind = 'report'`, [ref]);
+  const [log] = await q.query<Pick<CompanyLogRow, 'seat' | 'meta'>>(`select seat, meta from company_log where id = $1 and kind = 'report'`, [ref]);
   if (!log || log.seat !== by || log.meta?.review?.verdict !== 'approve' || log.meta?.review?.kind !== kind) return { ok: false as const, why: 'review not found in the log' };
   return { ok: true as const };
 }

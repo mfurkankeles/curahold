@@ -1,6 +1,7 @@
 // Records under accounts (contacts, opportunities, risks…) and the kinds of
 // record a company keeps. Works with or without a CRM; when one is
 // connected, edits here are queued for it.
+import type { FilesRow, RecordCommentsRow, RecordTypesRow, RecordsRow } from '../db/rows.gen';
 import { quarantine } from '../lib/uploadScan';
 import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { Hono } from 'hono';
@@ -121,10 +122,10 @@ export async function createRecordType(
 ): Promise<Row> {
   const builtin = input.kind !== 'custom' ? BUILTIN_TYPES[input.kind] : null;
   if (builtin) {
-    const [have] = await q.query('select * from record_types where org_id = $1 and kind = $2 order by created_at limit 1', [orgId, input.kind]);
+    const [have] = await q.query<RecordTypesRow>('select * from record_types where org_id = $1 and kind = $2 order by created_at limit 1', [orgId, input.kind]);
     if (have) {
       if (have.archived_at) {
-        const [u] = await q.query('update record_types set archived_at = null where id = $1 returning *', [have.id]);
+        const [u] = await q.query<RecordTypesRow>('update record_types set archived_at = null where id = $1 returning *', [have.id]);
         return u;
       }
       return have;
@@ -139,7 +140,7 @@ export async function createRecordType(
   const keys = fields.map((f) => f.key);
   if (new Set(keys).size !== keys.length) fail('validation', { fields: 'fields' }, { fields: ['fields'] });
   const [{ n }] = await q.query<{ n: number }>('select count(*)::int as n from record_types where org_id = $1', [orgId]);
-  const [row] = await q.query(
+  const [row] = await q.query<RecordTypesRow>(
     'insert into record_types (org_id, key, name, kind, fields, position) values ($1, $2, $3, $4, $5, $6) returning *',
     [orgId, key, JSON.stringify(input.name ?? builtin!.name), input.kind, JSON.stringify(fields), n],
   );
@@ -182,9 +183,9 @@ recordRoutes.patch('/record-types/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [t] = await q.query('select * from record_types where id = $1', [id]);
+    const [t] = await q.query<RecordTypesRow>('select * from record_types where id = $1', [id]);
     if (!t) fail('not_found');
-    const [u] = await q.query(
+    const [u] = await q.query<RecordTypesRow>(
       `update record_types set name = coalesce($2, name), fields = coalesce($3, fields), position = coalesce($4, position),
               archived_at = case when $5::boolean is null then archived_at when $5 then coalesce(archived_at, now()) else null end,
               columns = case when $6 then $7::text[] else columns end
@@ -216,7 +217,7 @@ recordRoutes.delete('/record-types/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const [t] = await q.query('select * from record_types where id = $1', [id]);
+    const [t] = await q.query<RecordTypesRow>('select * from record_types where id = $1', [id]);
     if (!t) fail('not_found');
     const [{ n }] = await q.query<{ n: number }>('select count(*)::int as n from records where type_id = $1', [id]);
     if (n > 0) fail('type_not_empty', { n });
@@ -359,8 +360,8 @@ recordRoutes.get('/records/:id', async (c) => {
     if (!r) fail('not_found');
     const links = await linksFor(q, 'record', [id]);
     if (!full) return { r, links, hidden: await hiddenByType(q, c.get('auth')) };
-    const comments = await q.query('select * from record_comments where record_id = $1 order by created_at', [id]);
-    const files = await q.query('select * from files where record_id = $1 order by created_at', [id]);
+    const comments = await q.query<RecordCommentsRow>('select * from record_comments where record_id = $1 order by created_at', [id]);
+    const files = await q.query<FilesRow>('select * from files where record_id = $1 order by created_at', [id]);
     // Its tasks: what is open, and what was finished in the last ninety days.
     const tasks = await q.query(
       `select t.*, a.name as account_name, b.name as board_name from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
@@ -405,10 +406,10 @@ recordRoutes.post('/records/:id/comments', async (c) => {
     if (!r) fail('not_found');
     const mentioned = [...new Set([...input.body.matchAll(MENTION_RE)].map((m) => m[2]))];
     const valid = mentioned.length ? (await q.query<{ id: string }>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [mentioned])).map((u) => u.id) : [];
-    const [cm] = await q.query('insert into record_comments (org_id, record_id, author_id, body, mentions) values ($1, $2, $3, $4, $5) returning *', [org.id, id, auth.userId, input.body, valid]);
+    const [cm] = await q.query<RecordCommentsRow>('insert into record_comments (org_id, record_id, author_id, body, mentions) values ($1, $2, $3, $4, $5) returning *', [org.id, id, auth.userId, input.body, valid]);
     // Files uploaded for this comment, by its author, onto this record.
     const files = input.fileIds?.length
-      ? await q.query('update files set record_comment_id = $1 where id = any($2::uuid[]) and record_id = $3 and uploaded_by = $4 and record_comment_id is null returning *', [cm.id, input.fileIds, id, auth.userId])
+      ? await q.query<FilesRow>('update files set record_comment_id = $1 where id = any($2::uuid[]) and record_id = $3 and uploaded_by = $4 and record_comment_id is null returning *', [cm.id, input.fileIds, id, auth.userId])
       : [];
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record_comment.created', entity: 'record', entityId: id });
     const excerpt = input.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 280) || (files[0]?.name ?? '');
@@ -442,7 +443,7 @@ recordRoutes.delete('/record-comments/:id', async (c) => {
   const org = c.get('org');
   const keys = await run(c, async (q) => {
     const files = await q.query<{ id: string; storage_key: string }>('select id, storage_key from files where record_comment_id = $1', [id]);
-    const rows = await q.query('delete from record_comments where id = $1 returning record_id', [id]);
+    const rows = await q.query<Pick<RecordCommentsRow, 'record_id'>>('delete from record_comments where id = $1 returning record_id', [id]);
     if (!rows.length) fail('not_found');
     // Its pictures and files go with it.
     if (files.length) await q.query('delete from files where id = any($1::uuid[])', [files.map((f) => f.id)]);
@@ -466,12 +467,12 @@ recordRoutes.post('/records/:id/files', async (c) => {
   const f = await readUpload(c);
   const key = `${org.id}/r/${id}/${crypto.randomUUID()}`;
   const row = await run(c, async (q) => {
-    const [r] = await q.query('select id from records where id = $1', [id]);
+    const [r] = await q.query<Pick<RecordsRow, 'id'>>('select id from records where id = $1', [id]);
     if (!r) fail('not_found');
     // The plan's storage cap (shared/src/plans.json), before anything is stored.
     await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
-    const [x] = await q.query(
+    const [x] = await q.query<FilesRow>(
       `insert into files (org_id, record_id, name, size, mime, storage_key, uploaded_by) values ($1, $2, $3, $4, $5, $6, $7) returning *`,
       [org.id, id, f.name, f.size, f.mime, key, auth.userId],
     );
@@ -502,7 +503,7 @@ async function checkRefs(q: Q, accountId: string | null | undefined, ownerId: st
 export async function checkParent(q: Q, self: { id: string | null; type_id: string; account_id: string | null }, parentId: string | null | undefined) {
   if (!parentId) return;
   if (parentId === self.id) fail('validation', { fields: 'parentId' }, { fields: ['parentId'] });
-  const [p] = await q.query('select id, type_id, account_id from records where id = $1', [parentId]);
+  const [p] = await q.query<Pick<RecordsRow, 'id' | 'type_id' | 'account_id'>>('select id, type_id, account_id from records where id = $1', [parentId]);
   if (!p || p.type_id !== self.type_id || (p.account_id ?? null) !== (self.account_id ?? null)) fail('validation', { fields: 'parentId' }, { fields: ['parentId'] });
   if (!self.id) return;
   const [loop] = await q.query(
@@ -556,7 +557,7 @@ recordRoutes.post('/records', async (c) => {
     const name = contactName(type.kind, input.name, fields, null);
     if (!name) fail('validation', { fields: 'name' }, { fields: ['name'] });
     await checkParent(q, { id: null, type_id: type.id, account_id: input.accountId ?? null }, input.parentId);
-    const [r] = await q.query(
+    const [r] = await q.query<Pick<RecordsRow, 'id'>>(
       `insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, created_by, currency)
        values ($1, $2, $3, $4, $5, $6, $7, $8,
                -- Without a currency of its own it is in its customer's, else in the company's.
@@ -591,14 +592,14 @@ recordRoutes.post('/records/bulk', async (c) => {
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
     await checkRefs(q, undefined, input.ownerId);
-    const rows = await q.query('select id, type_id, account_id, owner_id, archived_at, fields from records where id = any($1::uuid[]) for update', [input.ids]);
+    const rows = await q.query<Pick<RecordsRow, 'id' | 'type_id' | 'account_id' | 'owner_id' | 'archived_at' | 'fields'>>('select id, type_id, account_id, owner_id, archived_at, fields from records where id = any($1::uuid[]) for update', [input.ids]);
     if (!rows.length) fail('not_found');
     const typeIds = [...new Set(rows.map((r) => r.type_id))];
     let cleaned: Record<string, unknown> = {};
     if (input.fields) {
       // Field values belong to one kind of record: a list holds one.
       if (typeIds.length !== 1) fail('validation', { fields: 'fields' }, { fields: ['fields'] });
-      const [type] = await q.query('select fields from record_types where id = $1', [typeIds[0]]);
+      const [type] = await q.query<Pick<RecordTypesRow, 'fields'>>('select fields from record_types where id = $1', [typeIds[0]]);
       cleaned = cleanFields(type.fields ?? [], input.fields, org.locale);
       checkEditable(type.fields ?? [], Object.keys(cleaned), auth);
     }
@@ -671,9 +672,9 @@ recordRoutes.patch('/records/:id', async (c) => {
   if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     // Locked until this change is written, so the version check and the write are one step.
-    const [r] = await q.query('select * from records where id = $1 for update', [id]);
+    const [r] = await q.query<RecordsRow>('select * from records where id = $1 for update', [id]);
     if (!r) fail('not_found');
-    const [type] = await q.query('select * from record_types where id = $1', [r.type_id]);
+    const [type] = await q.query<RecordTypesRow>('select * from record_types where id = $1', [r.type_id]);
     await checkRefs(q, input.accountId, input.ownerId);
     const cleaned = input.fields ? cleanFields(type.fields, input.fields, org.locale) : {};
     if (input.baseVersion !== undefined && r.version !== input.baseVersion) {
@@ -743,7 +744,7 @@ recordRoutes.delete('/records/:id', async (c) => {
     if (!r) fail('not_found');
     // It stays in the trash for 30 days, with its comments and files.
     const trashId = await toTrash(q, 'record', [id], r.name, { type: r.type?.one ?? {}, ...(r.account_id && r.account ? { accountId: r.account_id, account: r.account } : {}) });
-    const rows = await q.query('delete from records where id = $1 returning name, account_id', [id]);
+    const rows = await q.query<Pick<RecordsRow, 'name' | 'account_id'>>('delete from records where id = $1 returning name, account_id', [id]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.deleted', entity: 'record', entityId: id, meta: { name: rows[0].name, trashId } });
     await recomputeRollups(q, org.id, org.account_fields, [rows[0].account_id]);

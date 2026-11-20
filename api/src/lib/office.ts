@@ -2,6 +2,7 @@
 // over the owner connection. Two doors use it: the owner console (his session,
 // routes/office.ts officeRoutes) and the agents (a seat's own key,
 // routes/office.ts agentRoutes). Only the first can decide an approval.
+import type { AgentMemoryRow, AgentPausesRow, AgentTasksRow, AgentsRow, ApprovalsRow, CompanyLogRow, MeetingLinesRow, MeetingsRow, SeatsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { Q, Row } from '../db';
 import type { Approval, ApprovalProposal, AuditLine, LogEntry, LogKind, Meeting, MeetingLine, MeetingMinutes, Pause, Seat } from '../../../shared/src/office';
@@ -46,7 +47,7 @@ export async function listPauses(deps: Pick<Deps, 'db'>): Promise<Pause[]> {
 
 /** Pauses all, a team or a seat (no duplicate for the same scope and target) and records who and why (ADR 0011). */
 export async function pause(q: Q, scope: Pause['scope'], target: string | null, by: string, reason: string | null) {
-  const [open] = await q.query(`select id from agent_pauses where resumed_at is null and scope = $1 and target is not distinct from $2`, [scope, target]);
+  const [open] = await q.query<Pick<AgentPausesRow, 'id'>>(`select id from agent_pauses where resumed_at is null and scope = $1 and target is not distinct from $2`, [scope, target]);
   if (open) return String(open.id);
   const [r] = await q.query<{ id: string }>('insert into agent_pauses (scope, target, reason, paused_by) values ($1, $2, $3, $4) returning id', [scope, target, reason, by]);
   await auditLine(q, { seat: target ?? 'all', actor: by.includes('@') ? 'owner' : 'system', what: 'pause', target: `${scope}:${target ?? '*'}`, detail: { reason } });
@@ -56,7 +57,7 @@ export async function pause(q: Q, scope: Pause['scope'], target: string | null, 
 
 /** Lifts a pause and records who lifted it; 'not_found' for one already lifted. */
 export async function resume(q: Q, id: string, by: string) {
-  const [r] = await q.query('update agent_pauses set resumed_at = now(), resumed_by = $2 where id = $1 and resumed_at is null returning scope, target', [id, by]);
+  const [r] = await q.query<Pick<AgentPausesRow, 'scope' | 'target'>>('update agent_pauses set resumed_at = now(), resumed_by = $2 where id = $1 and resumed_at is null returning scope, target', [id, by]);
   if (!r) fail('not_found');
   await auditLine(q, { seat: r.target ?? 'all', actor: 'owner', what: 'resume', target: `${r.scope}:${r.target ?? '*'}` });
 }
@@ -100,7 +101,7 @@ export async function listSeats(deps: Pick<Deps, 'db'>, now: Date, only?: string
         order by array_position(array['ceo-office','executive','lead','specialist','note-taker','advisor'], s.tier), s.team, s.seat`,
       only ? [weekOf(now), only] : [weekOf(now)],
     );
-    const pauses = await q.query('select scope, target from agent_pauses where resumed_at is null');
+    const pauses = await q.query<Pick<AgentPausesRow, 'scope' | 'target'>>('select scope, target from agent_pauses where resumed_at is null');
     const all = pauses.some((p) => p.scope === 'all');
     const seats = new Set(pauses.filter((p) => p.scope === 'seat').map((p) => String(p.target)));
     const teams = new Set(pauses.filter((p) => p.scope === 'team').map((p) => String(p.target)));
@@ -136,7 +137,7 @@ export async function upsertSeat(q: Q, s: SeatInput, by: string) {
     [s.seat, s.title, s.titleTr ?? '', s.team, s.reportsTo ?? null, s.tier, s.state ?? null, s.filledBy ?? null, s.humanEmail ?? null, s.cadence ?? null, s.weeklyBudget ?? null, s.wakeTrigger ?? null, s.card ? JSON.stringify(s.card) : null],
   );
   if (s.agent) {
-    const [had] = await q.query('select id from agents where seat = $1', [s.seat]);
+    const [had] = await q.query<Pick<AgentsRow, 'id'>>('select id from agents where seat = $1', [s.seat]);
     if (had) await q.query('update agents set name = $2, avatar = $3, model = $4, effort = $5 where id = $1', [had.id, s.agent.name, s.agent.avatar ?? null, s.agent.model ?? null, s.agent.effort ?? null]);
     else await q.query('insert into agents (seat, name, avatar, model, effort) values ($1, $2, $3, $4, $5)', [s.seat, s.agent.name, s.agent.avatar ?? null, s.agent.model ?? null, s.agent.effort ?? null]);
   }
@@ -148,15 +149,15 @@ export async function upsertSeat(q: Q, s: SeatInput, by: string) {
  * Returns the handover pack: the card, open work, memory and the latest log, so nothing lives only in an agent's head.
  */
 export async function handOver(q: Q, seat: string, to: { filledBy: Seat['filledBy']; humanEmail: string | null }, by: string) {
-  const [s] = await q.query('update seats set filled_by = $2, human_email = $3, updated_at = now() where seat = $1 returning *', [seat, to.filledBy, to.humanEmail]);
+  const [s] = await q.query<SeatsRow>('update seats set filled_by = $2, human_email = $3, updated_at = now() where seat = $1 returning *', [seat, to.filledBy, to.humanEmail]);
   if (!s) fail('not_found');
   // A person who takes the seat alone takes it from the agent: the agent leaves the seat (its history stays).
   if (to.filledBy === 'human') await q.query('update agents set seat = null where seat = $1', [seat]);
   // The seat's key moves with it: an old key stops working at handover; a new one is issued when needed.
   await q.query('update seats set key_hash = null where seat = $1', [seat]);
-  const tasks = await q.query(`select id, title, status, priority, due_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at`, [seat]);
-  const memory = await q.query('select key, value from agent_memory where seat = $1 order by key', [seat]);
-  const log = await q.query('select at, kind, body, ref from company_log where seat = $1 order by at desc limit 50', [seat]);
+  const tasks = await q.query<Pick<AgentTasksRow, 'id' | 'title' | 'status' | 'priority' | 'due_at'>>(`select id, title, status, priority, due_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at`, [seat]);
+  const memory = await q.query<Pick<AgentMemoryRow, 'key' | 'value'>>('select key, value from agent_memory where seat = $1 order by key', [seat]);
+  const log = await q.query<Pick<CompanyLogRow, 'at' | 'kind' | 'body' | 'ref'>>('select at, kind, body, ref from company_log where seat = $1 order by at desc limit 50', [seat]);
   await auditLine(q, { seat, actor: 'owner', what: 'seat.handover', target: seat, detail: { filledBy: to.filledBy, by } });
   await q.query(`insert into company_log (seat, kind, body) values ($1, 'handoff', $2)`, [seat, `Seat handed over: ${to.filledBy}${to.humanEmail ? ` (${to.humanEmail})` : ''}`]);
   return { seat: { seat: s.seat, title: s.title, titleTr: s.title_tr, team: s.team, reportsTo: s.reports_to, card: s.card }, openWork: tasks, memory, recentLog: log };
@@ -258,7 +259,7 @@ export type Decision = { decision: 'approve'; edits?: Approval['edited']; note?:
 /** The owner decides. The caller has checked it is the owner's own console session; nobody else reaches this. */
 export async function decide(deps: Deps, id: string, owner: string, d: Decision): Promise<Approval> {
   return deps.db.system(async (q) => {
-    const [row] = await q.query('select * from approvals where id = $1 for update', [id]);
+    const [row] = await q.query<ApprovalsRow>('select * from approvals where id = $1 for update', [id]);
     if (!row) fail('not_found');
     if (row.status !== 'pending') fail('conflict');
     let a = approvalOf(row);
@@ -293,7 +294,7 @@ export async function decide(deps: Deps, id: string, owner: string, d: Decision)
       }
     }
     await auditLine(q, { seat: a.proposedBy, actor: 'owner', what: `approval.${d.decision}`, target: a.ref, detail: { by: owner } });
-    const [after] = await q.query('select * from approvals where id = $1', [id]);
+    const [after] = await q.query<ApprovalsRow>('select * from approvals where id = $1', [id]);
     return approvalOf(after);
   });
 }
@@ -305,7 +306,7 @@ const logOf = (r: Row): LogEntry => ({ id: Number(r.id), at: isoAt(r.at), seat: 
 /** Writes a line in the AI team's company log; refused if it contains a secret. */
 export async function writeLog(q: Q, seat: string, e: { kind: LogKind; body: string; thread?: string | null; ref?: string | null }) {
   if (hasSecret(e.body, e.ref)) fail('validation', { fields: 'secret' }, { fields: ['body'], reason: 'secret' });
-  const [r] = await q.query('insert into company_log (seat, kind, thread, body, ref) values ($1, $2, $3, $4, $5) returning *', [seat, e.kind, e.thread ?? null, e.body, e.ref ?? null]);
+  const [r] = await q.query<CompanyLogRow>('insert into company_log (seat, kind, thread, body, ref) values ($1, $2, $3, $4, $5) returning *', [seat, e.kind, e.thread ?? null, e.body, e.ref ?? null]);
   return logOf(r);
 }
 
@@ -392,16 +393,16 @@ export async function listMeetings(deps: Pick<Deps, 'db'>, opts: { withOwner?: b
 /** One meeting with its lines, or null. */
 export async function meetingDetail(deps: Pick<Deps, 'db'>, id: string): Promise<{ meeting: Meeting; lines: MeetingLine[] } | null> {
   return deps.db.system(async (q) => {
-    const [m] = await q.query('select * from meetings where id = $1', [id]);
+    const [m] = await q.query<MeetingsRow>('select * from meetings where id = $1', [id]);
     if (!m) return null;
-    const lines = await q.query('select id, speaker, body, at from meeting_lines where meeting = $1 order by id limit 2000', [id]);
+    const lines = await q.query<Pick<MeetingLinesRow, 'id' | 'speaker' | 'body' | 'at'>>('select id, speaker, body, at from meeting_lines where meeting = $1 order by id limit 2000', [id]);
     return { meeting: meetingOf(m), lines: lines.map((l) => ({ id: Number(l.id), speaker: l.speaker, body: l.body, at: isoAt(l.at) })) };
   });
 }
 
 /** Creates a meeting called by `by` with the given attendees and limits. */
 export async function createMeeting(q: Q, by: string, m: { title: string; goal?: string | null; attendees: string[]; withOwner: boolean; startsAt?: string | null; timeBoxMin?: number | null; tokenBudget?: number | null }) {
-  const [r] = await q.query(
+  const [r] = await q.query<MeetingsRow>(
     `insert into meetings (title, goal, called_by, with_owner, attendees, starts_at, time_box_min, token_budget) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
     [m.title, m.goal ?? null, by, m.withOwner, [...new Set(m.attendees)], m.startsAt ?? null, m.timeBoxMin ?? null, m.tokenBudget ?? null],
   );
@@ -412,18 +413,18 @@ export async function createMeeting(q: Q, by: string, m: { title: string; goal?:
 /** Adds a line to a meeting; refused if it contains a secret, 'not_found' for an unknown meeting. */
 export async function addMeetingLine(q: Q, id: string, speaker: string, text: string) {
   if (hasSecret(text)) fail('validation', { fields: 'secret' }, { fields: ['body'], reason: 'secret' });
-  const [m] = await q.query(`select status from meetings where id = $1`, [id]);
+  const [m] = await q.query<Pick<MeetingsRow, 'status'>>(`select status from meetings where id = $1`, [id]);
   if (!m) fail('not_found');
   if (m.status === 'ended' || m.status === 'cancelled') fail('conflict');
   if (m.status === 'scheduled') await q.query(`update meetings set status = 'live', started_at = now() where id = $1`, [id]);
-  const [l] = await q.query('insert into meeting_lines (meeting, speaker, body) values ($1, $2, $3) returning id, speaker, body, at', [id, speaker, text]);
+  const [l] = await q.query<Pick<MeetingLinesRow, 'id' | 'speaker' | 'body' | 'at'>>('insert into meeting_lines (meeting, speaker, body) values ($1, $2, $3) returning id, speaker, body, at', [id, speaker, text]);
   return { id: Number(l.id), speaker: l.speaker, body: l.body, at: isoAt(l.at) } as MeetingLine;
 }
 
 /** The note taker's minutes end the meeting; each proposed decision becomes an approval card (nothing runs before his yes). */
 export async function writeMinutes(q: Q, id: string, by: string, minutes: MeetingMinutes, deps?: Pick<Deps, 'config'>) {
   if (hasSecret(JSON.stringify(minutes))) fail('validation', { fields: 'secret' }, { fields: ['minutes'], reason: 'secret' });
-  const [m] = await q.query(`update meetings set minutes = $2, status = 'ended', ended_at = coalesce(ended_at, now()) where id = $1 returning *`, [id, JSON.stringify(minutes)]);
+  const [m] = await q.query<MeetingsRow>(`update meetings set minutes = $2, status = 'ended', ended_at = coalesce(ended_at, now()) where id = $1 returning *`, [id, JSON.stringify(minutes)]);
   if (!m) fail('not_found');
   const attendees: string[] = m.attendees ?? [];
   const cards = [];

@@ -2,6 +2,7 @@
 // tasks, time entries, watching, comments and files. Every route runs under the person's rights (run(): row security
 // and department walls, ADR 0004, 0009); writes need a writer seat, side effects go through the outbox, deletes to the trash.
 // Screens: BoardPage, TaskPanel, MyTasks. Tests: tests/tasks*.test.ts.
+import type { ChecklistTemplatesRow, CommentsRow, FilesRow, RecordsRow, TaskEventsRow, TaskLinksRow, TaskWatchersRow, TasksRow, TimeEntriesRow, UndoLogRow, UsersRow } from '../db/rows.gen';
 import { quarantine, released } from '../lib/uploadScan';
 import { INLINE_TYPES, readUpload } from '../lib/upload';
 import { Hono, type Context } from 'hono';
@@ -41,14 +42,14 @@ const COUNTS = `
        and (select bt.archived_at is null and bt.done_at is null from tasks bt where bt.id = l.from_id)) as blocked_by`;
 
 async function loadTask(q: Q, id: string): Promise<Row> {
-  const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
+  const [t] = await q.query<TasksRow>('select * from tasks where id = $1 and archived_at is null', [id]);
   if (!t) fail('not_found');
   return t;
 }
 
 async function checkAssignees(q: Q, ids: string[]) {
   if (!ids.length) return;
-  const rows = await q.query(
+  const rows = await q.query<Pick<UsersRow, 'id'>>(
     `select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`,
     [ids],
   );
@@ -292,7 +293,7 @@ const fields = {
 /** A record a task is about: it must be one this person can see. Its customer comes with it. */
 async function checkRecord(q: Q, recordId: string | null | undefined): Promise<Row | null> {
   if (!recordId) return null;
-  const [r] = await q.query('select id, account_id from records where id = $1', [recordId]);
+  const [r] = await q.query<Pick<RecordsRow, 'id' | 'account_id'>>('select id, account_id from records where id = $1', [recordId]);
   if (!r) fail('validation', { fields: 'recordId' }, { fields: ['recordId'] });
   return r;
 }
@@ -452,7 +453,7 @@ taskRoutes.get('/tasks/:id', async (c) => {
          from tasks t left join records r on r.id = t.record_id left join record_types rt on rt.id = r.type_id where t.id = $1`,
       [id],
     );
-    const subtasks = await q.query(
+    const subtasks = await q.query<TasksRow>(
       'select * from tasks where parent_id = $1 and archived_at is null order by position, created_at',
       [id],
     );
@@ -460,14 +461,14 @@ taskRoutes.get('/tasks/:id', async (c) => {
       'select c.*, pu.name as portal_author_name from comments c left join portal_users pu on pu.id = c.portal_author_id where c.task_id = $1 order by c.created_at',
       [id],
     );
-    const files = await q.query('select * from files where task_id = $1 order by created_at', [id]);
+    const files = await q.query<FilesRow>('select * from files where task_id = $1 order by created_at', [id]);
     const [mute] = await q.query('select 1 from task_mutes where task_id = $1', [id]);
-    const events = await q.query('select * from task_events where task_id = $1 order by created_at desc limit 200', [id]);
-    const watchers = await q.query('select user_id from task_watchers where task_id = $1 order by created_at', [id]);
+    const events = await q.query<TaskEventsRow>('select * from task_events where task_id = $1 order by created_at desc limit 200', [id]);
+    const watchers = await q.query<Pick<TaskWatchersRow, 'user_id'>>('select user_id from task_watchers where task_id = $1 order by created_at', [id]);
     // Both directions of every link, seen from this task. A task in another department shows
     // its title, where it stands and its department; its board only to people who can open it.
     const links = await q.query('select * from app_task_link_cards($1)', [id]);
-    const time = await q.query('select * from time_entries where task_id = $1 order by day desc, created_at desc limit 200', [id]);
+    const time = await q.query<TimeEntriesRow>('select * from time_entries where task_id = $1 order by day desc, created_at desc limit 200', [id]);
     return { t: counted ?? t, subtasks, comments, files, muted: !!mute, events, watchers, links, time };
   });
   const files = detail.files.map(toFile);
@@ -664,9 +665,9 @@ taskRoutes.delete('/tasks/:id/links/:other', async (c) => {
   await run(c, async (q) => {
     await loadTask(q, id);
     const l = orient(id, other, kind.data!);
-    const gone = await q.query('delete from task_links where from_id = $1 and to_id = $2 and kind = $3 returning from_id', [l.from, l.to, l.kind]);
+    const gone = await q.query<Pick<TaskLinksRow, 'from_id'>>('delete from task_links where from_id = $1 and to_id = $2 and kind = $3 returning from_id', [l.from, l.to, l.kind]);
     if (gone.length) {
-      const [o] = await q.query('select title from tasks where id = $1', [other]);
+      const [o] = await q.query<Pick<TasksRow, 'title'>>('select title from tasks where id = $1', [other]);
       await addEvent(q, org.id, id, auth.userId, 'unlinked', { kind: kind.data, taskId: other, title: o?.title ?? '' });
     }
   });
@@ -683,7 +684,7 @@ taskRoutes.post('/tasks/:id/time', async (c) => {
   const org = c.get('org');
   const entry = await run(c, async (q) => {
     await loadTask(q, id);
-    const [e] = await q.query('insert into time_entries (org_id, task_id, user_id, minutes, day, note) values ($1, $2, $3, $4, $5, $6) returning *', [
+    const [e] = await q.query<TimeEntriesRow>('insert into time_entries (org_id, task_id, user_id, minutes, day, note) values ($1, $2, $3, $4, $5, $6) returning *', [
       org.id,
       id,
       auth.userId,
@@ -701,7 +702,7 @@ taskRoutes.post('/tasks/:id/time', async (c) => {
 taskRoutes.delete('/time/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
-  const gone = await run(c, (q) => q.query('delete from time_entries where id = $1 returning id', [id]));
+  const gone = await run(c, (q) => q.query<Pick<TimeEntriesRow, 'id'>>('delete from time_entries where id = $1 returning id', [id]));
   if (!gone.length) fail('not_found');
   return c.json({ ok: true });
 });
@@ -721,7 +722,7 @@ taskRoutes.post('/tasks/:id/checklist', async (c) => {
     let items = input.items ?? [];
     let name = '';
     if (input.templateId) {
-      const [tpl] = await q.query('select name, items from checklist_templates where id = $1', [input.templateId]);
+      const [tpl] = await q.query<Pick<ChecklistTemplatesRow, 'name' | 'items'>>('select name, items from checklist_templates where id = $1', [input.templateId]);
       if (!tpl) fail('not_found');
       items = (tpl.items as string[]).filter((x) => typeof x === 'string' && x.trim()).slice(0, 50);
       name = tpl.name;
@@ -764,7 +765,7 @@ taskRoutes.post('/tasks/bulk', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
   const out = await run(c, async (q) => {
-    const tasks = await q.query('select * from tasks where id = any($1::uuid[]) and parent_id is null and (archived_at is null or $2)', [input.ids, input.archived === false]);
+    const tasks = await q.query<TasksRow>('select * from tasks where id = any($1::uuid[]) and parent_id is null and (archived_at is null or $2)', [input.ids, input.archived === false]);
     if (input.addAssignee) await checkAssignees(q, [input.addAssignee]);
     const boards = new Map<string, Row>();
     const before: Row[] = [];
@@ -785,7 +786,7 @@ taskRoutes.post('/tasks/bulk', async (c) => {
       let assignees: string[] = t.assignee_ids ?? [];
       if (input.addAssignee && !assignees.includes(input.addAssignee)) assignees = [...assignees, input.addAssignee].slice(0, 10);
       if (input.removeAssignee) assignees = assignees.filter((a) => a !== input.removeAssignee);
-      const [u] = await q.query(
+      const [u] = await q.query<TasksRow>(
         `update tasks set status = $2, assignee_ids = $3, due_date = $4, priority = $5,
                 archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end,
                 version = version + 1, updated_by = $7, updated_at = now()
@@ -820,13 +821,13 @@ taskRoutes.post('/undo/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const n = await run(c, async (q) => {
-    const [u] = await q.query(`select * from undo_log where id = $1 and used_at is null and created_at > now() - make_interval(mins => $2)`, [id, UNDO_MINUTES]);
+    const [u] = await q.query<UndoLogRow>(`select * from undo_log where id = $1 and used_at is null and created_at > now() - make_interval(mins => $2)`, [id, UNDO_MINUTES]);
     if (!u) fail('not_found');
     let restored = 0;
     const touched = new Set<string | null>();
     for (const p of u.payload as Row[]) {
       if (u.kind === 'tasks') {
-        const r = await q.query(
+        const r = await q.query<Pick<TasksRow, 'id'>>(
           `update tasks set status = $2, assignee_ids = $3, due_date = $4, priority = $5, archived_at = $6, repeat = $7,
                   version = version + 1, updated_by = $8, updated_at = now() where id = $1 returning id`,
           [p.id, p.status, p.assignee_ids ?? [], p.due_date, p.priority, p.archived_at, p.repeat ? JSON.stringify(p.repeat) : null, auth.userId],
@@ -837,7 +838,7 @@ taskRoutes.post('/undo/:id', async (c) => {
         const fields = (p.fields ?? {}) as Record<string, unknown>;
         const unset = Object.keys(fields).filter((k) => fields[k] === null);
         const back = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null));
-        const r = await q.query(
+        const r = await q.query<Pick<RecordsRow, 'account_id'>>(
           `update records set owner_id = case when $2 then $3::uuid else owner_id end,
                   archived_at = case when $4 then $5::timestamptz else archived_at end,
                   fields = (coalesce(fields, '{}'::jsonb) - $6::text[]) || $7::jsonb, updated_at = now()
@@ -898,7 +899,7 @@ taskRoutes.delete('/tasks/:id', async (c) => {
     // It stays in the trash for 30 days with its subtasks, comments, time and files; the files leave
     // storage only when the trash lets go of them.
     const trashId = await toTrash(q, 'task', [id], t.title, { boardId: t.board_id, board: w?.board, ...(t.account_id && w?.account ? { accountId: t.account_id, account: w.account } : {}) });
-    const gone = await q.query('delete from tasks where id = $1 returning id', [id]);
+    const gone = await q.query<Pick<TasksRow, 'id'>>('delete from tasks where id = $1 returning id', [id]);
     if (!gone.length) fail('forbidden');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.deleted', entity: 'task', entityId: id, meta: { title: t.title, trashId } });
     return trashId;
@@ -952,7 +953,7 @@ taskRoutes.delete('/comments/:id', async (c) => {
   const org = c.get('org');
   const keys = await run(c, async (q) => {
     const files = await q.query<{ id: string; storage_key: string }>('select id, storage_key from files where comment_id = $1', [id]);
-    const rows = await q.query('delete from comments where id = $1 returning id', [id]);
+    const rows = await q.query<Pick<CommentsRow, 'id'>>('delete from comments where id = $1 returning id', [id]);
     if (!rows.length) return null;
     // Its pictures and files go with it.
     if (files.length) await q.query('delete from files where id = any($1::uuid[])', [files.map((f) => f.id)]);
@@ -980,7 +981,7 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
     // The plan's storage cap (shared/src/plans.json), before anything is stored.
     await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
-    const [r] = await q.query(
+    const [r] = await q.query<FilesRow>(
       `insert into files (org_id, task_id, name, size, mime, storage_key, uploaded_by)
        values ($1, $2, $3, $4, $5, $6, $7) returning *`,
       [org.id, id, name, f.size, f.mime, key, auth.userId],
@@ -999,7 +1000,7 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
 taskRoutes.get('/files/:id', async (c) => {
   const id = param(c, 'id');
   const row = await run(c, async (q) => {
-    const [r] = await q.query('select * from files where id = $1', [id]);
+    const [r] = await q.query<FilesRow>('select * from files where id = $1', [id]);
     if (!r) fail('not_found');
     return r;
   });
