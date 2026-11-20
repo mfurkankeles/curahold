@@ -4,8 +4,9 @@
 // stops with the language and the activity id when one is missing.
 import type { NoticeLocale, NoticeText } from './types';
 import ar from './ar';
+import he from './he';
 // 
 export type { NoticeLocale, NoticeRow, NoticeText } from './types';
 
 /** The notice-table words per language (draft translations; the English text prevails). */
-export const NOTICE_ROWS: Partial<Record<NoticeLocale, NoticeText>> = { ar };
+export const NOTICE_ROWS: Partial<Record<NoticeLocale, NoticeText>> = { ar, he };
