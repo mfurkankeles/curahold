@@ -36,7 +36,7 @@ Bir nesne bir dakika içinde birkaç kez değişirse tek bir mesaj gider ve mesa
 ## Mesaj
 
 ```http
-POST /senin-adresin HTTP/1.1
+POST /adresiniz HTTP/1.1
 Content-Type: application/json
 Curahold-Event: task.updated
 Curahold-Signature: t=1794394831,v1=5f2b…

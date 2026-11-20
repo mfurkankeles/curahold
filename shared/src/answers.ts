@@ -9,6 +9,7 @@
 // leaves their device.
 //
 // The same code runs in the app (React) and on the docs site (a small script).
+import { GLOSSARY as CONCEPTS, type Concept, type Term } from './i18n/glossary';
 import { foldText } from './text';
 
 /** One section of a docs page, as the docs build writes it (answers.json). */
@@ -266,11 +267,35 @@ function headSays(head: string, perTerm: { forms: string[] }[]): boolean {
   return perTerm.every(({ forms }) => forms.some((f, k) => words.some((h) => sameWord(h, f, k === 0 ? 0.5 : alikeMost(f)))));
 }
 
+// The words a reader may type that the product and its help do not use ("नवीनीकरण" where the help says
+// "रिन्यूअल", "续订" for "续约"): the glossary lists them as what to avoid, so the search reads them as the word used.
+// Built on first use: the glossary module is still loading when this one is (they import each other's neighbours).
+let instead: [said: string, use: string][] | null = null;
+const insteadWords = (): [string, string][] =>
+  (instead ??= CONCEPTS.flatMap((c: Concept) =>
+    Object.values(c.terms).flatMap((term: Term | undefined) => (term?.avoid ?? []).filter((w) => !w.startsWith('/')).map((w): [string, string] => [w.toLowerCase(), term!.use])),
+  ));
+/** The question in the product's own words: a word the glossary says it avoids becomes the word it uses. */
+function inProductWords(question: string): string {
+  let out = question;
+  for (const [said, use] of insteadWords()) {
+    if ([...said].length < 2) continue; // one letter is a piece of too many words ("딜" in "딜러")
+    const at = out.toLowerCase().indexOf(said);
+    if (at < 0) continue;
+    // Where words have spaces between them, only the whole word: "tahta" is not in "tahtaya" by accident.
+    const letter = /\p{L}/u;
+    if (!/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(said) && (letter.test(out[at - 1] ?? '') || letter.test(out[at + said.length] ?? ''))) continue;
+    out = out.slice(0, at) + use + out.slice(at + said.length);
+  }
+  return out;
+}
+
 /**
  * Finds the sections that answer a question. `near` is the page the previous
  * answer came from: a follow-up question is probably about the same thing.
  */
-export function ask(index: AnswerIndex, question: string, near?: string | null): Answer {
+export function ask(index: AnswerIndex, asked: string, near?: string | null): Answer {
+  const question = inProductWords(asked);
   const folded = foldText(question).trim();
   const terms = [...new Set(wordsOf(question))];
   if (!terms.length) {

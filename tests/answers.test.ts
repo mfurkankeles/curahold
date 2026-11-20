@@ -97,6 +97,13 @@ describe('the same question in every language', () => {
     // A question in the reader's own language is asked of their own docs, as before.
     expect(askAcross(index.ja, index.en, RENEWAL.ja).found[0].section).toBe(ask(index.ja, RENEWAL.ja).found[0].section);
   });
+  it('reads a word the glossary avoids as the one the help uses (review: Hindi "नवीनीकरण" found nothing)', () => {
+    for (const [lang, q] of [['hi', 'नवीनीकरण कैसे जोड़ूं?'], ['zh-Hans', '如何添加续订？']]) {
+      const a = ask(index[lang], q);
+      expect(a.confident, q).toBe(true);
+      expect(a.found[0].section.u, q).toBe(`/docs/${lang}/customers/`);
+    }
+  });
   it('does not pass off a three-letter guess as the answer (a poem is not "service")', () => {
     expect(ask(index.he, 'כתוב לי שיר על הים.').confident).toBe(false);
   });
