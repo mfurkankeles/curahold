@@ -38,6 +38,11 @@ export const BASE: BaseCase[] = [
     q: { en: 'How do I import my customers from a CSV file?', tr: 'Müşterilerimi bir CSV dosyasından nasıl içe aktarırım?', ar: 'كيف أستورد عملائي من ملف CSV؟', he: 'איך מייבאים את הלקוחות שלי מקובץ CSV?', fa: 'چطور مشتریانم را از یک فایل CSV وارد کنم؟', 'zh-Hans': '如何从 CSV 文件导入我的客户？', 'zh-Hant': '如何從 CSV 檔案匯入我的客戶？', ja: 'CSV ファイルから顧客をインポートするには？', ko: 'CSV 파일에서 고객을 가져오려면 어떻게 하나요?', hi: "मैं CSV फ़ाइल से अपने ग्राहक कैसे इंपोर्ट करूं?", ms: "Bagaimana saya mengimport pelanggan daripada fail CSV?" },
   },
   {
+    id: 'howto-add-renewal', category: 'how_to', kinds: ['answer'], cite: 'customers',
+    rubric: "Explains that a renewal is the customer's renewal date, set under Details or imported, and that renewals can start by themselves; from the docs.",
+    q: { en: 'How do I add a renewal?', tr: 'Yenileme nasıl eklenir?', ar: 'كيف أضيف تجديدًا؟', he: 'איך מוסיפים חידוש?', fa: 'چطور یک تمدید اضافه کنم؟', 'zh-Hans': '如何添加续约？', 'zh-Hant': '如何新增續約？', ja: '更新を追加するには？', ko: '갱신은 어떻게 추가하나요?', hi: 'रिन्यूअल कैसे जोड़ूं?', ms: 'Bagaimana saya menambah pembaharuan?' },
+  },
+  {
     id: 'howto-api-key', category: 'how_to', kinds: ['answer'], cite: 'api-keys',
     rubric: 'Explains how to create an API key and where; mentions it is shown once or kept secret only if the docs say so.',
     q: { en: 'How do I make an API key?', tr: 'API anahtarı nasıl oluştururum?', ar: 'كيف أنشئ مفتاح API؟', he: 'איך יוצרים מפתח API?', fa: 'چطور یک کلید API بسازم؟', 'zh-Hans': '如何创建 API 密钥？', 'zh-Hant': '如何建立 API 金鑰？', ja: 'API キーを作成するには？', ko: 'API 키는 어떻게 만드나요?', hi: "मैं API की कैसे बनाऊं?", ms: "Bagaimana saya membuat kunci API?" },

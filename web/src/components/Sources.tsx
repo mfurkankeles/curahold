@@ -1600,7 +1600,7 @@ function StatusTab({ id, d, refresh, reload }: { id: string; d: Detail; refresh:
           <ul className="plainlist problem-list">
             {problems.map((p) => (
               <li key={`${p.entity}:${p.entityId}`}>
-                <strong>{p.name}</strong> <span className="muted">· {p.lastError}</span>
+                <strong>{p.name}</strong> <ConnectionTrouble app={appName(d.connection)} message={p.lastError} />
               </li>
             ))}
           </ul>

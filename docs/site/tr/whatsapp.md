@@ -2,7 +2,7 @@
 title: WhatsApp Business
 section: help
 order: 8.15
-summary: Müşterilerin WhatsApp mesajları kendi sayfalarında, cevaplar kendi numarandan; kendi Meta hesabınla.
+summary: Müşterilerinizin WhatsApp mesajları kendi sayfalarında, cevaplar kendi numaranızdan; kendi Meta hesabınızla.
 ---
 # WhatsApp Business
 

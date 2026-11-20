@@ -165,7 +165,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'Q3 business review',
           ours: 'Our side: Zeynep Tunç, Ada Demir',
           theirs: 'Their side: Selin Aytaç',
-          steps: ['Send the extra seats quote', 'Draft a sample journey for the mobile channel'],
+          steps: ['Send the extra seats quote', 'Draft the rollout plan for the second team'],
         },
         todo: 'Share the usage report',
         tasksOpened: '2 tasks opened',
@@ -180,7 +180,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Actual',
         review: 'Code review',
         epics: ['Billing', 'Mobile', 'Onboarding'],
-        tasks: ['Sample journey for the mobile channel', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
+        tasks: ['Rollout plan for the second team', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
       },
     },
     bento: {
@@ -286,7 +286,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: '3. çeyrek iş değerlendirmesi',
           ours: 'Bizden: Zeynep Tunç, Ada Demir',
           theirs: 'Onlardan: Selin Aytaç',
-          steps: ['Ek kullanıcı teklifini gönder', 'Mobil kanal için örnek akış hazırla'],
+          steps: ['Ek kullanıcı teklifini gönder', 'İkinci ekip için yaygınlaştırma planını hazırla'],
         },
         todo: 'Kullanım raporunu paylaş',
         tasksOpened: '2 görev açıldı',
@@ -301,7 +301,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Gerçekleşen',
         review: 'Kod incelemesi',
         epics: ['Faturalama', 'Mobil', 'Kurulum'],
-        tasks: ['Mobil kanal için örnek akış', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
+        tasks: ['İkinci ekip için yaygınlaştırma planı', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
       },
     },
     bento: {
@@ -407,7 +407,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'مراجعة أعمال الربع الثالث',
           ours: 'من جانبنا: Zeynep Tunç، Ada Demir',
           theirs: 'من جانبهم: Selin Aytaç',
-          steps: ['أرسل عرض المقاعد الإضافية', 'جهّز رحلة نموذجية لقناة الجوال'],
+          steps: ['أرسل عرض المقاعد الإضافية', 'جهّز خطة التوسّع للفريق الثاني'],
         },
         todo: 'شارك تقرير الاستخدام',
         tasksOpened: 'فُتحت مهمتان',
@@ -422,7 +422,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'الفعلي',
         review: 'مراجعة الكود',
         epics: ['الفوترة', 'الجوال', 'الاستقبال'],
-        tasks: ['رحلة نموذجية لقناة الجوال', 'قائمة الترحيب', 'إصلاح تصدير CSV', 'فواتير حسب المقاعد', 'إشعارات فورية على iOS'],
+        tasks: ['خطة التوسّع للفريق الثاني', 'قائمة الترحيب', 'إصلاح تصدير CSV', 'فواتير حسب المقاعد', 'إشعارات فورية على iOS'],
       },
     },
     bento: {
@@ -516,14 +516,14 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     tour: {
       label: 'סיור במוצר',
       steps: [
-        { tab: 'בריאות', title: 'ראה מי צריך אותך', text: 'לכל לקוח ציון מ-0 עד 100 והסיבות שמאחוריו, כך שהלקוח שהשתתק עולה לראש הרשימה מעצמו.' },
-        { tab: 'הבטחות', title: 'עמוד בכל הבטחה', text: 'תעד את הפגישה והצעדים הבאים שלה הופכים למשימות, לכל אחת בעלים ותאריך. שום דבר שנאמר בחדר לא הולך לאיבוד.' },
-        { tab: 'חידושים', title: 'התחל לחדש מוקדם', text: 'תשעים יום לפני התאריך, פלייבוק החידוש פותח את המשימות שלו והזדמנות חידוש. אף אחד לא צריך לזכור.' },
-        { tab: 'ספרינטים', title: 'שחרר בספרינטים', text: 'אפיקים, סטורי פוינטס ומשימות מקושרות על אותם לוחות, וגרף הברנדאון מצטייר מעצמו כשהכרטיסים נסגרים.' },
+        { tab: 'בריאות', title: 'ראו מי צריך אתכם', text: 'לכל לקוח ציון מ-0 עד 100 והסיבות שמאחוריו, כך שהלקוח שהשתתק עולה לראש הרשימה מעצמו.' },
+        { tab: 'הבטחות', title: 'עמדו בכל הבטחה', text: 'תעדו את הפגישה והצעדים הבאים שלה הופכים למשימות, לכל אחת בעלים ותאריך. שום דבר שנאמר בחדר לא הולך לאיבוד.' },
+        { tab: 'חידושים', title: 'התחילו לחדש מוקדם', text: 'תשעים יום לפני התאריך, פלייבוק החידוש פותח את המשימות שלו והזדמנות חידוש. אף אחד לא צריך לזכור.' },
+        { tab: 'ספרינטים', title: 'שחררו בספרינטים', text: 'אפיקים, סטורי פוינטס ומשימות מקושרות על אותם לוחות, וגרף הברנדאון מצטייר מעצמו כשהכרטיסים נסגרים.' },
       ],
       ui: {
         chips: { review: 'סקירה עסקית באיחור של 14 ימים', renewal: 'חידוש בעוד 94 ימים' },
-        meeting: { kind: 'סקירה עסקית', name: 'סקירה עסקית לרבעון 3', ours: 'מצידנו: Zeynep Tunç, Ada Demir', theirs: 'מצידם: Selin Aytaç', steps: ['שלח הצעה למושבים נוספים', 'הכן מסע לדוגמה לערוץ המובייל'] },
+        meeting: { kind: 'סקירה עסקית', name: 'סקירה עסקית לרבעון 3', ours: 'מצידנו: Zeynep Tunç, Ada Demir', theirs: 'מצידם: Selin Aytaç', steps: ['שלחו הצעה למושבים נוספים', 'הכינו תוכנית הטמעה לצוות השני'] },
         todo: 'שתף את דוח השימוש',
         tasksOpened: 'נפתחו 2 משימות',
         playbook: 'פלייבוק חידוש',
@@ -537,7 +537,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'בפועל',
         review: 'סקירת קוד',
         epics: ['חיוב', 'מובייל', 'קליטה'],
-        tasks: ['מסע לדוגמה לערוץ המובייל', 'רשימת קבלת פנים', 'תיקון ייצוא CSV', 'חשבוניות לפי מושבים', 'התראות פוש ב-iOS'],
+        tasks: ['תוכנית הטמעה לצוות השני', 'רשימת קבלת פנים', 'תיקון ייצוא CSV', 'חשבוניות לפי מושבים', 'התראות פוש ב-iOS'],
       },
     },
     bento: {
@@ -643,7 +643,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'بازبینی کسب‌وکار سه‌ماههٔ سوم',
           ours: 'از طرف ما: Zeynep Tunç، Ada Demir',
           theirs: 'از طرف آن‌ها: Selin Aytaç',
-          steps: ['ارسال پیشنهاد صندلی‌های بیشتر', 'آماده‌سازی سفر نمونه برای کانال موبایل'],
+          steps: ['ارسال پیشنهاد صندلی‌های بیشتر', 'آماده‌سازی برنامهٔ گسترش برای تیم دوم'],
         },
         todo: 'اشتراک‌گذاری گزارش استفاده',
         tasksOpened: '۲ وظیفه باز شد',
@@ -658,7 +658,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'واقعی',
         review: 'بازبینی کد',
         epics: ['صورتحساب', 'موبایل', 'آنبوردینگ'],
-        tasks: ['سفر نمونه برای کانال موبایل', 'چک‌لیست خوشامدگویی', 'رفع خروجی CSV', 'صورتحساب بر پایهٔ صندلی', 'اعلان‌های پوش در iOS'],
+        tasks: ['برنامهٔ گسترش برای تیم دوم', 'چک‌لیست خوشامدگویی', 'رفع خروجی CSV', 'صورتحساب بر پایهٔ صندلی', 'اعلان‌های پوش در iOS'],
       },
     },
     bento: {
@@ -751,7 +751,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '业务回顾已延迟 14 天', renewal: '94 天后续约' },
-        meeting: { kind: '业务回顾', name: '第三季度业务回顾', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '对方：Selin Aytaç', steps: ['发送增购席位报价', '起草移动渠道的示例旅程'] },
+        meeting: { kind: '业务回顾', name: '第三季度业务回顾', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '对方：Selin Aytaç', steps: ['发送增购席位报价', '起草第二个团队的推广计划'] },
         todo: '分享使用情况报告',
         tasksOpened: '已创建 2 个任务',
         playbook: '续约行动手册',
@@ -765,7 +765,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '实际',
         review: '代码评审',
         epics: ['计费', '移动端', '入门引导'],
-        tasks: ['移动渠道的示例旅程', '欢迎清单', '修复 CSV 导出', '按席位开票', 'iOS 推送通知'],
+        tasks: ['第二个团队的推广计划', '欢迎清单', '修复 CSV 导出', '按席位开票', 'iOS 推送通知'],
       },
     },
     bento: {
@@ -850,7 +850,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '業務檢視已延遲 14 天', renewal: '94 天後續約' },
-        meeting: { kind: '業務檢視', name: '第三季業務檢視', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '對方：Selin Aytaç', steps: ['寄送加購席次報價', '草擬行動通路的範例旅程'] },
+        meeting: { kind: '業務檢視', name: '第三季業務檢視', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '對方：Selin Aytaç', steps: ['寄送加購席次報價', '草擬第二個團隊的導入計畫'] },
         todo: '分享使用狀況報告',
         tasksOpened: '已建立 2 個任務',
         playbook: '續約行動手冊',
@@ -864,7 +864,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '實際',
         review: '程式碼審查',
         epics: ['計費', '行動版', '客戶導入'],
-        tasks: ['行動通路的範例旅程', '歡迎檢查清單', '修正 CSV 匯出', '依席次開立發票', 'iOS 推播通知'],
+        tasks: ['第二個團隊的導入計畫', '歡迎檢查清單', '修正 CSV 匯出', '依席次開立發票', 'iOS 推播通知'],
       },
     },
     bento: {
@@ -949,7 +949,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: 'ビジネスレビューが14日遅延', renewal: '更新まであと94日' },
-        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', 'モバイル向けのサンプルジャーニーを作成'] },
+        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', '2つ目のチームへの展開計画を作成'] },
         todo: '利用状況レポートを共有',
         tasksOpened: '2件のタスクを作成',
         playbook: '更新プレイブック',
@@ -963,7 +963,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '実績',
         review: 'コードレビュー',
         epics: ['請求', 'モバイル', 'オンボーディング'],
-        tasks: ['モバイルチャネルのサンプルジャーニー', 'ウェルカムチェックリスト', 'CSVエクスポートを修正', 'シート単位の請求書', 'iOSのプッシュ通知'],
+        tasks: ['2つ目のチームへの展開計画', 'ウェルカムチェックリスト', 'CSVエクスポートを修正', 'シート単位の請求書', 'iOSのプッシュ通知'],
       },
     },
     bento: {
@@ -1048,7 +1048,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '비즈니스 리뷰 14일 지연', renewal: '94일 후 갱신' },
-        meeting: { kind: '비즈니스 리뷰', name: '3분기 비즈니스 리뷰', ours: '우리 측: Zeynep Tunç, Ada Demir', theirs: '고객 측: Selin Aytaç', steps: ['추가 좌석 견적 보내기', '모바일 채널 샘플 여정 작성'] },
+        meeting: { kind: '비즈니스 리뷰', name: '3분기 비즈니스 리뷰', ours: '우리 측: Zeynep Tunç, Ada Demir', theirs: '고객 측: Selin Aytaç', steps: ['추가 좌석 견적 보내기', '두 번째 팀 도입 계획 작성'] },
         todo: '사용 현황 보고서 공유',
         tasksOpened: '작업 2개 생성됨',
         playbook: '갱신 플레이북',
@@ -1062,7 +1062,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '실제',
         review: '코드 리뷰',
         epics: ['결제', '모바일', '온보딩'],
-        tasks: ['모바일 채널 샘플 여정', '환영 체크리스트', 'CSV 내보내기 수정', '좌석 기준 청구서', 'iOS 푸시 알림'],
+        tasks: ['두 번째 팀 도입 계획', '환영 체크리스트', 'CSV 내보내기 수정', '좌석 기준 청구서', 'iOS 푸시 알림'],
       },
     },
     bento: {
@@ -1183,7 +1183,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: "Q3 बिज़नेस रिव्यू",
           ours: "हमारी तरफ़: Zeynep Tunç, Ada Demir",
           theirs: "उनकी तरफ़: Selin Aytaç",
-          steps: ["अतिरिक्त सीटों का कोटेशन भेजें", "मोबाइल चैनल के लिए सैंपल जर्नी का ड्राफ़्ट बनाएं"],
+          steps: ["अतिरिक्त सीटों का कोटेशन भेजें", "दूसरी टीम के लिए रोलआउट प्लान का ड्राफ़्ट बनाएं"],
         },
         todo: "उपयोग रिपोर्ट शेयर करें",
         tasksOpened: "2 टास्क खोले गए",
@@ -1198,7 +1198,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: "असल",
         review: "कोड रिव्यू",
         epics: ["बिलिंग", "मोबाइल", "ऑनबोर्डिंग"],
-        tasks: ["मोबाइल चैनल के लिए सैंपल जर्नी", "स्वागत चेकलिस्ट", "CSV एक्सपोर्ट ठीक करें", "सीट के हिसाब से इनवॉइस", "iOS पर पुश नोटिफ़िकेशन"],
+        tasks: ["दूसरी टीम के लिए रोलआउट प्लान", "स्वागत चेकलिस्ट", "CSV एक्सपोर्ट ठीक करें", "सीट के हिसाब से इनवॉइस", "iOS पर पुश नोटिफ़िकेशन"],
       },
     },
     bento: {
@@ -1370,7 +1370,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: "Semakan perniagaan S3",
           ours: "Pihak kami: Zeynep Tunç, Ada Demir",
           theirs: "Pihak mereka: Selin Aytaç",
-          steps: ["Hantar sebut harga tempat duduk tambahan", "Draf contoh perjalanan untuk saluran mudah alih"],
+          steps: ["Hantar sebut harga tempat duduk tambahan", "Draf pelan pelancaran untuk pasukan kedua"],
         },
         todo: "Kongsi laporan penggunaan",
         tasksOpened: "2 tugasan dibuka",
@@ -1385,7 +1385,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: "Sebenar",
         review: "Semakan kod",
         epics: ["Pengebilan", "Mudah alih", "Onboarding"],
-        tasks: ["Contoh perjalanan untuk saluran mudah alih", "Senarai semak alu-aluan", "Betulkan eksport CSV", "Invois berasaskan tempat duduk", "Pemberitahuan tolak pada iOS"],
+        tasks: ["Pelan pelancaran untuk pasukan kedua", "Senarai semak alu-aluan", "Betulkan eksport CSV", "Invois berasaskan tempat duduk", "Pemberitahuan tolak pada iOS"],
       },
     },
     bento: {
@@ -1552,7 +1552,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Follow Marevo through one quarter: a warning, a promise, the work that keeps it, and a renewal saved.',
     steps: [
       { title: 'The score drops, and says why', text: 'Marevo slips from 60 to 48 and turns at risk. Open Why? and the reasons are listed: no touch in 38 days, three overdue tasks, no champion.' },
-      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a sample journey for their mobile channel. Zeynep logs it as a next step before the call ends.' },
+      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a rollout plan for their second team. Zeynep logs it as a next step before the call ends.' },
       { title: 'It becomes a task by itself', text: 'Saving the meeting turns the next step into a task: it has an owner and a due date, it is linked to Marevo, and it is shared with them.' },
       { title: 'The sprint ships it', text: 'The product team builds it in Sprint 24, on a card linked to the promise. When the card reaches Done, the sprint’s points move with it.' },
       { title: 'Marevo sees it in their portal', text: 'Selin signs in with the link in her email. The task shows as done, with Zeynep’s reply under it. Nobody had to write a status email.' },
@@ -1562,7 +1562,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Task opened',
       from: 'From the meeting',
       board: 'Customer success',
-      reply: 'The sample journey is ready in your workspace.',
+      reply: 'The rollout plan is ready in your workspace.',
     },
   },
   tr: {
@@ -1571,7 +1571,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo’nun bir çeyreğini izleyin: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
     steps: [
       { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. “Neden?” bağlantısını açın; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
-      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
+      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, ikinci ekipleri için bir yaygınlaştırma planı ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
       { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
       { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
       { title: 'Marevo onu kendi portalında görür', text: 'Selin e-postasındaki bağlantıyla girer. Görev tamamlandı olarak görünür, altında Zeynep’in yanıtı durur. Kimsenin durum e-postası yazması gerekmez.' },
@@ -1581,7 +1581,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Görev açıldı',
       from: 'Geldiği toplantı',
       board: 'Müşteri başarısı',
-      reply: 'Örnek akış çalışma alanında hazır.',
+      reply: 'Yaygınlaştırma planı çalışma alanında hazır.',
     },
   },
   ar: {
@@ -1590,13 +1590,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'تابع Marevo على مدى ربع سنة: تحذير، ثم وعد، ثم العمل الذي يفي به، ثم تجديد أُنقذ.',
     steps: [
       { title: 'تنخفض الدرجة وتقول السبب', text: 'تهبط Marevo من 60 إلى 48 وتصبح معرّضة للخطر. افتح «لماذا؟» فتجد الأسباب: لا تواصل منذ 38 يومًا، وثلاث مهام متأخرة، ولا مناصر.' },
-      { title: 'يُقطع الوعد في الاجتماع', text: 'في مراجعة أعمال الربع الثالث تطلب Selin رحلة نموذجية لقناة الجوال. تسجّلها Zeynep خطوةً تالية قبل أن تنتهي المكالمة.' },
+      { title: 'يُقطع الوعد في الاجتماع', text: 'في مراجعة أعمال الربع الثالث تطلب Selin خطة التوسّع للفريق الثاني. تسجّلها Zeynep خطوةً تالية قبل أن تنتهي المكالمة.' },
       { title: 'يتحوّل إلى مهمة تلقائيًا', text: 'عند حفظ الاجتماع تصبح الخطوة التالية مهمة: لها مسؤول وتاريخ استحقاق، ومرتبطة بـ Marevo، ومُشارَكة معهم.' },
       { title: 'السبرنت يسلّمها', text: 'يبنيها فريق المنتج في سبرنت 24 على بطاقة مرتبطة بالوعد. وحين تصل البطاقة إلى «تم» تتقدّم نقاط السبرنت معها.' },
       { title: 'تراها Marevo في بوابتها', text: 'تدخل Selin عبر الرابط في بريدها. تظهر المهمة منجزة وتحتها ردّ Zeynep. لم يضطر أحد إلى كتابة بريد عن سير العمل.' },
       { title: 'يُنقذ التجديد وتعود الصحة', text: 'مع تواصل حديث ولا شيء متأخر، تعود درجة Marevo إلى 85. وتُغلق فرصة التجديد رابحةً قبل موعدها بوقت طويل.' },
     ],
-    ui: { opened: 'فُتحت المهمة', from: 'من الاجتماع', board: 'نجاح العملاء', reply: 'الرحلة النموذجية جاهزة في مساحة عملكم.' },
+    ui: { opened: 'فُتحت المهمة', from: 'من الاجتماع', board: 'نجاح العملاء', reply: 'خطة التوسّع جاهزة في مساحة عملكم.' },
   },
   he: {
     cue: 'גללו כדי ללוות לקוח אחד',
@@ -1604,13 +1604,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'לוו את Marevo לאורך רבעון אחד: אזהרה, הבטחה, העבודה שמקיימת אותה וחידוש שניצל.',
     steps: [
       { title: 'הציון יורד ואומר למה', text: 'Marevo יורדת מ־60 ל־48 ועוברת לסיכון. פתחו את „למה?” והסיבות שם: אין מגע כבר 38 ימים, שלוש משימות באיחור, אין תומך מרכזי.' },
-      { title: 'הבטחה ניתנת בחדר', text: 'בסקירה העסקית של רבעון 3, Selin מבקשת מסע לדוגמה לערוץ המובייל. Zeynep רושמת זאת כצעד הבא עוד לפני שהשיחה נגמרת.' },
+      { title: 'הבטחה ניתנת בחדר', text: 'בסקירה העסקית של רבעון 3, Selin מבקשת תוכנית הטמעה לצוות השני. Zeynep רושמת זאת כצעד הבא עוד לפני שהשיחה נגמרת.' },
       { title: 'היא הופכת למשימה מעצמה', text: 'שמירת הפגישה הופכת את הצעד הבא למשימה: יש לה אחראי ותאריך יעד, היא מקושרת ל־Marevo ומשותפת איתם.' },
       { title: 'הספרינט מספק אותה', text: 'צוות המוצר בונה אותה בספרינט 24, על כרטיס שמקושר להבטחה. כשהכרטיס מגיע ל„הושלם”, נקודות הספרינט מתקדמות איתו.' },
       { title: 'Marevo רואה אותה בפורטל שלה', text: 'Selin נכנסת עם הקישור שבמייל. המשימה מופיעה כהושלמה, והתשובה של Zeynep מתחתיה. אף אחד לא נדרש לכתוב מייל עדכון.' },
       { title: 'החידוש ניצל והבריאות חוזרת', text: 'עם מגע עדכני ושום דבר באיחור, הציון של Marevo חוזר ל־85. הזדמנות החידוש נסגרת בהצלחה, הרבה לפני המועד.' },
     ],
-    ui: { opened: 'המשימה נפתחה', from: 'מהפגישה', board: 'הצלחת לקוחות', reply: 'המסע לדוגמה מוכן בסביבת העבודה שלכם.' },
+    ui: { opened: 'המשימה נפתחה', from: 'מהפגישה', board: 'הצלחת לקוחות', reply: 'תוכנית ההטמעה מוכנה בסביבת העבודה שלכם.' },
   },
   fa: {
     cue: 'اسکرول کنید و یک مشتری را دنبال کنید',
@@ -1618,13 +1618,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo را در یک فصل دنبال کنید: یک هشدار، یک قول، کاری که آن قول را نگه می‌دارد و تمدیدی که نجات پیدا می‌کند.',
     steps: [
       { title: 'امتیاز پایین می‌آید و دلیلش را می‌گوید', text: 'Marevo از ۶۰ به ۴۸ می‌رسد و در خطر قرار می‌گیرد. «چرا؟» را باز کنید؛ دلیل‌ها آنجاست: ۳۸ روز بدون تماس، سه وظیفهٔ عقب‌افتاده، بدون حامی.' },
-      { title: 'قول در جلسه داده می‌شود', text: 'در بازبینی کسب‌وکار فصل سوم، Selin یک سفر نمونه برای کانال موبایل می‌خواهد. Zeynep پیش از پایان تماس آن را گام بعدی ثبت می‌کند.' },
+      { title: 'قول در جلسه داده می‌شود', text: 'در بازبینی کسب‌وکار فصل سوم، Selin یک برنامهٔ گسترش برای تیم دوم می‌خواهد. Zeynep پیش از پایان تماس آن را گام بعدی ثبت می‌کند.' },
       { title: 'خودبه‌خود وظیفه می‌شود', text: 'با ذخیرهٔ جلسه، گام بعدی به وظیفه تبدیل می‌شود: مسئول و موعد دارد، به Marevo پیوند خورده و با آن‌ها به اشتراک گذاشته شده است.' },
       { title: 'اسپرینت تحویلش می‌دهد', text: 'تیم محصول آن را در اسپرینت ۲۴، روی کارتی که به قول پیوند دارد، می‌سازد. وقتی کارت به «انجام‌شده» می‌رسد، امتیازهای اسپرینت هم با آن جلو می‌روند.' },
       { title: 'Marevo آن را در پورتال خودش می‌بیند', text: 'Selin با پیوندی که در ایمیلش است وارد می‌شود. وظیفه انجام‌شده دیده می‌شود و پاسخ Zeynep زیر آن است. هیچ‌کس مجبور نشد ایمیل گزارش وضعیت بنویسد.' },
       { title: 'تمدید نجات پیدا می‌کند و سلامت برمی‌گردد', text: 'با تماسی تازه و بدون کار عقب‌افتاده، امتیاز Marevo دوباره به ۸۵ می‌رسد. فرصت تمدید خیلی پیش از موعد با موفقیت بسته می‌شود.' },
     ],
-    ui: { opened: 'وظیفه باز شد', from: 'از جلسه', board: 'موفقیت مشتری', reply: 'سفر نمونه در فضای کاری شما آماده است.' },
+    ui: { opened: 'وظیفه باز شد', from: 'از جلسه', board: 'موفقیت مشتری', reply: 'برنامهٔ گسترش در فضای کاری شما آماده است.' },
   },
   'zh-Hans': {
     cue: '向下滚动，跟随一位客户',
@@ -1632,13 +1632,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: '跟随 Marevo 走完一个季度：一次预警、一个承诺、兑现承诺的工作，以及一次挽回的续约。',
     steps: [
       { title: '分数下降，并说明原因', text: 'Marevo 从 60 降到 48，变为有风险。点开“为什么？”，原因一目了然：38 天没有联系、3 个任务逾期、没有内部支持者。' },
-      { title: '承诺在会上做出', text: '在第三季度业务回顾中，Selin 希望看到移动渠道的示例旅程。通话还没结束，Zeynep 就把它记为后续步骤。' },
+      { title: '承诺在会上做出', text: '在第三季度业务回顾中，Selin 希望看到第二个团队的推广计划。通话还没结束，Zeynep 就把它记为后续步骤。' },
       { title: '它自动变成任务', text: '保存会议后，后续步骤就成了任务：有负责人、有截止日期，关联到 Marevo，并与对方共享。' },
       { title: '迭代把它交付', text: '产品团队在迭代 24 中，用一张关联到该承诺的卡片完成开发。卡片进入“完成”时，迭代的点数随之推进。' },
       { title: 'Marevo 在自己的门户里看到', text: 'Selin 通过邮件中的链接登录，看到任务已完成，下方是 Zeynep 的回复。没有人需要再写进度邮件。' },
       { title: '续约保住了，健康度回升', text: '近期有联系、没有逾期事项，Marevo 的分数回到 85。续约商机远在到期日之前就以赢单关闭。' },
     ],
-    ui: { opened: '任务已创建', from: '来源会议', board: '客户成功', reply: '示例旅程已在你们的工作区准备好。' },
+    ui: { opened: '任务已创建', from: '来源会议', board: '客户成功', reply: '推广计划已在你们的工作区准备好。' },
   },
   'zh-Hant': {
     cue: '向下捲動，跟著一位客戶走',
@@ -1646,13 +1646,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: '跟著 Marevo 走過一個季度：一次警訊、一個承諾、兌現承諾的工作，以及一次挽回的續約。',
     steps: [
       { title: '分數下滑，並說出原因', text: 'Marevo 從 60 掉到 48，變成有風險。打開「為什麼？」，原因都在那裡：38 天沒有接觸、3 項任務逾期、沒有擁護者。' },
-      { title: '承諾在會議上做出', text: '在第三季業務檢視中，Selin 想看行動通路的範例旅程。通話結束前，Zeynep 就把它記成後續步驟。' },
+      { title: '承諾在會議上做出', text: '在第三季業務檢視中，Selin 想看第二個團隊的導入計畫。通話結束前，Zeynep 就把它記成後續步驟。' },
       { title: '它自動變成任務', text: '儲存會議後，後續步驟就變成任務：有負責人、有截止日，連結到 Marevo，並與對方共用。' },
       { title: '衝刺把它交付', text: '產品團隊在衝刺 24 中，以一張連結到承諾的卡片完成開發。卡片移到「完成」時，衝刺點數也跟著前進。' },
       { title: 'Marevo 在自己的入口網站看到', text: 'Selin 用電子郵件裡的連結登入，任務顯示為已完成，下方是 Zeynep 的回覆。沒有人需要再寫進度郵件。' },
       { title: '續約保住了，健康度回升', text: '最近有接觸、沒有逾期事項，Marevo 的分數回到 85。續約交易遠在到期日之前就以贏得結案。' },
     ],
-    ui: { opened: '任務已建立', from: '來源會議', board: '客戶成功', reply: '範例旅程已在你們的工作區準備好。' },
+    ui: { opened: '任務已建立', from: '來源會議', board: '客戶成功', reply: '導入計畫已在你們的工作區準備好。' },
   },
   ja: {
     cue: 'スクロールして、ひとつの顧客を追う',
@@ -1660,13 +1660,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo の一四半期を追いかけます。警告、約束、それを守る仕事、そして守られた更新。',
     steps: [
       { title: 'スコアが下がり、理由を示す', text: 'Marevo は 60 から 48 に下がり、リスクありになります。「理由」を開くと、38日間接触なし、期限超過のタスク3件、推進者なし、と並んでいます。' },
-      { title: '約束はミーティングで生まれる', text: '第3四半期ビジネスレビューで、Selin がモバイル向けのサンプルジャーニーを求めます。Zeynep は通話が終わる前に、それを次のステップとして記録します。' },
+      { title: '約束はミーティングで生まれる', text: '第3四半期ビジネスレビューで、Selin が2つ目のチームへの展開計画を求めます。Zeynep は通話が終わる前に、それを次のステップとして記録します。' },
       { title: 'それはひとりでにタスクになる', text: 'ミーティングを保存すると、次のステップがタスクになります。担当者と期日があり、Marevo にひもづき、先方とも共有されます。' },
       { title: 'スプリントが届ける', text: 'プロダクトチームはスプリント 24 で、約束にひもづいたカードとしてこれを開発します。カードが「完了」に進むと、スプリントのポイントも一緒に進みます。' },
       { title: 'Marevo は自分のポータルで確認する', text: 'Selin はメールのリンクからログインします。タスクは完了と表示され、その下に Zeynep の返信があります。誰も進捗メールを書く必要はありません。' },
       { title: '更新は守られ、ヘルスが戻る', text: '最近の接触があり、期限超過もないので、Marevo のスコアは 85 に戻ります。更新の商談は期日よりずっと前に受注で完了します。' },
     ],
-    ui: { opened: 'タスクを作成しました', from: '元のミーティング', board: 'カスタマーサクセス', reply: 'サンプルジャーニーをワークスペースにご用意しました。' },
+    ui: { opened: 'タスクを作成しました', from: '元のミーティング', board: 'カスタマーサクセス', reply: '展開計画をワークスペースにご用意しました。' },
   },
   ko: {
     cue: '스크롤해서 한 고객을 따라가 보세요',
@@ -1674,13 +1674,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo의 한 분기를 따라가 보세요. 경고 하나, 약속 하나, 그 약속을 지키는 일, 그리고 지켜 낸 갱신.',
     steps: [
       { title: '점수가 떨어지고, 이유를 알려 줍니다', text: 'Marevo가 60에서 48로 떨어지며 위험 상태가 됩니다. ‘이유’를 열면 38일째 접점 없음, 기한 초과 작업 3개, 챔피언 없음이 보입니다.' },
-      { title: '약속은 회의에서 생깁니다', text: '3분기 비즈니스 리뷰에서 Selin이 모바일 채널용 샘플 여정을 요청합니다. Zeynep은 통화가 끝나기 전에 이를 다음 단계로 기록합니다.' },
+      { title: '약속은 회의에서 생깁니다', text: '3분기 비즈니스 리뷰에서 Selin이 두 번째 팀의 도입 계획을 요청합니다. Zeynep은 통화가 끝나기 전에 이를 다음 단계로 기록합니다.' },
       { title: '저절로 작업이 됩니다', text: '회의를 저장하면 다음 단계가 작업이 됩니다. 담당자와 마감일이 있고, Marevo에 연결되며, 고객과 공유됩니다.' },
       { title: '스프린트가 전달합니다', text: '제품 팀은 약속에 연결된 카드로 스프린트 24에서 이를 개발합니다. 카드가 ‘완료’에 도달하면 스프린트 포인트도 함께 움직입니다.' },
       { title: 'Marevo는 자기 포털에서 확인합니다', text: 'Selin은 이메일의 링크로 로그인합니다. 작업은 완료로 표시되고, 그 아래에 Zeynep의 답장이 있습니다. 아무도 진행 상황 메일을 쓰지 않아도 됩니다.' },
       { title: '갱신을 지키고, 건강도가 회복됩니다', text: '최근 접점이 있고 기한 초과도 없으니 Marevo의 점수는 85로 돌아옵니다. 갱신 기회는 마감일보다 한참 전에 성사로 마무리됩니다.' },
     ],
-    ui: { opened: '작업이 생성됨', from: '출처 회의', board: '고객 성공', reply: '샘플 여정이 워크스페이스에 준비되어 있습니다.' },
+    ui: { opened: '작업이 생성됨', from: '출처 회의', board: '고객 성공', reply: '도입 계획이 워크스페이스에 준비되어 있습니다.' },
   },
   hi: {
     cue: "एक ग्राहक को फ़ॉलो करने के लिए स्क्रॉल करें",
@@ -1691,7 +1691,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
         text: "Marevo 60 से 48 पर फिसलता है और जोखिम में आ जाता है। “क्यों?” खोलें और वजहें दिखती हैं: 38 दिनों से कोई संपर्क नहीं, तीन देर वाले टास्क, कोई चैंपियन नहीं।",
       }, {
         title: "मीटिंग में एक वादा होता है",
-        text: "Q3 बिज़नेस रिव्यू में, Selin अपने मोबाइल चैनल के लिए एक सैंपल जर्नी मांगती हैं। कॉल खत्म होने से पहले Zeynep इसे अगले स्टेप के रूप में दर्ज करती हैं।",
+        text: "Q3 बिज़नेस रिव्यू में, Selin अपनी दूसरी टीम के लिए एक रोलआउट प्लान मांगती हैं। कॉल खत्म होने से पहले Zeynep इसे अगले स्टेप के रूप में दर्ज करती हैं।",
       }, {
         title: "यह अपने आप टास्क बन जाता है",
         text: "मीटिंग सेव करने पर अगला स्टेप एक टास्क बन जाता है: इसका एक ओनर और नियत तारीख है, यह Marevo से लिंक है, और उनके साथ शेयर किया गया है।",
@@ -1709,7 +1709,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: "टास्क खोला गया",
       from: "मीटिंग से",
       board: "कस्टमर सक्सेस",
-      reply: "सैंपल जर्नी आपके वर्कस्पेस में तैयार है।",
+      reply: "रोलआउट प्लान आपके वर्कस्पेस में तैयार है।",
     },
   },
   ms: {
@@ -1721,7 +1721,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
         text: "Marevo merosot dari 60 ke 48 dan menjadi berisiko. Buka Mengapa? dan sebab-sebabnya disenaraikan: tiada hubungan selama 38 hari, tiga tugasan lewat, tiada juara.",
       }, {
         title: "Janji dibuat dalam bilik mesyuarat",
-        text: "Pada semakan perniagaan S3, Selin meminta contoh perjalanan untuk saluran mudah alih mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",
+        text: "Pada semakan perniagaan S3, Selin meminta pelan pelancaran untuk pasukan kedua mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",
       }, {
         title: "Ia menjadi tugasan dengan sendirinya",
         text: "Menyimpan mesyuarat menjadikan langkah seterusnya tugasan: ia mempunyai pemilik dan tarikh akhir, dipautkan kepada Marevo, dan dikongsi dengan mereka.",
@@ -1739,7 +1739,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: "Tugasan dibuka",
       from: "Daripada mesyuarat",
       board: "Kejayaan pelanggan",
-      reply: "Contoh perjalanan sudah sedia dalam ruang kerja anda.",
+      reply: "Pelan pelancaran sudah sedia dalam ruang kerja anda.",
     },
   },
 };

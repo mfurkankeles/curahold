@@ -1289,7 +1289,8 @@ function AccountBand({ account, tasks, again, onAddTask }: { account: Account; t
                 navigate(`${location.pathname}?${p}`);
               }}
             >
-              {next.title}
+              {/* The two-line clamp sits on the text, not the link: the link's 44 px touch height would otherwise show part of a third line. */}
+              <span className="acc-tile__tasktext">{next.title}</span>
             </a>
             <span className="acc-tile__sub acc-tile__who">
               {owner && <Avatar person={owner} />}

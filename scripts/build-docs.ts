@@ -50,6 +50,9 @@ const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
  * The sales site links to the app's address, so that is the default (docs/ENVIRONMENT.md).
  */
 const DOCS_ORIGIN = (process.env.DOCS_ORIGIN ?? 'https://app.curahold.com').replace(/\/$/, '');
+// The share picture for a link to a help page: the site's own (scripts/build-site.ts), so a shared page looks like Curahold.
+const SITE_ORIGIN = (process.env.SITE_ORIGIN ?? `https://${process.env.SITE_BASE_DOMAIN ?? 'curahold.com'}`).replace(/\/$/, '');
+const OG_IMAGE = `${SITE_ORIGIN}/assets/${existsSync(join(import.meta.dirname, '..', 'site', 'og.png')) ? 'og.png' : 'og.svg'}`;
 /**
  * The languages the docs are written in: a folder per language under docs/site.
  * Adding a language is adding its folder. Its user guide (section help) must be
@@ -307,7 +310,18 @@ function searchTags(lang: Lang, page: Page | null, path: string, site: string, s
       ]
     : [{ '@type': 'WebSite', name: site, url: home, inLanguage: bcp47Of(lang), publisher: org }];
   const ld = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
-  return [`<link rel="canonical" href="${canonical}">`, ...alternates, `<script type="application/ld+json">${ld}</script>`].join('\n');
+  // A link to a help page shared in a chat or a post shows its title, summary and picture (site review #11).
+  const og = [
+    `<meta property="og:type" content="${page ? 'article' : 'website'}">`,
+    `<meta property="og:site_name" content="${esc(site)}">`,
+    `<meta property="og:title" content="${esc(page ? page.title : site)}">`,
+    ...(page?.summary ? [`<meta property="og:description" content="${esc(page.summary)}">`] : []),
+    `<meta property="og:url" content="${canonical}">`,
+    `<meta property="og:image" content="${OG_IMAGE}">`,
+    `<meta property="og:locale" content="${bcp47Of(page?.borrowed ? 'en' : lang).replace('-', '_')}">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+  ];
+  return [`<link rel="canonical" href="${canonical}">`, ...alternates, ...og, `<script type="application/ld+json">${ld}</script>`].join('\n');
 }
 
 /** A page of the docs. `path` is where it sits inside a language ('' for the start page, '<slug>/'), so the language menu lands on the same page. */

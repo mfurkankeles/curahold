@@ -58,7 +58,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |
 | `consent_required` | 403 | Lütfen önce yapay zekâ asistanı bilgilendirmesini kabul edin ya da belge aramasını kullanmaya devam edin. |
 | `field_locked` | 403 | Rolünüz bu alanı görebilir ama değiştiremez (…). |
-| `forbidden` | 403 | Bunu yapma yetkin yok. |
+| `forbidden` | 403 | Bunu yapma yetkiniz yok. |
 | `join_closed` | 403 | Bu şirkete yalnızca davetle katılınabiliyor. |
 | `portal_invite_owner` | 403 | Portala yalnızca yöneticiler ya da müşterinin sorumlusu davet gönderebilir. |
 | `preview_read_only` | 403 | Şu an başkasının gözünden bakıyorsunuz, bu yüzden hiçbir şey değiştirilemez. Önce kendi görünümünüze dönün. |

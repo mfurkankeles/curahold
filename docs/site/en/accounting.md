@@ -33,7 +33,7 @@ Each customer in the accounting program is matched to one customer in Curahold: 
 
 ## Who sees the figures
 
-Amounts are shown to roles with **See finance figures** (administrators and managers to start with; change it in Settings → Roles). Everyone else who sees the customer sees only, inside the health score, how many days a payment is late — never an amount.
+Amounts are shown to roles with **See finance figures** (administrators and managers to start with; change it in Settings → Roles and permissions). Everyone else who sees the customer sees only, inside the health score, how many days a payment is late — never an amount.
 
 People in the **Finance** department see the amounts too, whatever their role, and so do the departments chosen under **Who sees Finance on the customer page** in Settings → Departments. Switching Finance off takes this away.
 

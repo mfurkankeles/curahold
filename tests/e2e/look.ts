@@ -137,7 +137,7 @@ for (const mode of ['light', 'dark'] as const) {
     await page.waitForSelector('.cura .ask__answer, .cura .ask__chips .ask__chip').catch(() => undefined);
     await pause(700);
     await shot(page, `look-${mode}-cura2-answer`);
-    await page.click('.cura__tool');
+    await page.click('.cura__mine');
     await page.waitForSelector('.grantbox').catch(() => undefined);
     await pause(300);
     await shot(page, `look-${mode}-cura3-requests`);

@@ -1411,6 +1411,23 @@
     width: var(--tap);
     height: var(--tap);
   }
+  /* A finger needs 44 x 44 (review, 20 Nov): room chips grow to it; name tags keep their size over the
+     figures and get an invisible touch area of that size around them. */
+  .of-chip {
+    height: var(--tap);
+  }
+  .of-tag::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    inline-size: max(100%, var(--tap));
+    block-size: max(100%, var(--tap));
+    translate: -50% -50%;
+  }
+  [dir='rtl'] .of-tag::before {
+    translate: 50% -50%;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .of-pulse {

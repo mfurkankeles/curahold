@@ -2,7 +2,7 @@
 title: Erişilebilirlik beyanı
 section: legal
 order: 10
-summary: Curahold ne kadar erişilebilir: hedeflediğimiz standart (WCAG 2.2 AA), nasıl kontrol ettiğimiz, neyin çalıştığı, neyin henüz çalışmadığı ve bir sorunu bize nasıl bildireceğin.
+summary: Curahold ne kadar erişilebilir: hedeflediğimiz standart (WCAG 2.2 AA), nasıl kontrol ettiğimiz, neyin çalıştığı, neyin henüz çalışmadığı ve bir sorunu bize nasıl bildireceğiniz.
 ---
 # Erişilebilirlik beyanı
 

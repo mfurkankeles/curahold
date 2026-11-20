@@ -72,7 +72,8 @@ export function OnboardingBanner({ ctx }: { ctx: Ctx }) {
           <strong>{ctx.t('pob.banner')}</strong>
           <small>{plan.name}</small>
         </span>
-        <Ico name="back" flip />
+        {/* Forward, to the plan: a left arrow here would read as Back. */}
+        <Ico name="next" flip />
       </a>
     </div>
   );

@@ -43,6 +43,10 @@ Müşteriler sayfasının üstündeki düğmelerle dört görünüm arasında ge
 
 Sayfanın üstündeki cümle kaç müşterinin ilgi beklediğini ve ne kadar tutarın risk altında olduğunu söyler; “ilgi bekliyor” bağlantısı listeyi onlara daraltır. Telefonda filtreler tek bir **Filtre** sayfasında toplanır.
 
+## Yenileme ekleme
+
+Yenileme, müşterinin **Yenileme tarihi**dir. Müşteriyi açın ve **Bilgiler** altında doldurun ya da içe aktarırken bir sütunla getirin. Müşteri bundan sonra **Yenilemeler**'de, kendi ayında ve tutarıyla görünür. Böyle bir alan henüz yok mu? Ayarlar → Müşteri alanları'ndan bir tarih alanı ekleyin. Yenileme işinin kendiliğinden açılması için Ayarlar → **Hedefler ve ritim**'de **Yenilemeleri kendiliğinden başlat**'ı açın; ne kadar önceden ve hangi playbook ile başlayacağını seçin.
+
 ## İçe aktarma
 
 Excel ya da CSV dosyasını sürükleyin; sütunları alanlarla eşleştirin, önizlemeye bakın, aktarın. Yanlış giden bir aktarmayı 30 gün içinde tek tıkla geri alabilirsiniz.

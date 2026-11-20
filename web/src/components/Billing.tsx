@@ -311,7 +311,7 @@ export function BillingSettings() {
         <div className="seg" role="group" aria-label={t('billing.intervalLabel')}>
           {(['month', 'year'] as const).map((k) => (
             <button key={k} type="button" aria-pressed={interval === k} onClick={() => setInterval_(k)}>
-              {t(`billing.interval.${k}`)}
+              {t(`billing.intervalTab.${k}`)}
               {k === 'year' && savePct > 0 && <span className="billing__save">{t('billing.saveN', { n: savePct })}</span>}
             </button>
           ))}

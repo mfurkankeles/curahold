@@ -14,7 +14,7 @@ Menu di sebelah kiri mempunyai empat bahagian: kerja harian di atas (Utama, Tuga
 
 Tiada dalam menu? Syarikat yang memilih Jualan atau Jualan Dalaman memilikinya sejak hari pertama; jika tidak, buka **Tetapan → Rekod** dan klik **Tambah peluang**.
 
-Setiap urus niaga mempunyai **jenis**: perniagaan baharu, pengembangan atau pembaharuan. Ubah peringkat dan jenis dalam Tetapan → Jenis rekod; dengan CRM disambungkan, peringkat datang dari sana. **Jadual** menunjukkan urus niaga yang sama sebagai senarai. Mana-mana jenis rekod dengan medan pilihan boleh ditunjukkan sebagai papan dengan cara yang sama.
+Setiap urus niaga mempunyai **jenis**: perniagaan baharu, pengembangan atau pembaharuan. Ubah peringkat dan jenis dalam Tetapan → Rekod; dengan CRM disambungkan, peringkat datang dari sana. **Jadual** menunjukkan urus niaga yang sama sebagai senarai. Mana-mana jenis rekod dengan medan pilihan boleh ditunjukkan sebagai papan dengan cara yang sama.
 
 ## Sasaran dan rentak
 

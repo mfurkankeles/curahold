@@ -33,8 +33,10 @@
 .acc-tile[data-band='good'] :is(.acc-tile__score, .acc-tile__state) { color: var(--done); }
 .acc-tile[data-tone='late'] :is(.acc-tile__score, .acc-tile__state) { color: var(--late); }
 .acc-tile[data-tone='soon'] :is(.acc-tile__score, .acc-tile__state) { color: var(--soon-ink); }
-.acc-tile__task { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--fs-l); font-weight: 600; line-height: var(--lh-snug); color: var(--ink); text-decoration: none; }
-.acc-tile__task:hover { text-decoration: underline; }
+.acc-tile__task { display: flex; align-items: center; min-width: 0; font-size: var(--fs-l); font-weight: 600; line-height: var(--lh-snug); color: var(--ink); text-decoration: none; }
+.acc-tile__task:hover .acc-tile__tasktext { text-decoration: underline; }
+/* Exactly two whole lines, in every script: the box is never taller than two lines, so no part of a third shows. */
+.acc-tile__tasktext { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; max-block-size: calc(2lh); min-width: 0; overflow-wrap: anywhere; }
 .acc-tile__who .avatar { flex: none; }
 .acc-tile__name { min-width: 0; overflow-wrap: anywhere; }
 .acc-band__why .healthwhy { margin-top: 0; background: var(--surface); }
