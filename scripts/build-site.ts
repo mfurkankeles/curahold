@@ -1335,14 +1335,15 @@ const CSS_SOURCES: Record<CssKind, string[]> = {
 const cssSlot = (kind: CssKind, rel: string) => `<!--css:${kind}:${rel}-->`;
 
 /**
- * The font files a language preloads, from its slices in site/locales.ts (SITE_FONTS): each Latin
- * slice brings the text face, and the basic slice the headline face too. Other scripts list no
- * slice and read their system faces (site/chrome.css :lang rules), so they download no font.
- * Turkish preloads latin-ext for ş, ğ and İ: found only through the CSS, it would arrive late.
+ * The font files a language preloads: both faces of each slice it lists in site/locales.ts
+ * (SITE_FONTS). Other scripts list no slice and read their system faces (site/chrome.css :lang
+ * rules), so they download no font. Turkish preloads latin-ext too (ş, ğ, İ): found only through
+ * the CSS, the headline face's file arrived after the first paint and its swap re-laid out every
+ * heading on the page (about 70 ms on a mid-range phone, counted as blocking time).
  */
 const fontPreload = (locale: SiteLocale, rel: string) =>
   SITE_FONTS[locale]
-    .flatMap((s) => (s === 'latin' ? [`bricolage-grotesque-${s}-wght-normal`, `figtree-${s}-wght-normal`] : [`figtree-${s}-wght-normal`]))
+    .flatMap((s) => [`bricolage-grotesque-${s}-wght-normal`, `figtree-${s}-wght-normal`])
     .map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`)
     .join('\n');
 

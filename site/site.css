@@ -491,6 +491,14 @@ html:not(.js) .tour__bar { display: none; }
 /* Off-screen sections skip rendering until near; the placeholder sizes are close to the real ones so the scrollbar does not jump. */
 .bento, .faq { content-visibility: auto; contain-intrinsic-size: auto 1600px; }
 .faq { contain-intrinsic-size: auto 560px; }
+/* The story's two halves are drawn lazily too: the steps list beside the stage and the window
+   inside it, never the pinned stage itself (see above). The script re-measures the steps when they
+   appear (its ResizeObserver on the story), so the scroll still drives the scenes exactly. On a phone
+   this cuts the layout and style work after the first paint by about 40% (Turkish landing page:
+   1,397 layout objects to 968), which is what kept its blocking time over budget. */
+.story__steps { content-visibility: auto; contain-intrinsic-size: auto 2400px; }
+.story__win { content-visibility: auto; contain-intrinsic-size: auto 440px; }
+.wy--brief, .psum { content-visibility: auto; contain-intrinsic-size: auto 600px; }
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }

@@ -37,9 +37,10 @@ paid SEO service, no runtime dependency) and make only true claims.
   relative and preview builds stay closed to crawlers and add no files (ADR 0016's file limit holds).
 - **Speed:** the four hand-written sheets stay as they are for editing; the build minifies them (esbuild, already a dev
   tool), cuts each kind of page's styles to the classes it uses (`scripts/site-css.ts`), inlines what the first screen
-  needs and loads the rest at low priority without blocking. Latin pages preload their two fonts; body text uses
+  needs and loads the rest at low priority without blocking. Latin pages preload the font files their letters need (`SITE_FONTS`: two in English, four in Turkish); body text uses
   `font-display: optional` so a late font never repaints the page; other scripts use their system faces and download
-  no font. The first screen is never hidden for an animation. Trade-off: every page carries its first-screen styles
+  no font. Below the first screen the landing page's sections use `content-visibility: auto`, except the story's
+  pinned stage, so the work after the first paint covers only what is on screen. The first screen is never hidden for an animation. Trade-off: every page carries its first-screen styles
   inline (about 10 KB compressed on the landing page) instead of a cached file.
 - **AI crawlers:** training crawlers are always refused. Answer engines (the robots that fetch for an AI search answer)
   stay refused by default on both the site and the docs, as before; one build-time setting opens the site to them

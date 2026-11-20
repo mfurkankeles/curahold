@@ -28,8 +28,8 @@ export const SITE_LOCALES = Object.keys(SITE_LANGS) as SiteLocale[];
 export type FontSubset = 'latin' | 'latin-ext';
 
 /**
- * The font files each language preloads. Latin-script languages list the slices their
- * letters need (Turkish needs latin-ext for ş, ğ, ı and İ); other scripts list none and
+ * The font slices each language preloads (both faces of each). Latin-script languages list
+ * the slices their letters need (Turkish needs latin-ext for ş, ğ and İ); other scripts list none and
  * read their system's own faces (the :lang rules in site/chrome.css), so they download
  * no font. A Record, so a new language cannot ship without saying which it is.
  */

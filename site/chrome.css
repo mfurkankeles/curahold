@@ -179,7 +179,8 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 }
 
 /* ------------------------------------------------------------------ footer */
-.foot { background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font: 15px/1.6 var(--text); position: relative; z-index: 1; }
+/* Drawn only when near the screen (content-visibility); its links stay in the accessibility tree and find-in-page. */
+.foot { content-visibility: auto; contain-intrinsic-size: auto 900px; background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font: 15px/1.6 var(--text); position: relative; z-index: 1; }
 .foot .foot__wrap { width: min(var(--wrap), 100% - 40px); margin-inline: auto; }
 .foot__in { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(4, minmax(0, 1fr)); gap: 28px; }
 .foot .brand, .foot .foot__brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 700 19px/1 var(--display); }

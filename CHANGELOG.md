@@ -67,6 +67,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
   no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
   a Pause button and stays still for anyone who asked their system for less motion.
+- Sales site speed on phones: the lower half of the landing page (the story's steps and window, the short "why" block,
+  the price summary, the footer) is laid out only as it comes near the screen, and Turkish pages preload the headline
+  face's Turkish letters too, so a late font no longer re-lays out every heading after the first paint.
 - Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
   `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched
