@@ -16,6 +16,7 @@ import { PLATFORM_PATH } from './live/platform';
 import { assistantConfigFrom } from './assistant/cost';
 import { edgeAnswer } from './lib/botGuard';
 import { retentionFrom } from './lib/retention';
+import { minSeatRulesFrom } from '../../shared/src/billing';
 import type { DocSection } from '../../shared/src/answers';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
@@ -110,6 +111,8 @@ export interface Env {
   PADDLE_CLIENT_TOKEN?: string;
   /** Price ids: {"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}} */
   PADDLE_PRICES?: string;
+  /** The fewest seats a subscription is billed for, JSON by plan, interval and price region (shared/src/billing.ts MIN_SEATS_DEFAULT). */
+  BILLING_MIN_SEATS?: string;
   /** The assistant (api/src/assistant/cost.ts): the model's key (a secret), the model, the monthly caps in USD. Without a key the docs search answers. */
   ANTHROPIC_API_KEY?: string;
   ASSISTANT_PROVIDER?: string;
@@ -122,6 +125,9 @@ export interface Env {
   /** "0" closes the public docs chat. */
   ASSISTANT_PUBLIC_CHAT?: string;
   ASSISTANT_DESK_FIRST_REPLY_BASIS?: string;
+  ASSISTANT_USD_PER_SEAT?: string;
+  ASSISTANT_TRIAL_USD?: string;
+  ASSISTANT_PUBLIC_MONTHLY_USD?: string;
   /** The AI team (api/src/team/config.ts): models, the monthly USD cap, and TEAM_SCHEDULER=off to stop its 10-minute clock. */
   TEAM_MONTHLY_USD?: string;
   TEAM_MODEL_DEEP?: string;
@@ -156,13 +162,13 @@ export interface Env {
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
-export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 'PADDLE_WEBHOOK_SECRET' | 'PADDLE_CLIENT_TOKEN' | 'PADDLE_PRICES'>): BillingConfig | undefined {
+export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 'PADDLE_WEBHOOK_SECRET' | 'PADDLE_CLIENT_TOKEN' | 'PADDLE_PRICES' | 'BILLING_MIN_SEATS'>): BillingConfig | undefined {
   if (!env.PADDLE_API_KEY || !env.PADDLE_WEBHOOK_SECRET || !env.PADDLE_CLIENT_TOKEN || !env.PADDLE_PRICES) return undefined;
   const prices = JSON.parse(env.PADDLE_PRICES) as BillingConfig['prices'];
   for (const plan of ['team', 'business'] as const) {
     if (!prices[plan]?.month || !prices[plan]?.year) throw new Error(`PADDLE_PRICES needs ${plan}.month and ${plan}.year`);
   }
-  return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices };
+  return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices, minSeats: minSeatRulesFrom(env.BILLING_MIN_SEATS) };
 }
 
 const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO', 'JIRA', 'XERO', 'FREEE', 'QUICKBOOKS'] as const;

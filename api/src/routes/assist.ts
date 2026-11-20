@@ -15,7 +15,7 @@ import type { AssistReply, AssistRequest, AssistSurface } from '../../../shared/
 import { emptyTrace, toolsFor, type AssistantDeps, type Tool } from '../../../shared/src/assistant';
 import { prepare, type AnswerIndex } from '../../../shared/src/answers';
 import { accountWords, HELP_LANGUAGES, normalizeLocale, type Locale } from '../../../shared/src/i18n';
-import { requirePerm, run, todayOf, type AppEnv, type C, type Deps, type OrgRow } from '../context';
+import { accessFor, requirePerm, run, todayOf, type AppEnv, type C, type Deps, type OrgRow } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
@@ -23,7 +23,8 @@ import { clientIp, sharedLimiter } from '../lib/ratelimit';
 import { body } from '../lib/validate';
 import type { PortalEnv } from '../lib/portal';
 import { answer, RETENTION_CHOICES, settingsOf, type AssistEnv, type CompanyAssistSettings } from '../assistant/core';
-import { ASSIST_BUDGETS, assistantConfigFrom, type AssistantConfig } from '../assistant/cost';
+import { ASSIST_BUDGETS, assistantConfigFrom, planAiCeilingUsd, type AssistantConfig } from '../assistant/cost';
+import { capsForOrg } from '../billing/entitlements';
 import { anthropicProvider, type LlmProvider } from '../assistant/provider';
 import { dbStore, docsIndex, monthUsage } from '../assistant/store';
 import { appConsent, portalConsent, publicConsent, setAppConsent, setPortalConsent, setPublicConsent } from '../assistant/consent';
@@ -115,7 +116,7 @@ async function envFor(
   return {
     config,
     provider: providerOf(deps),
-    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, portalUserId: opts.portalUserId ?? null, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing }),
+    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, portalUserId: opts.portalUserId ?? null, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing, config }),
     docs,
     docsVersion: version,
     surface: opts.surface,
@@ -211,17 +212,32 @@ const settingsInput = z.object({
   deskFirstReply: z.enum(['note', 'off']).optional(),
 });
 
-async function settingsView(c: C, s: CompanyAssistSettings) {
+/**
+ * The highest monthly limit this company may set: the installation's maximum, and below it the plan's ceiling (seats ×
+ * the plan's rate, a trial's fixed amount; cost.ts planAiCeilingUsd) when billing is on. Only the operator lifts it.
+ */
+async function capCeilingUsd(c: C): Promise<number> {
   const deps = c.get('deps');
   const cfg = assistantConfig(deps);
+  if (!deps.config.billing) return cfg.companyMaxUsd;
+  const access = accessFor(c);
+  const caps = await run(c, (q) => capsForOrg(q, c.get('org').id, access));
+  const plan = planAiCeilingUsd(access, caps.fullSeats, cfg);
+  return plan == null ? cfg.companyMaxUsd : Math.min(cfg.companyMaxUsd, plan);
+}
+
+async function settingsView(c: C, s: CompanyAssistSettings) {
+  const deps = c.get('deps');
   const provider = providerOf(deps);
+  const ceiling = await capCeilingUsd(c);
   return {
-    settings: s,
+    // What is stored may be above a ceiling that came later (fewer seats, a trial): the limit in force is shown.
+    settings: { ...s, monthlyCapUsd: Math.min(s.monthlyCapUsd, ceiling) },
     usage: await monthUsage(deps.db, c.get('org').id, c.get('auth').userId),
     // Whether a model can answer at all on this installation, and which.
-    engine: { available: !!provider, model: provider?.model ?? null, maxMonthlyCapUsd: cfg.companyMaxUsd },
+    engine: { available: !!provider, model: provider?.model ?? null, maxMonthlyCapUsd: ceiling },
     // The draft first reply asks the model only for requesters who accepted the notice (deskFirstReply).
-    deskNeedsConsent: cfg.deskFirstReplyBasis !== 'company',
+    deskNeedsConsent: assistantConfig(deps).deskFirstReplyBasis !== 'company',
     retentionChoices: RETENTION_CHOICES,
   };
 }
@@ -243,6 +259,11 @@ assistRoutes.put('/assist/settings', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const cfg = assistantConfig(c.get('deps'));
+  // A limit above the plan's ceiling is refused, not quietly lowered: the administrator sees why (plan_limit_ai).
+  if (input.monthlyCapUsd !== undefined) {
+    const ceiling = await capCeilingUsd(c);
+    if (input.monthlyCapUsd > ceiling) fail('plan_limit_ai', { cap: ceiling }, { what: 'ai', cap: ceiling });
+  }
   const next = settingsOf({ ...((assistantSettingsOf(org) as object | undefined) ?? {}), ...input }, cfg);
   await run(c, async (q) => {
     await q.query(`update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('assistant', $2::jsonb) where id = $1`, [org.id, JSON.stringify(next)]);

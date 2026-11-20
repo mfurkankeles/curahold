@@ -57,7 +57,7 @@ export interface DraftEnv {
 export async function modelDraft(env: DraftEnv, kind: DraftKind, locale: Locale, facts: Record<string, unknown>): Promise<{ out: Omit<DraftResult, 'ai' | 'why'> | null; why: DraftResult['why'] }> {
   const settings = settingsOf(env.orgSettings?.assistant, env.config);
   if (!env.provider || !settings.enabled) return { out: null, why: 'off' };
-  const store = dbStore(env.deps.db, { orgId: env.orgId, userId: env.userId, surface: 'app', retentionDays: 0, billingOn: !!env.deps.config.billing });
+  const store = dbStore(env.deps.db, { orgId: env.orgId, userId: env.userId, surface: 'app', retentionDays: 0, billingOn: !!env.deps.config.billing, config: env.config });
   const used = await store.usage().catch(() => ({ companyMicros: Infinity, globalMicros: Infinity }));
   if (overCap(used, env.config.globalMonthlyUsd, settings.monthlyCapUsd)) return { out: null, why: 'cap' };
   try {

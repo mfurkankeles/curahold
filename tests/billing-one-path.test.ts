@@ -126,7 +126,8 @@ describe('plan changes and dunning', () => {
       return new Response(JSON.stringify({ data: sub({ items: [{ price: { id: body.items[0].price_id }, quantity: body.items[0].quantity }] }) }), { status: 200 });
     };
     expect((await ada.post('/api/billing/change', { plan: 'business', interval: 'month' })).status).toBe(200);
-    expect(calls[0]).toMatchObject({ items: [{ price_id: 'pri_biz_m', quantity: 2 }], proration_billing_mode: CATALOGUE.proration.upgrade });
+    // Two seats on the subscription, but never fewer than the plan's minimum (3 by default, BILLING_MIN_SEATS).
+    expect(calls[0]).toMatchObject({ items: [{ price_id: 'pri_biz_m', quantity: 3 }], proration_billing_mode: CATALOGUE.proration.upgrade });
     expect((await ada.get('/api/me')).json.org.billing.plan).toBe('business');
     expect((await ada.post('/api/billing/change', { plan: 'team', interval: 'year' })).status).toBe(200);
     expect(calls[1]).toMatchObject({ items: [{ price_id: 'pri_team_y' }], proration_billing_mode: CATALOGUE.proration.downgrade });

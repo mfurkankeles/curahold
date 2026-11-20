@@ -21,7 +21,7 @@ import { CATALOGUE, INTERVALS, PLAN_LIST, isPlanKey, planOf, regionFor, regional
 import { accessFor, nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import { capsForOrg, usageOf, withinCap } from '../billing/entitlements';
 import { projectBilling } from '../billing/project';
-import { LIVE, SEATS_SQL, applyWebhook, changePlan, ensureSubscription, providerFor, readSubscription } from '../billing/service';
+import { LIVE, SEATS_SQL, applyWebhook, billedSeats, billingRegionKey, changePlan, ensureSubscription, providerFor, readSubscription } from '../billing/service';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { body, email } from '../lib/validate';
@@ -59,7 +59,13 @@ async function overview(c: C) {
   });
   // The buyer's region for the prices shown (Cloudflare's country header; Paddle decides the real one at checkout).
   const region = regionFor(c.req.header('cf-ipcountry') ?? null);
-  const plans = PLAN_LIST.map((p) => ({ ...p, regional: { month: regionalPrice(region, p.key, 'month'), year: regionalPrice(region, p.key, 'year') } }));
+  // The fewest seats each plan is billed for here (billedSeats): the screen counts the total with it.
+  const billedIn = billingRegionKey(profile?.billing_country ?? c.req.header('cf-ipcountry'));
+  const plans = PLAN_LIST.map((p) => ({
+    ...p,
+    regional: { month: regionalPrice(region, p.key, 'month'), year: regionalPrice(region, p.key, 'year') },
+    minSeats: { month: billedSeats(deps, p.key, 'month', billedIn, 1), year: billedSeats(deps, p.key, 'year', billedIn, 1) },
+  }));
   return c.json({
     enabled: !!cfg,
     access,
@@ -96,7 +102,10 @@ billingRoutes.post('/billing/checkout', async (c) => {
   refuseNotOffered(billing_country, c.req.header('cf-ipcountry'));
   // A plan with a seat limit cannot be bought for more full seats than it allows.
   withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, Number(seats)));
-  const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval: input.interval ?? 'month', quantity: Math.max(1, Number(seats)), email: c.get('auth').email });
+  // Never fewer seats than the plan's minimum for that interval and region (billedSeats).
+  const interval = input.interval ?? 'month';
+  const quantity = billedSeats(deps, input.plan, interval, billingRegionKey(billing_country ?? c.req.header('cf-ipcountry')), Number(seats));
+  const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval, quantity, email: c.get('auth').email });
   return c.json({ checkout });
 });
 
@@ -108,13 +117,13 @@ billingRoutes.post('/billing/change', async (c) => {
   if (!provider) return fail('billing_off');
   const input = await body(c, z.object({ plan: planKey, interval: z.enum(INTERVALS) }));
   const org = c.get('org');
-  const { sub, seats } = await run(c, async (q) => ({
-    sub: await readSubscription(q, nowOf(deps)),
-    seats: Number((await q.query<{ n: number }>(`select ${SEATS_SQL} as n from orgs o where o.id = $1`, [org.id]))[0]?.n ?? 0),
-  }));
+  const { sub, seats, country } = await run(c, async (q) => {
+    const [o] = await q.query<{ n: number; billing_country: string | null }>(`select ${SEATS_SQL} as n, o.billing_country from orgs o where o.id = $1`, [org.id]);
+    return { sub: await readSubscription(q, nowOf(deps)), seats: Number(o?.n ?? 0), country: o?.billing_country ?? null };
+  });
   if (!sub?.providerSubscriptionId || !['active', 'trialing', 'past_due'].includes(sub.status)) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
   withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, seats));
-  await changePlan(deps, provider, org.id, sub, input.plan, input.interval, seats);
+  await changePlan(deps, provider, org.id, sub, input.plan, input.interval, seats, country ? billingRegionKey(country) : null);
   await run(c, (q) => audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { plan: input.plan, interval: input.interval } }));
   return c.json({ ok: true });
 });

@@ -16,7 +16,7 @@
 // never spill into another's. By-hand changes an administrator makes go through
 // the request role and row-level security, in the route.
 import type { BillingEventsRow, SubscriptionsRow } from '../db/rows.gen';
-import { CATALOGUE, PLANS, planOf, trialEndsAt, type Interval, type PlanKey, type Subscription, type SubscriptionStatus } from '../../../shared/src/billing';
+import { CATALOGUE, MIN_SEATS_DEFAULT, minSeatsFor, PLANS, planOf, regionFor, trialEndsAt, type Interval, type PlanKey, type Subscription, type SubscriptionStatus } from '../../../shared/src/billing';
 import { fetchOf, nowOf, type Deps } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
@@ -30,6 +30,25 @@ const DAY = 86_400_000;
 
 /** Full seats that are in use: people who joined (an invitation not yet taken is not billed). */
 export const SEATS_SQL = `(select count(*)::int from users u where u.org_id = o.id and u.seat = 'full' and u.status = 'active')`;
+
+/**
+ * The price region a company is billed in: its billing country, else the country it is seen from (checkout only),
+ * else the one region that collects the subscription's currency. Null: the fallback region's rule applies.
+ */
+export function billingRegionKey(country: string | null | undefined, currency?: string | null): string | null {
+  if (country) return regionFor(country)?.key ?? null;
+  const byCurrency = currency ? CATALOGUE.regions.filter((r) => r.collect === currency.toUpperCase()) : [];
+  return byCurrency.length === 1 ? byCurrency[0]!.key : null;
+}
+
+/**
+ * The seats a subscription is billed for: the full seats in use, but never fewer than the plan's minimum for that
+ * interval and region (BILLING_MIN_SEATS; shared/src/billing.ts MIN_SEATS_DEFAULT). Every quantity sent to the
+ * provider goes through here (checkout, plan change, the hourly seat sync), so none can buy below it.
+ */
+export function billedSeats(deps: Pick<Deps, 'config'>, plan: PlanKey, interval: Interval, region: string | null, fullSeats: number): number {
+  return Math.max(minSeatsFor(deps.config.billing?.minSeats ?? MIN_SEATS_DEFAULT, plan, interval, region), Math.max(1, Math.floor(fullSeats) || 0));
+}
 
 /** The configured payment provider, or null when billing is off (self-hosted, demo, tests). */
 export function providerFor(deps: Pick<Deps, 'config' | 'fetch'>): PaymentProvider | null {
@@ -200,9 +219,9 @@ const worth = (plan: PlanKey, interval: Interval) => PLANS[plan]?.price[interval
  * for the rest of the period; a downgrade is credited at the next bill (the
  * catalogue's proration settings). Shown at once; Paddle's webhook confirms it.
  */
-export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number): Promise<void> {
+export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number, region: string | null = null): Promise<void> {
   const up = worth(plan, interval) >= worth(sub.plan, sub.interval ?? interval);
-  const seats = Math.max(1, sub.seats ?? fullSeats);
+  const seats = billedSeats(deps, plan, interval, region ?? billingRegionKey(null, sub.currency), sub.seats ?? fullSeats);
   const next = await provider.changeItems(sub.providerSubscriptionId!, plan, interval, seats, up ? CATALOGUE.proration.upgrade : CATALOGUE.proration.downgrade);
   await deps.db.system(async (q) => {
     await q.query(`update subscriptions set plan = $2, billing_interval = $3, seats = coalesce($4, seats), updated_at = now() where org_id = $1`, [
@@ -225,16 +244,17 @@ export async function syncSeats(deps: Deps): Promise<number> {
   const provider = providerFor(deps);
   if (!provider) return 0;
   const rows = await deps.db.system((q) =>
-    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number }>(
-      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want
+    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number; billing_country: string | null; currency: string | null }>(
+      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want, o.billing_country, s.currency
          from subscriptions s join orgs o on o.id = s.org_id
         where s.provider_subscription_id is not null and s.status in ('active', 'trialing', 'past_due')`,
     ),
   );
   let changed = 0;
   for (const r of rows) {
-    const want = Math.max(1, Number(r.want));
-    if (r.seats === want || !r.billing_interval || !planOf(r.plan)) continue;
+    if (!r.billing_interval || !planOf(r.plan)) continue;
+    const want = billedSeats(deps, r.plan, r.billing_interval, billingRegionKey(r.billing_country, r.currency), Number(r.want));
+    if (r.seats === want) continue;
     try {
       const next = await provider.changeItems(r.provider_subscription_id, r.plan, r.billing_interval, want, want > (r.seats ?? 0) ? CATALOGUE.proration.seatsUp : CATALOGUE.proration.seatsDown);
       await deps.db.system(async (q) => {
