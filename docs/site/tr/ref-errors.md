@@ -34,6 +34,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `portal_bad_code` | 400 | Kod yanlış ya da süresi dolmuş. Yenisini iste. |
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
 | `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, OpenDocument, metin, CSV ve ZIP dosyaları eklenebilir. |
+| `portal_file_unsafe` | 400 | … eklenemiyor: içeriği güvenli görünmüyor (açılamayacak kadar büyük bir arşiv, içinde program veya makro, ya da kod çalıştıran bir PDF). Dosyayı sade hâliyle gönderin. |
 | `portal_internal_email` | 400 | Bu adres şirketindeki birine ait. Portal müşteriler içindir. |
 | `portal_method_off` | 400 | Bu giriş yolu kapalı. |
 | `portal_no_method` | 400 | En az bir giriş yolu açık kalmalı: e-posta, Google, Microsoft ya da şifre. |
@@ -103,6 +104,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `plan_limit_storage` | 413 | Planınızın dosya alanı (… GB) doldu. Artık gerekmeyen dosyaları silin ya da daha büyük bir plan seçin. |
 | `portal_quota` | 413 | Sağlayıcınızın dosya alanı dolu. Dosyayı başka bir yolla gönderin ya da yer açmalarını isteyin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |
+| `file_quarantined` | 423 | Bu dosya virüslere karşı kontrol ediliyor. Bir dakika sonra tekrar deneyin. |
 | `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden dene. |
 | `portal_locked` | 429 | Çok fazla yanlış deneme oldu. … dakika sonra tekrar dene ya da şifreni yenile. |
 | `too_many_requests` | 429 | Çok fazla deneme oldu. Birkaç dakika bekleyip tekrar dene. |
