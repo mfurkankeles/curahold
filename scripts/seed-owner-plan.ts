@@ -15,7 +15,7 @@ export async function seedOwnerPlan(db: Db, now = new Date()): Promise<void> {
     const [had] = await q.query(`select 1 from fundraising_windows limit 1`);
     if (had) return;
     const ids: Record<string, string> = {};
-    for (const w of planWindows(addPeriod(period, 2), 'en')) {
+    for (const w of planWindows(addPeriod(period, 2))) {
       const [r] = await q.query<{ id: string }>(
         `insert into fundraising_windows (key, name, opens_on, closes_on, target_min, target_max, conditions) values ($1, $2, $3, $4, $5, $6, $7) returning id`,
         [w.key, w.name, w.opensOn, w.closesOn, w.targetMin, w.targetMax, w.conditions],

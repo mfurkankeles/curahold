@@ -9,6 +9,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'rea
 import type { OwnerKey } from '../../../../shared/src/i18n/owner';
 import {
   INVESTOR_KINDS,
+  addPeriod,
   INVESTOR_STAGES,
   isOwnerLocale,
   readPlanFile,
@@ -50,14 +51,15 @@ export function InvestorSideView({ beat, failed }: { beat: number; failed: Faile
       {(d) => (
         <>
           <div className="occols occols--plan">
+            <BudgetCard d={d} onChanged={setData} failed={failed} onImport={() => setImporting(true)} />
             <div className="occolstack">
-              <BudgetCard d={d} onChanged={setData} failed={failed} onImport={() => setImporting(true)} />
               <MilestonesCard d={d} onImport={() => setImporting(true)} />
-            </div>
-            <div className="occolstack">
               <WindowsCard d={d} onChanged={setData} reload={reload} failed={failed} onImport={() => setImporting(true)} />
-              <InvestorsCard d={d} onChanged={setData} reload={reload} failed={failed} />
             </div>
+          </div>
+          {/* The pipeline gets the whole width: a row per investor reads best side by side. */}
+          <div className="ocwidecard">
+            <InvestorsCard d={d} onChanged={setData} reload={reload} failed={failed} />
           </div>
           {importing ? <ImportDialog onClose={() => setImporting(false)} onDone={reload} failed={failed} /> : null}
         </>
@@ -79,6 +81,10 @@ function BudgetCard({ d, onChanged, failed, onImport }: { d: OwnerInvestorSide; 
   const [saved, setSaved] = useState<'cash' | 'lines' | null>(null);
   const empty = d.budget.months.every((m) => !m.lines.length) && d.budget.cash == null;
   const m = d.budget.months.find((x) => x.period === month) ?? d.budget.months[0];
+  // Last month to four ahead by default; the whole year on request (a long table is a wall on a phone).
+  const [year, setYear] = useState(false);
+  const near = d.budget.months.filter((x) => x.period >= addPeriod(d.period, -1) && x.period <= addPeriod(d.period, 4));
+  const shown = year ? d.budget.months : near;
   const top = Math.max(1, ...d.budget.months.map((x) => Math.max(x.planned, x.actual ?? 0)));
 
   const saveCash = async (e: FormEvent) => {
@@ -128,7 +134,10 @@ function BudgetCard({ d, onChanged, failed, onImport }: { d: OwnerInvestorSide; 
           {o('budget.cash')}
           <input className="input input--num" type="number" min={0} step="any" inputMode="decimal" value={cash} onChange={(e) => (setCash(e.target.value), setSaved(null))} />
         </label>
-        <DateField value={cashOn} onChange={(v) => (setCashOn(v), setSaved(null))} label={o('budget.cashOn')} />
+        <span className="ocrunway__date">
+          <span aria-hidden="true">{o('budget.cashOn')}</span>
+          <DateField value={cashOn} onChange={(v) => (setCashOn(v), setSaved(null))} label={o('budget.cashOn')} />
+        </span>
         <button type="submit" className="btn btn--small">
           <Icon name="check" size={14} />
           {saved === 'cash' ? o('common.saved') : o('budget.saveCash')}
@@ -156,7 +165,7 @@ function BudgetCard({ d, onChanged, failed, onImport }: { d: OwnerInvestorSide; 
             </tr>
           </thead>
           <tbody>
-            {d.budget.months.map((x) => (
+            {shown.map((x) => (
               <tr key={x.period} data-now={x.period === d.period ? '' : undefined} data-picked={x.period === m.period ? '' : undefined}>
                 <th scope="row">
                   <button type="button" className="oclink" aria-pressed={x.period === m.period} onClick={() => (setMonth(x.period), setTyped({}), setSaved(null))}>
@@ -180,6 +189,13 @@ function BudgetCard({ d, onChanged, failed, onImport }: { d: OwnerInvestorSide; 
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="ocbuttons">
+        <button type="button" className="btn btn--small btn--quiet" aria-expanded={year} onClick={() => setYear(!year)}>
+          <Icon name={year ? 'chevronUp' : 'chevronDown'} size={14} />
+          {year ? o('budget.fewer') : o('budget.year')}
+        </button>
       </div>
 
       <form className="ocbudgetlines" onSubmit={saveLines} aria-labelledby="oc-budget-month">
