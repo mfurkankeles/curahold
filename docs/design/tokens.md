@@ -34,6 +34,21 @@ it is written in px, and every value is a multiple of 4.
 
 Line heights: `--lh-tight` 1.1 for figures, `--lh-snug` 1.25 for headings, `--lh-body` 1.45 for text.
 
+**Per script** (`html:lang(…)` rules at the top of `styles.css`; no web font outside Latin, 0 KB). Figtree draws
+Latin (en, tr, ms) and the Latin words inside other scripts; each other script uses the system font made for it,
+named for Windows, Apple and Android in turn.
+
+| Script | Stack after Figtree | Body | Line height | Notes |
+| --- | --- | --- | --- | --- |
+| Arabic, Persian | Segoe UI, SF Arabic, Geeza Pro, Noto Sans Arabic, Tahoma | 15px | 1.7 | no letter-spacing (letters join) |
+| Hebrew | Segoe UI, SF Hebrew, Arial Hebrew, Noto Sans Hebrew | 15px | 1.6 | |
+| Devanagari (hi) | Nirmala UI, Kohinoor Devanagari, Noto Sans Devanagari | 15px | 1.75 (headings 1.4) | no letter-spacing (the headline joins) |
+| Japanese | Hiragino Sans, Yu Gothic UI, Meiryo, Noto Sans JP | 14px | 1.7 | `font-synthesis: none`, no italics |
+| Korean | Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR | 14px | 1.7 | `word-break: keep-all`, `font-synthesis: none` |
+| Chinese | PingFang SC/TC, Microsoft YaHei/JhengHei UI, Noto Sans SC/TC | 14px | 1.7 | `font-synthesis: none`, no italics |
+
+Outside Latin no text is under 12px (`--fs-2xs` becomes 12px) and headings have no negative tracking.
+
 ## Spacing (4 px grid)
 
 Every padding, margin and gap is a multiple of 4px (0, 4, 8, 12, 16, 20, 24, 32, 40, 48 …).
@@ -85,6 +100,9 @@ Ambient loops are not answers to a hand, so they are outside the 150–200 ms ru
 | `--loop-caret` | 1s | The blinking caret while the assistant writes |
 | `--loop-pulse` | 1.6s | The guided-tour spotlight pulse (demo only) |
 | `--loop-twinkle` | 5s | The assistant button's twinkle, twice, then still |
+| `--loop-loader` | 1.2s | The brand loader's mark drawing itself (`components/Loader.tsx`, the demo's opening screen) |
+| `--loop-route` | 800ms | The route bar's creep to 80 % |
+| `--loop-spin` | 700ms | The ring of a busy button |
 
 ## Colour
 
@@ -93,7 +111,9 @@ Semantic, never literal. Each has a light and a dark value; text tokens meet WCA
 
 - Surfaces: `--paper` (page), `--surface` (cards, fields), `--surface-2` (raised rows), `--sunk` (wells, hovers), `--scrim` (behind dialogs).
 - Text: `--ink` (primary), `--ink-2` (secondary), `--ink-3` (meta; the lightest text allowed), `--on-ink`, `--on-brand`, `--on-status`.
-- Lines: `--line` (hairlines), `--line-strong` (field borders, dividers that matter).
+- Lines: `--line` (hairlines), `--line-strong` (dividers that matter), `--field-line` (borders of inputs, selects and pickers: 3:1 on cards and the page).
+- Focus: `--focus` (the keyboard ring, at least 4:1 on every light surface). Brand gradients `--grad`, `--new-bg`, `--new-hover`: their text is at least 4.5:1 on every stop; `--hover-shift` darkens a primary button under the pointer in light and lightens it in dark.
+- `tests/contrast.test.ts` checks the pairs in both themes: text on every surface 4.5:1, field borders, focus and the brand mark 3:1.
 - Brand: `--brand` (fills, marks), `--brand-ink` (brand text and links), `--brand-wash` / `--brand-soft` (tinted backgrounds).
 - Time (the identity): `--calm`, `--soon`, `--today`, `--late`, `--done`, with `--soon-wash/-line/-ink`, `--late-wash/-line/-ink`, `--done-wash`, `--info-wash/-ink`.
 - Navigation well: `--well`, `--well-2`, `--well-3`, `--well-deep`, `--well-ink`, `--well-mute`, `--well-hi`, `--nav-on`, `--nav-on-ink`.
@@ -165,10 +185,34 @@ One family; a screen never draws its own.
 
 `--wait` (300 ms, in the Motion block) is how long a wait shows nothing at all; `useAfter(ms)` is its hook.
 
+### Loading — `Loader`, `RouteBar` (`components/Loader.tsx`), `lib/loading.ts`, `lib/busy.ts`
+
+Five parts, and a view waiting for data always shows its skeleton, never a spinner.
+
+| Part | What | Timing |
+| --- | --- | --- |
+| Skeleton | `SkeletonRows`, `SkeletonCards`, `SkeletonDash` (tiles over chart panes), `SkeletonPanel` (the side panel) | after `--wait`, at the final size |
+| Route bar | a 2px brand line at the top while any skeleton or route fallback is on screen (each holds a mark in `lib/loading.ts`) | after `--dur-2`; creeps to 80 % in `--loop-route`; fills and fades when all is in |
+| Brand loader | the mark drawing itself; inline SVG + CSS, under 1.2 KB, no GIF | after `--wait`; once seen it stays 400 ms; fades in `--dur-1` |
+| Opening screen | the demo's start: the loader, the real step, a bar that follows the work, "Still getting ready" after 8 s, a 200 ms cross-fade into the app | |
+| Busy button | `const [state, run] = useBusy()`, `{...busyProps(state)}`: the label stays, the first icon turns into a 14px ring after `--dur-2`, at least 300 ms, then a tick for 600 ms | |
+
+### Buttons, Back and Close
+
+- **Every action button has an icon and a label** (`<Icon …/>` first, then the words). A button with only an icon has an
+  `aria-label`; `lib/tooltips.ts` makes it its tooltip. Choices in a segmented control or a tab strip and whole rows of a
+  list are not action buttons: they are words.
+- **Back**: every page that lives under another (a customer, a report, a settings section, an onboarding plan) shows
+  `BackBar` above its title, in the same place (`parentOf` in `components/BackBar.tsx` says which page is above). On a
+  phone the task and record panels are whole screens with Back at the start of their header.
+- **Close**: every dialog, panel, sheet and popover closes with `CloseButton` (`components/ui.tsx`) at the end corner of
+  its header: 44 × 44, a visible fill, "Close (Esc)" as its tooltip, apart from a destructive button. Esc does the same.
+
 ### Undo — `useUndo`, `useServerUndo` (`lib/undo.ts`)
 
 The one way a change is taken back. A delete, a move, a bulk change or a settings change says what it did
-in a toast with **Undo** for 10 seconds; **Ctrl+Z / ⌘Z** takes back the latest one while it shows (not
+in a toast with **Undo** for 7 seconds (a plain note shows 4 seconds, an error stays until closed; the count pauses while the
+pointer or the focus is on the toast; at most three show at once, the oldest gives way); **Ctrl+Z / ⌘Z** takes back the latest one while it shows (not
 while the focus is in a text field: there it belongs to the text). The toast area is a polite live region.
 
 - `offer(text, takeBack, after?)` from `useUndo()` — `takeBack` restores, then "Put back" and `after` (reload).
