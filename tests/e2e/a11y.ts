@@ -23,6 +23,7 @@ import { extname, join, normalize } from 'node:path';
 import type { Browser, KeyInput, Page } from 'puppeteer-core';
 import { base32Decode, hotp, stepOf } from '../../api/src/lib/totp';
 import { CONSENT_POLICY_VERSION } from '../../shared/src/consent/core';
+import { OWNER_LOCALES } from '../../shared/src/i18n/owner';
 import { ALLOW } from './a11y-allow';
 import { DESK_STAFF, SCREENS as SHOTS, startStack } from './browser';
 
@@ -118,15 +119,32 @@ const focusNow = (page: Page) =>
 
 /** The keyboard path through a screen: the skip link first, then every stop visibly focused, no stop twice in a row. */
 async function keyboard(page: Page, where: string, v: Variant, tabs = 25) {
-  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  // Start where the surface starts: the demo puts its own bar before the app, and the page may hold an
+  // earlier focus. The skip link must be the surface's first stop.
+  await page.evaluate(() => {
+    const skip = document.querySelector('a.skip-link, a.skip');
+    const box = skip?.parentElement ?? document.body;
+    const start = document.createElement('span');
+    start.tabIndex = -1;
+    start.id = '__a11y_start';
+    box.insertBefore(start, box.firstChild);
+    start.focus();
+  });
   await page.keyboard.press('Tab');
+  await page.evaluate(() => document.getElementById('__a11y_start')?.remove());
   const first = await focusNow(page);
   if (!/skip/.test(first.tag)) problem(`${where} ${tag(v)}: the first Tab lands on ${first.tag}, not "skip to content"`);
   else {
+    // After the skip link, the focus — or, where the target cannot take focus, the next Tab — is in the content.
+    const target = await page.evaluate(() => (document.activeElement as HTMLAnchorElement).hash);
     await page.keyboard.press('Enter');
     await sleep(150);
-    const after = await page.evaluate(() => document.activeElement?.tagName.toLowerCase() ?? '');
-    if (after !== 'main') problem(`${where} ${tag(v)}: "skip to content" does not move focus to the content (${after})`);
+    let inside = await page.evaluate((h) => !!document.activeElement?.closest(h), target);
+    if (!inside) {
+      await page.keyboard.press('Tab');
+      inside = await page.evaluate((h) => !!document.activeElement?.closest(h), target);
+    }
+    if (!inside) problem(`${where} ${tag(v)}: "skip to content" does not lead the keyboard to ${target}`);
   }
   const unseen = new Set<string>();
   let same = 0;
@@ -149,6 +167,7 @@ async function keyboard(page: Page, where: string, v: Variant, tabs = 25) {
 /** A dialog opened from the keyboard: focus goes in, Tab stays in, Escape closes it and focus comes back. */
 async function dialogKeys(page: Page, where: string, v: Variant) {
   const inside = await focusNow(page);
+  await page.evaluate(() => document.activeElement?.closest('[role=dialog], dialog')?.setAttribute('data-a11y-open', ''));
   if (!inside.inDialog) problem(`${where} ${tag(v)}: focus is not in the dialog when it opens (${inside.tag})`);
   for (let i = 0; i < 15; i++) {
     await page.keyboard.press('Tab');
@@ -160,7 +179,10 @@ async function dialogKeys(page: Page, where: string, v: Variant) {
   }
   await page.keyboard.press('Escape');
   await sleep(300);
-  const open = await page.$('[role=dialog][aria-modal=true]');
+  const open = await page.evaluate(() => {
+    const d = document.querySelector('[data-a11y-open]');
+    return !!d && d.getClientRects().length > 0;
+  });
   if (open) problem(`${where} ${tag(v)}: Escape does not close the dialog`);
 }
 
@@ -223,9 +245,11 @@ async function open(v: Variant, opts: { consent?: boolean } = {}) {
   );
   return { page, close: () => ctx.close() };
 }
+/** Opens a page; false when there is none (a language without a blog, say): nothing to check there. */
 const go = async (page: Page, url: string, wait = 300) => {
-  await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 }).catch(() => undefined);
+  const r = await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 }).catch(() => null);
   await sleep(wait);
+  return !r || r.status() < 400;
 };
 
 // ---------------------------------------------------------------- the app and the portal, in the demo
@@ -368,7 +392,9 @@ if (part('console')) {
   await page.type('.desk-signin__card input[autocomplete="one-time-code"]', await hotp(base32Decode(secret), stepOf(Date.now())));
   await page.click('.desk-signin__card .btn--primary');
   await page.waitForSelector('.console__rail', { timeout: 20000 });
-  for (const v of VARIANTS) {
+  // The owner's console speaks the owner's languages (OWNER_LOCALES); in another one it is checked in English.
+  for (const asked of VARIANTS) {
+    const v: Variant = (OWNER_LOCALES as string[]).includes(asked.locale) ? asked : { ...asked, locale: 'en' };
     const phone = v.width === 390;
     await page.setViewport({ width: v.width, height: phone ? 844 : 900, deviceScaleFactor: 1, isMobile: phone, hasTouch: phone });
     await page.emulateMediaFeatures([
@@ -377,7 +403,18 @@ if (part('console')) {
     ]);
     await page.evaluate((t: string) => localStorage.setItem('app_theme', t), v.theme);
     await page.goto(`${desk}/`, { waitUntil: 'load', timeout: 30000 }).catch(() => undefined);
-    await page.waitForSelector('.console__rail', { timeout: 20000 });
+    // The walk asks for pages much faster than a person: the per-person request budget (lib/ratelimit.ts)
+    // can run out. Wait for it to fill again, once, before calling it a problem.
+    let rail = await page.waitForSelector('.console__rail', { timeout: 20000 }).catch(() => null);
+    if (!rail) {
+      await sleep(30000);
+      await page.goto(`${desk}/`, { waitUntil: 'load', timeout: 30000 }).catch(() => undefined);
+      rail = await page.waitForSelector('.console__rail', { timeout: 20000 }).catch(() => null);
+    }
+    if (!rail) {
+      problem(`console ${tag(v)}: the console did not open (${(await page.evaluate(() => document.body.innerText.slice(0, 160))).replace(/\s+/g, ' ')})`);
+      continue;
+    }
     if (await page.$('.desk__langs select')) {
       await page.select('.desk__langs select', v.locale);
       await sleep(600);
@@ -387,7 +424,7 @@ if (part('console')) {
       await page.waitForSelector('.console__main, .of', { timeout: 10000 }).catch(() => undefined);
       await sleep(to === '/office' ? 1500 : 700);
       await scan(page, `console:${to}`, v);
-      if (to === '/' && VARIANTS.find((x) => x.width === v.width) === v) await keyboard(page, 'console:/', v);
+      if (to === '/' && VARIANTS.find((x) => x.width === v.width) === asked) await keyboard(page, 'console:/', v);
       if (to === '/office') {
         // Without a graphics card the floor is drawn in 2D; with one it is 3D. Either way the people on it
         // must be readable as text: a list of seats a screen reader can walk.
@@ -427,7 +464,7 @@ const sitePrefix = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
 for (const v of part('static') ? VARIANTS : []) {
   const { page, close } = await open(v, { consent: v !== VARIANTS[0] });
   for (const p of v.width === 390 ? ['', 'pricing/'] : SITE_PAGES) {
-    await go(page, `http://localhost:${PORT + 1}${sitePrefix(v.locale)}${p}`);
+    if (!(await go(page, `http://localhost:${PORT + 1}${sitePrefix(v.locale)}${p}`))) continue;
     await scan(page, `site:/${p}${v === VARIANTS[0] && p === '' ? '+consent-banner' : ''}`, v);
     if (p === '' && v !== VARIANTS[0] && VARIANTS.find((x) => x.width === v.width && x !== VARIANTS[0]) === v) await keyboard(page, 'site:/', v, 15);
   }
