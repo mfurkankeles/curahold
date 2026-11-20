@@ -12,6 +12,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Hindi and Malay: the app, the customer portal, e-mails, the help centre (whole user guide), the website, the demo company
+  and the free assistant rules, in a formal register; job titles and plan names stay in English. Trial consent texts for India
+  (DPDP Act 2023: itemised notice, grievance route to the Data Protection Board) and Malaysia (PDPA: notice in Malay and English
+  together), drafts for the lawyer's review. Rupee and ringgit amounts, Latin digits in Hindi.
 - Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
   use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
   by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).

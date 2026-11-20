@@ -144,9 +144,7 @@ describe('illustrated guides keep their pictures', () => {
         if (!pic) bad.push(`${lang}/${slug}: step "${line.slice(0, 50)}" has no picture of its own`);
         else {
           const file = /\(img\/([\w-]+\.webp)\)/.exec(pic)![1];
-          // A language whose screens are not taken yet (no img folder) shows the English picture (scripts/build-docs.ts).
-          const shown = existsSync(join(DOCS, lang, 'img')) ? join(DOCS, lang, 'img', file) : join(DOCS, 'en', 'img', file);
-          if (!existsSync(shown)) bad.push(`${lang}/${slug}: img/${file} is missing (scripts/docs/shots.ts)`);
+          if (!existsSync(join(DOCS, lang, 'img', file))) bad.push(`${lang}/${slug}: img/${file} is missing (scripts/docs/shots.ts)`);
         }
       });
     }
