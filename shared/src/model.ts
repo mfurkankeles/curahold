@@ -373,6 +373,7 @@ export interface ImportResult {
   created: number;
   updated: number;
   skipped: number;
+  /** `reason`: `name` (no name), `fields:<keys>` (values it could not read) or `duplicate:<row>` (the same customer as an earlier row of the file, merged). */
   errors: { row: number; reason: string }[];
   unmatchedOwners: { email: string | null; name: string | null; count: number }[];
 }

@@ -118,6 +118,15 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- A customer listed twice in an imported file is reported ("same customer as row 2: merged into one") instead of being
+  merged without a word.
+- A new deal, contact or other record can create its customer on the spot: the customer field searches and offers "Add new
+  customer" like the task form.
+- The trial request form, opened in another tab, says the answers are kept and only the e-mail needs confirming again,
+  then returns to the step it was on; before, it silently started over.
+- Tools that are not turned on for an installation say who can turn them on and what to use meanwhile, instead of "not set
+  up on this server".
+
 - A connection that stopped working now says why in your language (sign-in no longer accepted, no permission, could not
   be reached, or a neutral "reported a problem"), with the service's own message under it, in the reconnect banner and the
   connection lists; before, the raw service message (often English) stood alone. A sync that only waits out a service's

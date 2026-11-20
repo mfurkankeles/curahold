@@ -32,6 +32,7 @@ import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
 import { DateRangeField } from './DateField';
+import { AccountPicker } from './AccountPicker';
 
 /**
  * A table column: one of the record's own fields, or something every record
@@ -761,6 +762,7 @@ export function RecordDialog({
   const [parent, setParent] = useState<string>(record?.parentId ?? parentId ?? '');
   const [ownerId, setOwnerId] = useState(record?.ownerId ?? (record ? '' : me.user.id));
   const [account, setAccount] = useState<string>(record?.accountId ?? accountId ?? '');
+  const [accountName, setAccountName] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string | number | null>>(
     initialSplit ? { ...(record?.fields ?? {}), first_name: initialSplit.first, last_name: initialSplit.last } : (record?.fields ?? {}),
   );
@@ -921,17 +923,16 @@ export function RecordDialog({
         )}
         <div className="form__row">
           {!accountId && (
-            <label className="field">
+            <div className="field">
               <span className="field__label">{words.one}</span>
-              <select className="select" value={account} disabled={!canWrite} onChange={(e) => setAccount(e.target.value)}>
-                <option value="">—</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              {/* Search, or add the customer right here: a new deal is often for a customer not entered yet (persona run). */}
+              <AccountPicker
+                value={account || null}
+                name={accountName ?? accounts.find((a) => a.id === account)?.name ?? null}
+                disabled={!canWrite}
+                onChange={(id, picked) => (setAccount(id ?? ''), setAccountName(picked ?? null))}
+              />
+            </div>
           )}
           <label className="field">
             <span className="field__label">{t('accounts.owner')}</span>

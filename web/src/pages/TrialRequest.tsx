@@ -123,6 +123,18 @@ const EMPTY: Draft = {
 const DRAFT_KEY = 'curahold.trial.draft';
 // The proof of the address lives as long as the browser tab (two hours at most, signed by the server).
 const TICKET_KEY = 'curahold.trial.ticket';
+// How far the answers got. A new tab has the answers (above) but not the proof, which stays with its tab on purpose
+// (a shared computer must not carry a confirmed address over); so it says so and, once the address is confirmed
+// again, goes back to this step instead of silently starting over.
+const STEP_KEY = 'curahold.trial.step';
+const readStep = (): number => {
+  try {
+    const n = Number(localStorage.getItem(STEP_KEY) ?? 0);
+    return Number.isInteger(n) && n > 0 && n < 5 ? n : 0;
+  } catch {
+    return 0;
+  }
+};
 const readDraft = (): Draft => {
   try {
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null');
@@ -239,8 +251,10 @@ const described = (id: string, hint: boolean, error?: string) => ({
 function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => void; config: Config | null; failed: boolean }) {
   const { t, locale } = useI18n();
   const [d, setD] = useState<Draft>(readDraft);
-  const [step, setStep] = useState(() => (readTicket() ? 1 : 0));
+  const [step, setStep] = useState(() => (readTicket() ? Math.max(1, readStep()) : 0));
   const [proof, setProof] = useState(readTicket);
+  // Answers carried over from another tab: the step to come back to once the address is confirmed here.
+  const [resumeAt] = useState(() => (readTicket() ? 0 : readStep()));
   const [codeSent, setCodeSent] = useState<{ freeMail: boolean; devCode?: string } | null>(null);
   const [code, setCode] = useState('');
   const [hp, setHp] = useState('');
@@ -253,6 +267,14 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
   const heading = useRef<HTMLHeadingElement>(null);
   const first = useRef(true);
 
+  useEffect(() => {
+    if (done || step === 0) return;
+    try {
+      localStorage.setItem(STEP_KEY, String(step));
+    } catch {
+      /* storage full or off: the form still works */
+    }
+  }, [step, done]);
   // Keep the answers on this device while they are being written.
   useEffect(() => {
     if (done) return;
@@ -357,7 +379,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
       sessionStorage.setItem(TICKET_KEY, JSON.stringify(p));
       setProof(p);
       setCodeSent(null);
-      if (!v.freeMail) setStep(1);
+      if (!v.freeMail) setStep(Math.max(1, resumeAt));
     } catch (err) {
       setProblem(err instanceof ApiFailure && err.code === 'invalid_token' ? t('trial.code.wrong') : errorText(err, t));
     } finally {
@@ -366,6 +388,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
   }
   function forget() {
     sessionStorage.removeItem(TICKET_KEY);
+    localStorage.removeItem(STEP_KEY);
     setProof(null);
     setCodeSent(null);
     setStep(0);
@@ -418,6 +441,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
         freeMailNote: proof.freeMail ? d.freeMailNote : null,
       });
       localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(STEP_KEY);
       sessionStorage.removeItem(TICKET_KEY);
       setDone({ ref: r.ref, email: proof.email });
     } catch (err) {
@@ -483,6 +507,11 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
         {step === 0 ? t('trial.title') : t(STEPS[step])}
       </h1>
       {step === 0 && <p className="auth__sub">{t('trial.lead')}</p>}
+      {step === 0 && !proof && resumeAt > 0 && (
+        <p className="notice" role="status">
+          {t('trial.resume', { n: resumeAt + 1 })}
+        </p>
+      )}
       {failed && (
         <div className="notice notice--error" role="alert">
           {t('errors.network')}

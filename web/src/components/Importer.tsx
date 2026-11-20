@@ -143,7 +143,11 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
 
   const fieldName = (key: string) => labelOf(fields.find((f) => f.key === key)?.label, locale) || key;
   const reasonText = (reason: string) =>
-    reason === 'name' ? t('import.reason.name') : t('import.reason.fields', { fields: reason.replace(/^fields:/, '').split(',').map(fieldName).join(', ') });
+    reason === 'name'
+      ? t('import.reason.name')
+      : reason.startsWith('duplicate:')
+        ? t('import.reason.duplicate', { n: Number(reason.slice(10)) })
+        : t('import.reason.fields', { fields: reason.replace(/^fields:/, '').split(',').map(fieldName).join(', ') });
 
   const sampleCsv = useMemo(() => {
     const cols = [t('import.sample.name'), t('import.sample.owner'), ...fields.slice(0, 3).map((f) => labelOf(f.label, locale))];

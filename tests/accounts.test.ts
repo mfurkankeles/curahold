@@ -149,6 +149,20 @@ describe('import with undo', () => {
     const t = (await ada.get('/api/accounts?q=Tidewater')).json.accounts[0];
     expect(t.fields).toEqual({ region: 'North' });
   });
+  it('reports a customer listed twice in the file instead of merging it silently', async () => {
+    // Persona run: "Ege" twice in one file became one customer and the result said nothing.
+    const r = await ada.post('/api/accounts/import', {
+      rows: [{ Name: 'Harbourline Ltd', Tier: 'A' }, { Name: 'Quayside Co' }, { Name: 'harbourline ltd', Tier: 'B' }],
+      mapping: { name: 'Name' },
+    });
+    expect(r.json.created).toBe(2);
+    expect(r.json.errors).toEqual([{ row: 4, reason: 'duplicate:2' }]);
+    const found = (await ada.get('/api/accounts?q=Harbourline')).json.accounts;
+    expect(found).toHaveLength(1);
+    const [batch] = (await ada.get('/api/imports')).json.imports;
+    expect(batch.summary.problems.duplicate).toBe(1);
+    expect(batch.summary.problems.other).toBe(0);
+  });
 });
 
 describe('bulk changes and hand-over', () => {

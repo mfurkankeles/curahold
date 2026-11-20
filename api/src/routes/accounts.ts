@@ -441,6 +441,9 @@ accountRoutes.post('/accounts/import', async (c) => {
     const createdIds: string[] = [];
     const previous: Row[] = [];
     const touched = new Set<string>();
+    // The first row of this file that wrote each customer: a later row landing on the same one is a duplicate in the
+    // file. It is still merged (later values win), but reported with both row numbers instead of disappearing silently.
+    const firstRow = new Map<string, number>();
 
     for (const [i, row] of input.rows.entries()) {
       const rowNo = i + 2; // spreadsheet row number (header is row 1)
@@ -482,6 +485,9 @@ accountRoutes.post('/accounts/import', async (c) => {
       const ext = input.mapping.externalId ? String(row[input.mapping.externalId] ?? '').trim().slice(0, 200) || null : null;
       const match = (ext ? byExt.get(`import:${ext}`) : undefined) ?? byAccName.get(fold(name));
       if (match) {
+        const earlier = firstRow.get(match.id);
+        if (earlier !== undefined) out.errors.push({ row: rowNo, reason: `duplicate:${earlier}` });
+        else firstRow.set(match.id, rowNo);
         if (!touched.has(match.id)) {
           previous.push({ id: match.id, name: match.name, owner_id: match.owner_id, team_id: match.team_id, fields: match.fields, external_id: match.external_id, source: match.source });
           touched.add(match.id);
@@ -507,6 +513,7 @@ accountRoutes.post('/accounts/import', async (c) => {
         byAccName.set(fold(name), row2);
         if (ext) byExt.set(`import:${ext}`, row2);
         createdIds.push(id);
+        firstRow.set(id, rowNo);
         out.created++;
       }
     }
@@ -515,9 +522,10 @@ accountRoutes.post('/accounts/import', async (c) => {
     if (createdIds.length) await queueSync(q, org.id, 'account', createdIds, null, { created: true });
     const batchId = crypto.randomUUID();
     // What the rows said, by kind, for setup health (lib/setupHealth.ts): no name, a date or an amount it could not read, anything else.
-    const problems = { name: 0, date: 0, money: 0, other: 0 };
+    const problems = { name: 0, date: 0, money: 0, other: 0, duplicate: 0 };
     for (const e of out.errors) {
       if (e.reason === 'name') problems.name++;
+      else if (e.reason.startsWith('duplicate:')) problems.duplicate++;
       else for (const k of e.reason.replace(/^fields:/, '').split(',')) problems[(['date', 'money'] as const).find((t) => defs.find((d) => d.key === k)?.type === t) ?? 'other']++;
     }
     await q.query(
