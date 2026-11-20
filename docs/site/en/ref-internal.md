@@ -10,12 +10,12 @@ These addresses exist but belong to the browser or to other machines. They are l
 
 | Addresses | How many | Why |
 | --- | --- | --- |
-| `/admin/…` | 33 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/admin/…` | 38 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/agent/…` | 14 | The AI team's own door: each seat's agent with its own key reads its slice and proposes; never a company's API. |
 | `/agreements/…` | 2 | Accepting the terms of service and the DPA: a company administrator in the browser, once per version. |
-| `/assist/…` | 6 | CuraAI and the docs' "Ask": questions answered from the docs and, in the app, from what the asking person may see; an administrator sets its limits in the browser. Keys use the AI connector instead. |
+| `/assist/…` | 9 | CuraAI and the docs' "Ask": questions answered from the docs and, in the app, from what the asking person may see; an administrator sets its limits in the browser. Keys use the AI connector instead. |
 | `/auth/…` | 10 | Signing in and out happens in the browser. |
-| `/billing/…` | 8 | Plan and payment, with the payment provider. |
+| `/billing/…` | 8 | Plan and payment (one path, ADR 0019): where the company stands with usage against its plan limits, checkout, plan change, portal, leaving and resuming, billing details. Paddle's signed notifications arrive at `POST /api/inbound/billing/paddle`. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 33 | Managing connections and their field matching: an administrator in the browser. |

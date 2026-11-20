@@ -39,7 +39,11 @@ import { ProviderError, type LlmBlock, type LlmMessage, type LlmProvider, type L
 
 /** What a company has chosen (orgs.settings.assistant). */
 export interface CompanyAssistSettings {
-  /** Answer with the model (default on). Off: the docs search answers. */
+  /**
+   * Answer with the model. Off until an administrator turns it on: the privacy
+   * notice and the DPA promise that nothing goes to the AI provider unless the
+   * company chose it (docs/site/<lang>/legal-privacy.md, migration 0220).
+   */
   enabled: boolean;
   /** USD a month for this company. */
   monthlyCapUsd: number;
@@ -56,7 +60,8 @@ export function settingsOf(raw: unknown, cfg: AssistantConfig): CompanyAssistSet
   const cap = Number(s.monthlyCapUsd);
   const days = Number(s.retentionDays);
   return {
-    enabled: s.enabled !== false,
+    // Only an explicit `true` counts: a company that never chose stays off (legal texts, L1 audit).
+    enabled: s.enabled === true,
     monthlyCapUsd: Number.isFinite(cap) && cap >= 0 ? Math.min(cap, cfg.companyMaxUsd) : cfg.companyMonthlyUsd,
     retentionDays: (RETENTION_CHOICES as readonly number[]).includes(days) ? days : 30,
     deskFirstReply: s.deskFirstReply === 'off' ? 'off' : 'note',
@@ -66,7 +71,14 @@ export function settingsOf(raw: unknown, cfg: AssistantConfig): CompanyAssistSet
 export interface UsageNow {
   companyMicros: number;
   globalMicros: number;
+  /** Model-answered questions this month, and the plan's cap on them (null or absent: no cap). */
+  companyQuestions?: number;
+  questionCap?: number | null;
 }
+
+/** Whether a money cap or the plan's question cap is reached: then the free docs search answers instead of the model. */
+export const overCap = (used: UsageNow, globalUsd: number, companyUsd: number | null): boolean =>
+  used.globalMicros >= globalUsd * 1e6 || (companyUsd != null && used.companyMicros >= companyUsd * 1e6) || (used.questionCap != null && (used.companyQuestions ?? 0) >= used.questionCap);
 export interface Spend {
   model: boolean;
   usage: LlmUsage;
@@ -325,7 +337,7 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
   let why: AssistFallback | undefined = fallbackWhy;
   if (!why) {
     const used = await env.store.usage().catch(() => ({ companyMicros: Infinity, globalMicros: Infinity }));
-    if (used.globalMicros >= env.config.globalMonthlyUsd * 1e6 || (env.orgId && used.companyMicros >= env.settings.monthlyCapUsd * 1e6)) why = 'cap';
+    if (overCap(used, env.config.globalMonthlyUsd, env.orgId ? env.settings.monthlyCapUsd : null)) why = 'cap';
   }
   if (why) {
     // Without the model, an instruction hidden in the question is simply not followed.

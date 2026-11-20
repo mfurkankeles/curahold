@@ -140,7 +140,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * request limits are off) and at most `perDay` a day, counted in `fin.calls`.
  */
 export function pacedCtx(ctx: CrmCtx, limits: NonNullable<CrmAdapter['accounting']>, fin: FinState, scale: number, now: () => Date): CrmCtx {
-  const gap = scale > 0 ? Math.ceil((60_000 / Math.max(1, limits.perMinute)) * scale) : 0;
+  // `scale` is the server's budget factor (config.limitScale): 10 gives ten times the requests, so a tenth of the gap.
+  const gap = scale > 0 ? Math.ceil(60_000 / Math.max(1, limits.perMinute) / scale) : 0;
   let last = 0;
   const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const today = utcDay(now());

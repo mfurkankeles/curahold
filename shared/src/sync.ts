@@ -172,9 +172,6 @@ export const KEY_FIELDS: Record<
   ],
 };
 
-/** Spreadsheets: rows are found by a key column instead of a CRM id. */
-export const TABULAR: CrmProvider[] = ['gsheets', 'excel'];
-
 export type RemoteFieldType =
   | 'id'
   | 'text'
@@ -304,8 +301,16 @@ export interface SyncRun {
   /** Stopped to stay within its time; the next run carries on. */
   more: boolean;
   stats: Record<string, SyncStats>;
-  errors: { object: string; remoteId?: string; name?: string; message: string }[];
+  /** `code` says in plain words what happened (shown translated, with the service's own message under it). */
+  errors: { object: string; remoteId?: string; name?: string; message: string; code?: SyncErrorCode }[];
 }
+
+/**
+ * What stopped a run, for the person who has to act: `rate` the service asked us to slow down (not a fault;
+ * the next run carries on), `auth` the sign-in or key stopped working (reconnect), `permission` the account
+ * may not read or write something, `unreachable` the service could not be reached.
+ */
+export type SyncErrorCode = 'rate' | 'auth' | 'permission' | 'unreachable';
 
 export interface SyncPreviewObject {
   remote: string;

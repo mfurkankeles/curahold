@@ -312,7 +312,7 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
       // Kept 30 days and 500 a hook: the log is for finding a problem, not an archive.
       await q.query(
         `delete from inbound_deliveries where org_id = $1 and hook_id = $2 and (received_at < now() - make_interval(days => $3)
-            or id in (select id from inbound_deliveries where hook_id = $2 order by received_at desc offset $4))`,
+            or id in (select id from inbound_deliveries where org_id = $1 and hook_id = $2 order by received_at desc offset $4))`,
         [orgId, hook.id, KEEP_DAYS, KEEP_PER_HOOK],
       );
       return !!row;
@@ -336,7 +336,7 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
   }
   const eventId = check.eventId;
   if (eventId) {
-    const [seen] = await deps.db.system((q) => q.query(`select 1 from inbound_deliveries where hook_id = $1 and event_id = $2 and status in ('ok', 'skipped')`, [hook.id, eventId]));
+    const [seen] = await deps.db.system((q) => q.query(`select 1 from inbound_deliveries where org_id = $1 and hook_id = $2 and event_id = $3 and status in ('ok', 'skipped')`, [hook.org_id, hook.id, eventId]));
     if (seen) return { http: 200, status: 'duplicate', eventId };
   }
   if (!hook.created_by) {

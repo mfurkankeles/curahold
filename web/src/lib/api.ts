@@ -48,6 +48,8 @@ export function endPreview(to = '/settings/roles') {
 export function setApiLocale(l: string) {
   currentLocale = l;
 }
+/** The language answers are asked in (texts the server writes, such as the setup checks, come back in it). */
+export const apiLocale = () => currentLocale;
 
 type Listener = (code: string) => void;
 const authListeners = new Set<Listener>();

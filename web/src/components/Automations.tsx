@@ -281,7 +281,20 @@ function RunHistory({ rule, onClose }: { rule: Automation; onClose: () => void }
   );
 }
 
-function presetDrafts(locale: Locale, boards: Board[]): { key: string; template: string; draft: Draft }[] {
+/**
+ * The company's own date field a rule should watch. Ready-made rules name the
+ * template's field ("renewal_date"); a company that imported its own "Renewal
+ * date" column has that one instead. Without this the editor shows the right
+ * name while the rule keeps a field that does not exist, and never runs.
+ */
+function datedField(dateFields: { key: string; label: Record<string, string | undefined> }[], key: string): string {
+  if (!dateFields.length || dateFields.some((f) => f.key === key)) return key;
+  const like = (re: RegExp) => dateFields.find((f) => re.test(`${f.key} ${Object.values(f.label).join(' ')}`));
+  const near = key.startsWith('renewal') ? like(/renew|yenile|تجديد|חידוש|تمدید|续|續|更新|갱신/i) : key.startsWith('close') ? like(/close|kapan|إغلاق|סגירה|بستن|成交|締結|마감/i) : undefined;
+  return (near ?? dateFields[0]).key;
+}
+
+function presetDrafts(locale: Locale, boards: Board[], dateFields: Parameters<typeof datedField>[0]): { key: string; template: string; draft: Draft }[] {
   const out: { key: string; template: string; draft: Draft }[] = [];
   const firstBoard = boards[0]?.id ?? '';
   for (const tk of TEMPLATE_KEYS) {
@@ -298,7 +311,12 @@ function presetDrafts(locale: Locale, boards: Board[]): { key: string; template:
               boardId: boardFor(p.action.board),
               tasks: p.action.tasks.map((x) => ({ title: pick(x.title, locale), dueInDays: x.dueInDays, assignee: x.assignee, subtasks: (x.subtasks ?? []).map((s) => pick(s, locale)) })),
             };
-      const trigger = p.trigger.type === 'task_moved' ? { ...p.trigger, boardId: p.trigger.boardId ? boardFor(p.trigger.boardId) : null } : p.trigger;
+      const trigger =
+        p.trigger.type === 'task_moved'
+          ? { ...p.trigger, boardId: p.trigger.boardId ? boardFor(p.trigger.boardId) : null }
+          : p.trigger.type === 'account_date'
+            ? { ...p.trigger, field: datedField(dateFields, p.trigger.field) }
+            : p.trigger;
       if (out.some((o) => o.key === p.key && JSON.stringify(o.draft.trigger) === JSON.stringify(trigger))) continue;
       out.push({ key: `${tk}:${p.key}`, template: pick(TEMPLATES[tk].name, locale), draft: { name: pick(p.name, locale), enabled: true, trigger, conditions: p.conditions ?? [], action, preset: p.key } });
     }
@@ -312,10 +330,20 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
   const describe = useDescribe();
   const { types } = useRecordTypes();
   const fields = me.org.accountFields;
-  const dateFields = fields.filter((f) => f.type === 'date');
-  const presets = useMemo(() => presetDrafts(locale, boards), [locale, boards]);
+  const dateFields = useMemo(() => fields.filter((f) => f.type === 'date'), [fields]);
+  const presets = useMemo(() => presetDrafts(locale, boards, dateFields), [locale, boards, dateFields]);
+  // A rule watching a date field that is not there (made from a template before the company had its own) opens on
+  // the company's field, so saving it is the fix the setup check asks for.
   const [draft, setDraft] = useState<Draft | null>(
-    rule ? { name: rule.name, enabled: rule.enabled, trigger: rule.trigger, conditions: rule.conditions, action: rule.action } : null,
+    rule
+      ? {
+          name: rule.name,
+          enabled: rule.enabled,
+          trigger: rule.trigger.type === 'account_date' ? { ...rule.trigger, field: datedField(dateFields, rule.trigger.field) } : rule.trigger,
+          conditions: rule.conditions,
+          action: rule.action,
+        }
+      : null,
   );
   const [preview, setPreview] = useState<{ count: number | null; sample: string[] } | null>(null);
   const [busy, setBusy] = useState(false);

@@ -19,7 +19,7 @@
 -- The receiver has no signed-in person: it reads the hook with owner access anchored to the company the address
 -- belongs to, and writes every row with that company's id. People with connections.manage manage hooks and read
 -- the log; nobody else sees either.
--- Undo: db/rollback/0240_connectors_b19.sql.
+-- Undo: db/rollback/0245_connectors_b19.sql.
 
 alter table dev_hooks drop constraint dev_hooks_provider_check;
 alter table dev_hooks add constraint dev_hooks_provider_check check (provider in ('github', 'gitlab', 'azuredevops'));

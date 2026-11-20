@@ -336,9 +336,13 @@ free to click anything meanwhile. On a phone the card docks at the bottom.
 
 ## Run it locally
 
+You need Node 22 (the version in `.nvmrc`; `nvm use`) and, for the browser tests only, Chrome or Chromium. No
+database, Docker or account is needed: development runs on an in-memory Postgres (PGlite) with an invented demo
+company.
+
 ```bash
-npm install
-npm run dev
+npm ci          # exact versions from package-lock.json (about 20 s)
+npm run dev     # API on :8787 and the web app on :5173; stop with Ctrl+C
 ```
 
 Open **http://demo.localhost:5173** (Chrome, Edge and Firefox resolve
@@ -348,17 +352,21 @@ Open **http://demo.localhost:5173** (Chrome, Edge and Firefox resolve
 link is shown on screen and printed in the terminal. All demo people and
 accounts are invented.
 
-`npm run start:local` serves the built app and API together on :8787.
+`npm run start:local` serves the built app and API together on :8787 (run `npm run build` first; open
+http://demo.localhost:8787).
+
+New to the code? Read [docs/HANDOVER.md](docs/HANDOVER.md) (the first week, the map, the risks), then
+[docs/DEVELOPER.md](docs/DEVELOPER.md).
 
 ## Tests
 
 | Command | What it checks | Time |
 | --- | --- | --- |
-| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", search, bulk changes and undo, repeating tasks, quiet hours, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
+| `npm test` | About 130 test files, ~1,400 tests (several minutes; run single files while you work): API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", search, bulk changes and undo, repeating tasks, quiet hours, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | minutes |
 | `npm run test:e2e` | Builds the app and the docs and drives them in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
 | `npm run test:demo` | Builds the in-browser demo and opens it under a strict content security policy in a sandboxed frame; switches person | ~20 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
-| `TEST_DATABASE_URL=postgres://… npm test` | The same suite on a real Postgres, through the production driver (a fresh database per test file; the user must be able to create databases). Run it before a release: the in-memory database forgives things a real server does not | ~45 s |
+| `TEST_DATABASE_URL=postgres://… npm test` | The same suite on a real Postgres, through the production driver (a fresh database per test file; the user must be able to create databases). Run it before a release: the in-memory database forgives things a real server does not | minutes |
 | `PERF_DATABASE_URL=postgres://… npx tsx scripts/perf.ts` | The speed test: builds a large company (300 people, 6,000 customers, 120,000 tasks, 300,000 comments) on a throwaway Postgres and times the requests behind every page as a member, a team lead and an admin, plus the jobs that run by themselves. Exits non-zero if any request is over 400 ms | ~1 min |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id
@@ -373,16 +381,21 @@ an endpoint, a screen or a word, and a map from each feature to its files.
 
 ```
 api/src/          Hono API — runs on Cloudflare Workers (worker.ts), Node (node.ts) and your own server (selfhost.ts)
-  routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync,
-                  developer (keys, webhooks), oauth, mcp
+  routes/         one router per area (about 60 files: auth, boards, tasks, accounts, records, sync, departments,
+                  onboarding, setup health, assistant, billing, desk, owner console…); mounted in app.ts
   connectors/     messaging (Slack, Teams, Google Chat, webhooks)
   sync/           CRM and spreadsheet adapters and the two-way sync engine
   db/             Postgres drivers (postgres.js for production, PGlite for tests)
-shared/src/       types, EN/TR dictionaries, edit-merge logic — used by API and web
+  assistant/      the one assistant core behind every chatbot (ADR 0010)
+  team/           Curahold's own AI team: runtime, approval gate, monitor (ADR 0011)
+  billing/        the table-backed billing path (ADR 0019 explains the two paths)
+  live/           live updates: a Durable Object per company, or LISTEN/NOTIFY on Node
+shared/src/       types, the dictionaries (every language), pure rules — used by API and web
 web/src/          React app (Vite)
 db/migrations/    SQL schema and row-level security policies
 scripts/          dev server, migrations, demo data, docs build
-docs/site/        public docs (Markdown, TR/EN) and their stylesheet
+docs/site/        the help centre (Markdown, one folder per language) and its stylesheet
+docs/ADR/         decisions and their reasons
 web/demo/         the in-browser demo's page (vite.demo.config.ts)
 tests/            Vitest suites; tests/e2e drives Chrome
 ```
@@ -393,13 +406,16 @@ tests/            Vitest suites; tests/e2e drives Chrome
 2. Create a minimal login role for the API (below) and a Hyperdrive config
    pointing at it; put its id in `wrangler.toml`.
 3. R2 bucket `curahold-files`.
-4. Secrets: `wrangler secret put AUTH_SECRET` (32+ random characters),
-   `RESEND_API_KEY`, and the Google / Microsoft client id and secret if those
+4. Secrets: `wrangler secret put AUTH_SECRET` (32+ random characters), the
+   product mail settings (`SMTP_RELAY_USER` / `SMTP_RELAY_PASSWORD` for the
+   Google Workspace relay, or `RESEND_API_KEY`), `ANTHROPIC_API_KEY` if the
+   assistant should use a model, and the Google / Microsoft client id and secret if those
    sign-ins are offered. `STAFF_KEY` (24+ characters) lets Curahold support's
    tooling read the queue and answer; help requests go to `SUPPORT_EMAIL`
    and/or `SUPPORT_WEBHOOK_URL`; `SUPPORT_STAFF` (addresses, comma-separated)
    names who may sign in to the support desk at `desk.<domain>` (`DESK_HOST`
-   to use another host name).
+   to use another host name). Every setting: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md);
+   the full release and rollback procedure: [docs/RUNBOOK.md](docs/RUNBOOK.md).
 5. DNS: `*.curahold.com` and `app.curahold.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
 7. Customer portal (optional): a second domain (e.g. `curahold-portal.com`)
@@ -414,19 +430,27 @@ Paddle sells Curahold as the merchant of record (it charges, handles sales
 tax and VAT, and sends invoices). Start in Paddle's sandbox, then repeat with
 live keys.
 
-1. In Paddle, make two products, **Team** and **Business**, each with a
-   monthly and a yearly price **per seat** (quantity-based). The amounts are
-   in `shared/src/billing.ts` (`PLANS`); keep the two in step.
+1. In Paddle, make one product per plan in `shared/src/plans.json` (today
+   **Team** and **Business**), each with a monthly and a yearly price **per seat**
+   (quantity-based). The amounts, the regional prices (INR, SGD, the Malaysian
+   USD price) and the caps all live in that one file; mirror its prices in Paddle,
+   with a country override per regional price. Changing the price list is a data
+   change, not a code change ([ADR 0019](docs/ADR/0019-one-billing-path.md)).
 2. Approve the website domain (`curahold.com`); checkout opens on company
    addresses such as `acme.curahold.com`.
-3. A notification destination for `https://app.curahold.com/api/billing/webhook`
-   with the `subscription.*` events; its secret key is `PADDLE_WEBHOOK_SECRET`.
+3. A notification destination for `https://app.curahold.com/api/inbound/billing/paddle`
+   with the `subscription.*` and `transaction.*` events; its secret key is
+   `PADDLE_WEBHOOK_SECRET`. (The older address `/api/billing/webhook` runs the same
+   handler, so a destination set up earlier keeps working.)
 4. An API key with read and write access to subscriptions and customer portal
    sessions (`PADDLE_API_KEY`), and a client-side token (`PADDLE_CLIENT_TOKEN`).
 5. `PADDLE_ENV` (`sandbox` or `live`) and `PADDLE_PRICES`, for example
    `{"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}}`.
-6. Put the secrets with `wrangler secret put` and deploy. New companies get a
-   14-day trial; seats follow the people who joined (checked every hour).
+6. In Paddle's payment recovery settings, keep retrying a failed renewal for the
+   catalogue's `dunning.graceDays` (30) before cancelling; Curahold stays open that long.
+7. Put the secrets with `wrangler secret put` and deploy. New companies get the
+   three-month trial when their request is approved (`trial` in
+   `shared/src/plans.json`); seats follow the people who joined (checked every hour).
 
 ### Chat apps (each optional)
 
@@ -494,7 +518,9 @@ help page *Running Curahold on your own server* says the same for customers.
 
 ## Sub-processors (for the DPA)
 
-Cloudflare (hosting, files), Supabase (database, EU region), Resend (email),
+Cloudflare (hosting, files, the optional Turnstile check), Supabase (database, EU region), Google Workspace
+(product email through its SMTP relay) or Resend (email, if chosen instead), Anthropic (the assistant's and the AI
+team's model, only when a key is set; see `docs/compliance/ai-assistant-privacy-notes.md`),
 Google and Microsoft (only when a company enables their sign-in or connects
 Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
 Pipedrive, Zoho) is its processor, not ours: Curahold reads and writes it on

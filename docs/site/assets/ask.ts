@@ -40,6 +40,8 @@ interface Words {
   /** The question back and its choices when a question means several things (assist.clarify.*, assist.opt.*), for when no server answers. */
   clarify: Record<string, string>;
   options: Record<string, string>;
+  /** The AI assistant's consent notice and its version (assistConsent.*, shared/src/assistConsent.ts). */
+  consent?: Record<string, string> & { version: string };
 }
 interface Cfg {
   lang: string;
@@ -105,6 +107,8 @@ function show(on: boolean) {
   openBtn.setAttribute('aria-expanded', String(on));
   root.classList.toggle('ask--open', on);
   if (on) {
+    consentNotice();
+    consentFoot();
     if (!greeted) {
       greeted = true;
       bot(`<p>${esc(w.hello)}</p>`, chips(w.examples as readonly string[]));
@@ -217,6 +221,78 @@ function supportLink(): HTMLElement {
 
 // The server's assistant: only where Curahold serves these pages (an absolute base), and only while it has a model.
 let serverAnswers = base.startsWith('/') && location.protocol.startsWith('http');
+
+// ------------------------------------------------------------------ consent
+// KVKK/GDPR: nothing goes to the server before a "yes" to the current notice.
+// The answer is kept here under a random id (curahold_ai_consent, listed on the
+// Cookies page) and recorded by the server under the same id; a new notice
+// version asks again. Until then, and after a "no", this page answers.
+const CONSENT_KEY = 'curahold_ai_consent';
+const cw = cfg.words.consent;
+type Kept = { id: string; version: string; granted: boolean };
+function kept(): Kept | null {
+  try {
+    const k = JSON.parse(localStorage.getItem(CONSENT_KEY) ?? 'null') as Kept | null;
+    return k && cw && k.version === cw.version ? k : null;
+  } catch {
+    return null;
+  }
+}
+let notNow = false;
+const consented = () => kept()?.granted === true;
+async function decide(granted: boolean) {
+  const id = kept()?.id ?? JSON.parse(localStorage.getItem(CONSENT_KEY) ?? 'null')?.id ?? crypto.randomUUID();
+  try {
+    const res = await fetch('/api/assist/public/consent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-curahold-ask': '1' },
+      body: JSON.stringify({ consentId: id, granted, lang: cfg.lang, surface: 'docs' }),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    localStorage.setItem(CONSENT_KEY, JSON.stringify({ id, version: cw!.version, granted }));
+  } catch {
+    // Not recorded: nothing is sent, this page answers.
+    notNow = true;
+  }
+  consentFoot();
+}
+/** The notice in the chat, once per page load while there is no answer for this version. */
+function consentNotice() {
+  if (!cw || !serverAnswers || kept() || notNow || log.querySelector('.ask__consent')) return;
+  const box = el('section', 'ask__consent');
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-label', cw.title);
+  box.tabIndex = -1;
+  box.innerHTML = `<div class="ask__consent-head"><strong>${esc(cw.title)}</strong><button type="button" class="ask__consent-btn" data-c="later" aria-label="${esc(cw.close)}"><span aria-hidden="true">×</span> ${esc(cw.close)}</button></div>
+<ul>${['what', 'why', 'keep', 'withdraw'].map((k) => `<li>${esc(cw[k] ?? '')}</li>`).join('')}</ul>
+<p><a href="${base}${cfg.lang}/legal-privacy/${tail}" target="_blank" rel="noreferrer">${esc(cw.privacy)}</a></p>
+<div class="ask__consent-actions"><button type="button" class="ask__consent-btn" data-c="no"><span aria-hidden="true">✕</span> ${esc(cw.decline)}</button><button type="button" class="ask__consent-btn" data-c="yes"><span aria-hidden="true">✓</span> ${esc(cw.accept)}</button></div>`;
+  const done = (fn: () => void) => () => {
+    box.remove();
+    fn();
+  };
+  box.querySelector('[data-c="later"]')!.addEventListener('click', done(() => (notNow = true)));
+  box.querySelector('[data-c="no"]')!.addEventListener('click', done(() => void decide(false).then(() => bot(`<p>${esc(cw.declined)}</p>`))));
+  box.querySelector('[data-c="yes"]')!.addEventListener('click', done(() => void decide(true)));
+  box.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    done(() => (notNow = true))();
+  });
+  log.prepend(box);
+  box.focus();
+}
+/** "Withdraw consent" under the chat while a "yes" is on record. */
+function consentFoot() {
+  root.querySelector('.ask__consent-foot')?.remove();
+  if (!cw || !consented()) return;
+  const p = el('p', 'ask__consent-foot');
+  const b = el('button', 'ask__consent-btn', esc(cw.withdrawAction));
+  b.type = 'button';
+  b.addEventListener('click', () => void decide(false).then(() => bot(`<p>${esc(cw.withdrawn)}</p>`)));
+  p.appendChild(b);
+  panel.appendChild(p);
+}
 const turns: AssistTurn[] = [];
 
 /** The model's text as the chat shows it: paragraphs, "- " lists and **bold**; everything escaped, nothing a link. */
@@ -255,13 +331,20 @@ function optionChips(options: { id: string; label: string }[]): HTMLElement {
 
 /** Asks the server. Returns false when this page should answer instead. */
 async function askServer(q: string, intent?: string): Promise<boolean> {
-  if (!serverAnswers) return false;
+  if (!serverAnswers || !consented()) return false;
   try {
     const res = await fetch('/api/assist/public', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-curahold-ask': '1' },
-      body: JSON.stringify({ question: q, history: turns.slice(-6), lang: cfg.lang, surface: 'docs', ...(intent ? { intent } : {}) }),
+      body: JSON.stringify({ question: q, history: turns.slice(-6), lang: cfg.lang, surface: 'docs', consentId: kept()!.id, ...(intent ? { intent } : {}) }),
     });
+    // The server has no "yes" under this id (a cleared record, another server): ask again, answer here meanwhile.
+    if (res.status === 403) {
+      localStorage.removeItem(CONSENT_KEY);
+      consentFoot();
+      consentNotice();
+      return false;
+    }
     if (!res.ok) throw new Error(String(res.status));
     const { reply } = (await res.json()) as { reply: AssistReply };
     // No model there now: the same search runs here, where its answer reads better.

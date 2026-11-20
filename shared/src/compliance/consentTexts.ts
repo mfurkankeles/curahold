@@ -61,6 +61,12 @@ export interface ConsentFlags {
   trStandardContractsNotified: boolean;
   /** Japan: optional cross-border consent box (lawyer's switch). */
   jpTransferConsent: boolean;
+  /**
+   * Türkiye: Curahold is registered in İYS (İleti Yönetim Sistemi) as a service provider and approvals are uploaded there
+   * (owner task, go-live checklist). Off: the two Turkish marketing boxes (TR.M1/M2) are not offered at all, so no approval
+   * is collected that could not be registered within 3 business days (Law 6563, Regulation art. 7; L1 audit).
+   */
+  trIysRegistered: boolean;
 }
 
 export const DEFAULT_FLAGS: ConsentFlags = {
@@ -71,6 +77,7 @@ export const DEFAULT_FLAGS: ConsentFlags = {
   trTransferConsent: false,
   trStandardContractsNotified: false,
   jpTransferConsent: false,
+  trIysRegistered: false,
 };
 
 const EEA_UK = 'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH'.split(' ');
@@ -686,7 +693,8 @@ export function consentSetFor(opts: { declared: string; ipCountry?: string | nul
   // Notices first, then the required boxes, then one set of marketing choices (Türkiye's two boxes win), then the capacity line.
   const order: BlockKind[] = ['notice', 'note', 'consent', 'transfer'];
   blocks.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  const marketing = sets.includes('TR') ? RULE_SETS.TR.marketing : RULE_SETS[own].marketing;
+  // Türkiye's two boxes win, but only once İYS registration is real (trIysRegistered); until then Türkiye gets no marketing boxes.
+  const marketing = sets.includes('TR') ? (flags.trIysRegistered ? RULE_SETS.TR.marketing : []) : RULE_SETS[own].marketing;
   return { ...base, offered: true, manualReview, ruleSets: sets, blocks: [...blocks, ...marketing, A].map(pick) };
 }
 

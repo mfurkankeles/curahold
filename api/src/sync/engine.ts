@@ -8,8 +8,10 @@
 import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
 import { calculated, ISSUE_TYPES, SPRINT_STATES, type AccountField, type Column, type FieldOption } from '../../../shared/src/model';
-import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
+import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncErrorCode, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
 import { nowOf, secretsKey, type Deps } from '../context';
+import { accessOf, capsOf } from '../../../shared/src/billing';
+import { syncGapMinutes } from '../billing/entitlements';
 import type { Q, Row } from '../db';
 import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
@@ -1334,6 +1336,17 @@ async function claim(deps: Deps, conn: LoadedCrm, opts: RunOptions, mode: SyncRu
   });
 }
 
+/** Plain-words kind of a run-stopping failure (shared/src/sync SyncErrorCode); undefined when it is none of them. */
+function errorCode(e: unknown): SyncErrorCode | undefined {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (e instanceof CrmError) {
+    if (e.auth || /invalid_grant|reconnect|revoked|expired/i.test(msg)) return 'auth';
+    if (e.status === 403) return 'permission';
+  }
+  if (/fetch failed|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|getaddrinfo|network/i.test(msg)) return 'unreachable';
+  return undefined;
+}
+
 export async function syncConnection(deps: Deps, orgId: string, connectionId: string, opts: RunOptions): Promise<SyncRun | null> {
   const conn = await loadCrm(deps, orgId, connectionId);
   if (!conn || conn.status === 'disabled' || !conn.sync.startedAt) return null;
@@ -1370,10 +1383,18 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
     }
     if (pulled && full && !opts.pushOnly) conn.state.fullAt = nowOf(deps).toISOString();
   } catch (e) {
-    status = 'error';
     fatal = e instanceof Error ? e.message : String(e);
     authFailed = e instanceof CrmError && e.auth;
-    if (r) r.errors.unshift({ object: '', message: fatal });
+    if (e instanceof CrmError && e.retryAfter !== undefined && !e.auth) {
+      // The service asked us to slow down: not a fault. The run stops with its place kept and the next one carries on.
+      status = 'partial';
+      more = true;
+      if (r) r.errors.unshift({ object: '', message: fatal, code: 'rate' });
+      fatal = null;
+    } else {
+      status = 'error';
+      if (r) r.errors.unshift({ object: '', message: fatal, code: errorCode(e) });
+    }
   }
   const errors = r?.errors ?? [{ object: '', message: fatal ?? 'Failed' }];
   if (status === 'ok' && errors.length) status = 'partial';
@@ -1446,14 +1467,21 @@ export async function pushOrg(deps: Deps, orgId: string) {
 /** The hourly run: every live connection reads its changes; failed sends are retried. */
 export async function runScheduledSyncs(deps: Deps, now: Date, budgetMs = 10 * 60_000) {
   const conns = await deps.db.system((q) =>
-    q.query(`select id, org_id, state from connections where kind = 'source' and status <> 'disabled' and config->'sync'->>'startedAt' is not null order by updated_at`),
+    q.query(
+      `select c.id, c.org_id, c.state, o.billing, o.trial_ends_at
+         from connections c join orgs o on o.id = c.org_id
+        where c.kind = 'source' and c.status <> 'disabled' and c.config->'sync'->>'startedAt' is not null order by c.updated_at`,
+    ),
   );
+  // How often each company's tools sync on their own is the plan's (caps.syncEveryMinutes); the scheduler runs hourly.
+  const billingOn = !!deps.config.billing;
   let ran = 0;
   const until = Date.now() + budgetMs;
   for (const c of conns) {
     if (Date.now() > until) break;
     const last = c.state?.lastRun?.at ? new Date(c.state.lastRun.at).getTime() : 0;
-    if (now.getTime() - last < 50 * 60_000 && !c.state?.lastRun?.more) continue;
+    const gap = syncGapMinutes(capsOf(accessOf(billingOn, c.billing, c.trial_ends_at ? new Date(c.trial_ends_at).toISOString() : null, now), 1));
+    if (now.getTime() - last < gap * 60_000 && !c.state?.lastRun?.more) continue;
     await syncConnection(deps, c.org_id, c.id, { trigger: 'schedule', budgetMs: Math.max(30_000, until - Date.now()) }).catch(() => null);
     ran++;
   }

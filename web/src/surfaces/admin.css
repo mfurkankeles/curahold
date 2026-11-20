@@ -153,6 +153,12 @@
 .billing-manage__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-block-start: 4px; }
 .billing-manage__profile { display: grid; gap: 12px; }
 .billing-manage__profile .sheet__title { margin: 0; }
+/* Usage against the plan's limits: four figures in a row, wrapping on a phone; a full one in the warning colour. */
+.billing-usage { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0; }
+.billing-usage > div { display: grid; gap: 2px; min-width: 0; }
+.billing-usage dt { font-size: var(--fs-xs); color: var(--ink-2); }
+.billing-usage dd { margin: 0; font-weight: 600; }
+.billing-usage > [data-full] dd { color: var(--late); }
 .billing__plans > .sheet + .sheet, .billing-manage > .sheet + .sheet, .billing-manage > .billing, .sso > .sheet + .sheet { margin-block: 0; }
 
 /* ---------------------------------------------------------------- people: a table on a wide screen, cards on a phone */

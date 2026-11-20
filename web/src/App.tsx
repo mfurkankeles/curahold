@@ -1,7 +1,7 @@
 import { setCompanyZone } from './lib/time';
 import { ReauthDialog } from './components/Reauth';
 import { lazy, Suspense, useCallback, useEffect, useState, type ComponentType } from 'react';
-import type { Locale } from '../../shared/src/i18n';
+import { LOCALES, type Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Shell } from './components/Shell';
@@ -121,7 +121,13 @@ type Boot =
 
 export function App() {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
-  const [locale, setLocale] = useState<Locale>(() => storedLocale() ?? startLocale());
+  // ?lang=tr on a link (the Turkish site's "Try it free") is the person's own choice, not a guess: it is kept like a pick on the page.
+  const [locale, setLocale] = useState<Locale>(() => {
+    const asked = new URLSearchParams(location.search).get('lang');
+    const pick = asked && (LOCALES as readonly string[]).includes(asked) ? (asked as Locale) : null;
+    if (pick) storeLocale(pick);
+    return pick ?? storedLocale() ?? startLocale();
+  });
   const loc = useLocation();
 
   useEffect(() => setApiLocale(locale), [locale]);

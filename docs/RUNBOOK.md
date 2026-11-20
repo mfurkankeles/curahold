@@ -52,7 +52,7 @@ Verify after deploy (5 minutes):
 5. Look at `GET /api/admin/errors` (an admin session; there is no screen for it yet) or the `error_log` table for a new error spike.
 
 Not deployed by this repo: DNS (`*.curahold.com`, `app.`, `desk.`, portal domain), Cloudflare Email Routing for the support
-reply domain, Paddle notification destination (`https://app.<domain>/api/billing/webhook`, `subscription.*` events),
+reply domain, Paddle notification destination (`https://app.<domain>/api/inbound/billing/paddle`, `subscription.*` and `transaction.*` events),
 Supabase project settings. They are one-time setup; see README "Deploying".
 
 First-time setup order (new environment): Supabase EU project -> `npm run migrate` -> minimal login role (README "Database
@@ -65,11 +65,31 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
    company: `Type: CNAME  Name: *  Target: curahold.com  Proxy: on`. Every company's address
    (`<slug>.curahold.com`) and its onboarding hub (`/onboarding`) answer from then on; the portal domain
    gets the same single record. Nothing is added when a company signs up.
+2. **Files from customers are looked into before they are kept** (`api/src/lib/uploadScan.ts`, free, on every
+   hosting). The portal takes files only on requests or tickets shared with the customer and on steps of their
+   onboarding plan; each is checked by ending and first bytes, at most 25 MB, within the company's allowance
+   (Settings → Customer portal), then by its contents without unpacking: ZIP directories (at most 2,000 entries,
+   250 MB unpacked, ratio 120:1; no encrypted, nested-archive, program or climbing-path entries), Office macros
+   (`vbaProject.bin`), PDFs with `/JavaScript`, `/JS`, `/Launch` or `/EmbeddedFile`. Stored privately, served only
+   as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). **A signature virus scan is
+   optional:** self-host sets `CLAMAV_HOST` (the commented `clamav` service in `docker-compose.yml`); every upload
+   (portal, tasks, records, onboarding steps) is then held (`file_scans`, answer 423 `file_quarantined`) until
+   clamd finds it clean, deleted if infected (alert in the owner console), retried hourly if clamd is down. The
+   hosted Workers have no free signature scanner; the content checks above are the hosted line (decision in
+   `/home/claude/orch/out/owner-questions.md`).
 2. **Files from customers have no malware scan yet.** The portal takes files only on requests or tickets
    shared with the customer and on steps of their onboarding plan; each is checked by ending and first
    bytes, at most 25 MB, within the company's allowance (Settings → Customer portal), stored privately and
    only ever served as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). Decide on a
    scan before go-live (no paid service has been added); until then this is the standing risk.
+3. **İYS before any marketing e-mail to Türkiye.** Curahold must be registered in İYS (İleti Yönetim Sistemi) as a service
+   provider before it collects or uses commercial-message approvals (Law 6563, Regulation art. 7). Until then the switch
+   `trIysRegistered` in `shared/src/compliance/consentTexts.ts` (`DEFAULT_FLAGS`) is `false`: the trial form shows Türkiye no
+   marketing boxes and the KVKK notice says so. After registration (and the upload of approvals within 3 business days set
+   up), set it to `true`, change the sentence in `docs/site/{en,tr}/legal-kvkk.md` and `legal-privacy.md` ("Until Curahold is
+   registered in İYS…"), and run `npx tsx scripts/compliance/legal-pack.ts`.
+4. **Breach readiness.** Read [docs/compliance/breach-runbook.md](compliance/breach-runbook.md): roles named, counsel appointed per
+   market, the deadlines marked "lawyer to confirm" confirmed, and `incident_log` (migration 0244) reachable by the operator.
 
 ## Rollback
 
@@ -79,6 +99,10 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
   additive (new nullable column, new table, new index). Therefore: ship destructive changes (drop/rename/type change) in two
   releases: first stop using the thing, deploy; then drop it in a later migration.
 - If a bad migration already ran: restore from backup is the last resort (see below); first try a **new** corrective migration.
+- **Hand-run undo scripts** exist for the larger recent migrations in `db/rollback/` (0120 departments, 0170 flow, 0195 setup health,
+  0200/0210/0211 onboarding). They are not migrations (the runner never reads that folder) and they delete the feature's data: run one only
+  on the owner's decision, as the owner, in one transaction (`psql "$DATABASE_URL" -1 -f db/rollback/<file>.sql`), after a backup, and
+  roll the code back first. `tests/departments-migration.test.ts` exercises the 0120 one.
 
 ## Migrations
 
@@ -120,14 +144,26 @@ After any rotation: run the deploy verification checklist, and record the date a
 - R2 objects (attachments, logos): no versioning or cross-region copy configured **[not yet in place]**; enable R2 object
   versioning / replication or a periodic `rclone` copy to a second provider.
 
-**Targets from QUALITY.md that are not in place yet [not yet in place]**
+**Scripted backup and the restore drill (free; `scripts/backup/`)**
 
-- A weekly **encrypted off-site copy** of the database.
-- A written, **rehearsed** restore, repeated at least quarterly. This section is the written part; the rehearsal is still to do.
-- **Point-in-time recovery**: decided to switch on with the first paying customer (about $105 per month fixed). Until then the
-  recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
+- `scripts/backup/backup.ts`: `pg_dump` (custom format, `public` schema) of `BACKUP_DATABASE_URL`, encrypted with
+  `BACKUP_PASSPHRASE` (openssl AES-256, PBKDF2), plus a manifest (exact row count per table, extensions, last
+  migration, SHA-256). Weekly off-site copy: put the two files in a second place, e.g. an R2 bucket
+  `curahold-backups` (`npx wrangler r2 object put curahold-backups/<file> --file <file> --remote`; R2's free tier is
+  10 GB) and a copy on the owner's computer. Keep the passphrase in the password manager, never beside the file.
+- `scripts/backup/restore.ts <file>`: into an **empty** database only (refuses one with tables): checks the
+  checksum, creates the request roles and extensions, `pg_restore`, then verifies every table's row count against
+  the manifest and the row-level security gates (RLS on, no privileges without a policy, SECURITY DEFINER search
+  paths, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything differs.
+- `scripts/backup/restore-drill.ts` (`DRILL_PG=<throwaway server>`): build → back up → **wipe** → restore → verify,
+  timed. **Rehearsed 19 Nov 2026 on local Postgres 16:** sample install (144 tables) passed in 4.1 s (backup 0.4 s,
+  restore 1.4 s, verify 0.1 s); the large test company (473 MB, 90 tables, 1.29 million rows) backed up in 15 s
+  (72 MB encrypted) and restored + verified in 161 s; `tests/rls.test.ts` passed on the same server. Repeat it
+  quarterly and after big schema changes, and once against a copy of production (Supabase "restore to a new project").
+- Point-in-time recovery: decided to switch on with the first paying customer (about $105 per month fixed). Until
+  then the recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
 
-**Restore procedure (draft; rehearse it on a scratch project before you need it)**
+**Restore procedure (rehearsed with the drill above; repeat on a scratch project before you need it)**
 
 1. Declare an incident; stop writes if corruption is ongoing (put a maintenance route in front, or `wrangler rollback` is not enough
    to stop writes: use a Cloudflare WAF/maintenance rule on `/api/*`).
@@ -153,9 +189,12 @@ migrates on start). Keep copies on another machine and try a restore now and the
 | Signal | How |
 | --- | --- |
 | Is it up? | `GET /api/health` on the app domain (returns `{"ok":true}`); the same path is the Docker `HEALTHCHECK`. |
+| Is the database reached? | `GET /api/health/ready` (app) and `GET /papi/health` (portal): `{"ok":true,"db":{"ok":true,"ms":4},"at":"…"}`, 503 when the database is not reached. Both allow any origin, so the status page can read them. |
+| Outside view | `npx tsx scripts/synthetic.ts` (addresses from `SYN_APP`, `SYN_SITE`, `SYN_PORTAL`) times every public address and exits 1 on a failure; `--json status.json` writes the status page's file. The public page is `tools/status-page/index.html` (Cloudflare Pages, free, project `curahold-status`, apart from the app's Worker; `status.` on curahold.com would be caught by the Worker's wildcard route). |
+| Error rate and latency | `lib/ops.ts`: more than 5% 5xx answers or a 95th percentile over 2 s in 5 minutes (at least 50 answers, per Worker copy), and 20+ server errors in `error_log` within an hour or 200+ deliveries stuck for an hour (hourly job, every copy together) → an alert in the owner console (`company_log`, refs `ops:*`) and one e-mail to `PLATFORM_OWNER`. `OPS_ALERTS=off` stops them; `OPS_ALERT_EMAIL=off` keeps them in the console only. |
 | Live errors | `npx wrangler tail curahold` (and `--config wrangler.portal.toml`); log prefix `[curahold]`. |
 | Recorded errors | `error_log` table: unhandled server errors and browser errors (source, company, user, path, message, stack; no bodies or secrets; kept 30 days). Admins see their own company's at `GET /api/admin/errors`; company-less errors stay with Curahold. |
-| Background jobs | Worker cron `0 * * * *` (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
+| Background jobs | Worker crons `0 * * * *` (hourly jobs) and `*/10 * * * *` (the AI team's clock; returns at once without a model key or with `TEAM_SCHEDULER=off`) (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
 | Billing | `billing_events` table and Paddle's notification log. |
 | Abuse | Cloudflare analytics / WAF events (rate rules live here, **not** in the app). |
 
@@ -166,7 +205,9 @@ migrates on start). Keep copies on another machine and try a restore now and the
 3. Last deploy within the hour? If yes and symptoms match, `wrangler rollback` first, investigate second.
 4. If a single company: look at its `sync_runs`, `webhook_events`, `notifications` backlog (rows stuck unsent), and `error_log` by `org_id`.
 5. Communicate: status message to affected admins (email), no promises about causes until known.
-6. After: post-mortem within 3 working days, added to a `docs/postmortems/` folder (invented names only), with action items.
+6. **Personal data involved?** Follow [docs/compliance/breach-runbook.md](compliance/breach-runbook.md) from here: the deadlines (48 hours
+   to customers under our DPA; 72 hours to most authorities) run from the moment we are aware, and every breach goes into `incident_log`.
+7. After: post-mortem within 3 working days, added to a `docs/postmortems/` folder (invented names only), with action items.
 
 **Severity guide.** SEV1: data leak between companies (also a security incident, see SECURITY.md), data loss, full outage, or billing taking wrong
 payments. SEV2: a core flow broken for many (sign-in, tasks), one connector down, scheduler not running for more than 3 hours. SEV3: degraded or
@@ -225,7 +266,7 @@ Leave Cloudflare's managed robots.txt **off**: the site and the Worker serve the
 **3. Bot Fight Mode.** Security → **Settings** → filter **Bot traffic** → **Bot fight mode** → On, on
 `curahold-portal.com` (browsers only). On `curahold.com` turn it on, then watch Security → **Analytics** for 48 hours:
 it cannot be skipped per path, and it may challenge API calls with keys, inbound webhooks (`/api/hooks/*`,
-`/api/inbound/*`, `/api/billing/webhook`) and the AI connector. If any of those are challenged, turn it **off** on
+`/api/inbound/*`, including the Paddle webhook, and the older `/api/billing/webhook`) and the AI connector. If any of those are challenged, turn it **off** on
 `curahold.com` and rely on steps 2, 4 and 5 (the code's limits and robot rules do the same work per path).
 
 **4. WAF custom rules (free plan: 5).** Security → **Security rules** → **Create rule** → **Custom rules**.

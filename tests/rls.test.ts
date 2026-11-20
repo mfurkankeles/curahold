@@ -60,6 +60,8 @@ const NO_ORG_ID: Record<string, string> = {
   trash_links: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   assistant_global: "the installation's monthly assistant totals (counts and cost only, no company data), for the global cap",
   consent_events: 'cookie choices of visitors who are not signed in: no company, written by the server only (no privileges for the request roles)',
+  assistant_public_consents: 'answers to the AI assistant notice on the public docs: a random browser id, no company, no person; written by the server only (no privileges for the request roles)',
+  incident_log: "Curahold's own personal-data breach record (GDPR Art. 33(5)): no company, append-only, written by the operator's script only (no privileges for the request roles)",
 };
 
 const REQUEST_ROLES = ['curahold_app', 'curahold_portal'];

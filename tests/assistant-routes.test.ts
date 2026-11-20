@@ -24,6 +24,8 @@ beforeAll(async () => {
   (env.deps as Deps).assistant = { provider, docs: async () => DOCS };
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
+  // Each person says yes to the consent notice first (tests/assistant-consent.test.ts checks the refusal without it).
+  for (const who of [ada, lena]) expect((await who.post('/api/assist/consent', { granted: true })).status).toBe(200);
 }, 60_000);
 
 describe('CuraAI in the app', () => {
@@ -41,6 +43,7 @@ describe('CuraAI in the app', () => {
     const made = await ada.post('/api/accounts', { name: 'Wall Test Harbour' });
     expect(made.status).toBe(201);
     const other = await login(env, 'beta', 'ada@demo.example');
+    await other.post('/api/assist/consent', { granted: true });
     const seen: string[] = [];
     script = (req, n) => {
       if (n % 2 === 1) return { content: [{ type: 'tool_use', id: `t${n}`, name: 'list_customers', input: { query: 'Wall Test', limit: 25 } }], stop: 'tool_use', usage: { input: 500, output: 20, cacheRead: 2000, cacheWrite: 0 } };
@@ -80,6 +83,32 @@ describe('CuraAI in the app', () => {
     await ada.put('/api/assist/settings', { enabled: true });
   });
 
+  it('a new company starts with AI answers off, and the 0240 migration switches existing ones off (the demo stays on)', async () => {
+    const { createOrg } = await import('../api/src/lib/orgs');
+    const { readFileSync } = await import('node:fs');
+    const made = await createOrg(env.db, { slug: 'freshco', name: 'Fresh Co', locale: 'en', admin: { email: 'fresh@demo.example', name: 'Fresh Admin' } });
+    const orgId = made.orgId;
+    const fresh = await login(env, 'freshco', 'fresh@demo.example');
+    expect((await fresh.get('/api/assist/status')).json.available).toBe(false);
+    expect((await fresh.get('/api/assist/settings')).json.settings.enabled).toBe(false);
+    // The migration over a copy of the state: a stored true (written by an old card) goes off; slug 'demo' is kept.
+    const sql = readFileSync(new URL('../db/migrations/0240_assistant_default_off.sql', import.meta.url), 'utf8');
+    // Inside one transaction that is rolled back, so the other tests keep their companies as they were.
+    let seen: Record<string, string | null> = {};
+    await env.db
+      .system(async (q) => {
+        await q.query(`update orgs set settings = settings || '{"assistant":{"enabled":true}}'::jsonb where id = $1`, [orgId]);
+        await q.query(`update orgs set slug = 'demo' where slug = 'beta'`);
+        await q.query(sql);
+        const rows = await q.query<{ slug: string; on: string | null }>(`select slug, settings->'assistant'->>'enabled' as on from orgs where slug in ('freshco', 'demo', 'acme')`);
+        seen = Object.fromEntries(rows.map((r) => [r.slug, r.on]));
+        throw new Error('roll back');
+      })
+      .catch((e: Error) => expect(e.message).toBe('roll back'));
+    expect(seen).toEqual({ freshco: 'false', acme: 'false', demo: 'true' });
+    expect((await ada.get('/api/assist/settings')).json.settings.enabled).toBe(true);
+  });
+
   it('keeps the questions in the company’s log, readable by the person who asked', async () => {
     const rows = await env.db.system((q) => q.query(`select l.question, u.email from assistant_log l join users u on u.id = l.user_id`));
     expect(rows.some((r) => r.email === 'ada@demo.example' && r.question === 'Which customers are called Wall Test?')).toBe(true);
@@ -95,8 +124,11 @@ describe('the public docs chat', () => {
 
   it('answers from the docs only, and only from a page that says so', async () => {
     expect((await ask({ question: 'How do I invite my team?' }, {})).status).toBe(403);
+    const consentId = crypto.randomUUID();
+    const said = await env.app.request(`https://${BASE}/api/assist/public/consent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-ask': '1' }, body: JSON.stringify({ consentId, granted: true, lang: 'en' }) });
+    expect(said.status).toBe(200);
     provider.calls.length = 0;
-    const r = await ask({ question: 'How do I invite my team?', lang: 'en' });
+    const r = await ask({ question: 'How do I invite my team?', lang: 'en', consentId });
     expect(r.status).toBe(200);
     const { reply } = (await r.json()) as any;
     expect(reply.kind).toBe('answer');

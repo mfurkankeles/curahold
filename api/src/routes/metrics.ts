@@ -7,14 +7,14 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../context';
 import { requireConsoleOwner } from '../lib/platform';
-import { PLANS, type Interval, type PlanKey } from '../../../shared/src/billing';
-import { SEATS_SQL } from '../lib/billing';
+import { PLANS, isPlanKey, type Interval, type PlanKey } from '../../../shared/src/billing';
+import { SEATS_SQL } from '../billing/service';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
 
 export const metricsRoutes = new Hono<AppEnv>();
 
 const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
-const planKey = (v: unknown): PlanKey | null => (v === 'team' || v === 'business' ? v : null);
+const planKey = (v: unknown): PlanKey | null => (isPlanKey(v) ? v : null);
 const interval = (v: unknown): Interval => (v === 'year' ? 'year' : 'month');
 /** Monthly recurring revenue for one paying company: per-seat price × seats. */
 const mrrOf = (plan: PlanKey | null, iv: Interval, seats: number) => (plan ? PLANS[plan].price[iv] * Math.max(0, seats) : 0);

@@ -9,7 +9,7 @@ import { normalizeLocale } from '../shared/src/i18n';
 import type { AppEnv } from '../api/src/context';
 import { HttpError } from '../api/src/lib/errors';
 import { onboardingRoutes } from '../api/src/routes/onboarding';
-import { paddleInboundWebhook, subscriptionRoutes } from '../api/src/routes/subscriptions';
+import { billingRoutes, billingWebhook } from '../api/src/routes/billing';
 import { BASE, type Env } from './helpers';
 
 export function billingApp(env: Env) {
@@ -19,7 +19,8 @@ export function billingApp(env: Env) {
     await next();
   });
   // Central address, before any company: the provider's signed webhook.
-  app.post('/api/inbound/billing/paddle', paddleInboundWebhook);
+  app.post('/api/inbound/billing/paddle', billingWebhook);
+  app.post('/api/billing/webhook', billingWebhook);
   // Company routes: the host picks the company, x-test-user picks the person.
   app.use('/api/*', async (c, next) => {
     const slug = (c.req.header('host') ?? new URL(c.req.url).host).split('.')[0];
@@ -46,7 +47,7 @@ export function billingApp(env: Env) {
     }
     await next();
   });
-  app.route('/api', subscriptionRoutes);
+  app.route('/api', billingRoutes);
   app.route('/api', onboardingRoutes);
   app.onError((err, c) => {
     if (err instanceof HttpError) return c.json({ error: err.code, ...err.extra }, err.status as 400);

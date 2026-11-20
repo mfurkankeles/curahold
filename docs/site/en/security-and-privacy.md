@@ -26,7 +26,7 @@ So that you can read without a connection, the app keeps a copy of the lists you
 
 ## Activity log
 
-Sign-ins, second steps, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log. The log can be added to, never changed or deleted, not even through the database role the application uses. **Export the log** downloads it with a running SHA-256 fingerprint; the final fingerprint is written to the log too, so a copy can be checked later.
+Sign-ins, second steps, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log. An entry is never changed, and not even the database role the application uses can remove one; after 12 months the nightly clean-up lets it go (the database refuses to remove anything newer than 90 days). **Export the log** downloads it with a running SHA-256 fingerprint; the final fingerprint is written to the log too, so a copy can be checked later.
 
 ## Customer portal
 
@@ -42,6 +42,12 @@ In Settings → People, a person's menu offers:
 
 - **Download their data:** everything about that person in one file.
 - **Erase their personal data:** name and email are removed; the work they did stays, anonymised. Hand their customers and open tasks to someone else first.
+- **Erasing** also removes what they asked CuraAI, their notifications, chat links, passkeys and second steps, session recordings, and mentions of their address or full name in the AI team's notes. Kept, because the law asks for it: invoices, the record of who accepted the terms for the company, and consent records without the address (only its fingerprint).
+- **People at your customers** (Settings → Customer portal → People who can sign in): an administrator who manages privacy can **Download data** or **Erase personal data**. Erasing deletes the portal account itself; what they wrote stays without their name.
+
+### Deleting the whole company
+
+An administrator can ask, in **Settings → Company → Delete the company**, by typing the company's address. Nothing is deleted for 30 days: the company works as usual, you can still export, and any administrator can cancel. Then everything goes for good, files and connection keys included, and a deletion certificate is kept that lists what was removed (no names or addresses). Invoices stay, as tax law requires. Backups roll off on the hosting provider's schedule.
 
 ## How long things are kept
 
@@ -55,6 +61,10 @@ In Settings → People, a person's menu offers:
 | Webhook delivery records | 7 days |
 | Error records (what broke, where — never request contents) | 30 days |
 | Revoked API keys | 30 days |
+| Activity log | 12 months |
+| Help requests, their messages and files | 24 months after the last change |
+| Questions to CuraAI | As your company chose (30 days unless changed) |
+| A deleted company | 30 days after the request, then erased |
 
 ## Stored secrets
 

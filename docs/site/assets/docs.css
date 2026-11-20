@@ -194,6 +194,14 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
 .ask__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .ask__chip { font: inherit; font-size: 14px; text-align: start; color: var(--brand-ink); background: var(--brand-wash); border: 0; border-radius: 10px; padding: 6px 10px; cursor: pointer; }
 .ask__chip:hover { background: #dedafc; }
+/* The AI assistant's consent notice (assets/ask.ts): before a question goes to the server. */
+.ask__consent { display: grid; gap: 8px; padding: 12px 16px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk); font-size: 14px; }
+.ask__consent ul { margin: 0; padding-inline-start: 16px; display: grid; gap: 4px; }
+.ask__consent p { margin: 0; }
+.ask__consent-head, .ask__consent-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ask__consent-actions { justify-content: flex-end; }
+.ask__consent-btn { font: inherit; font-size: 14px; min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; cursor: pointer; }
+.ask__consent-foot { margin: 0; padding: 4px 12px 8px; }
 .ask__helped { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
 .ask__helped button { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 3px 12px; cursor: pointer; }
 .ask__helped button:hover { border-color: var(--brand); color: var(--brand-ink); }

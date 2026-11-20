@@ -1,5 +1,6 @@
 // The customer portal, the company's side: is it on, sign-in links for
 // customers' people, and telling them when a reply is written for them.
+import { inspectContent } from './uploadScan';
 import { normalizeLocale, translate, type Locale, intlTag } from '../../../shared/src/i18n';
 import { portalAuthOf, portalBrandOf, type PortalAuth, type PortalBrand, type PortalSignInOptions } from '../../../shared/src/portal';
 import { logoPath, orgUrl, portalUrl, type Deps, type OrgRow } from '../context';
@@ -219,6 +220,8 @@ export async function checkPortalFile(f: File): Promise<{ name: string; size: nu
       ? !head.includes(0) && !/^\s*<(?:!doctype|html|script|svg)/i.test(new TextDecoder().decode(head.slice(0, 256)))
       : kind.magic!.some((m) => m.every((b, i) => head[i] === b)) && (kind.mime !== 'image/webp' || String.fromCharCode(...head.slice(8, 12)) === 'WEBP'));
   if (!ok) fail('portal_file_type', { name: name.slice(0, 80) });
+  // The inside: archive bomb limits, programs and macros, PDFs that run code (lib/uploadScan.ts).
+  if (inspectContent(data, kind!.mime)) fail('portal_file_unsafe', { name: name.slice(0, 80) });
   return { name, size: f.size, mime: kind!.mime, data };
 }
 

@@ -66,6 +66,7 @@ export type PurposeId =
   | 'deskEmail'
   | 'device'
   | 'consent'
+  | 'aiConsent'
   | 'consentMirror'
   | 'prefs'
   | 'locale'
@@ -159,6 +160,17 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '此裝置的隨機識別碼，用於每個席位的裝置數量限制和新登入提醒。絕不用於追蹤或廣告。',
     ja: 'この端末のランダムな識別子です。シートごとの端末数の上限と、新しいログインの通知に使います。追跡や広告には一切使いません。',
     ko: '이 기기의 무작위 식별자로, 좌석당 기기 수 제한과 새 로그인 알림에 쓰입니다. 추적이나 광고에는 절대 쓰지 않습니다.',
+  },
+  aiConsent: {
+    en: 'Remembers your answer to the AI assistant notice on the docs (a random id, the notice version, yes or no), so the chat does not ask again until the notice changes.',
+    tr: 'Belgelerdeki yapay zekâ asistanı bilgilendirmesine verdiğiniz cevabı (rastgele bir kimlik, bilgilendirme sürümü, evet ya da hayır) hatırlar; böylece bilgilendirme değişene kadar sohbet yeniden sormaz.',
+    ar: 'يتذكّر إجابتك على إشعار مساعد الذكاء الاصطناعي في الوثائق (معرّف عشوائي وإصدار الإشعار ونعم أو لا)، حتى لا تسألك المحادثة مجددًا إلى أن يتغيّر الإشعار.',
+    he: 'זוכר את התשובה שלכם להודעת עוזר ה-AI בתיעוד (מזהה אקראי, גרסת ההודעה, כן או לא), כדי שהצ׳אט לא ישאל שוב עד שההודעה תשתנה.',
+    fa: 'پاسخ شما به اطلاعیهٔ دستیار هوش مصنوعی در راهنما را به خاطر می‌سپارد (یک شناسهٔ تصادفی، نسخهٔ اطلاعیه، بله یا نه) تا گفتگو تا تغییر اطلاعیه دوباره نپرسد.',
+    'zh-Hans': '记住你对文档中 AI 助手说明的回答（一个随机 ID、说明版本、同意或拒绝），在说明更改之前聊天不会再次询问。',
+    'zh-Hant': '記住你對文件中 AI 助理說明的回答（一個隨機 ID、說明版本、同意或拒絕），在說明變更之前聊天不會再次詢問。',
+    ja: 'ドキュメントの AI アシスタントの説明への回答（ランダムな ID、説明のバージョン、同意の有無）を記憶し、説明が変わるまでチャットが再び尋ねないようにします。',
+    ko: '문서의 AI 어시스턴트 안내에 대한 답(무작위 ID, 안내 버전, 동의 여부)을 기억해 안내가 바뀔 때까지 채팅이 다시 묻지 않게 합니다.',
   },
   consent: {
     en: 'Remembers your cookie choice, its date and the version of this policy you saw, so you are not asked again on every page.',
@@ -325,6 +337,7 @@ export const STORAGE: StorageItem[] = [
     conditional: 'ab',
   },
   // ---- necessary: browser storage
+  { name: 'curahold_ai_consent', type: 'localStorage', category: 'necessary', purpose: 'aiConsent', duration: { kind: 'cleared' }, surfaces: ['docs'], identifier: true },
   { name: 'curahold_consent_v1', type: 'localStorage', category: 'necessary', purpose: 'consent', duration: { kind: 'months', n: 12 }, surfaces: ['site', 'app'], identifier: true },
   { name: 'app_device', type: 'localStorage', category: 'necessary', purpose: 'device', duration: { kind: 'cleared' }, surfaces: ['app'], identifier: true },
   { name: 'app-after-login', type: 'localStorage', category: 'necessary', purpose: 'returnTo', duration: { kind: 'cleared' }, surfaces: ['app'] },

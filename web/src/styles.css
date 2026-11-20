@@ -1606,6 +1606,15 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
 .ask__form { display: flex; gap: 8px; }
 .ask__form .input { flex: 1; min-width: 0; }
 .ask__private { margin: 0; }
+/* The AI assistant's consent notice (components/AssistConsent.tsx): before the first question goes to the server. */
+.ask__consent { display: grid; gap: var(--s-2); padding: var(--s-3) var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-m); background: var(--surface-2); font-size: var(--fs-s); }
+.ask__consent:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); }
+.ask__consent h4 { margin: 0; font-size: var(--fs-m); }
+.ask__consent p { margin: 0; }
+.ask__consent-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.ask__consent-list { margin: 0; padding-inline-start: var(--s-4); display: grid; gap: var(--s-1); color: var(--ink-2); }
+.ask__consent-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: flex-end; }
+.ask__consent-btn { min-height: var(--tap); min-width: var(--tap); display: inline-flex; align-items: center; gap: var(--s-1); }
 /* An answer the model is writing, and what it prepared or read for it. */
 .ask__ai[data-live] .ask__body > :last-child::after { content: '▍'; margin-inline-start: 4px; color: var(--brand); animation: ask-caret var(--loop-caret) steps(2) infinite; }
 @keyframes ask-caret { 50% { opacity: 0; } }

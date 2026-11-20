@@ -8,6 +8,7 @@ import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../sha
 import { NOTIFY_EVENTS, type DeliveryOption, type NotifyPrefs } from '../../../shared/src/model';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { PrivacyLine } from '../components/ConsentBanner';
+import { AssistConsentSettings } from '../components/AssistConsent';
 import { AiConnect, KeyList } from '../components/Developer';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -294,6 +295,8 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               </div>
             </section>
           )}
+
+          {mode === 'profile' && <AssistConsentSettings />}
 
           {mode === 'profile' && <PrivacyLine />}
 

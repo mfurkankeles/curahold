@@ -1,6 +1,6 @@
 # 0005. Two complete languages; other languages fall back to English
 
-- Status: Accepted
+- Status: Superseded by 0008
 - Date: 2026-11-12
 - Deciders: product owner
 

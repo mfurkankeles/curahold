@@ -169,7 +169,8 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale; d
     }
     // One saved meeting type, with an agenda prompt to start from.
     await q.query(
-      `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
+      // The demo company has the AI assistant switched on, as an administrator would (a real company starts with it off).
+      `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb, 'assistant', jsonb_build_object('enabled', true)) where id = $1`,
       [orgId, JSON.stringify([{ id: 'qbr', label: B.meetingType[0], kind: 'review', minutes: 60, prompt: B.meetingType[1] }])],
     );
     const opened = await seedDepartments(q, { orgId, ids, locale, accounts, boards: !!opts.departments });

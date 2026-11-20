@@ -14,7 +14,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { dictionaries, LOCALES, type Locale } from '../shared/src/i18n';
+import { dictionaries, LOCALES, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { GLOSSARY, KEEP_ENGLISH, PLANNED, REGISTER, type Concept } from '../shared/src/i18n/glossary';
 import { COPY, STORY_COPY } from '../site/content';
 import { INFO } from '../site/info';
@@ -66,6 +66,16 @@ function siteText(l: Locale): Map<string, string> {
 
 const matcher = (w: string) => (w.startsWith('/') && w.endsWith('/') ? new RegExp(w.slice(1, -1), 'u') : { test: (s: string) => s.includes(w) });
 
+describe('number agreement (CLDR plural rules)', () => {
+  it('Arabic puts the counted noun in the form its number needs', () => {
+    const ar = (key: string, n: number) => translate('ar', key as MessageKey, { n });
+    expect([5, 30, 100, 365].map((n) => ar('home.within', n))).toEqual(['خلال 5 أيام', 'خلال 30 يومًا', 'خلال 100 يوم', 'خلال 365 يومًا']);
+    expect([5, 30].map((n) => ar('portal.admin.days', n))).toEqual(['5 أيام', '30 يومًا']);
+    expect([5, 12].map((n) => ar('nav.setupLeft', n))).toEqual(['بقيت 5 خطوات', 'بقيت 12 خطوة']);
+    expect(translate('en', 'home.within', { n: 30 })).toBe('within 30 days');
+  });
+});
+
 describe('dictionaries: completeness and shape', () => {
   it.each(others.map((l) => [l] as const))('%s has every key, and none English does not have', (l) => {
     const own = dict(l);
@@ -97,7 +107,7 @@ const SAME_AS_ENGLISH = new Set([
   'metrics.mrr', 'metrics.arr', 'metrics.dau', 'metrics.wau', 'metrics.mau', 'platform.tile.mrr', 'platform.tile.arr', 'task.history.system', 'ob.side.vendor.self',
   'recordPanel.playbook', 'billing.plan.team', 'billing.plan.business', 'ask.nav', 'cura.name', 'demo.tour.area.ai', 'pm.sprint', 'pm.backlog', 'pm.stage.backlog', 'pm.stage.qa', 'pm.stage.uat',
   'support.field.front.token', 'nav.platform', 'platform.col.plan', 'platform.sub.plan', 'founder.area.crm', 'trial.tools.crm', 'sso.protocol.saml', 'sso.protocol.oidc',
-  'tpl.onboarding', 'imp.dept.onboarding', 'demo.intent.team.onboarding', 'flow.dept.onboarding', 'tpl.premium', 'tpl.it', 'rtype.linkedin', 'rtype.risk', 'demo.bar.tag',
+  'tpl.onboarding', 'dept.onboarding', 'imp.dept.onboarding', 'demo.intent.team.onboarding', 'flow.dept.onboarding', 'tpl.premium', 'tpl.it', 'rtype.linkedin', 'rtype.risk', 'demo.bar.tag',
   'ob.view.sponsor', 'ob.role.sponsor', 'trial.hint.linkedin', 'sync.rtype.id',
   'analytics.guide.powerbi', 'analytics.guide.excel', 'analytics.guide.fabric', 'analytics.guide.tableau', 'analytics.guide.lookerstudio', 'analytics.guide.qlik', 'analytics.guide.zoho',
   'analytics.tool.powerquery', 'analytics.tool.tableau', 'analytics.tool.qlik', 'analytics.tool.zoho', 'analytics.tool.lookerstudio', 'analytics.tool.domo', 'analytics.tool.sap',

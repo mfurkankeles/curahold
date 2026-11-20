@@ -6,11 +6,11 @@ summary: Fırsat kazanılınca devir kartı, ürün işine bağlanan müşteri t
 ---
 # Devir, talepler ve müşteriye dönüş
 
-İş Satış'tan Kurulum'a ya da Müşteri Başarısı'na, müşteriden Ürün'e geçer. Curahold her ekibin ihtiyacını müşteri sayfasında tutar; kimse yeniden yazmaz, kimse başka departmanın panosunu açmak zorunda kalmaz.
+İş Satış'tan Onboarding'e ya da Müşteri Başarısı'na, müşteriden Ürün'e geçer. Curahold her ekibin ihtiyacını müşteri sayfasında tutar; kimse yeniden yazmaz, kimse başka departmanın panosunu açmak zorunda kalmaz.
 
 ## Fırsat kazanılınca {#handover}
 
-Durumu **kazanıldı** olan bir fırsat (burada ya da CRM'inde) veya Satış panosunda **Kazanıldı**'ya taşınan bir görev, müşteri sayfasında tek bir **devir kartı** alır. Şirketinde Kurulum departmanı varsa kart **Kurulum**'a, yoksa **Müşteri Başarısı**'na gider.
+Durumu **kazanıldı** olan bir fırsat (burada ya da CRM'inde) veya Satış panosunda **Kazanıldı**'ya taşınan bir görev, müşteri sayfasında tek bir **devir kartı** alır. Şirketinde Onboarding departmanı varsa kart **Onboarding**'e, yoksa **Müşteri Başarısı**'na gider.
 
 1. Müşterinin sayfasını aç. Kart **Özet**'in en üstündedir ve **Sahip bekliyor** yazar. Oku: kişiler ve size bakışları, Satış'ın verdiği sözler, müşterinin Ürün'den hâlâ beklediği işler, tarihler, yıllık değer (o alanı görebiliyorsan) ve satış yazışmasından gelen devir notu.
    ![Müşteri sayfasındaki devir kartı işaretli](img/flow-card.webp)

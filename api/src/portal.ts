@@ -19,13 +19,15 @@ import type { Q } from './db';
 import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
+import { readiness } from './lib/ops';
+import { quarantine, released } from './lib/uploadScan';
 import { enqueue, kick } from './lib/notify';
 import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalBytesUsed, portalFiles, portalOn, portalQuotaMb, signInOptions, type PortalEnv } from './lib/portal';
 import { PORTAL_FILE_MB, PORTAL_MAX_FILES } from '../../shared/src/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
-import { portalAssist, portalAssistAvailable } from './routes/assist';
+import { portalAssist, portalAssistAvailable, portalAssistConsent } from './routes/assist';
 
 /** Errors raised inside the portal_* functions, by name. */
 const DB_ERRORS: Record<string, 'unauthenticated' | 'not_found' | 'too_many_requests'> = {
@@ -87,6 +89,13 @@ export function createPortalApp(deps: Deps) {
   const db = (c: { get: (k: 'org' | 'person') => any }, fn: (q: Q) => Promise<any>) =>
     deps.db.portal({ orgId: c.get('org').id, portalUserId: c.get('person')?.id ?? null }, fn);
 
+  // Liveness and readiness for the status page and the synthetic check (no company, no data).
+  app.get('/papi/health', async (c) => {
+    const r = await readiness(deps);
+    c.header('access-control-allow-origin', '*');
+    return c.json(r, r.ok ? 200 : 503);
+  });
+
   // ------------------------------------------------------------ company
   app.use('/papi/*', async (c, next) => {
     if (!cfg.portalDomain) fail('not_found');
@@ -114,6 +123,7 @@ export function createPortalApp(deps: Deps) {
       signIn: signInOptions(org, deps),
       brand: portalBrand(org),
       turnstile: turnstileSiteKey(deps),
+      docsBase: `${deps.config.scheme}://${deps.config.centralHost}/docs/`,
     };
     return c.json(out);
   });
@@ -201,6 +211,9 @@ export function createPortalApp(deps: Deps) {
   // The portal's assistant: how to use the portal, and the person's own requests (routes/assist.ts).
   app.post('/papi/assist', (c) => portalAssist(c, deps, (fn) => db(c, fn)));
   app.get('/papi/assist/status', (c) => c.json({ available: portalAssistAvailable(deps, c.get('org')) }));
+  // The consent notice's answer (KVKK/GDPR): asked before the first question, withdrawable from the chat.
+  app.get('/papi/assist/consent', (c) => portalAssistConsent(c, (fn) => db(c, fn)));
+  app.post('/papi/assist/consent', (c) => portalAssistConsent(c, (fn) => db(c, fn)));
 
   app.get('/papi/boards/:id/tasks', async (c) => c.json({ tasks: await one(c, 'select portal_tasks($1) as t', [id(c, 'id')]) }));
 
@@ -249,6 +262,8 @@ export function createPortalApp(deps: Deps) {
       await deps.storage.delete(key).catch(() => undefined);
       throw e;
     }
+    // With a scanner configured, nobody opens it until it is found clean (lib/uploadScan.ts).
+    await quarantine(deps, key.slice(0, 36), key);
   };
 
   /** Keeps the files, then records each on the request (comment null) or on the reply. */
@@ -344,6 +359,7 @@ export function createPortalApp(deps: Deps) {
   // A file is always a download, never shown in the page, and can run nothing.
   app.get('/papi/files/:id', async (c) => {
     const f = await one(c, 'select portal_file($1) as f', [id(c, 'id')]);
+    if (!(await released(deps, c.get('org').id, f.key))) fail('file_quarantined');
     const obj = await deps.storage.get(f.key);
     if (!obj) fail('not_found');
     return c.body(obj!.data, 200, {

@@ -239,7 +239,13 @@ export async function call(ctx: CrmCtx, url: string, init: RequestInit & { json?
     const after = Number(res.headers.get('retry-after') ?? 60);
     throw new CrmError(await errorText(res), res.status, Number.isFinite(after) ? after : 60);
   }
-  if (res.status === 401 || res.status === 403) throw new CrmError(await errorText(res), res.status, undefined, res.status === 401);
+  if (res.status === 403) {
+    const text = await errorText(res);
+    // Some services answer a used-up request allowance with 403 (Salesforce: REQUEST_LIMIT_EXCEEDED): that is a pause, not a lost permission.
+    if (/REQUEST_LIMIT_EXCEEDED|limit exceeded|rate limit|too many requests|quota/i.test(text)) throw new CrmError(text, 429, 3600);
+    throw new CrmError(text, 403);
+  }
+  if (res.status === 401) throw new CrmError(await errorText(res), res.status, undefined, true);
   if (!res.ok) throw new CrmError(await errorText(res), res.status);
   if (res.status === 204) return null;
   const text = await res.text();

@@ -6,7 +6,7 @@ summary: Şirketinde hangi departmanlar var, onları kim yönetir, kim hangi pan
 ---
 # Departmanlar
 
-Curahold'da iş departmanlarda yaşar: İç Satış, Satış, Kurulum, Müşteri Başarısı ve Destek, Ürün ve Finans. Herkes kendi departmanlarının panolarını görür. İş başka bir departmana bir taleple geçer; müşteri sayfası ise o müşteriyi görebilen herkesin ortak sayfasıdır.
+Curahold'da iş departmanlarda yaşar: İç Satış, Satış, Onboarding, Müşteri Başarısı ve Destek, Ürün ve Finans. Herkes kendi departmanlarının panolarını görür. İş başka bir departmana bir taleple geçer; müşteri sayfası ise o müşteriyi görebilen herkesin ortak sayfasıdır.
 
 ## Departmanlarını kur {#set-up}
 
@@ -50,4 +50,4 @@ Talep o departmanın panosuna düşer ve senin görevine bağlanır. Başlığı
 2. Sağda **Her departmandaki sahibi**, müşteriyle her departmanda kimin ilgilendiğini gösterir. Atamak için bir kişi seç.
    ![Her departmandaki sahibi işaretli](img/dept-owners.webp)
 
-Departmanlar arası devirler (Kurulum'a ya da Müşteri Başarısı'na giden kazanılmış bir fırsat) [Devir, talepler ve müşteriye dönüş](/docs/tr/handover-and-requests/) sayfasında.
+Departmanlar arası devirler (Onboarding'e ya da Müşteri Başarısı'na giden kazanılmış bir fırsat) [Devir, talepler ve müşteriye dönüş](/docs/tr/handover-and-requests/) sayfasında.

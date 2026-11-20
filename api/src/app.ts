@@ -30,7 +30,6 @@ import { segmentInboundRoutes } from './routes/segment';
 import { whatsappInboundRoutes } from './routes/whatsapp';
 import { inboundHookReceiverRoutes, inboundHookRoutes } from './routes/inboundHooks';
 import { jiraRoutes } from './routes/jira';
-import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
 import { onboardingPlanRoutes, onboardingShareRoutes } from './routes/onboardingPlans';
 import { platformRoutes } from './routes/admin-platform';
@@ -82,6 +81,7 @@ import { assistPublicRoutes, assistRoutes } from './routes/assist';
 import { signInSupport } from './lib/support';
 import { BUDGETS, INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
+import { raiseOpsAlert, readiness, sharedOps } from './lib/ops';
 import { liveRoutes } from './live/routes';
 import { asksForTicket } from './live/protocol';
 import { touchesConsole } from './live/platform';
@@ -113,6 +113,16 @@ export function createApp(deps: Deps) {
 
   // Browser-side protections on every answer (CSP, HSTS, framing, sniffing); see lib/headers.ts.
   app.use('*', securityHeaders(cfg.scheme === 'https'));
+
+  // Operations watch (lib/ops.ts): every API answer's status and time; too many failures or a slow tail → an alert.
+  const ops = deps.ops ?? sharedOps;
+  if (cfg.ops?.alerts !== false)
+    app.use('/api/*', async (c, next) => {
+      const t0 = Date.now();
+      await next();
+      const alert = ops.note(c.res.status, Date.now() - t0);
+      if (alert) defer(deps, raiseOpsAlert(deps, alert));
+    });
 
   // Robots (lib/botGuard.ts): robots.txt and the TDM reservation per host, known
   // crawlers refused by name, and bursts of refused or limited answers noted for the console.
@@ -256,7 +266,12 @@ export function createApp(deps: Deps) {
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 
-  app.get('/api/health', (c) => c.json({ ok: true }));
+  app.get('/api/health', (c) => c.json({ ok: true }, 200, { 'access-control-allow-origin': '*', 'cache-control': 'no-store' }));
+  // Readiness: the database reached, and how fast (the status page and the synthetic check read it; no company data).
+  app.get('/api/health/ready', async (c) => {
+    const r = await readiness(deps);
+    return c.json(r, r.ok ? 200 : 503, { 'access-control-allow-origin': '*', 'cache-control': 'no-store' });
+  });
   // Where to report a vulnerability, on every address (before any company is looked up).
   app.get('/.well-known/security.txt', securityTxt);
 
@@ -279,10 +294,10 @@ export function createApp(deps: Deps) {
   app.route('/api/desk', deskRoutes);
   // The public docs' and sales site's "Ask": no company, docs only (routes/assist.ts).
   app.route('/', assistPublicRoutes);
-  // Paddle's notifications about subscriptions (checked against its secret).
+  // Paddle's notifications (signature-checked), one handler on two addresses: the
+  // documented one and the older one, so either Paddle destination works (ADR 0019).
+  app.post('/api/inbound/billing/paddle', billingWebhook);
   app.post('/api/billing/webhook', billingWebhook);
-  // Paddle notifications for the table-based subscription system (signature-checked).
-  app.post('/api/inbound/billing/paddle', paddleInboundWebhook);
   // SSO login and SCIM provisioning resolve the company themselves (by slug or
   // bearer token), so they mount before companyFromHost and its CSRF guard.
   app.route('/api/sso', ssoAuthRoutes);
@@ -502,7 +517,6 @@ export function createApp(deps: Deps) {
   app.route('/api', timelineRoutes);
   app.route('/api', meetingRoutes);
   app.route('/api', billingRoutes);
-  app.route('/api', subscriptionRoutes);
   app.route('/api', onboardingRoutes);
   app.route('/api', onboardingPlanRoutes);
   app.route('/api', ssoAdminRoutes);

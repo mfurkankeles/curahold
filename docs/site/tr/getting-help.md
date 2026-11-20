@@ -102,7 +102,7 @@ Kurumun kendi çalışanlarına bunu bir gizlilik bildiriminde anlatması gereki
 
 1. **Ayarlar → Destek erişimi**'ni aç ve **Yapay zekâ asistanı**'na kadar kaydır.
    ![Yapay zekâ asistanı ayarları işaretli](img/ai-settings.webp)
-2. CuraAI'nın yapay zekâyla cevap vermesi için **Yapay zekâ ile cevapla**'yı işaretle; yalnızca belge aramasıyla, ücretsiz cevap vermesi için işareti kaldır. CuraAI'nın okudukları hiçbir zaman yapay zekâ modellerini eğitmek için kullanılmaz.
+2. CuraAI'nın yapay zekâyla cevap vermesi için **Yapay zekâ ile cevapla**'yı işaretle; yalnızca belge aramasıyla, ücretsiz cevap vermesi için işareti kaldır. CuraAI'nın okudukları hiçbir zaman yapay zekâ modellerini eğitmek için kullanılmaz. Yeni bir şirkette bu kutu **kapalı** başlar: bir yönetici işaretleyene kadar yapay zekâ sağlayıcısına hiçbir şey gönderilmez; kapalıyken kart bunu açıkça yazar.
    ![Yapay zekâ ile cevapla kutusu işaretli](img/ai-switch.webp)
 
 Aynı kartta:
@@ -112,6 +112,8 @@ Aynı kartta:
 - **Destek taleplerimize ilk cevap taslağı yaz**: Curahold desteği taleplerine taslak bir ilk cevap görür; sen taslağı hiç görmezsin, yalnızca desteğin gerçek cevabını görürsün.
 
 Kart, bu kurulumda yapay zekâ ile cevabın kurulmadığını söylüyorsa CuraAI belge aramasını kullanır; yapay zekâ anahtarını Curahold sunucunu çalıştıran kişi ekler.
+
+**Herkese önce sorulur.** Yapay zekâ cevapları açıkken biri CuraAI'yi ilk kez açtığında CuraAI, yapay zekâ sağlayıcısına neyin, neden ve ne kadar süreyle gönderildiğini söyler, aydınlatma metnine bağlantı verir ve **Kabul ediyorum** ile **Reddet** düğmelerini gösterir (hiçbir şey önceden işaretli değildir). Kabul edilene kadar yazılan hiçbir şey cihazdan çıkmaz, belge araması cevap verir; reddetmek hiçbir şey kaybettirmez. Onay CuraAI'nin altından ya da **Ayarların → Yapay zekâ asistanı onayı**'ndan her an geri alınabilir; bilgilendirme değişince yeniden sorulur. Sunucu "evet" olmadan gelen soruyu reddeder ve her cevap aktivite kaydına yazılır. Müşteri portalı ve herkese açık belgeler de aynı şekilde sorar.
 
 ## Hata kaydı (yöneticiler) {#errors}
 

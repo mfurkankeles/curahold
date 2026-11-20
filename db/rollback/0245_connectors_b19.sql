@@ -1,6 +1,6 @@
--- Undo 0240_connectors_b19.sql: incoming webhooks gone (with their log), Azure DevOps links removed.
+-- Undo 0245_connectors_b19.sql: incoming webhooks gone (with their log), Azure DevOps links removed.
 -- Not a migration (the runner never reads this folder). Run it by hand, as the
--- owner, in one transaction:  psql "$DATABASE_URL" -1 -f db/rollback/0240_connectors_b19.sql
+-- owner, in one transaction:  psql "$DATABASE_URL" -1 -f db/rollback/0245_connectors_b19.sql
 drop table if exists inbound_links;
 drop table if exists inbound_deliveries;
 drop table if exists inbound_hooks;

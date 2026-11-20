@@ -77,7 +77,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |
-| Son içe aktarmanızda … satır gelmedi (Düzeltmeye değer) | Bu satırlardaki bir şey okunamadı. İçe aktarma ekranı onları satır numaralarıyla listeler. | **İçe aktarmayı aç** |
+| Son içe aktarmanızda … satır gelmedi (Düzeltmeye değer) | Bu satırlardaki bir şey okunamadı. Satır numaralı liste içe aktarmanın hemen ardından görünür; satırları dosyanızda düzeltip yeniden içe aktarın: gelmiş satırlar güncellenir, ikilenmez. | **İçe aktarmayı aç** |
 | Son içe aktarmanızda … satırda müşteri adı yoktu (Düzeltmeye değer) | Her satırda mutlaka olması gereken tek sütun ad. Dosyada doldurup yeniden içe aktarın: gelmiş satırlar güncellenir, ikilenmez. | **Yeniden içe aktar** |
 | … satırda okuyamadığımız bir tarih vardı (Düzeltmeye değer) | Tarihleri 2026-03-31 ya da 31.03.2026 gibi yazın. Okunamayan tarihler boş bırakıldı. | **Yeniden içe aktar** |
 | … satırda okuyamadığımız bir tutar vardı (Düzeltmeye değer) | Yalnızca rakam kullanın (12500 ya da 12.500,00); para birimini ayrı bir sütuna yazın. Okunamayan tutarlar boş bırakıldı. | **Yeniden içe aktar** |
@@ -122,7 +122,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |
-| … otomasyon silinmiş bir alanı kullanıyor (Önce bunu) | Bu haliyle hiç çalışamaz. Başka bir alan seçin ya da kuralı kapatın. | **Kuralı düzelt** |
+| … otomasyon şirkette olmayan bir alanı izliyor (Önce bunu) | Bu haliyle hiç çalışamaz. Kuralı düzelt'e, sonra Düzenle'ye ve Kaydet'e tıklayın: kendi tarih alanınıza geçer. Ya da kuralı kapatın. | **Kuralı düzelt** |
 | … otomasyon artık olmayan bir panoyu gösteriyor (Önce bunu) | Oluşturması gereken görevlerin gidecek yeri yok. Başka bir pano seçin. | **Kuralı düzelt** |
 | Henüz otomasyon yok (Bir dakikanız olduğunda) | Her yenilemeden 60 gün önce bir görev gibi tek bir kural, her seferinde bir hatırlatmayı üstlenir. Açılmaya hazır kurallar var. | **Hazır kurallara bak** |
 

@@ -13,8 +13,6 @@ import type { MetricPoint } from './metrics';
  */
 export type SubStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'paused' | 'none';
 
-export const SUB_STATUSES: SubStatus[] = ['trialing', 'active', 'past_due', 'canceled', 'paused', 'none'];
-
 /** One row of the customers table: a single company with its billing standing. */
 export interface PlatformCustomer {
   orgId: string;

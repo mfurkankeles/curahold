@@ -1422,7 +1422,7 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                       </label>
                       <label className="ocfield ocfield--wide">
                         <span>{o('check.evidence')}</span>
-                        <input className="input" value={evidence} maxLength={1000} onChange={(e) => setEvidence(e.target.value)} />
+                        <input className="input" value={evidence} maxLength={1000} placeholder={n.proof} onChange={(e) => setEvidence(e.target.value)} />
                       </label>
                     </div>
                     <div className="ocbuttons ocap__buttons">

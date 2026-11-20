@@ -34,6 +34,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `portal_bad_code` | 400 | Kod yanlış ya da süresi dolmuş. Yenisini iste. |
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
 | `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, OpenDocument, metin, CSV ve ZIP dosyaları eklenebilir. |
+| `portal_file_unsafe` | 400 | … eklenemiyor: içeriği güvenli görünmüyor (açılamayacak kadar büyük bir arşiv, içinde program veya makro, ya da kod çalıştıran bir PDF). Dosyayı sade hâliyle gönderin. |
 | `portal_internal_email` | 400 | Bu adres şirketindeki birine ait. Portal müşteriler içindir. |
 | `portal_method_off` | 400 | Bu giriş yolu kapalı. |
 | `portal_no_method` | 400 | En az bir giriş yolu açık kalmalı: e-posta, Google, Microsoft ya da şifre. |
@@ -55,6 +56,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `billing_locked` | 402 | Şirketinin etkin bir planı yok; şu an bir şey değiştirilemez, ama her şey okunabilir ve dışa aktarılabilir. Bir yönetici Ayarlar → Abonelik’ten plan seçebilir. |
 | `plan_required` | 402 | Bu, … planında var. Bir yönetici Ayarlar → Abonelik’ten geçebilir. |
 | `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |
+| `consent_required` | 403 | Lütfen önce yapay zekâ asistanı bilgilendirmesini kabul edin ya da belge aramasını kullanmaya devam edin. |
 | `field_locked` | 403 | Rolün bu alanı görebilir ama değiştiremez (…). |
 | `forbidden` | 403 | Bunu yapma yetkin yok. |
 | `join_closed` | 403 | Bu şirkete yalnızca davetle katılınabiliyor. |
@@ -80,6 +82,8 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `email_taken` | 409 | Şirketinde bu e-postayı kullanan biri zaten var. |
 | `handover_confirmed` | 409 | Bu devir zaten onaylandı. |
 | `last_admin` | 409 | Şirketinde en az bir aktif yönetici kalmalı. |
+| `plan_limit_connectors` | 409 | Planınız en fazla … bağlı araç içeriyor. Birini kaldırın ya da daha büyük bir plan seçin. |
+| `plan_limit_seats` | 409 | Planınız en fazla … tam kullanıcı içeriyor ve hepsi kullanımda. Görüntüleyen olarak (ücretsiz) davet edin ya da daha büyük bir plan seçin. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
 | `role_in_use` | 409 | Bu role sahip kişiler var. Önce onlara başka bir rol ver. |
 | `seat_cap_reached` | 409 | Deneme … tam koltuk içeriyor ve hepsi kullanımda. İzleyici olarak davet et (ücretsiz) ya da bizden daha fazla koltuk iste. |
@@ -97,11 +101,14 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `export_too_large` | 413 | Bir dosyaya en fazla … satır sığar. Listeyi bir filtreyle daralt, sonra yeniden dışa aktar. |
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
+| `plan_limit_storage` | 413 | Planınızın dosya alanı (… GB) doldu. Artık gerekmeyen dosyaları silin ya da daha büyük bir plan seçin. |
 | `portal_quota` | 413 | Sağlayıcınızın dosya alanı dolu. Dosyayı başka bir yolla gönderin ya da yer açmalarını isteyin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |
+| `file_quarantined` | 423 | Bu dosya virüslere karşı kontrol ediliyor. Bir dakika sonra tekrar deneyin. |
 | `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden dene. |
 | `portal_locked` | 429 | Çok fazla yanlış deneme oldu. … dakika sonra tekrar dene ya da şifreni yenile. |
 | `too_many_requests` | 429 | Çok fazla deneme oldu. Birkaç dakika bekleyip tekrar dene. |
 | `server` | 500 | Bizim tarafta bir sorun oldu. Lütfen tekrar dene. |
 | `billing_error` | 502 | Ödeme sağlayıcısı beklendiği gibi yanıt vermedi. Bir dakika sonra yeniden dene. |
 | `crm_error` | 502 | Bağlı servis şunu söyledi: … |
+| `crm_unreachable` | 502 | Bu adrese ulaşamadık. Adın doğru yazıldığına bak; doğruysa şirket ağı engelliyor olabilir: BT ekibine sor. |

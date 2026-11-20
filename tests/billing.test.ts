@@ -1,12 +1,14 @@
-// Billing through Paddle: the trial, signed webhooks applied once and in
-// order, read-only without a plan (reading and exporting still work), plan
+// Billing through Paddle (the one path, docs/ADR/0019), driven through the older
+// webhook address /api/billing/webhook so that alias stays covered: the trial,
+// signed webhooks applied once and in order, read-only without a plan (reading and exporting still work), plan
 // features (Business), seats following the people who joined, and nothing of
 // it at all while billing is off.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { accessOf } from '../shared/src/billing';
 import { hmacHex } from '../api/src/lib/crypto';
-import { checkoutCustomData, syncSeats } from '../api/src/lib/billing';
-import { verifyPaddle } from '../api/src/lib/paddle';
+import { checkoutCustomData } from '../api/src/billing/sign';
+import { syncSeats } from '../api/src/billing/service';
+import { verifyPaddle } from '../api/src/billing/paddle';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
 const SECRET = 'pdl_ntfset_test_secret';
@@ -79,7 +81,9 @@ describe('the trial and the subscription', () => {
     const b = (await ada.get('/api/billing')).json;
     expect(b.enabled).toBe(true);
     expect(b.checkout.prices).toEqual(PRICES);
-    expect(b.checkout.orgId).toBe(orgId);
+    // No secret ever reaches the browser.
+    expect(JSON.stringify(b)).not.toContain('pdl_key');
+    expect(JSON.stringify(b)).not.toContain(SECRET);
     // Only administrators see what checkout needs.
     expect((await lena.get('/api/billing')).json.checkout).toBeUndefined();
   });
@@ -125,8 +129,10 @@ describe('the trial and the subscription', () => {
 
 describe('checkout cannot be pointed at someone else’s company', () => {
   it('the server signs the company id it hands the browser', async () => {
-    const b = (await ada.get('/api/billing')).json;
+    const b = (await ada.post('/api/billing/checkout', { plan: 'team', interval: 'year' })).json;
     expect(b.checkout.customData).toEqual(signed);
+    expect(b.checkout.priceId).toBe('pri_team_y');
+    expect((await lena.post('/api/billing/checkout', { plan: 'team' })).status).toBe(403);
   });
 
   it('an unsigned or forged company id is ignored', async () => {

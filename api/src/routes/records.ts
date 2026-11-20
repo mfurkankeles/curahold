@@ -1,13 +1,15 @@
 // Records under accounts (contacts, opportunities, risks…) and the kinds of
 // record a company keeps. Works with or without a CRM; when one is
 // connected, edits here are queued for it.
+import { quarantine } from '../lib/uploadScan';
 import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { LOCALES, type Locale } from '../../../shared/src/i18n/core';
 import { MENTION_RE, type Task } from '../../../shared/src/model';
 import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordComment, type RecordDetail, type RecordType, type RenewalLinks } from '../../../shared/src/records';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { accessFor, nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { checkStorage } from '../billing/entitlements';
 import { runRecordEvent } from '../lib/automations';
 import { flowAfterRecord } from '../lib/handoff';
 import type { Q, Row } from '../db';
@@ -445,6 +447,8 @@ recordRoutes.post('/records/:id/files', async (c) => {
   const row = await run(c, async (q) => {
     const [r] = await q.query('select id from records where id = $1', [id]);
     if (!r) fail('not_found');
+    // The plan's storage cap (shared/src/plans.json), before anything is stored.
+    await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
     const [x] = await q.query(
       `insert into files (org_id, record_id, name, size, mime, storage_key, uploaded_by) values ($1, $2, $3, $4, $5, $6, $7) returning *`,
@@ -453,6 +457,7 @@ recordRoutes.post('/records/:id/files', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: x.id, meta: { name: f.name } });
     return x;
   });
+  await quarantine(deps, org.id, key);
   return c.json({ file: toFile(row) }, 201);
 });
 
