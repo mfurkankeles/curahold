@@ -82,17 +82,8 @@
     const groups = ['.sc', '[data-crumb]', '[data-now]'].map((s) => [...tour.querySelectorAll(s)]);
     const panel = tour.querySelector('[role="tabpanel"]');
     const film = tour.querySelector('.film');
-    // The page ships only the first scene; the rest wait in a <template> below the fold
-    // (a lighter first paint). They join the stage the first time another chapter opens.
-    const rest = document.getElementById('film-rest');
-    const fill = () => {
-      if (!rest?.content.childElementCount) return;
-      tour.querySelector('.film__stage')?.append(rest.content);
-      groups[0] = [...tour.querySelectorAll('.sc')];
-    };
     let cur = 0;
     const go = (i, focus) => {
-      fill();
       cur = (i + tabs.length) % tabs.length;
       const all = [tabs, ...groups];
       all.forEach((list) => list.forEach((el) => el.classList.remove('is-on')));
