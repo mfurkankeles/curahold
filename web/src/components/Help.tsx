@@ -91,7 +91,8 @@ type DocHit = {
 const docIndex: Partial<Record<string, Promise<DocHit[]>>> = {};
 function loadDocs(locale: string) {
   docIndex[locale] ??= fetch(docsFile(`${locale}/search.json`))
-    .then((r) => (r.ok ? r.json() : []))
+    // A missing file (404 for a language's docs) is cancelled, not left unread: an unread answer keeps its connection open.
+    .then((r) => (r.ok ? r.json() : r.body?.cancel().then(() => []) ?? []))
     .catch(() => []);
   return docIndex[locale]!;
 }
