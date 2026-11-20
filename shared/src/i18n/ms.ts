@@ -1,9 +1,9 @@
-import type { MessageKey } from './en';
-
 // Malay (Bahasa Melayu), Malaysia and Singapore. Formal "anda"; Malaysian
 // vocabulary, not Indonesian (tetapan, padam, log masuk, e-mel, papan pemuka).
 // Job titles and a few market terms stay English (sprint, backlog, onboarding).
 // Words per concept: ./glossary.ts.
+import type { MessageKey } from './en';
+
 export const ms: Partial<Record<MessageKey, string>> = {
   'common.save': "Simpan",
   'common.cancel': "Batal",

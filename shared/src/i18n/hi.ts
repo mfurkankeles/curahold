@@ -1,9 +1,9 @@
-import type { MessageKey } from './en';
-
 // Hindi (हिन्दी), India. Formal आप, polite imperative (करें). SaaS nouns as Indian
 // business software writes them: Devanagari loan words (टास्क, डैशबोर्ड, रिपोर्ट,
 // सेटिंग, एक्सेस), product and brand names in Latin, Latin digits. Job titles stay
 // English. Words per concept: ./glossary.ts.
+import type { MessageKey } from './en';
+
 export const hi: Partial<Record<MessageKey, string>> = {
   'common.save': "सेव करें",
   'common.cancel': "रद्द करें",

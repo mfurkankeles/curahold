@@ -1,3 +1,5 @@
+// The sales site's header and inner pages in Hindi (formal आप), written for India; see ./types.ts.
+// Job titles and plan names stay English; terms from shared/src/i18n/glossary.ts.
 import type { InfoCopy } from './types';
 
 export const hi: InfoCopy = {

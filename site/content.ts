@@ -1330,7 +1330,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     },
     hero: {
       kicker: "Pengurusan kerja untuk pasukan pelanggan",
-      title: "Setiap pembaharuan, setiap janji, setiap tugasan, tepat pada masanya.",
+      title: "Setiap pembaharuan, janji dan tugasan, tepat pada masa.",
       lead: "Lihat kesihatan setiap pelanggan dan sebab di sebaliknya, jadikan langkah seterusnya daripada mesyuarat sebagai tugasan, dan biarkan pembaharuan dibuka sendiri sembilan puluh hari lebih awal.",
       note: "3 bulan percuma, tiada kad diperlukan.",
       works: "Mulakan bersama alat yang anda ada hari ini, beralih mengikut rentak anda",

@@ -1,3 +1,5 @@
+// The sales site's header and inner pages in Malay (formal "anda"), written for Malaysia; see ./types.ts.
+// Job titles and plan names stay English; terms from shared/src/i18n/glossary.ts.
 import type { InfoCopy } from './types';
 
 export const ms: InfoCopy = {
