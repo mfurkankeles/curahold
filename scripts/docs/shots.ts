@@ -80,7 +80,7 @@ const B19: Shot[] = [
   { name: 'b19-odoocrm-tile', go: sources, ready: '[data-tour="crm-odoocrm"]', mark: '[data-tour="crm-odoocrm"]', n: 1 },
   { name: 'b19-calendar-tile', go: sources, ready: '[data-tour="calendars"]', mark: '[data-tour="calendars"]', n: 1 },
   { name: 'b19-ado-tile', go: sources, ready: '[data-tour="dev-azuredevops"]', mark: '[data-tour="dev-azuredevops"]', n: 1 },
-  { name: 'b19-ado-form', go: `${sources}; await wait('[data-tour="dev-azuredevops"] button'); document.querySelector('[data-tour="dev-azuredevops"] button').click(); await wait('.dialog .btn--primary'); document.querySelector('.dialog .btn--primary').click()`, ready: '.dialog input[readonly]', mark: '.dialog .form', n: 2 },
+  { name: 'b19-ado-form', go: `${sources}; await wait('[data-tour="dev-azuredevops"] button'); document.querySelector('[data-tour="dev-azuredevops"] button').click(); await wait('.dialog .btn--primary'); ${pause(1200)}; if (!document.querySelector('.dialog input[readonly]')) document.querySelector('.dialog .btn--primary').click()`, ready: '.dialog input[readonly]', mark: '.dialog .form', n: 2 },
   { name: 'b19-zohodesk-tile', go: sources, ready: '[data-tour="crm-zohodesk"]', mark: '[data-tour="crm-zohodesk"]', n: 1 },
   { name: 'b19-stripe-tile', go: sources, ready: '[data-tour="fin-stripe"]', mark: '[data-tour="fin-stripe"]', n: 1 },
   { name: 'b19-whatsapp-tile', go: sources, ready: '[data-tour="crm-whatsapp"]', mark: '[data-tour="crm-whatsapp"]', n: 1 },

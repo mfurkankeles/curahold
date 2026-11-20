@@ -13,7 +13,7 @@ Customers, invoices (with their due date and what is still owed) and payments fr
 1. Open **Settings → CRMs and spreadsheets**, find **Accounting programs** and click **Connect Stripe**.
    ![The Stripe tile, ringed](img/b19-stripe-tile.webp)
 
-Paste the restricted key into **Restricted key** and click **Connect**. A full secret key (`sk_…`) is refused on purpose. Then click **Start** and check the customers it could not match on the **Matching** tab.
+Paste the restricted key into **Restricted key** and click **Check and connect**. A full secret key (`sk_…`) is refused on purpose. Then click **Start** and check the customers it could not match on the **Matching** tab.
 
 ## In Stripe
 

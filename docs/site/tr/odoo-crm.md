@@ -13,7 +13,7 @@ Odoo Online, Odoo.sh ya da kendi sunucundaki Odoo'dan şirketler, kişileri ve f
 1. **Ayarlar → CRM ve tablolar**'nı aç ve kutucuğundaki **Odoo CRM bağla**'ya tıkla.
    ![Odoo CRM kutucuğu, işaretli](img/b19-odoocrm-tile.webp)
 
-Sonra dört alanı doldur ve **Bağlan**'a tıkla:
+Sonra dört alanı doldur ve **Kontrol et ve bağla**'a tıkla:
 
 - **Odoo adresi**, örneğin:
 

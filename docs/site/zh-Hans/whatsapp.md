@@ -16,7 +16,7 @@ summary: 客户的 WhatsApp 消息显示在其页面上，并从你自己的号�
 
 1. 打开 **设置 → CRM 和电子表格**，找到 **消息应用**，点击 **连接 WhatsApp Business**。
    ![圈出的 WhatsApp Business 卡片](img/b19-whatsapp-tile.webp)
-2. 粘贴下面三个值并点击 **连接**。随后连接页面会显示 **回调地址** 和 **验证令牌**。
+2. 粘贴下面三个值并点击 **检查并连接**。随后连接页面会显示 **回调地址** 和 **验证令牌**。
    ![圈出的连接表单三个字段](img/b19-whatsapp-panel.webp)
 
 - **电话号码 ID**：Meta for Developers → 你的应用 → **WhatsApp → API Setup**。

@@ -13,7 +13,7 @@ Stripe'tan müşteriler, faturalar (vade tarihi ve kalan tutarıyla) ve ödemele
 1. **Ayarlar → CRM ve tablolar**'nı aç, **Muhasebe programları**'nı bul ve **Stripe bağla**'ya tıkla.
    ![Stripe kutucuğu, işaretli](img/b19-stripe-tile.webp)
 
-Kısıtlı anahtarı **Kısıtlı anahtar**'a yapıştır ve **Bağlan**'a tıkla. Tam yetkili gizli anahtar (`sk_…`) bilerek reddedilir. Sonra **Başlat**'a tıkla ve eşleşemeyen müşterileri **Eşleştirme** sekmesinde kontrol et.
+Kısıtlı anahtarı **Kısıtlı anahtar**'a yapıştır ve **Kontrol et ve bağla**'a tıkla. Tam yetkili gizli anahtar (`sk_…`) bilerek reddedilir. Sonra **Başlat**'a tıkla ve eşleşemeyen müşterileri **Eşleştirme** sekmesinde kontrol et.
 
 ## Stripe'ta
 

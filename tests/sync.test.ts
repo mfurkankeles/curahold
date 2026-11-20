@@ -152,7 +152,7 @@ describe('two-way sync with a CRM', () => {
     // Connectors that take a key need nothing on the server; of those, Jira Service Management, the warehouses and Segment only read.
     const keyed = list.providers.filter((p: any) => p.setup === 'key');
     expect(keyed.every((p: any) => p.available)).toBe(true);
-    expect(keyed.filter((p: any) => !p.twoWay).map((p: any) => p.id)).toEqual(['jsm', 'bigquery', 'snowflake', 'segment', 'odoo', 'parasut', 'finfile']);
+    expect(keyed.filter((p: any) => !p.twoWay).map((p: any) => p.id)).toEqual(['jsm', 'bigquery', 'snowflake', 'segment', 'odoo', 'parasut', 'stripe', 'finfile']);
     expect(list.providers.find((p: any) => p.id === 'salesforce').available).toBe(false);
     expect(list.providers.find((p: any) => p.id === 'gsheets').available).toBe(true);
     expect((await mert.post('/api/connections/demo')).status).toBe(403);

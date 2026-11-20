@@ -16,7 +16,7 @@ You need a Meta business account with a WhatsApp Business number on the Cloud AP
 
 1. Open **Settings → CRMs and spreadsheets**, find **Messaging apps** and click **Connect WhatsApp Business**.
    ![The WhatsApp Business tile, ringed](img/b19-whatsapp-tile.webp)
-2. Paste the three values below and click **Connect**. The connection page then shows a **callback address** and a **verify token**.
+2. Paste the three values below and click **Check and connect**. The connection page then shows a **callback address** and a **verify token**.
    ![The three fields of the connect form, ringed](img/b19-whatsapp-panel.webp)
 
 - **Phone number ID**: Meta for Developers → your app → **WhatsApp → API Setup**.

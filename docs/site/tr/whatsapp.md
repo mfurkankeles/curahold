@@ -16,7 +16,7 @@ Cloud API'de bir WhatsApp Business numarası olan bir Meta işletme hesabı, Wha
 
 1. **Ayarlar → CRM ve tablolar**'nı aç, **Mesajlaşma uygulamaları**'nı bul ve **WhatsApp Business bağla**'ya tıkla.
    ![WhatsApp Business kutucuğu, işaretli](img/b19-whatsapp-tile.webp)
-2. Aşağıdaki üç değeri yapıştır ve **Bağlan**'a tıkla. Bağlantı sayfası bir **geri arama adresi** ve bir **doğrulama anahtarı** gösterir.
+2. Aşağıdaki üç değeri yapıştır ve **Kontrol et ve bağla**'a tıkla. Bağlantı sayfası bir **geri arama adresi** ve bir **doğrulama anahtarı** gösterir.
    ![Bağlantı formunun üç alanı, işaretli](img/b19-whatsapp-panel.webp)
 
 - **Telefon numarası kimliği**: Meta for Developers → uygulaman → **WhatsApp → API Setup**.

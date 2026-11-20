@@ -16,7 +16,7 @@ Cloud API에 WhatsApp Business 번호가 있는 Meta 비즈니스 계정, WhatsA
 
 1. **설정 → CRM과 스프레드시트**을 열고 **메신저 앱**에서 **WhatsApp Business 연결**을 클릭하세요.
    ![표시된 WhatsApp Business 타일](img/b19-whatsapp-tile.webp)
-2. 아래 세 값을 붙여 넣고 **연결**을 클릭하세요. 연결 페이지에 **콜백 주소**와 **확인 토큰**이 나타납니다.
+2. 아래 세 값을 붙여 넣고 **확인 및 연결**을 클릭하세요. 연결 페이지에 **콜백 주소**와 **확인 토큰**이 나타납니다.
    ![표시된 연결 양식의 세 칸](img/b19-whatsapp-panel.webp)
 
 - **전화번호 ID**: Meta for Developers → 앱 → **WhatsApp → API Setup**.

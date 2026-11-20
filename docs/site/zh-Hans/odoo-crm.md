@@ -13,7 +13,7 @@ summary: 让 Odoo 的公司、联系人和商机与 Curahold 双向保持一致�
 1. 打开 **设置 → CRM 和电子表格**，点击 Odoo CRM 卡片上的 **连接 Odoo CRM**。
    ![圈出的 Odoo CRM 卡片](img/b19-odoocrm-tile.webp)
 
-然后填写四个字段并点击 **连接**：
+然后填写四个字段并点击 **检查并连接**：
 
 - **Odoo 地址**，例如：
 

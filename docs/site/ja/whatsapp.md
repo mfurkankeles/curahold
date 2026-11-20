@@ -16,7 +16,7 @@ Cloud API に WhatsApp Business の番号がある Meta ビジネスアカウン
 
 1. **設定 → CRM とスプレッドシート** を開き、**メッセージアプリ** で **WhatsApp Business に接続** をクリックします。
    ![WhatsApp Business のタイルを囲んだ画面](img/b19-whatsapp-tile.webp)
-2. 下の 3 つの値を貼り付けて **接続** をクリックします。連携のページに **コールバック URL** と **認証トークン** が表示されます。
+2. 下の 3 つの値を貼り付けて **確認して接続** をクリックします。連携のページに **コールバック URL** と **認証トークン** が表示されます。
    ![接続フォームの 3 つの項目を囲んだ画面](img/b19-whatsapp-panel.webp)
 
 - **電話番号 ID**：Meta for Developers → アプリ → **WhatsApp → API Setup**。

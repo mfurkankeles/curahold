@@ -13,7 +13,7 @@ Companies, their contacts and opportunities from Odoo Online, Odoo.sh or your ow
 1. Open **Settings → CRMs and spreadsheets** and click **Connect Odoo CRM** on its tile.
    ![The Odoo CRM tile, ringed](img/b19-odoocrm-tile.webp)
 
-Then fill in the four fields and click **Connect**:
+Then fill in the four fields and click **Check and connect**:
 
 - **Odoo address**, for example:
 

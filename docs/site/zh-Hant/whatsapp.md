@@ -16,7 +16,7 @@ summary: 客戶的 WhatsApp 訊息顯示在其頁面上，並從你自己的號�
 
 1. 開啟 **設定 → CRM 與試算表**，找到 **訊息應用程式**，點選 **連接 WhatsApp Business**。
    ![圈出的 WhatsApp Business 卡片](img/b19-whatsapp-tile.webp)
-2. 貼上下列三個值並點選 **連接**。之後連線頁面會顯示 **回呼位址** 和 **驗證權杖**。
+2. 貼上下列三個值並點選 **檢查並連接**。之後連線頁面會顯示 **回呼位址** 和 **驗證權杖**。
    ![圈出的連接表單三個欄位](img/b19-whatsapp-panel.webp)
 
 - **電話號碼 ID**：Meta for Developers → 你的應用程式 → **WhatsApp → API Setup**。
