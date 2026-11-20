@@ -2,7 +2,10 @@
 // Transition — the sidebar stays still, the main area cross-fades in 150 ms with an 8 px shift
 // that follows the direction (Back comes from the other side) — and an item opened from a list
 // grows into its page: the element marked `data-hero-key={id}` in the list and `data-hero={id}`
-// on the page share one 280 ms morph, both ways. Where the browser has no View Transitions, or
+// on the page share one 280 ms morph, both ways. A task or record opened from a card or row in
+// its panel (same screen, only the query changes) gets the same morph into the panel's title, on
+// its own: the screen behind does not cross-fade, the panel slides in as usual, and closing is the
+// panel's own exit. Where the browser has no View Transitions, or
 // "reduce motion" is on, the screen simply changes. Called by lib/router.ts for every move.
 //
 // Back also finds the screen where it was left: its scroll position is filed under its step of
@@ -83,11 +86,12 @@ const cssId = (v: string) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.esc
  * Shows a move. `dir` is null when only the query changed on the same screen (no transition);
  * `run` re-renders the app at the new address; `keys` are the history steps left and reached.
  */
-export function moveScreens(dir: Dir | null, run: () => void, keys: { from: string; to: string }) {
+export function moveScreens(dir: Dir | null, run: () => void, keys: { from: string; to: string }, panel = false) {
   if (dir) saveScroll(keys.from);
   const doc = document as Doc;
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const back = dir === 'back';
+  if (!dir && panel && !reduce && doc.startViewTransition && document.visibilityState !== 'hidden') return growIntoPanel(doc, run);
   if (!dir || reduce || !doc.startViewTransition || document.visibilityState === 'hidden') {
     run();
     if (back) restoreScroll(keys.to);
@@ -114,6 +118,32 @@ export function moveScreens(dir: Dir | null, run: () => void, keys: { from: stri
   // A transition the browser skips (another one started, the tab was hidden) rejects; the screen has changed anyway.
   const tidy = () => {
     delete root.dataset.nav;
+    if (shared) shared.style.viewTransitionName = '';
+  };
+  t.finished.then(tidy, tidy);
+  t.ready.catch(() => undefined);
+  t.updateCallbackDone.catch(() => undefined);
+}
+
+/**
+ * A task or record opened in its panel: the card or row just picked grows into the panel's title.
+ * Only the hero moves (no `data-nav`, so the screen behind keeps still); without a picked item, or when
+ * the title is not drawn within HERO_WAIT_MS, the panel simply opens.
+ */
+function growIntoPanel(doc: Doc, run: () => void) {
+  const picked = lastClick && performance.now() - lastClick.at < 1000 && lastClick.el.isConnected ? (lastClick.el as HTMLElement) : null;
+  lastClick = null;
+  const id = picked?.dataset.heroKey;
+  if (!picked || !id) return run();
+  picked.style.viewTransitionName = 'hero';
+  let shared: HTMLElement | null = null;
+  const t = doc.startViewTransition!(async () => {
+    flushSync(run);
+    picked.style.viewTransitionName = '';
+    shared = await waitFor(`.panel:not([data-leaving]) [data-hero="${cssId(id)}"]`);
+    if (shared) shared.style.viewTransitionName = 'hero';
+  });
+  const tidy = () => {
     if (shared) shared.style.viewTransitionName = '';
   };
   t.finished.then(tidy, tidy);

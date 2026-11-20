@@ -11,6 +11,8 @@ import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, setQuery } from '../lib/router';
 import { PanelBack } from './BackBar';
 import { useLeave } from '../lib/leave';
+import { SHEET_PHONE, useDragClose } from '../lib/dragClose';
+import { useMedia } from './FilterSheet';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
@@ -94,6 +96,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   const here = usePresence(taskId ? `t:${taskId}` : null);
 
   const close = useCallback(() => setQuery('task', null), []);
+  useDragClose(panel, close, { handle: '.panel__head', on: useMedia(SHEET_PHONE) });
   // What the way back from another task or record calls this one.
   const taskTitle = task?.title;
   useEffect(() => nameIt(`task:${taskId}`, taskTitle), [taskId, taskTitle]);
@@ -231,7 +234,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
         )}
         {view && !error && (
           <div className="panel__body">
-            <TitleField key={`${view.id}:${view.version}`} value={view.title} disabled={!editable} onSave={(title) => title !== view.title && save({ title })} />
+            <TitleField key={`${view.id}:${view.version}`} hero={view.id} value={view.title} disabled={!editable} onSave={(title) => title !== view.title && save({ title })} />
             {notice && <div className="notice" role="status">{notice}</div>}
             {!!view.blockedBy && (
               <div className="notice notice--wait" role="status">
@@ -476,7 +479,7 @@ function Section({ title, icon, children, action }: { title: string; icon: IconN
   );
 }
 
-function TitleField({ value, disabled, onSave }: { value: string; disabled: boolean; onSave: (v: string) => void }) {
+function TitleField({ hero, value, disabled, onSave }: { hero: string; value: string; disabled: boolean; onSave: (v: string) => void }) {
   const { t } = useI18n();
   const [v, setV] = useState(value);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -491,6 +494,7 @@ function TitleField({ value, disabled, onSave }: { value: string; disabled: bool
     <textarea
       ref={ref}
       className="panel__title"
+      data-hero={hero}
       rows={1}
       aria-label={t('task.title')}
       value={v}

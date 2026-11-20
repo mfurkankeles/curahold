@@ -42,6 +42,14 @@ function keep() {
 }
 
 /** The screen a URL shows, leaving out what only opens a panel over it or filters it. */
+/** Whether moving from `from` to `to` opens a task or record panel over the same screen (`?task=` / `?record=` added or changed). */
+export function panelOpened(from: string, to: string): boolean {
+  const q = (u: string) => new URLSearchParams(u.split('#')[0].split('?')[1] ?? '');
+  const a = q(from);
+  const b = q(to);
+  return ['task', 'record'].some((k) => !!b.get(k) && b.get(k) !== a.get(k));
+}
+
 export function screenOf(url: string): string {
   const [path, qs = ''] = url.split('#')[0].split('?');
   const p = new URLSearchParams(qs);
@@ -178,7 +186,8 @@ function deliver() {
   const run = () => listeners.forEach((f) => f());
   // Same address (a place got its name, a fresh visit marked): a re-render, no transition.
   if (from === shownUrl) return run();
-  moveScreens(screenOf(from) !== screenOf(shownUrl) ? lastMove : null, run, { from: fromKey, to: shownKey });
+  const same = screenOf(from) === screenOf(shownUrl);
+  moveScreens(same ? null : lastMove, run, { from: fromKey, to: shownKey }, same && lastMove === 'forward' && panelOpened(from, shownUrl));
 }
 window.addEventListener('popstate', deliver);
 window.addEventListener('app:navigate', deliver);

@@ -118,7 +118,7 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
     const d = date ? (r.fields[date.key] as string | null) : null;
     const k = kind ? kind.options?.find((o) => o.key === r.fields[kind.key]) : null;
     return (
-      <article className={`card dealcard${overlay ? ' card--overlay' : ''}`} data-due={d ? dueState(d, isClosed(r), today) : undefined} onClick={() => onOpen(r)}>
+      <article className={`card dealcard${overlay ? ' card--overlay' : ''}`} data-hero-key={overlay ? undefined : r.id} data-due={d ? dueState(d, isClosed(r), today) : undefined} onClick={() => onOpen(r)}>
         <div className="card__title">{r.name}</div>
         {r.accountName && <div className="card__account">{r.accountName}</div>}
         <div className="card__meta">
