@@ -17,6 +17,8 @@ import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../sh
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
 import { SITE_FONTS, SITE_LANGS } from '../site/locales';
+import { SITE_GATES } from '../site/gates';
+import { SEED_LOCALES } from './seed-words';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
@@ -44,10 +46,15 @@ const AI_VERSION: 'a' | 'c' = process.env.SITE_AI_VERSION === 'c' ? 'c' : 'a';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-// Which languages the help pages and demo hub are built in. The site falls
-// back to English for any locale they do not cover yet.
-const DOCS_LANGS = new Set<SiteLocale>(['en', 'tr']);
-const DEMO_LANGS = new Set<SiteLocale>(['en', 'tr']);
+// Which languages the help pages and demo hub are built in, read from what is there: the help centre's folders
+// (docs/site/<lang>) and the demo company's languages (scripts/seed-words). A link goes to the reader's own
+// language and falls back to English only for a page that language does not have yet (`docsPath`), so nine
+// languages are no longer sent to English help and the English demo.
+const DOCS_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => existsSync(join(ROOT, 'docs', 'site', l))));
+const DEMO_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => (SEED_LOCALES as string[]).includes(l)));
+/** A help page in the reader's language when it exists there, else in English. */
+const docsPath = (locale: SiteLocale, slug: string) =>
+  `${DOCS}/${DOCS_LANGS.has(locale) && existsSync(join(ROOT, 'docs', 'site', locale, `${slug}.md`)) ? locale : 'en'}/${slug}/`;
 
 
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -194,7 +201,10 @@ function landingJsonLd(locale: SiteLocale, canonical: string, description: strin
         description,
         url: canonical,
         // The landing page names only the lowest price (its summary says "from …"); every offer is on /pricing/.
-        offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` },
+        // No offer at all while the prices are not published (SITE_PRICES, site/gates.ts): structured data never says more than the page.
+        ...(SITE_GATES.prices
+          ? { offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` } }
+          : {}),
         publisher: { '@id': `${ORIGIN}/#org` },
       },
     ],
@@ -230,13 +240,13 @@ function urlsOf(locale: SiteLocale): PageUrls & { blog: string; releases: string
     trial: TRIAL,
     demo: DEMO_LANGS.has(locale) && locale !== 'en' ? `${DEMO}${locale}/` : DEMO,
     docs: `${DOCS}/${docsLocale}/`,
-    devDocs: `${DOCS}/${docsLocale}/developers/`,
-    releases: `${DOCS}/${docsLocale}/release-notes/`,
+    devDocs: docsPath(locale, 'developers'),
+    releases: docsPath(locale, 'release-notes'),
     blog: blogBaseOf(locale),
-    legal: (slug: string) => `${DOCS}/${docsLocale}/legal-${slug}/`,
-    quickstart: `${DOCS}/${docsLocale}/quickstart/`,
-    selfHost: `${DOCS}/${docsLocale}/self-hosting/`,
-    contact: `${DOCS}/${docsLocale}/getting-help/`,
+    legal: (slug: string) => docsPath(locale, `legal-${slug}`),
+    quickstart: docsPath(locale, 'quickstart'),
+    selfHost: docsPath(locale, 'self-hosting'),
+    contact: docsPath(locale, 'getting-help'),
   };
 }
 
@@ -301,6 +311,8 @@ const HIGHEST_PRICE = Math.max(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => 
 /**
  * The plans on /pricing/, yearly first with a monthly switch. Never hidden for a scroll
  * animation: prices are what this page is for. Plan names are h2 (the page's h1 is "Pricing").
+ * While the prices are not published (SITE_PRICES, site/gates.ts) each card says they are
+ * announced at launch and there is no monthly/yearly switch: no figure appears anywhere.
  */
 function plansHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
@@ -311,19 +323,27 @@ function plansHtml(locale: SiteLocale): string {
     const points = (key === 'team' ? TEAM_POINTS : BUSINESS_POINTS).map((k) => `<li>${CHECK}<span>${esc(t(k))}</span></li>`).join('');
     return `<div class="plan${key === 'business' ? ' plan--business' : ''}">
           <h2 class="plan__name">${esc(t(`billing.plan.${key}` as MessageKey))}</h2>
-          <p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>
+          ${
+            SITE_GATES.prices
+              ? `<p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>`
+              : `<p class="plan__price plan__price--soon">${esc(c.pricing.announced)}</p>`
+          }
           <ul>${key === 'business' ? `<li class="plan__plus">${esc(c.pricing.business)}</li>` : ''}${points}</ul>
           <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${ICON_GO}<span>${esc(infoCopy(locale).nav.tryFree)}</span></a>
         </div>`;
   };
   return `<section class="pricing pricing--page" id="pricing">
     <div class="wrap">
-      <div class="pricing__top">
+      ${
+        SITE_GATES.prices
+          ? `<div class="pricing__top">
         <div class="pricing__switch" role="group" aria-label="${esc(c.nav.pricing)}">
           <button type="button" data-interval="month" aria-pressed="false">${esc(c.pricing.monthly)}</button>
           <button type="button" data-interval="year" aria-pressed="true">${esc(c.pricing.yearly)}<small>${esc(c.pricing.save)}</small></button>
         </div>
-      </div>
+      </div>`
+          : ''
+      }
       <div class="plans">${plan('team')}${plan('business')}</div>
       <p class="pricing__fine">${esc(c.pricing.fine)}</p>
     </div>
@@ -341,7 +361,7 @@ function compareHtml(locale: SiteLocale): string {
   // Each amount isolated (<bdi>) so the yearly price comes first in reading order in either direction.
   const price = (k: PlanKey) => `<td class="cmp__price"><bdi>${esc(money(PLANS[k].price.year))}</bdi> / <bdi>${esc(money(PLANS[k].price.month))}</bdi></td>`;
   const rows = [
-    row(pp.priceRow, price('team') + price('business')),
+    ...(SITE_GATES.prices ? [row(pp.priceRow, price('team') + price('business'))] : []),
     ...TEAM_POINTS.map((k) => row(t(k), yes + yes)),
     ...BUSINESS_POINTS.map((k) => row(t(k), no + yes)),
     row(pp.viewers, `<td>${esc(pp.free)}</td><td>${esc(pp.free)}</td>`),
@@ -396,7 +416,9 @@ function offersLd(locale: SiteLocale, url: string): object {
       };
     }),
   );
-  return { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers }, publisher: { '@id': `${ORIGIN}/#org` } };
+  const app = { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, publisher: { '@id': `${ORIGIN}/#org` } };
+  // Prices not published (SITE_PRICES): the application without any Offer.
+  return SITE_GATES.prices ? { ...app, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers } } : app;
 }
 
 /** schema.org FAQPage for questions shown in full on one page (only one page carries each set). */

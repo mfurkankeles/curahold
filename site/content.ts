@@ -6,6 +6,7 @@
 // language misses a key or still holds the English wording. Customer names
 // are invented (the same ones as the demo) and stay as they are written.
 
+import { gated } from './gates';
 import type { SiteLocale } from './locales';
 
 export { SITE_LOCALES, type SiteLocale } from './locales';
@@ -23,7 +24,9 @@ export interface SiteCopy {
     /** The landing page's two-line summary: {from} is the lowest monthly seat price (a yearly plan); `see` links to /pricing/. */
     summary: string;
     see: string;
-    perSeat: string; perSeatYearly: string; business: string; fine: string };
+    perSeat: string; perSeatYearly: string; business: string; fine: string;
+    /** On each plan card while the prices are not published (SITE_PRICES, site/gates.ts). */
+    announced: string };
   faq: { title: string; items: { q: string; a: string }[] };
   /** The closing call to action. */
   cta: { title: string; text: string };
@@ -145,7 +148,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: 'Work management for customer teams',
       title: 'Every renewal, every promise, every task, on time.',
       lead: 'See each customer’s health and the reasons behind it, turn a meeting’s next steps into tasks, and let renewals open themselves ninety days ahead.',
-      note: '3 months free, no card needed.',
+      note: '3 months free once approved, no card needed.',
       works: 'Start beside the tools you have today, move over at your pace',
       pause: 'Pause',
       play: 'Play',
@@ -165,7 +168,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'Q3 business review',
           ours: 'Our side: Zeynep Tunç, Ada Demir',
           theirs: 'Their side: Selin Aytaç',
-          steps: ['Send the extra seats quote', 'Draft a sample journey for the mobile channel'],
+          steps: ['Send the extra seats quote', 'Draft the usage report for their finance team'],
         },
         todo: 'Share the usage report',
         tasksOpened: '2 tasks opened',
@@ -180,7 +183,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Actual',
         review: 'Code review',
         epics: ['Billing', 'Mobile', 'Onboarding'],
-        tasks: ['Sample journey for the mobile channel', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
+        tasks: ['Usage report for the finance team', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
       },
     },
     bento: {
@@ -196,7 +199,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: 'Which accounts need me this week?', a: 'Three need your attention:', did: 'I’ve opened a task for Zeynep: book the Marevo review.' },
       portal: { plan: 'Onboarding' },
-      facts: ['SSO with SAML 2.0 or OpenID Connect', 'SCIM provisioning', 'Audit log', 'Database in the European Union', 'Runs on your own servers too'],
+      facts: ['SSO with SAML 2.0 or OpenID Connect', 'SCIM provisioning', 'Audit log', '⟦eu|Database in the European Union|⟧', 'Runs on your own servers too'],
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -204,25 +207,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: 'Monthly',
       yearly: 'Yearly',
       save: 'about 20% less',
-      summary: 'From {from} per seat a month on a yearly plan. Every plan starts with three months free, no card needed.',
+      summary: '⟦price|From {from} per seat a month on a yearly plan. Every plan starts with three months free, no card needed.|Prices are announced at launch. Every plan starts with three months free once approved, no card needed.⟧',
       see: 'Compare the plans',
       perSeat: 'per seat a month',
       perSeatYearly: 'per seat a month, paid yearly',
       business: 'Everything in Team, plus',
-      fine: 'Prices in US dollars; taxes are added at checkout. Seats follow the people who have joined. Payments are handled by Paddle, our reseller.',
+      fine: '⟦price|Prices in US dollars; taxes are added at checkout. Seats follow the people who have joined. Payments are handled by Paddle, our reseller.|Taxes are added at checkout. Seats follow the people who have joined. Payments are handled by Paddle, our reseller.⟧',
+      announced: 'Price announced at launch',
     },
     faq: {
       title: 'Questions',
       items: [
-        { q: 'Where is our data kept?', a: 'The database is in the European Union. Every company is kept apart at the database itself, so no mistake in a screen can show one company another’s data. The data processing agreement covers GDPR and Türkiye’s KVKK.' },
+        { q: '⟦eu|Where is our data kept?|How is our data kept apart?⟧', a: '⟦eu|The database is in the European Union. |⟧Every company is kept apart at the database itself, so no mistake in a screen can show one company another’s data. The data processing agreement covers GDPR and Türkiye’s KVKK.' },
         { q: 'Can we run it on our own servers?', a: 'Yes. A single-company package runs on your own server or cloud with its own database; it has no billing.' },
         { q: 'Do we need a CRM?', a: 'No. Customers can come from a spreadsheet, or be added by hand. If you have a CRM, Curahold keeps in step with it both ways.' },
         { q: 'Can we cancel at any time?', a: 'Yes. A cancelled plan works until the end of the period paid for, and everything can be exported.' },
         { q: 'Can we use our own words?', a: 'Yes. Call your customers accounts, partners or clients, and the whole interface follows. The app, the help center and the live demo all speak eleven languages.' },
-        { q: 'How long does setting up take?', a: 'About fifteen minutes: choose your address, bring your customers from a spreadsheet, invite your team.' },
+        { q: 'How does setting up work?', a: 'Choose your address, bring your customers from a spreadsheet and invite your team. A guided setup takes you through each step.' },
       ],
     },
-    cta: { title: 'Give every customer a team that never forgets.', text: 'Three months free, with everything switched on. Bring your customers from a spreadsheet and be at work in fifteen minutes.' },
+    cta: { title: 'Give every customer a team that never forgets.', text: 'Three months free once approved, with everything switched on. Bring your customers from a spreadsheet and a guided setup takes you through the rest.' },
     signIn: {
       title: 'Sign in',
       text: 'Every company has its own address. Type yours to go to its sign-in page.',
@@ -266,7 +270,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: 'Müşteri ekipleri için iş yönetimi',
       title: 'Her yenileme, her söz, her görev zamanında.',
       lead: 'Her müşterinin sağlığını nedenleriyle görün, toplantıdaki sonraki adımları göreve dönüştürün; yenilemeler doksan gün önceden kendiliğinden açılsın.',
-      note: '3 ay ücretsiz, kart gerekmez.',
+      note: 'Onaydan sonra 3 ay ücretsiz, kart gerekmez.',
       works: 'Bugünkü araçlarınızın yanında başlayın, kendi hızınızda geçin',
       pause: 'Durdur',
       play: 'Oynat',
@@ -286,7 +290,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: '3. çeyrek iş değerlendirmesi',
           ours: 'Bizden: Zeynep Tunç, Ada Demir',
           theirs: 'Onlardan: Selin Aytaç',
-          steps: ['Ek kullanıcı teklifini gönder', 'Mobil kanal için örnek akış hazırla'],
+          steps: ['Ek kullanıcı teklifini gönder', 'Finans ekibi için kullanım raporunu hazırla'],
         },
         todo: 'Kullanım raporunu paylaş',
         tasksOpened: '2 görev açıldı',
@@ -301,7 +305,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Gerçekleşen',
         review: 'Kod incelemesi',
         epics: ['Faturalama', 'Mobil', 'Kurulum'],
-        tasks: ['Mobil kanal için örnek akış', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
+        tasks: ['Finans ekibi için kullanım raporu', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
       },
     },
     bento: {
@@ -317,7 +321,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: 'Bu hafta hangi müşteriler beni bekliyor?', a: 'Üç müşteri ilgi bekliyor:', did: 'Zeynep’e bir görev açtım: Marevo değerlendirmesini planlamak.' },
       portal: { plan: 'Başlangıç' },
-      facts: ['SAML 2.0 ya da OpenID Connect ile SSO', 'SCIM ile kullanıcı yönetimi', 'Denetim kaydı', 'Veritabanı Avrupa Birliği’nde', 'Kendi sunucunuzda da çalışır'],
+      facts: ['SAML 2.0 ya da OpenID Connect ile SSO', 'SCIM ile kullanıcı yönetimi', 'Denetim kaydı', '⟦eu|Veritabanı Avrupa Birliği’nde|⟧', 'Kendi sunucunuzda da çalışır'],
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -325,25 +329,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: 'Aylık',
       yearly: 'Yıllık',
       save: 'yaklaşık %20 daha az',
-      summary: 'Fiyatlar, yıllık planda kullanıcı başına aylık {from} ile başlar. Her plan, kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.',
+      summary: '⟦price|Fiyatlar, yıllık planda kullanıcı başına aylık {from} ile başlar. Her plan, kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.|Fiyatlar lansmanda açıklanacak. Her plan, onaydan sonra kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.⟧',
       see: 'Planları karşılaştırın',
       perSeat: 'kullanıcı başına, aylık',
       perSeatYearly: 'kullanıcı başına aylık, yıllık ödemede',
       business: 'Team’deki her şey, artı',
-      fine: 'Fiyatlar ABD doları cinsindendir; vergiler ödeme sırasında eklenir. Kullanıcı sayısı katılan kişileri izler. Ödemeleri satıcımız Paddle alır.',
+      fine: '⟦price|Fiyatlar ABD doları cinsindendir; vergiler ödeme sırasında eklenir. Kullanıcı sayısı katılan kişileri izler. Ödemeleri satıcımız Paddle alır.|Vergiler ödeme sırasında eklenir. Kullanıcı sayısı katılan kişileri izler. Ödemeleri satıcımız Paddle alır.⟧',
+      announced: 'Fiyat lansmanda açıklanacak',
     },
     faq: {
       title: 'Sorular',
       items: [
-        { q: 'Verilerimiz nerede tutuluyor?', a: 'Veritabanı Avrupa Birliği’nde. Her şirket veritabanının kendisinde birbirinden ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.' },
+        { q: '⟦eu|Verilerimiz nerede tutuluyor?|Verilerimiz nasıl ayrı tutuluyor?⟧', a: '⟦eu|Veritabanı Avrupa Birliği’nde. |⟧Her şirket veritabanının kendisinde birbirinden ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.' },
         { q: 'Kendi sunucularımızda çalıştırabilir miyiz?', a: 'Evet. Tek şirketlik paket, kendi veritabanıyla kendi sunucunuzda ya da bulutunuzda çalışır; aboneliği yoktur.' },
         { q: 'CRM’imiz olması gerekiyor mu?', a: 'Hayır. Müşteriler bir tablodan gelebilir ya da elle eklenebilir. CRM’iniz varsa Curahold onunla iki yönlü uyumlu kalır.' },
         { q: 'İstediğimiz zaman iptal edebilir miyiz?', a: 'Evet. İptal edilen plan ödenmiş dönemin sonuna kadar çalışır ve her şey dışa aktarılabilir.' },
         { q: 'Kendi kelimelerimizi kullanabilir miyiz?', a: 'Evet. Müşterilerinize müşteri, partner ya da hesap deyin; bütün arayüz ona göre konuşur. Uygulama, yardım merkezi ve canlı demo on bir dilde.' },
-        { q: 'Kurulum ne kadar sürer?', a: 'Yaklaşık on beş dakika: adresinizi seçin, müşterilerinizi bir tablodan aktarın, ekibinizi davet edin.' },
+        { q: 'Kurulum nasıl işliyor?', a: 'Adresinizi seçin, müşterilerinizi bir tablodan aktarın, ekibinizi davet edin. Rehberli kurulum her adımda size yol gösterir.' },
       ],
     },
-    cta: { title: 'Her müşterinize hiçbir şeyi unutmayan bir ekip verin.', text: 'Her şey açık, üç ay ücretsiz. Müşterilerinizi bir tablodan aktarın, on beş dakikada işe başlayın.' },
+    cta: { title: 'Her müşterinize hiçbir şeyi unutmayan bir ekip verin.', text: 'Onaydan sonra üç ay ücretsiz, her şey açık. Müşterilerinizi bir tablodan aktarın, gerisini rehberli kurulum adım adım gösterir.' },
     signIn: {
       title: 'Giriş yap',
       text: 'Her şirketin kendi adresi var. Giriş sayfasına gitmek için şirketinizin adresini yazın.',
@@ -387,7 +392,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: 'إدارة العمل لفرق العملاء',
       title: 'كل تجديد وكل وعد وكل مهمة في موعدها.',
       lead: 'اعرف صحة كل عميل وأسبابها، وحوّل الخطوات التالية في كل اجتماع إلى مهام، ودع التجديدات تبدأ وحدها قبل موعدها بتسعين يومًا.',
-      note: '3 أشهر مجانًا، دون بطاقة دفع.',
+      note: '3 أشهر مجانًا بعد الموافقة، دون بطاقة دفع.',
       works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
       pause: 'إيقاف مؤقت',
       play: 'تشغيل',
@@ -407,7 +412,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'مراجعة أعمال الربع الثالث',
           ours: 'من جانبنا: Zeynep Tunç، Ada Demir',
           theirs: 'من جانبهم: Selin Aytaç',
-          steps: ['أرسل عرض المقاعد الإضافية', 'جهّز رحلة نموذجية لقناة الجوال'],
+          steps: ['أرسل عرض المقاعد الإضافية', 'جهّز تقرير الاستخدام لفريقهم المالي'],
         },
         todo: 'شارك تقرير الاستخدام',
         tasksOpened: 'فُتحت مهمتان',
@@ -422,7 +427,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'الفعلي',
         review: 'مراجعة الكود',
         epics: ['الفوترة', 'الجوال', 'الاستقبال'],
-        tasks: ['رحلة نموذجية لقناة الجوال', 'قائمة الترحيب', 'إصلاح تصدير CSV', 'فواتير حسب المقاعد', 'إشعارات فورية على iOS'],
+        tasks: ['تقرير استخدام للفريق المالي', 'قائمة الترحيب', 'إصلاح تصدير CSV', 'فواتير حسب المقاعد', 'إشعارات فورية على iOS'],
       },
     },
     bento: {
@@ -438,7 +443,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: 'أي العملاء يحتاجون إليّ هذا الأسبوع؟', a: 'ثلاثة يحتاجون إلى اهتمامك:', did: 'فتحتُ مهمة لـ Zeynep: حجز مراجعة Marevo.' },
       portal: { plan: 'الاستقبال' },
-      facts: ['دخول موحّد عبر SAML 2.0 أو OpenID Connect', 'إدارة المستخدمين عبر SCIM', 'سجل التدقيق', 'قاعدة البيانات في الاتحاد الأوروبي', 'يعمل على خوادمك أيضًا'],
+      facts: ['دخول موحّد عبر SAML 2.0 أو OpenID Connect', 'إدارة المستخدمين عبر SCIM', 'سجل التدقيق', '⟦eu|قاعدة البيانات في الاتحاد الأوروبي|⟧', 'يعمل على خوادمك أيضًا'],
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
@@ -446,25 +451,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: 'شهري',
       yearly: 'سنوي',
       save: 'أقل بنحو 20%',
-      summary: 'تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.',
+      summary: '⟦price|تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.|تُعلَن الأسعار عند الإطلاق. وتبدأ كل خطة بثلاثة أشهر مجانًا بعد الموافقة، دون بطاقة دفع.⟧',
       see: 'قارن بين الخطط',
       perSeat: 'لكل مقعد شهريًا',
       perSeatYearly: 'لكل مقعد شهريًا، بدفع سنوي',
       business: 'كل ما في الفريق، بالإضافة إلى',
-      fine: 'الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.',
+      fine: '⟦price|الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.|تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.⟧',
+      announced: 'يُعلَن السعر عند الإطلاق',
     },
     faq: {
       title: 'أسئلة',
       items: [
-        { q: 'أين تُحفظ بياناتنا؟', a: 'قاعدة البيانات في الاتحاد الأوروبي. تُفصل كل شركة عن غيرها في قاعدة البيانات نفسها، فلا يمكن لأي خطأ في شاشة أن يُظهر لشركة بيانات شركة أخرى. تغطي اتفاقية معالجة البيانات لائحة GDPR وقانون KVKK التركي.' },
+        { q: '⟦eu|أين تُحفظ بياناتنا؟|كيف تُفصل بياناتنا عن غيرها؟⟧', a: '⟦eu|قاعدة البيانات في الاتحاد الأوروبي. |⟧تُفصل كل شركة عن غيرها في قاعدة البيانات نفسها، فلا يمكن لأي خطأ في شاشة أن يُظهر لشركة بيانات شركة أخرى. تغطي اتفاقية معالجة البيانات لائحة GDPR وقانون KVKK التركي.' },
         { q: 'هل يمكننا تشغيله على خوادمنا الخاصة؟', a: 'نعم. تعمل حزمة الشركة الواحدة على خادمك أو سحابتك بقاعدة بياناتها الخاصة؛ وليست لها اشتراكات.' },
         { q: 'هل نحتاج إلى نظام إدارة عملاء؟', a: 'لا. يمكن أن يأتي العملاء من جدول بيانات أو يُضافوا يدويًا. وإن كان لديك نظام إدارة عملاء، يبقى Curahold متوافقًا معه في الاتجاهين.' },
         { q: 'هل يمكننا الإلغاء في أي وقت؟', a: 'نعم. تعمل الخطة الملغاة حتى نهاية المدة المدفوعة، ويمكن تصدير كل شيء.' },
         { q: 'هل يمكننا استخدام كلماتنا الخاصة؟', a: 'نعم. سمِّ عملاءك حسابات أو شركاء أو زبائن، وتتبع الواجهة كلها ذلك. التطبيق ومركز المساعدة والعرض المباشر متاحة كلها بإحدى عشرة لغة.' },
-        { q: 'كم يستغرق الإعداد؟', a: 'نحو خمس عشرة دقيقة: اختر عنوانك، واجلب عملاءك من جدول بيانات، وادعُ فريقك.' },
+        { q: 'كيف يجري الإعداد؟', a: 'اختر عنوانك، واجلب عملاءك من جدول بيانات، وادعُ فريقك. ويرشدك الإعداد الموجَّه في كل خطوة.' },
       ],
     },
-    cta: { title: 'امنح كل عميل فريقًا لا ينسى.', text: 'ثلاثة أشهر مجانًا وكل شيء مفعّل. اجلب عملاءك من جدول بيانات وابدأ العمل في خمس عشرة دقيقة.' },
+    cta: { title: 'امنح كل عميل فريقًا لا ينسى.', text: 'ثلاثة أشهر مجانًا بعد الموافقة، وكل شيء مفعّل. اجلب عملاءك من جدول بيانات، ويرشدك الإعداد الموجَّه في بقية الخطوات.' },
     signIn: {
       title: 'تسجيل الدخول',
       text: 'لكل شركة عنوانها الخاص. اكتب عنوان شركتك للانتقال إلى صفحة تسجيل دخولها.',
@@ -508,7 +514,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: 'ניהול עבודה לצוותי לקוחות',
       title: 'כל חידוש, כל הבטחה וכל משימה, בזמן.',
       lead: 'ראו את הבריאות של כל לקוח ואת הסיבות לה, הפכו את הצעדים הבאים מכל פגישה למשימות, ותנו לחידושים להיפתח מעצמם תשעים יום מראש.',
-      note: '3 חודשים בחינם, בלי כרטיס אשראי.',
+      note: '3 חודשים בחינם לאחר אישור, בלי כרטיס אשראי.',
       works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
       pause: 'השהיה',
       play: 'הפעלה',
@@ -516,14 +522,14 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     tour: {
       label: 'סיור במוצר',
       steps: [
-        { tab: 'בריאות', title: 'ראה מי צריך אותך', text: 'לכל לקוח ציון מ-0 עד 100 והסיבות שמאחוריו, כך שהלקוח שהשתתק עולה לראש הרשימה מעצמו.' },
-        { tab: 'הבטחות', title: 'עמוד בכל הבטחה', text: 'תעד את הפגישה והצעדים הבאים שלה הופכים למשימות, לכל אחת בעלים ותאריך. שום דבר שנאמר בחדר לא הולך לאיבוד.' },
-        { tab: 'חידושים', title: 'התחל לחדש מוקדם', text: 'תשעים יום לפני התאריך, פלייבוק החידוש פותח את המשימות שלו והזדמנות חידוש. אף אחד לא צריך לזכור.' },
-        { tab: 'ספרינטים', title: 'שחרר בספרינטים', text: 'אפיקים, סטורי פוינטס ומשימות מקושרות על אותם לוחות, וגרף הברנדאון מצטייר מעצמו כשהכרטיסים נסגרים.' },
+        { tab: 'בריאות', title: 'ראו מי צריך אתכם', text: 'לכל לקוח ציון מ-0 עד 100 והסיבות שמאחוריו, כך שהלקוח שהשתתק עולה לראש הרשימה מעצמו.' },
+        { tab: 'הבטחות', title: 'עמדו בכל הבטחה', text: 'תעדו את הפגישה והצעדים הבאים שלה הופכים למשימות, לכל אחת בעלים ותאריך. שום דבר שנאמר בחדר לא הולך לאיבוד.' },
+        { tab: 'חידושים', title: 'התחילו לחדש מוקדם', text: 'תשעים יום לפני התאריך, פלייבוק החידוש פותח את המשימות שלו והזדמנות חידוש. אף אחד לא צריך לזכור.' },
+        { tab: 'ספרינטים', title: 'שחררו בספרינטים', text: 'אפיקים, סטורי פוינטס ומשימות מקושרות על אותם לוחות, וגרף הברנדאון מצטייר מעצמו כשהכרטיסים נסגרים.' },
       ],
       ui: {
         chips: { review: 'סקירה עסקית באיחור של 14 ימים', renewal: 'חידוש בעוד 94 ימים' },
-        meeting: { kind: 'סקירה עסקית', name: 'סקירה עסקית לרבעון 3', ours: 'מצידנו: Zeynep Tunç, Ada Demir', theirs: 'מצידם: Selin Aytaç', steps: ['שלח הצעה למושבים נוספים', 'הכן מסע לדוגמה לערוץ המובייל'] },
+        meeting: { kind: 'סקירה עסקית', name: 'סקירה עסקית לרבעון 3', ours: 'מצידנו: Zeynep Tunç, Ada Demir', theirs: 'מצידם: Selin Aytaç', steps: ['שלחו הצעה למושבים נוספים', 'הכינו דוח שימוש לצוות הכספים שלהם'] },
         todo: 'שתף את דוח השימוש',
         tasksOpened: 'נפתחו 2 משימות',
         playbook: 'פלייבוק חידוש',
@@ -537,7 +543,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'בפועל',
         review: 'סקירת קוד',
         epics: ['חיוב', 'מובייל', 'קליטה'],
-        tasks: ['מסע לדוגמה לערוץ המובייל', 'רשימת קבלת פנים', 'תיקון ייצוא CSV', 'חשבוניות לפי מושבים', 'התראות פוש ב-iOS'],
+        tasks: ['דוח שימוש לצוות הכספים', 'רשימת קבלת פנים', 'תיקון ייצוא CSV', 'חשבוניות לפי מושבים', 'התראות פוש ב-iOS'],
       },
     },
     bento: {
@@ -553,7 +559,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: 'אילו לקוחות צריכים אותי השבוע?', a: 'שלושה זקוקים לתשומת לב:', did: 'פתחתי משימה ל-Zeynep: לקבוע את הסקירה של Marevo.' },
       portal: { plan: 'קליטה' },
-      facts: ['SSO עם SAML 2.0 או OpenID Connect', 'ניהול משתמשים ב-SCIM', 'יומן ביקורת', 'מסד הנתונים באיחוד האירופי', 'רץ גם על השרתים שלך'],
+      facts: ['SSO עם SAML 2.0 או OpenID Connect', 'ניהול משתמשים ב-SCIM', 'יומן ביקורת', '⟦eu|מסד הנתונים באיחוד האירופי|⟧', 'רץ גם על השרתים שלך'],
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
@@ -561,25 +567,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: 'חודשי',
       yearly: 'שנתי',
       save: 'בכ-20% פחות',
-      summary: 'החל מ-{from} למושב לחודש בתוכנית שנתית. כל תוכנית מתחילה בשלושה חודשים בחינם, בלי כרטיס אשראי.',
+      summary: '⟦price|החל מ-{from} למושב לחודש בתוכנית שנתית. כל תוכנית מתחילה בשלושה חודשים בחינם, בלי כרטיס אשראי.|המחירים יפורסמו בהשקה. כל תוכנית מתחילה בשלושה חודשים בחינם לאחר אישור, בלי כרטיס אשראי.⟧',
       see: 'השוואת תוכניות',
       perSeat: 'למושב לחודש',
       perSeatYearly: 'למושב לחודש, בתשלום שנתי',
       business: 'כל מה שבצוות, ובנוסף',
-      fine: 'המחירים בדולר אמריקאי; מסים מתווספים בתשלום. מספר המושבים עוקב אחר מי שהצטרף. את התשלומים מטפל המשווק שלנו Paddle.',
+      fine: '⟦price|המחירים בדולר אמריקאי; מסים מתווספים בתשלום. מספר המושבים עוקב אחר מי שהצטרף. את התשלומים מטפל המשווק שלנו Paddle.|מסים מתווספים בתשלום. מספר המושבים עוקב אחר מי שהצטרף. את התשלומים מטפל המשווק שלנו Paddle.⟧',
+      announced: 'המחיר יפורסם בהשקה',
     },
     faq: {
       title: 'שאלות',
       items: [
-        { q: 'היכן נשמרים הנתונים שלנו?', a: 'מסד הנתונים נמצא באיחוד האירופי. כל חברה מופרדת מהאחרות במסד הנתונים עצמו, כך ששום תקלה במסך לא תציג לחברה את נתוני חברה אחרת. הסכם עיבוד הנתונים מכסה את GDPR ואת KVKK הטורקי.' },
+        { q: '⟦eu|היכן נשמרים הנתונים שלנו?|איך הנתונים שלנו מופרדים?⟧', a: '⟦eu|מסד הנתונים נמצא באיחוד האירופי. |⟧כל חברה מופרדת מהאחרות במסד הנתונים עצמו, כך ששום תקלה במסך לא תציג לחברה את נתוני חברה אחרת. הסכם עיבוד הנתונים מכסה את GDPR ואת KVKK הטורקי.' },
         { q: 'אפשר להריץ על שרתים שלנו?', a: 'כן. חבילת החברה היחידה רצה על השרת או הענן שלך עם מסד נתונים משלה; אין לה חיוב.' },
         { q: 'צריך CRM?', a: 'לא. לקוחות יכולים להגיע מגיליון או להתווסף ידנית. אם יש לך CRM, Curahold נשאר מסונכרן איתו בשני הכיוונים.' },
         { q: 'אפשר לבטל בכל עת?', a: 'כן. תוכנית שבוטלה עובדת עד סוף התקופה ששולמה, והכול ניתן לייצוא.' },
         { q: 'אפשר להשתמש במילים שלנו?', a: 'כן. קרא ללקוחות שלך חשבונות, שותפים או לקוחות, וכל הממשק יתאים את עצמו. האפליקציה, מרכז העזרה וההדגמה החיה זמינים באחת עשרה שפות.' },
-        { q: 'כמה זמן לוקח להתקין?', a: 'כחמש עשרה דקות: בחר את הכתובת שלך, הבא את הלקוחות מגיליון, והזמן את הצוות.' },
+        { q: 'איך עובדת ההקמה?', a: 'בחרו כתובת, הביאו את הלקוחות מגיליון והזמינו את הצוות. ההקמה המודרכת מובילה אתכם בכל שלב.' },
       ],
     },
-    cta: { title: 'תן לכל לקוח צוות שלא שוכח.', text: 'שלושה חודשים חינם, עם הכול פתוח. הבא את הלקוחות מגיליון והתחל לעבוד תוך רבע שעה.' },
+    cta: { title: 'תן לכל לקוח צוות שלא שוכח.', text: 'שלושה חודשים בחינם לאחר אישור, עם הכול פתוח. הביאו את הלקוחות מגיליון, וההקמה המודרכת תלווה אתכם בשאר הדרך.' },
     signIn: {
       title: 'התחברות',
       text: 'לכל חברה כתובת משלה. הקלד את כתובת החברה שלך כדי לעבור לדף ההתחברות שלה.',
@@ -623,7 +630,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: 'مدیریت کار برای تیم‌های مشتری',
       title: 'هر تمدید، هر قول و هر وظیفه، سرِ وقت.',
       lead: 'سلامت هر مشتری را همراه با دلایلش ببینید، گام‌های بعدی هر جلسه را به وظیفه تبدیل کنید و بگذارید تمدیدها نود روز زودتر خودشان شروع شوند.',
-      note: '۳ ماه رایگان، بدون نیاز به کارت.',
+      note: '۳ ماه رایگان پس از تأیید، بدون نیاز به کارت.',
       works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
       pause: 'توقف',
       play: 'پخش',
@@ -643,7 +650,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'بازبینی کسب‌وکار سه‌ماههٔ سوم',
           ours: 'از طرف ما: Zeynep Tunç، Ada Demir',
           theirs: 'از طرف آن‌ها: Selin Aytaç',
-          steps: ['ارسال پیشنهاد صندلی‌های بیشتر', 'آماده‌سازی سفر نمونه برای کانال موبایل'],
+          steps: ['ارسال پیشنهاد صندلی‌های بیشتر', 'آماده‌سازی گزارش استفاده برای تیم مالی'],
         },
         todo: 'اشتراک‌گذاری گزارش استفاده',
         tasksOpened: '۲ وظیفه باز شد',
@@ -658,7 +665,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'واقعی',
         review: 'بازبینی کد',
         epics: ['صورتحساب', 'موبایل', 'آنبوردینگ'],
-        tasks: ['سفر نمونه برای کانال موبایل', 'چک‌لیست خوشامدگویی', 'رفع خروجی CSV', 'صورتحساب بر پایهٔ صندلی', 'اعلان‌های پوش در iOS'],
+        tasks: ['گزارش استفاده برای تیم مالی', 'چک‌لیست خوشامدگویی', 'رفع خروجی CSV', 'صورتحساب بر پایهٔ صندلی', 'اعلان‌های پوش در iOS'],
       },
     },
     bento: {
@@ -674,7 +681,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: 'این هفته کدام مشتریان به من نیاز دارند؟', a: 'سه مشتری به توجه نیاز دارند:', did: 'برای Zeynep یک وظیفه باز کردم: تنظیم بازبینی Marevo.' },
       portal: { plan: 'آنبوردینگ' },
-      facts: ['SSO با SAML 2.0 یا OpenID Connect', 'مدیریت کاربران با SCIM', 'گزارش ممیزی', 'پایگاه داده در اتحادیهٔ اروپا', 'روی سرورهای خودتان هم اجرا می‌شود'],
+      facts: ['SSO با SAML 2.0 یا OpenID Connect', 'مدیریت کاربران با SCIM', 'گزارش ممیزی', '⟦eu|پایگاه داده در اتحادیهٔ اروپا|⟧', 'روی سرورهای خودتان هم اجرا می‌شود'],
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
@@ -682,25 +689,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: 'ماهانه',
       yearly: 'سالانه',
       save: 'حدود ۲۰٪ کمتر',
-      summary: 'از {from} برای هر صندلی در ماه با طرح سالانه. هر طرح با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.',
+      summary: '⟦price|از {from} برای هر صندلی در ماه با طرح سالانه. هر طرح با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.|قیمت‌ها هنگام عرضه اعلام می‌شود. هر طرح پس از تأیید با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.⟧',
       see: 'مقایسهٔ طرح‌ها',
       perSeat: 'هر صندلی در ماه',
       perSeatYearly: 'هر صندلی در ماه، با پرداخت سالانه',
       business: 'همه چیزِ طرح تیم، به‌علاوهٔ',
-      fine: 'قیمت‌ها به دلار آمریکا است؛ مالیات هنگام پرداخت افزوده می‌شود. شمار صندلی‌ها از افرادی که پیوسته‌اند پیروی می‌کند. پرداخت‌ها را فروشنده ما Paddle انجام می‌دهد.',
+      fine: '⟦price|قیمت‌ها به دلار آمریکا است؛ مالیات هنگام پرداخت افزوده می‌شود. شمار صندلی‌ها از افرادی که پیوسته‌اند پیروی می‌کند. پرداخت‌ها را فروشنده ما Paddle انجام می‌دهد.|مالیات هنگام پرداخت افزوده می‌شود. شمار صندلی‌ها از افرادی که پیوسته‌اند پیروی می‌کند. پرداخت‌ها را فروشنده ما Paddle انجام می‌دهد.⟧',
+      announced: 'قیمت هنگام عرضه اعلام می‌شود',
     },
     faq: {
       title: 'پرسش‌ها',
       items: [
-        { q: 'داده‌های ما کجا نگهداری می‌شود؟', a: 'پایگاه داده در اتحادیهٔ اروپا است. هر شرکت در خودِ پایگاه داده از دیگران جدا می‌شود؛ پس هیچ خطایی در یک صفحه نمی‌تواند دادهٔ یک شرکت را به شرکت دیگر نشان دهد. قرارداد پردازش داده، GDPR و KVKK ترکیه را پوشش می‌دهد.' },
+        { q: '⟦eu|داده‌های ما کجا نگهداری می‌شود؟|داده‌های ما چگونه جدا نگه داشته می‌شود؟⟧', a: '⟦eu|پایگاه داده در اتحادیهٔ اروپا است. |⟧هر شرکت در خودِ پایگاه داده از دیگران جدا می‌شود؛ پس هیچ خطایی در یک صفحه نمی‌تواند دادهٔ یک شرکت را به شرکت دیگر نشان دهد. قرارداد پردازش داده، GDPR و KVKK ترکیه را پوشش می‌دهد.' },
         { q: 'می‌توانیم روی سرورهای خودمان اجرا کنیم؟', a: 'بله. بستهٔ تک‌شرکتی با پایگاه دادهٔ خودش روی سرور یا ابر شما اجرا می‌شود و صورتحساب اشتراک ندارد.' },
         { q: 'به CRM نیاز داریم؟', a: 'خیر. مشتریان می‌توانند از یک صفحه‌گسترده بیایند یا دستی افزوده شوند. اگر CRM دارید، Curahold دوطرفه با آن هماهنگ می‌ماند.' },
         { q: 'هر وقت بخواهیم می‌توانیم لغو کنیم؟', a: 'بله. طرح لغوشده تا پایان دورهٔ پرداخت‌شده کار می‌کند و از همه چیز می‌توان خروجی گرفت.' },
         { q: 'می‌توانیم از واژه‌های خودمان استفاده کنیم؟', a: 'بله. مشتریانتان را حساب، شریک یا کارفرما بنامید؛ کل رابط از آن پیروی می‌کند. برنامه، مرکز راهنما و دموی زنده هر سه به یازده زبان در دسترس‌اند.' },
-        { q: 'راه‌اندازی چقدر طول می‌کشد؟', a: 'حدود پانزده دقیقه: آدرستان را انتخاب کنید، مشتریانتان را از یک صفحه‌گسترده بیاورید و تیمتان را دعوت کنید.' },
+        { q: 'راه‌اندازی چگونه انجام می‌شود؟', a: 'آدرستان را انتخاب کنید، مشتریانتان را از یک صفحه‌گسترده بیاورید و تیمتان را دعوت کنید. راه‌اندازی گام‌به‌گام در هر مرحله راهنمایتان است.' },
       ],
     },
-    cta: { title: 'به هر مشتری تیمی بدهید که چیزی را فراموش نمی‌کند.', text: 'سه ماه رایگان، با همهٔ امکانات. مشتریانتان را از یک صفحه‌گسترده بیاورید و در پانزده دقیقه مشغول کار شوید.' },
+    cta: { title: 'به هر مشتری تیمی بدهید که چیزی را فراموش نمی‌کند.', text: 'سه ماه رایگان پس از تأیید، با همهٔ امکانات. مشتریانتان را از یک صفحه‌گسترده بیاورید؛ راه‌اندازی گام‌به‌گام بقیهٔ راه را نشانتان می‌دهد.' },
     signIn: {
       title: 'ورود',
       text: 'هر شرکت آدرس خودش را دارد. برای رفتن به صفحهٔ ورود، آدرس شرکتتان را بنویسید.',
@@ -740,7 +748,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hans': {
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移', pause: '暂停', play: '播放' },
+    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '申请通过后 3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移', pause: '暂停', play: '播放' },
     tour: {
       label: '产品导览',
       steps: [
@@ -751,7 +759,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '业务回顾已延迟 14 天', renewal: '94 天后续约' },
-        meeting: { kind: '业务回顾', name: '第三季度业务回顾', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '对方：Selin Aytaç', steps: ['发送增购席位报价', '起草移动渠道的示例旅程'] },
+        meeting: { kind: '业务回顾', name: '第三季度业务回顾', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '对方：Selin Aytaç', steps: ['发送增购席位报价', '起草财务团队的使用情况报告'] },
         todo: '分享使用情况报告',
         tasksOpened: '已创建 2 个任务',
         playbook: '续约行动手册',
@@ -765,7 +773,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '实际',
         review: '代码评审',
         epics: ['计费', '移动端', '入门引导'],
-        tasks: ['移动渠道的示例旅程', '欢迎清单', '修复 CSV 导出', '按席位开票', 'iOS 推送通知'],
+        tasks: ['财务团队的使用情况报告', '欢迎清单', '修复 CSV 导出', '按席位开票', 'iOS 推送通知'],
       },
     },
     bento: {
@@ -781,7 +789,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: '这周哪些客户需要我？', a: '有三个客户需要你关注：', did: '我已为 Zeynep 创建任务：安排 Marevo 的业务回顾。' },
       portal: { plan: '入门引导' },
-      facts: ['支持 SAML 2.0 或 OpenID Connect 单点登录', 'SCIM 用户配置', '审计日志', '数据库位于欧盟', '也可在你自己的服务器上运行'],
+      facts: ['支持 SAML 2.0 或 OpenID Connect 单点登录', 'SCIM 用户配置', '审计日志', '⟦eu|数据库位于欧盟|⟧', '也可在你自己的服务器上运行'],
     },
     pricing: {
       title: '简单的按席位定价',
@@ -789,25 +797,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: '按月',
       yearly: '按年',
       save: '约便宜 20%',
-      summary: '按年付每席位每月 {from} 起。每个套餐都以 3 个月免费试用开始，无需信用卡。',
+      summary: '⟦price|按年付每席位每月 {from} 起。每个套餐都以 3 个月免费试用开始，无需信用卡。|价格将在正式发布时公布。每个套餐都在申请通过后以 3 个月免费试用开始，无需信用卡。⟧',
       see: '比较套餐',
       perSeat: '每席位每月',
       perSeatYearly: '每席位每月，按年付费',
       business: '包含团队版的一切，另加',
-      fine: '价格以美元计；结账时另加税费。席位数随加入的成员变化。付款由我们的经销商 Paddle 处理。',
+      fine: '⟦price|价格以美元计；结账时另加税费。席位数随加入的成员变化。付款由我们的经销商 Paddle 处理。|结账时另加税费。席位数随加入的成员变化。付款由我们的经销商 Paddle 处理。⟧',
+      announced: '价格将在发布时公布',
     },
     faq: {
       title: '常见问题',
       items: [
-        { q: '我们的数据保存在哪里？', a: '数据库位于欧盟。每家公司在数据库层面彼此隔离，因此任何界面上的差错都无法把一家公司的数据显示给另一家。数据处理协议涵盖 GDPR 与土耳其的 KVKK。' },
+        { q: '⟦eu|我们的数据保存在哪里？|我们的数据如何隔离？⟧', a: '⟦eu|数据库位于欧盟。|⟧每家公司在数据库层面彼此隔离，因此任何界面上的差错都无法把一家公司的数据显示给另一家。数据处理协议涵盖 GDPR 与土耳其的 KVKK。' },
         { q: '可以在我们自己的服务器上运行吗？', a: '可以。单公司版在你自己的服务器或云上运行，拥有独立数据库；没有订阅计费。' },
         { q: '需要 CRM 吗？', a: '不需要。客户可以从电子表格导入，或手动添加。如果你有 CRM，Curahold 会与它双向保持同步。' },
         { q: '可以随时取消吗？', a: '可以。取消的套餐会运行到已付费周期结束，且一切都可导出。' },
         { q: '可以使用我们自己的称呼吗？', a: '可以。把你的客户称作账户、合作伙伴或客户，整个界面都会随之变化。应用、帮助中心和在线演示都支持十一种语言。' },
-        { q: '设置需要多久？', a: '大约十五分钟：选择你的地址，从电子表格导入客户，邀请你的团队。' },
+        { q: '如何完成设置？', a: '选择你的地址，从电子表格导入客户，邀请你的团队。引导式设置会带你完成每一步。' },
       ],
     },
-    cta: { title: '让每位客户都有一支从不遗忘的团队。', text: '三个月免费，全部功能开放。从电子表格导入客户，十五分钟即可上手。' },
+    cta: { title: '让每位客户都有一支从不遗忘的团队。', text: '申请通过后三个月免费，全部功能开放。从电子表格导入客户，其余步骤由引导式设置带你完成。' },
     signIn: { title: '登录', text: '每家公司都有自己的地址。输入你公司的地址即可前往其登录页面。', label: '你的公司地址', placeholder: 'yourcompany', go: '前往', close: '关闭', none: '还没有地址？开始免费试用。' },
     footer: {
       story: '名字来自拉丁语 cura（关怀）与英语 hold（守护）。',
@@ -839,7 +848,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hant': {
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換', pause: '暫停', play: '播放' },
+    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '申請核准後 3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換', pause: '暫停', play: '播放' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -850,7 +859,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '業務檢視已延遲 14 天', renewal: '94 天後續約' },
-        meeting: { kind: '業務檢視', name: '第三季業務檢視', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '對方：Selin Aytaç', steps: ['寄送加購席次報價', '草擬行動通路的範例旅程'] },
+        meeting: { kind: '業務檢視', name: '第三季業務檢視', ours: '我方：Zeynep Tunç、Ada Demir', theirs: '對方：Selin Aytaç', steps: ['寄送加購席次報價', '草擬財務團隊的使用情況報告'] },
         todo: '分享使用狀況報告',
         tasksOpened: '已建立 2 個任務',
         playbook: '續約行動手冊',
@@ -864,7 +873,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '實際',
         review: '程式碼審查',
         epics: ['計費', '行動版', '客戶導入'],
-        tasks: ['行動通路的範例旅程', '歡迎檢查清單', '修正 CSV 匯出', '依席次開立發票', 'iOS 推播通知'],
+        tasks: ['財務團隊的使用情況報告', '歡迎檢查清單', '修正 CSV 匯出', '依席次開立發票', 'iOS 推播通知'],
       },
     },
     bento: {
@@ -880,7 +889,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: '這週哪些客戶需要我？', a: '有三位客戶需要你關注：', did: '我已為 Zeynep 建立任務：安排 Marevo 的業務檢視。' },
       portal: { plan: '客戶導入' },
-      facts: ['支援 SAML 2.0 或 OpenID Connect 單一登入', 'SCIM 使用者佈建', '稽核記錄', '資料庫位於歐盟', '也可在你自己的伺服器上執行'],
+      facts: ['支援 SAML 2.0 或 OpenID Connect 單一登入', 'SCIM 使用者佈建', '稽核記錄', '⟦eu|資料庫位於歐盟|⟧', '也可在你自己的伺服器上執行'],
     },
     pricing: {
       title: '簡單的按席次定價',
@@ -888,25 +897,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: '按月',
       yearly: '按年',
       save: '約便宜 20%',
-      summary: '年繳每席次每月 {from} 起。每個方案都以 3 個月免費試用開始，不需信用卡。',
+      summary: '⟦price|年繳每席次每月 {from} 起。每個方案都以 3 個月免費試用開始，不需信用卡。|價格將於正式推出時公布。每個方案都在申請核准後以 3 個月免費試用開始，不需信用卡。⟧',
       see: '比較方案',
       perSeat: '每席次每月',
       perSeatYearly: '每席次每月，按年付費',
       business: '包含團隊版的一切，另加',
-      fine: '價格以美元計；結帳時另加稅金。席次數隨加入的成員變化。付款由我們的經銷商 Paddle 處理。',
+      fine: '⟦price|價格以美元計；結帳時另加稅金。席次數隨加入的成員變化。付款由我們的經銷商 Paddle 處理。|結帳時另加稅金。席次數隨加入的成員變化。付款由我們的經銷商 Paddle 處理。⟧',
+      announced: '價格將於推出時公布',
     },
     faq: {
       title: '常見問題',
       items: [
-        { q: '我們的資料儲存在哪裡？', a: '資料庫位於歐盟。每家公司在資料庫層級彼此隔離，因此任何介面上的差錯都無法把一家公司的資料顯示給另一家。資料處理合約涵蓋 GDPR 與土耳其的 KVKK。' },
+        { q: '⟦eu|我們的資料儲存在哪裡？|我們的資料如何隔離？⟧', a: '⟦eu|資料庫位於歐盟。|⟧每家公司在資料庫層級彼此隔離，因此任何介面上的差錯都無法把一家公司的資料顯示給另一家。資料處理合約涵蓋 GDPR 與土耳其的 KVKK。' },
         { q: '可以在我們自己的伺服器上執行嗎？', a: '可以。單公司版在你自己的伺服器或雲端上執行，擁有獨立資料庫；沒有訂閱計費。' },
         { q: '需要 CRM 嗎？', a: '不需要。客戶可以從試算表匯入，或手動新增。如果你有 CRM，Curahold 會與它雙向保持同步。' },
         { q: '可以隨時取消嗎？', a: '可以。取消的方案會運作到已付費週期結束，且一切都可匯出。' },
         { q: '可以使用我們自己的稱呼嗎？', a: '可以。把你的客戶稱作帳戶、夥伴或客戶，整個介面都會隨之改變。應用程式、說明中心與線上展示都支援十一種語言。' },
-        { q: '設定需要多久？', a: '大約十五分鐘：選擇你的網址，從試算表匯入客戶，邀請你的團隊。' },
+        { q: '如何完成設定？', a: '選擇你的網址，從試算表匯入客戶，邀請你的團隊。引導式設定會帶你完成每一步。' },
       ],
     },
-    cta: { title: '讓每位客戶都有一支從不遺忘的團隊。', text: '三個月免費，全部功能開放。從試算表匯入客戶，十五分鐘即可上手。' },
+    cta: { title: '讓每位客戶都有一支從不遺忘的團隊。', text: '申請核准後三個月免費，全部功能開放。從試算表匯入客戶，其餘步驟由引導式設定帶你完成。' },
     signIn: { title: '登入', text: '每家公司都有自己的網址。輸入你公司的網址即可前往其登入頁面。', label: '你的公司網址', placeholder: 'yourcompany', go: '前往', close: '關閉', none: '還沒有網址？開始免費試用。' },
     footer: {
       story: '名字來自拉丁語 cura（關懷）與英語 hold（守護）。',
@@ -938,7 +948,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ja: {
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます', pause: '一時停止', play: '再生' },
+    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '承認後3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます', pause: '一時停止', play: '再生' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -949,7 +959,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: 'ビジネスレビューが14日遅延', renewal: '更新まであと94日' },
-        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', 'モバイル向けのサンプルジャーニーを作成'] },
+        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', '経理チーム向けの利用状況レポートを作成'] },
         todo: '利用状況レポートを共有',
         tasksOpened: '2件のタスクを作成',
         playbook: '更新プレイブック',
@@ -963,7 +973,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '実績',
         review: 'コードレビュー',
         epics: ['請求', 'モバイル', 'オンボーディング'],
-        tasks: ['モバイルチャネルのサンプルジャーニー', 'ウェルカムチェックリスト', 'CSVエクスポートを修正', 'シート単位の請求書', 'iOSのプッシュ通知'],
+        tasks: ['経理チーム向けの利用状況レポート', 'ウェルカムチェックリスト', 'CSVエクスポートを修正', 'シート単位の請求書', 'iOSのプッシュ通知'],
       },
     },
     bento: {
@@ -979,7 +989,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: '今週、対応が必要な顧客は？', a: '対応が必要な顧客は3社です：', did: 'Zeynep にタスクを作成しました：Marevo のレビューを設定。' },
       portal: { plan: 'オンボーディング' },
-      facts: ['SAML 2.0 または OpenID Connect による SSO', 'SCIM プロビジョニング', '監査ログ', 'データベースは欧州連合内', '自社サーバーでも稼働'],
+      facts: ['SAML 2.0 または OpenID Connect による SSO', 'SCIM プロビジョニング', '監査ログ', '⟦eu|データベースは欧州連合内|⟧', '自社サーバーでも稼働'],
     },
     pricing: {
       title: 'シンプルな、\u200bシート単位の\u200b料金',
@@ -987,25 +997,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: '月額',
       yearly: '年額',
       save: '約20%お得',
-      summary: '年払いプランなら1シートあたり月額{from}から。どのプランも3か月の無料トライアルから始められ、カード登録は不要です。',
+      summary: '⟦price|年払いプランなら1シートあたり月額{from}から。どのプランも3か月の無料トライアルから始められ、カード登録は不要です。|料金はローンチ時に発表します。どのプランも承認後3か月の無料トライアルから始められ、カード登録は不要です。⟧',
       see: 'プランを比較',
       perSeat: '1シートあたり月額',
       perSeatYearly: '1シートあたり月額、年払い',
       business: 'チームのすべてに加えて',
-      fine: '価格は米ドル。税は決済時に加算されます。シート数は参加した人数に従います。決済は再販業者の Paddle が処理します。',
+      fine: '⟦price|価格は米ドル。税は決済時に加算されます。シート数は参加した人数に従います。決済は再販業者の Paddle が処理します。|税は決済時に加算されます。シート数は参加した人数に従います。決済は再販業者の Paddle が処理します。⟧',
+      announced: '料金はローンチ時に発表',
     },
     faq: {
       title: 'よくある質問',
       items: [
-        { q: 'データは\u200bどこに\u200b保管されますか？', a: 'データベースは欧州連合にあります。各社はデータベース自体で互いに分離されるため、画面上のどんな誤りでも、ある会社に別の会社のデータが表示されることはありません。データ処理契約は GDPR とトルコの KVKK をカバーします。' },
+        { q: '⟦eu|データは\u200bどこに\u200b保管されますか？|データは\u200bどのように\u200b分離されますか？⟧', a: '⟦eu|データベースは欧州連合にあります。|⟧各社はデータベース自体で互いに分離されるため、画面上のどんな誤りでも、ある会社に別の会社のデータが表示されることはありません。データ処理契約は GDPR とトルコの KVKK をカバーします。' },
         { q: '自社サーバーで\u200b運用できますか？', a: 'はい。シングルカンパニー版は、専用のデータベースとともに自社のサーバーまたはクラウドで動作します。課金はありません。' },
         { q: 'CRM は\u200b必要ですか？', a: 'いいえ。顧客はスプレッドシートから取り込むことも、手動で追加することもできます。CRM があれば、Curahold はそれと双方向で同期を保ちます。' },
         { q: 'いつでも\u200b解約できますか？', a: 'はい。解約したプランは支払い済み期間の終わりまで動作し、すべてをエクスポートできます。' },
         { q: '自社の\u200b呼び方を\u200b使えますか？', a: 'はい。顧客をアカウント、パートナー、クライアントなど自社の呼び方に変えると、インターフェース全体がそれに従います。アプリ、ヘルプセンター、ライブデモのすべてが11言語に対応しています。' },
-        { q: 'セットアップは\u200bどのくらい\u200bかかりますか？', a: '約15分：アドレスを選び、顧客をスプレッドシートから取り込み、チームを招待します。' },
+        { q: 'セットアップは\u200bどのように\u200b進みますか？', a: 'アドレスを選び、顧客をスプレッドシートから取り込み、チームを招待します。ガイド付きセットアップが各ステップをご案内します。' },
       ],
     },
-    cta: { title: 'すべての\u200b顧客に、\u200b何も\u200b忘れない\u200bチームを。', text: '3か月間無料、すべての機能が使えます。顧客をスプレッドシートから取り込めば、15分で始められます。' },
+    cta: { title: 'すべての\u200b顧客に、\u200b何も\u200b忘れない\u200bチームを。', text: '承認後3か月間無料、すべての機能が使えます。顧客をスプレッドシートから取り込めば、残りはガイド付きセットアップがご案内します。' },
     signIn: { title: 'ログイン', text: '各社に専用のアドレスがあります。自社のアドレスを入力して、そのログインページへ進みます。', label: '会社のアドレス', placeholder: 'yourcompany', go: '移動', close: '閉じる', none: 'まだアドレスがありませんか？無料トライアルを始めましょう。' },
     footer: {
       story: '名前はラテン語の cura（ケア）と英語の hold（抱える）に由来します。',
@@ -1037,7 +1048,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ko: {
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요', pause: '일시 정지', play: '재생' },
+    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '승인 후 3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요', pause: '일시 정지', play: '재생' },
     tour: {
       label: '제품 둘러보기',
       steps: [
@@ -1048,7 +1059,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ui: {
         chips: { review: '비즈니스 리뷰 14일 지연', renewal: '94일 후 갱신' },
-        meeting: { kind: '비즈니스 리뷰', name: '3분기 비즈니스 리뷰', ours: '우리 측: Zeynep Tunç, Ada Demir', theirs: '고객 측: Selin Aytaç', steps: ['추가 좌석 견적 보내기', '모바일 채널 샘플 여정 작성'] },
+        meeting: { kind: '비즈니스 리뷰', name: '3분기 비즈니스 리뷰', ours: '우리 측: Zeynep Tunç, Ada Demir', theirs: '고객 측: Selin Aytaç', steps: ['추가 좌석 견적 보내기', '재무팀용 사용 현황 보고서 작성'] },
         todo: '사용 현황 보고서 공유',
         tasksOpened: '작업 2개 생성됨',
         playbook: '갱신 플레이북',
@@ -1062,7 +1073,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: '실제',
         review: '코드 리뷰',
         epics: ['결제', '모바일', '온보딩'],
-        tasks: ['모바일 채널 샘플 여정', '환영 체크리스트', 'CSV 내보내기 수정', '좌석 기준 청구서', 'iOS 푸시 알림'],
+        tasks: ['재무팀용 사용 현황 보고서', '환영 체크리스트', 'CSV 내보내기 수정', '좌석 기준 청구서', 'iOS 푸시 알림'],
       },
     },
     bento: {
@@ -1078,7 +1089,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       ],
       ask: { q: '이번 주에 내가 챙겨야 할 고객은?', a: '세 곳에 관심이 필요합니다:', did: 'Zeynep에게 작업을 만들었습니다: Marevo 리뷰 예약.' },
       portal: { plan: '온보딩' },
-      facts: ['SAML 2.0 또는 OpenID Connect SSO', 'SCIM 프로비저닝', '감사 로그', '데이터베이스는 유럽 연합에 위치', '자체 서버에서도 실행'],
+      facts: ['SAML 2.0 또는 OpenID Connect SSO', 'SCIM 프로비저닝', '감사 로그', '⟦eu|데이터베이스는 유럽 연합에 위치|⟧', '자체 서버에서도 실행'],
     },
     pricing: {
       title: '간단한 좌석당 가격',
@@ -1086,25 +1097,26 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: '월간',
       yearly: '연간',
       save: '약 20% 저렴',
-      summary: '연간 플랜 기준 좌석당 월 {from}부터. 모든 플랜은 카드 없이 3개월 무료 체험으로 시작합니다.',
+      summary: '⟦price|연간 플랜 기준 좌석당 월 {from}부터. 모든 플랜은 카드 없이 3개월 무료 체험으로 시작합니다.|요금은 출시 때 공개합니다. 모든 플랜은 승인 후 카드 없이 3개월 무료 체험으로 시작합니다.⟧',
       see: '플랜 비교',
       perSeat: '좌석당 월',
       perSeatYearly: '좌석당 월, 연 결제 시',
       business: '팀의 모든 것에 더해',
-      fine: '가격은 미국 달러이며, 세금은 결제 시 추가됩니다. 좌석 수는 합류한 인원을 따릅니다. 결제는 리셀러인 Paddle이 처리합니다.',
+      fine: '⟦price|가격은 미국 달러이며, 세금은 결제 시 추가됩니다. 좌석 수는 합류한 인원을 따릅니다. 결제는 리셀러인 Paddle이 처리합니다.|세금은 결제 시 추가됩니다. 좌석 수는 합류한 인원을 따릅니다. 결제는 리셀러인 Paddle이 처리합니다.⟧',
+      announced: '요금은 출시 때 공개',
     },
     faq: {
       title: '자주 묻는 질문',
       items: [
-        { q: '데이터는 어디에 보관되나요?', a: '데이터베이스는 유럽 연합에 있습니다. 각 회사는 데이터베이스 자체에서 서로 분리되므로, 화면의 어떤 오류도 한 회사에 다른 회사의 데이터를 보여줄 수 없습니다. 데이터 처리 계약은 GDPR과 튀르키예의 KVKK를 포함합니다.' },
+        { q: '⟦eu|데이터는 어디에 보관되나요?|데이터는 어떻게 분리되나요?⟧', a: '⟦eu|데이터베이스는 유럽 연합에 있습니다. |⟧각 회사는 데이터베이스 자체에서 서로 분리되므로, 화면의 어떤 오류도 한 회사에 다른 회사의 데이터를 보여줄 수 없습니다. 데이터 처리 계약은 GDPR과 튀르키예의 KVKK를 포함합니다.' },
         { q: '자체 서버에서 실행할 수 있나요?', a: '네. 단일 회사 패키지는 전용 데이터베이스와 함께 자체 서버나 클라우드에서 실행되며, 구독 요금이 없습니다.' },
         { q: 'CRM이 필요한가요?', a: '아니요. 고객은 스프레드시트에서 가져오거나 직접 추가할 수 있습니다. CRM이 있다면 Curahold가 양방향으로 동기화를 유지합니다.' },
         { q: '언제든 해지할 수 있나요?', a: '네. 해지한 플랜은 결제한 기간이 끝날 때까지 작동하며, 모든 것을 내보낼 수 있습니다.' },
         { q: '우리만의 용어를 쓸 수 있나요?', a: '네. 고객을 계정, 파트너 또는 클라이언트로 부르면 인터페이스 전체가 그에 따릅니다. 앱과 도움말 센터, 라이브 데모 모두 11개 언어를 지원합니다.' },
-        { q: '설정에 얼마나 걸리나요?', a: '약 15분: 주소를 선택하고, 스프레드시트에서 고객을 가져오고, 팀을 초대합니다.' },
+        { q: '설정은 어떻게 진행되나요?', a: '주소를 선택하고, 스프레드시트에서 고객을 가져오고, 팀을 초대합니다. 안내형 설정이 단계마다 도와드립니다.' },
       ],
     },
-    cta: { title: '모든 고객에게 잊지 않는 팀을 선물하세요.', text: '모든 기능을 3개월 동안 무료로. 스프레드시트에서 고객을 가져오면 15분 만에 시작할 수 있습니다.' },
+    cta: { title: '모든 고객에게 잊지 않는 팀을 선물하세요.', text: '승인 후 모든 기능을 3개월 동안 무료로. 스프레드시트에서 고객을 가져오면 나머지는 안내형 설정이 도와드립니다.' },
     signIn: { title: '로그인', text: '회사마다 고유한 주소가 있습니다. 회사 주소를 입력하면 해당 로그인 페이지로 이동합니다.', label: '회사 주소', placeholder: 'yourcompany', go: '이동', close: '닫기', none: '아직 주소가 없나요? 무료 체험을 시작하세요.' },
     footer: {
       story: '이름은 라틴어 cura(돌봄)와 영어 hold(지키다)에서 왔습니다.',
@@ -1149,7 +1161,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: "ग्राहक टीमों के लिए वर्क मैनेजमेंट",
       title: "हर रिन्यूअल, हर वादा, हर टास्क, समय पर।",
       lead: "हर ग्राहक की हेल्थ और उसकी वजहें देखें, मीटिंग के अगले स्टेप को टास्क में बदलें, और रिन्यूअल को नब्बे दिन पहले अपने आप खुलने दें।",
-      note: "3 महीने मुफ़्त, कार्ड की ज़रूरत नहीं।",
+      note: "मंज़ूरी के बाद 3 महीने मुफ़्त, कार्ड की ज़रूरत नहीं।",
       works: "आज के अपने टूल के साथ शुरू करें, अपनी रफ़्तार से आगे बढ़ें",
       pause: "रोकें",
       play: "चलाएं",
@@ -1183,7 +1195,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: "Q3 बिज़नेस रिव्यू",
           ours: "हमारी तरफ़: Zeynep Tunç, Ada Demir",
           theirs: "उनकी तरफ़: Selin Aytaç",
-          steps: ["अतिरिक्त सीटों का कोटेशन भेजें", "मोबाइल चैनल के लिए सैंपल जर्नी का ड्राफ़्ट बनाएं"],
+          steps: ["अतिरिक्त सीटों का कोटेशन भेजें", "फ़ाइनेंस टीम के लिए यूसेज रिपोर्ट का ड्राफ़्ट बनाएं"],
         },
         todo: "उपयोग रिपोर्ट शेयर करें",
         tasksOpened: "2 टास्क खोले गए",
@@ -1198,7 +1210,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: "असल",
         review: "कोड रिव्यू",
         epics: ["बिलिंग", "मोबाइल", "ऑनबोर्डिंग"],
-        tasks: ["मोबाइल चैनल के लिए सैंपल जर्नी", "स्वागत चेकलिस्ट", "CSV एक्सपोर्ट ठीक करें", "सीट के हिसाब से इनवॉइस", "iOS पर पुश नोटिफ़िकेशन"],
+        tasks: ["फ़ाइनेंस टीम के लिए यूसेज रिपोर्ट", "स्वागत चेकलिस्ट", "CSV एक्सपोर्ट ठीक करें", "सीट के हिसाब से इनवॉइस", "iOS पर पुश नोटिफ़िकेशन"],
       },
     },
     bento: {
@@ -1231,7 +1243,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       portal: {
         plan: "ऑनबोर्डिंग",
       },
-      facts: ["SAML 2.0 या OpenID Connect के साथ SSO", "SCIM प्रोविज़निंग", "ऑडिट लॉग", "यूरोपीय संघ में डेटाबेस", "आपके अपने सर्वर पर भी चलता है"],
+      facts: ["SAML 2.0 या OpenID Connect के साथ SSO", "SCIM प्रोविज़निंग", "ऑडिट लॉग", "⟦eu|यूरोपीय संघ में डेटाबेस|⟧", "आपके अपने सर्वर पर भी चलता है"],
     },
     pricing: {
       title: "आसान कीमतें, प्रति सीट",
@@ -1239,18 +1251,19 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: "मासिक",
       yearly: "सालाना",
       save: "करीब 20% कम",
-      summary: "सालाना प्लान पर प्रति सीट प्रति महीना {from} से शुरू। हर प्लान तीन महीने के मुफ़्त ट्रायल से शुरू होता है, कार्ड की ज़रूरत नहीं।",
+      summary: "⟦price|सालाना प्लान पर प्रति सीट प्रति महीना {from} से शुरू। हर प्लान तीन महीने के मुफ़्त ट्रायल से शुरू होता है, कार्ड की ज़रूरत नहीं।|कीमतें लॉन्च पर घोषित होंगी। हर प्लान मंज़ूरी के बाद तीन महीने के मुफ़्त ट्रायल से शुरू होता है, कार्ड की ज़रूरत नहीं।⟧",
       see: "प्लान की तुलना करें",
       perSeat: "प्रति सीट प्रति महीना",
       perSeatYearly: "प्रति सीट प्रति महीना, सालाना भुगतान",
       business: "Team में सब कुछ, और साथ में",
-      fine: "कीमतें अमेरिकी डॉलर में; टैक्स चेकआउट पर जोड़े जाते हैं। सीटें जुड़े हुए लोगों के हिसाब से चलती हैं। भुगतान हमारे रीसेलर Paddle संभालते हैं।",
+      fine: "⟦price|कीमतें अमेरिकी डॉलर में; टैक्स चेकआउट पर जोड़े जाते हैं। सीटें जुड़े हुए लोगों के हिसाब से चलती हैं। भुगतान हमारे रीसेलर Paddle संभालते हैं।|टैक्स चेकआउट पर जोड़े जाते हैं। सीटें जुड़े हुए लोगों के हिसाब से चलती हैं। भुगतान हमारे रीसेलर Paddle संभालते हैं।⟧",
+      announced: "कीमत लॉन्च पर घोषित होगी",
     },
     faq: {
       title: "सवाल",
       items: [{
-          q: "हमारा डेटा कहां रखा जाता है?",
-          a: "डेटाबेस यूरोपीय संघ में है। हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके। डेटा प्रोसेसिंग एग्रीमेंट GDPR और तुर्किये के KVKK को कवर करता है।",
+          q: "⟦eu|हमारा डेटा कहां रखा जाता है?|हमारा डेटा अलग कैसे रखा जाता है?⟧",
+          a: "⟦eu|डेटाबेस यूरोपीय संघ में है। |⟧हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके। डेटा प्रोसेसिंग एग्रीमेंट GDPR और तुर्किये के KVKK को कवर करता है।",
         }, {
           q: "क्या हम इसे अपने सर्वर पर चला सकते हैं?",
           a: "हां। एक-कंपनी पैकेज आपके अपने सर्वर या क्लाउड पर, अपने डेटाबेस के साथ चलता है; इसमें बिलिंग नहीं होती।",
@@ -1264,13 +1277,13 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           q: "क्या हम अपने शब्द इस्तेमाल कर सकते हैं?",
           a: "हां। अपने ग्राहकों को अकाउंट, पार्टनर या क्लाइंट कहें, और पूरा इंटरफ़ेस उसी के हिसाब से चलेगा। ऐप, सहायता केंद्र और लाइव डेमो, तीनों ग्यारह भाषाओं में हैं।",
         }, {
-          q: "सेटअप में कितना समय लगता है?",
-          a: "करीब पंद्रह मिनट: अपना पता चुनें, स्प्रेडशीट से अपने ग्राहक लाएं, अपनी टीम को आमंत्रित करें।",
+          q: "सेटअप कैसे होता है?",
+          a: "अपना पता चुनें, स्प्रेडशीट से अपने ग्राहक लाएं, अपनी टीम को आमंत्रित करें। गाइडेड सेटअप हर कदम पर आपका साथ देता है।",
         }],
     },
     cta: {
       title: "हर ग्राहक को ऐसी टीम दें जो कभी नहीं भूलती।",
-      text: "तीन महीने मुफ़्त, सब कुछ चालू। स्प्रेडशीट से अपने ग्राहक लाएं और पंद्रह मिनट में काम शुरू करें।",
+      text: "मंज़ूरी के बाद तीन महीने मुफ़्त, सब कुछ चालू। स्प्रेडशीट से अपने ग्राहक लाएं, बाकी कदम गाइडेड सेटअप बताता है।",
     },
     signIn: {
       title: "साइन इन करें",
@@ -1332,7 +1345,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       kicker: "Pengurusan kerja untuk pasukan pelanggan",
       title: "Setiap pembaharuan, janji dan tugasan, tepat pada masa.",
       lead: "Lihat kesihatan setiap pelanggan dan sebab di sebaliknya, jadikan langkah seterusnya daripada mesyuarat sebagai tugasan, dan biarkan pembaharuan dibuka sendiri sembilan puluh hari lebih awal.",
-      note: "3 bulan percuma, tiada kad diperlukan.",
+      note: "3 bulan percuma selepas diluluskan, tiada kad diperlukan.",
       works: "Mulakan bersama alat yang anda ada hari ini, beralih mengikut rentak anda",
       pause: "Jeda",
       play: "Main",
@@ -1366,7 +1379,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: "Semakan perniagaan S3",
           ours: "Pihak kami: Zeynep Tunç, Ada Demir",
           theirs: "Pihak mereka: Selin Aytaç",
-          steps: ["Hantar sebut harga tempat duduk tambahan", "Draf contoh perjalanan untuk saluran mudah alih"],
+          steps: ["Hantar sebut harga tempat duduk tambahan", "Draf laporan penggunaan untuk pasukan kewangan mereka"],
         },
         todo: "Kongsi laporan penggunaan",
         tasksOpened: "2 tugasan dibuka",
@@ -1381,7 +1394,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: "Sebenar",
         review: "Semakan kod",
         epics: ["Pengebilan", "Mudah alih", "Onboarding"],
-        tasks: ["Contoh perjalanan untuk saluran mudah alih", "Senarai semak alu-aluan", "Betulkan eksport CSV", "Invois berasaskan tempat duduk", "Pemberitahuan tolak pada iOS"],
+        tasks: ["Laporan penggunaan untuk pasukan kewangan", "Senarai semak alu-aluan", "Betulkan eksport CSV", "Invois berasaskan tempat duduk", "Pemberitahuan tolak pada iOS"],
       },
     },
     bento: {
@@ -1414,7 +1427,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       portal: {
         plan: "Onboarding",
       },
-      facts: ["SSO dengan SAML 2.0 atau OpenID Connect", "Peruntukan SCIM", "Log audit", "Pangkalan data di Kesatuan Eropah", "Juga berjalan pada pelayan anda sendiri"],
+      facts: ["SSO dengan SAML 2.0 atau OpenID Connect", "Peruntukan SCIM", "Log audit", "⟦eu|Pangkalan data di Kesatuan Eropah|⟧", "Juga berjalan pada pelayan anda sendiri"],
     },
     pricing: {
       title: "Harga mudah, setiap tempat duduk",
@@ -1422,18 +1435,19 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       monthly: "Bulanan",
       yearly: "Tahunan",
       save: "kira-kira 20% kurang",
-      summary: "Dari {from} setiap tempat duduk sebulan dengan pelan tahunan. Setiap pelan bermula dengan tiga bulan percuma, tiada kad diperlukan.",
+      summary: "⟦price|Dari {from} setiap tempat duduk sebulan dengan pelan tahunan. Setiap pelan bermula dengan tiga bulan percuma, tiada kad diperlukan.|Harga diumumkan semasa pelancaran. Setiap pelan bermula dengan tiga bulan percuma selepas diluluskan, tiada kad diperlukan.⟧",
       see: "Bandingkan pelan",
       perSeat: "setiap tempat duduk sebulan",
       perSeatYearly: "setiap tempat duduk sebulan, dibayar tahunan",
       business: "Semua dalam Team, serta",
-      fine: "Harga dalam dolar AS; cukai ditambah semasa pembayaran. Tempat duduk mengikut orang yang telah menyertai. Pembayaran dikendalikan oleh Paddle, penjual semula kami.",
+      fine: "⟦price|Harga dalam dolar AS; cukai ditambah semasa pembayaran. Tempat duduk mengikut orang yang telah menyertai. Pembayaran dikendalikan oleh Paddle, penjual semula kami.|Cukai ditambah semasa pembayaran. Tempat duduk mengikut orang yang telah menyertai. Pembayaran dikendalikan oleh Paddle, penjual semula kami.⟧",
+      announced: "Harga diumumkan semasa pelancaran",
     },
     faq: {
       title: "Soalan",
       items: [{
-          q: "Di mana data kami disimpan?",
-          a: "Pangkalan data berada di Kesatuan Eropah. Setiap syarikat diasingkan pada pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat. Perjanjian pemprosesan data merangkumi GDPR dan KVKK Türkiye.",
+          q: "⟦eu|Di mana data kami disimpan?|Bagaimana data kami diasingkan?⟧",
+          a: "⟦eu|Pangkalan data berada di Kesatuan Eropah. |⟧Setiap syarikat diasingkan pada pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat. Perjanjian pemprosesan data merangkumi GDPR dan KVKK Türkiye.",
         }, {
           q: "Bolehkah kami menjalankannya pada pelayan kami sendiri?",
           a: "Ya. Pakej satu syarikat berjalan pada pelayan atau awan anda sendiri dengan pangkalan datanya sendiri; ia tiada pengebilan.",
@@ -1447,13 +1461,13 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           q: "Bolehkah kami menggunakan perkataan kami sendiri?",
           a: "Ya. Panggil pelanggan anda akaun, rakan kongsi atau klien, dan seluruh antara muka mengikut. Aplikasi, pusat bantuan dan demo langsung semuanya tersedia dalam sebelas bahasa.",
         }, {
-          q: "Berapa lama persediaan mengambil masa?",
-          a: "Kira-kira lima belas minit: pilih alamat anda, bawa pelanggan anda daripada hamparan, jemput pasukan anda.",
+          q: "Bagaimana persediaan berjalan?",
+          a: "Pilih alamat anda, bawa pelanggan anda daripada hamparan, jemput pasukan anda. Persediaan berpandu membimbing anda pada setiap langkah.",
         }],
     },
     cta: {
       title: "Berikan setiap pelanggan pasukan yang tidak pernah lupa.",
-      text: "Tiga bulan percuma, dengan semua ciri dihidupkan. Bawa pelanggan anda daripada hamparan dan mula bekerja dalam lima belas minit.",
+      text: "Tiga bulan percuma selepas diluluskan, dengan semua ciri dihidupkan. Bawa pelanggan anda daripada hamparan dan persediaan berpandu membimbing anda selebihnya.",
     },
     signIn: {
       title: "Log masuk",
@@ -1507,7 +1521,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
 // page — the builder never ships machine text dressed as native.
 
 /** The landing page's copy for one of the site's languages. */
-export const siteCopy = (locale: SiteLocale): SiteCopy => COPY[locale];
+export const siteCopy = (locale: SiteLocale): SiteCopy => gated(COPY[locale]);
 
 /** The consent words for a locale. */
 export const siteConsent = (locale: SiteLocale): SiteConsentCopy => siteCopy(locale).consent;
@@ -1544,7 +1558,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Follow Marevo through one quarter: a warning, a promise, the work that keeps it, and a renewal saved.',
     steps: [
       { title: 'The score drops, and says why', text: 'Marevo slips from 60 to 48 and turns at risk. Open Why? and the reasons are listed: no touch in 38 days, three overdue tasks, no champion.' },
-      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a sample journey for their mobile channel. Zeynep logs it as a next step before the call ends.' },
+      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a usage report for their finance team. Zeynep logs it as a next step before the call ends.' },
       { title: 'It becomes a task by itself', text: 'Saving the meeting turns the next step into a task: it has an owner and a due date, it is linked to Marevo, and it is shared with them.' },
       { title: 'The sprint ships it', text: 'The product team builds it in Sprint 24, on a card linked to the promise. When the card reaches Done, the sprint’s points move with it.' },
       { title: 'Marevo sees it in their portal', text: 'Selin signs in with the link in her email. The task shows as done, with Zeynep’s reply under it. Nobody had to write a status email.' },
@@ -1554,7 +1568,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Task opened',
       from: 'From the meeting',
       board: 'Customer success',
-      reply: 'The sample journey is ready in your workspace.',
+      reply: 'The usage report is ready in your workspace.',
     },
   },
   tr: {
@@ -1563,7 +1577,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo’nun bir çeyreğini izleyin: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
     steps: [
       { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. “Neden?” bağlantısını açın; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
-      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
+      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, finans ekipleri için bir kullanım raporu ister. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
       { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
       { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
       { title: 'Marevo onu kendi portalında görür', text: 'Selin e-postasındaki bağlantıyla girer. Görev tamamlandı olarak görünür, altında Zeynep’in yanıtı durur. Kimsenin durum e-postası yazması gerekmez.' },
@@ -1573,7 +1587,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Görev açıldı',
       from: 'Geldiği toplantı',
       board: 'Müşteri başarısı',
-      reply: 'Örnek akış çalışma alanında hazır.',
+      reply: 'Kullanım raporu çalışma alanınızda hazır.',
     },
   },
   ar: {
@@ -1582,13 +1596,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'تابع Marevo على مدى ربع سنة: تحذير، ثم وعد، ثم العمل الذي يفي به، ثم تجديد أُنقذ.',
     steps: [
       { title: 'تنخفض الدرجة وتقول السبب', text: 'تهبط Marevo من 60 إلى 48 وتصبح معرّضة للخطر. افتح «لماذا؟» فتجد الأسباب: لا تواصل منذ 38 يومًا، وثلاث مهام متأخرة، ولا مناصر.' },
-      { title: 'يُقطع الوعد في الاجتماع', text: 'في مراجعة أعمال الربع الثالث تطلب Selin رحلة نموذجية لقناة الجوال. تسجّلها Zeynep خطوةً تالية قبل أن تنتهي المكالمة.' },
+      { title: 'يُقطع الوعد في الاجتماع', text: 'في مراجعة أعمال الربع الثالث تطلب Selin تقرير استخدام لفريقهم المالي. تسجّلها Zeynep خطوةً تالية قبل أن تنتهي المكالمة.' },
       { title: 'يتحوّل إلى مهمة تلقائيًا', text: 'عند حفظ الاجتماع تصبح الخطوة التالية مهمة: لها مسؤول وتاريخ استحقاق، ومرتبطة بـ Marevo، ومُشارَكة معهم.' },
       { title: 'السبرنت يسلّمها', text: 'يبنيها فريق المنتج في سبرنت 24 على بطاقة مرتبطة بالوعد. وحين تصل البطاقة إلى «تم» تتقدّم نقاط السبرنت معها.' },
       { title: 'تراها Marevo في بوابتها', text: 'تدخل Selin عبر الرابط في بريدها. تظهر المهمة منجزة وتحتها ردّ Zeynep. لم يضطر أحد إلى كتابة بريد عن سير العمل.' },
       { title: 'يُنقذ التجديد وتعود الصحة', text: 'مع تواصل حديث ولا شيء متأخر، تعود درجة Marevo إلى 85. وتُغلق فرصة التجديد رابحةً قبل موعدها بوقت طويل.' },
     ],
-    ui: { opened: 'فُتحت المهمة', from: 'من الاجتماع', board: 'نجاح العملاء', reply: 'الرحلة النموذجية جاهزة في مساحة عملكم.' },
+    ui: { opened: 'فُتحت المهمة', from: 'من الاجتماع', board: 'نجاح العملاء', reply: 'تقرير الاستخدام جاهز في مساحة عملكم.' },
   },
   he: {
     cue: 'גללו כדי ללוות לקוח אחד',
@@ -1596,13 +1610,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'לוו את Marevo לאורך רבעון אחד: אזהרה, הבטחה, העבודה שמקיימת אותה וחידוש שניצל.',
     steps: [
       { title: 'הציון יורד ואומר למה', text: 'Marevo יורדת מ־60 ל־48 ועוברת לסיכון. פתחו את „למה?” והסיבות שם: אין מגע כבר 38 ימים, שלוש משימות באיחור, אין תומך מרכזי.' },
-      { title: 'הבטחה ניתנת בחדר', text: 'בסקירה העסקית של רבעון 3, Selin מבקשת מסע לדוגמה לערוץ המובייל. Zeynep רושמת זאת כצעד הבא עוד לפני שהשיחה נגמרת.' },
+      { title: 'הבטחה ניתנת בחדר', text: 'בסקירה העסקית של רבעון 3, Selin מבקשת דוח שימוש לצוות הכספים שלהם. Zeynep רושמת זאת כצעד הבא עוד לפני שהשיחה נגמרת.' },
       { title: 'היא הופכת למשימה מעצמה', text: 'שמירת הפגישה הופכת את הצעד הבא למשימה: יש לה אחראי ותאריך יעד, היא מקושרת ל־Marevo ומשותפת איתם.' },
       { title: 'הספרינט מספק אותה', text: 'צוות המוצר בונה אותה בספרינט 24, על כרטיס שמקושר להבטחה. כשהכרטיס מגיע ל„הושלם”, נקודות הספרינט מתקדמות איתו.' },
       { title: 'Marevo רואה אותה בפורטל שלה', text: 'Selin נכנסת עם הקישור שבמייל. המשימה מופיעה כהושלמה, והתשובה של Zeynep מתחתיה. אף אחד לא נדרש לכתוב מייל עדכון.' },
       { title: 'החידוש ניצל והבריאות חוזרת', text: 'עם מגע עדכני ושום דבר באיחור, הציון של Marevo חוזר ל־85. הזדמנות החידוש נסגרת בהצלחה, הרבה לפני המועד.' },
     ],
-    ui: { opened: 'המשימה נפתחה', from: 'מהפגישה', board: 'הצלחת לקוחות', reply: 'המסע לדוגמה מוכן בסביבת העבודה שלכם.' },
+    ui: { opened: 'המשימה נפתחה', from: 'מהפגישה', board: 'הצלחת לקוחות', reply: 'דוח השימוש מוכן בסביבת העבודה שלכם.' },
   },
   fa: {
     cue: 'اسکرول کنید و یک مشتری را دنبال کنید',
@@ -1610,13 +1624,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo را در یک فصل دنبال کنید: یک هشدار، یک قول، کاری که آن قول را نگه می‌دارد و تمدیدی که نجات پیدا می‌کند.',
     steps: [
       { title: 'امتیاز پایین می‌آید و دلیلش را می‌گوید', text: 'Marevo از ۶۰ به ۴۸ می‌رسد و در خطر قرار می‌گیرد. «چرا؟» را باز کنید؛ دلیل‌ها آنجاست: ۳۸ روز بدون تماس، سه وظیفهٔ عقب‌افتاده، بدون حامی.' },
-      { title: 'قول در جلسه داده می‌شود', text: 'در بازبینی کسب‌وکار فصل سوم، Selin یک سفر نمونه برای کانال موبایل می‌خواهد. Zeynep پیش از پایان تماس آن را گام بعدی ثبت می‌کند.' },
+      { title: 'قول در جلسه داده می‌شود', text: 'در بازبینی کسب‌وکار فصل سوم، Selin یک گزارش استفاده برای تیم مالی‌شان می‌خواهد. Zeynep پیش از پایان تماس آن را گام بعدی ثبت می‌کند.' },
       { title: 'خودبه‌خود وظیفه می‌شود', text: 'با ذخیرهٔ جلسه، گام بعدی به وظیفه تبدیل می‌شود: مسئول و موعد دارد، به Marevo پیوند خورده و با آن‌ها به اشتراک گذاشته شده است.' },
       { title: 'اسپرینت تحویلش می‌دهد', text: 'تیم محصول آن را در اسپرینت ۲۴، روی کارتی که به قول پیوند دارد، می‌سازد. وقتی کارت به «انجام‌شده» می‌رسد، امتیازهای اسپرینت هم با آن جلو می‌روند.' },
       { title: 'Marevo آن را در پورتال خودش می‌بیند', text: 'Selin با پیوندی که در ایمیلش است وارد می‌شود. وظیفه انجام‌شده دیده می‌شود و پاسخ Zeynep زیر آن است. هیچ‌کس مجبور نشد ایمیل گزارش وضعیت بنویسد.' },
       { title: 'تمدید نجات پیدا می‌کند و سلامت برمی‌گردد', text: 'با تماسی تازه و بدون کار عقب‌افتاده، امتیاز Marevo دوباره به ۸۵ می‌رسد. فرصت تمدید خیلی پیش از موعد با موفقیت بسته می‌شود.' },
     ],
-    ui: { opened: 'وظیفه باز شد', from: 'از جلسه', board: 'موفقیت مشتری', reply: 'سفر نمونه در فضای کاری شما آماده است.' },
+    ui: { opened: 'وظیفه باز شد', from: 'از جلسه', board: 'موفقیت مشتری', reply: 'گزارش استفاده در فضای کاری شما آماده است.' },
   },
   'zh-Hans': {
     cue: '向下滚动，跟随一位客户',
@@ -1624,13 +1638,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: '跟随 Marevo 走完一个季度：一次预警、一个承诺、兑现承诺的工作，以及一次挽回的续约。',
     steps: [
       { title: '分数下降，并说明原因', text: 'Marevo 从 60 降到 48，变为有风险。点开“为什么？”，原因一目了然：38 天没有联系、3 个任务逾期、没有内部支持者。' },
-      { title: '承诺在会上做出', text: '在第三季度业务回顾中，Selin 希望看到移动渠道的示例旅程。通话还没结束，Zeynep 就把它记为后续步骤。' },
+      { title: '承诺在会上做出', text: '在第三季度业务回顾中，Selin 希望为他们的财务团队拿到一份使用情况报告。通话还没结束，Zeynep 就把它记为后续步骤。' },
       { title: '它自动变成任务', text: '保存会议后，后续步骤就成了任务：有负责人、有截止日期，关联到 Marevo，并与对方共享。' },
       { title: '迭代把它交付', text: '产品团队在迭代 24 中，用一张关联到该承诺的卡片完成开发。卡片进入“完成”时，迭代的点数随之推进。' },
       { title: 'Marevo 在自己的门户里看到', text: 'Selin 通过邮件中的链接登录，看到任务已完成，下方是 Zeynep 的回复。没有人需要再写进度邮件。' },
       { title: '续约保住了，健康度回升', text: '近期有联系、没有逾期事项，Marevo 的分数回到 85。续约商机远在到期日之前就以赢单关闭。' },
     ],
-    ui: { opened: '任务已创建', from: '来源会议', board: '客户成功', reply: '示例旅程已在你们的工作区准备好。' },
+    ui: { opened: '任务已创建', from: '来源会议', board: '客户成功', reply: '使用情况报告已在你们的工作区准备好。' },
   },
   'zh-Hant': {
     cue: '向下捲動，跟著一位客戶走',
@@ -1638,13 +1652,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: '跟著 Marevo 走過一個季度：一次警訊、一個承諾、兌現承諾的工作，以及一次挽回的續約。',
     steps: [
       { title: '分數下滑，並說出原因', text: 'Marevo 從 60 掉到 48，變成有風險。打開「為什麼？」，原因都在那裡：38 天沒有接觸、3 項任務逾期、沒有擁護者。' },
-      { title: '承諾在會議上做出', text: '在第三季業務檢視中，Selin 想看行動通路的範例旅程。通話結束前，Zeynep 就把它記成後續步驟。' },
+      { title: '承諾在會議上做出', text: '在第三季業務檢視中，Selin 想為他們的財務團隊取得一份使用情況報告。通話結束前，Zeynep 就把它記成後續步驟。' },
       { title: '它自動變成任務', text: '儲存會議後，後續步驟就變成任務：有負責人、有截止日，連結到 Marevo，並與對方共用。' },
       { title: '衝刺把它交付', text: '產品團隊在衝刺 24 中，以一張連結到承諾的卡片完成開發。卡片移到「完成」時，衝刺點數也跟著前進。' },
       { title: 'Marevo 在自己的入口網站看到', text: 'Selin 用電子郵件裡的連結登入，任務顯示為已完成，下方是 Zeynep 的回覆。沒有人需要再寫進度郵件。' },
       { title: '續約保住了，健康度回升', text: '最近有接觸、沒有逾期事項，Marevo 的分數回到 85。續約交易遠在到期日之前就以贏得結案。' },
     ],
-    ui: { opened: '任務已建立', from: '來源會議', board: '客戶成功', reply: '範例旅程已在你們的工作區準備好。' },
+    ui: { opened: '任務已建立', from: '來源會議', board: '客戶成功', reply: '使用情況報告已在你們的工作區準備好。' },
   },
   ja: {
     cue: 'スクロールして、ひとつの顧客を追う',
@@ -1652,13 +1666,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo の一四半期を追いかけます。警告、約束、それを守る仕事、そして守られた更新。',
     steps: [
       { title: 'スコアが下がり、理由を示す', text: 'Marevo は 60 から 48 に下がり、リスクありになります。「理由」を開くと、38日間接触なし、期限超過のタスク3件、推進者なし、と並んでいます。' },
-      { title: '約束はミーティングで生まれる', text: '第3四半期ビジネスレビューで、Selin がモバイル向けのサンプルジャーニーを求めます。Zeynep は通話が終わる前に、それを次のステップとして記録します。' },
+      { title: '約束はミーティングで生まれる', text: '第3四半期ビジネスレビューで、Selin が経理チーム向けの利用状況レポートを求めます。Zeynep は通話が終わる前に、それを次のステップとして記録します。' },
       { title: 'それはひとりでにタスクになる', text: 'ミーティングを保存すると、次のステップがタスクになります。担当者と期日があり、Marevo にひもづき、先方とも共有されます。' },
       { title: 'スプリントが届ける', text: 'プロダクトチームはスプリント 24 で、約束にひもづいたカードとしてこれを開発します。カードが「完了」に進むと、スプリントのポイントも一緒に進みます。' },
       { title: 'Marevo は自分のポータルで確認する', text: 'Selin はメールのリンクからログインします。タスクは完了と表示され、その下に Zeynep の返信があります。誰も進捗メールを書く必要はありません。' },
       { title: '更新は守られ、ヘルスが戻る', text: '最近の接触があり、期限超過もないので、Marevo のスコアは 85 に戻ります。更新の商談は期日よりずっと前に受注で完了します。' },
     ],
-    ui: { opened: 'タスクを作成しました', from: '元のミーティング', board: 'カスタマーサクセス', reply: 'サンプルジャーニーをワークスペースにご用意しました。' },
+    ui: { opened: 'タスクを作成しました', from: '元のミーティング', board: 'カスタマーサクセス', reply: '利用状況レポートをワークスペースにご用意しました。' },
   },
   ko: {
     cue: '스크롤해서 한 고객을 따라가 보세요',
@@ -1666,13 +1680,13 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo의 한 분기를 따라가 보세요. 경고 하나, 약속 하나, 그 약속을 지키는 일, 그리고 지켜 낸 갱신.',
     steps: [
       { title: '점수가 떨어지고, 이유를 알려 줍니다', text: 'Marevo가 60에서 48로 떨어지며 위험 상태가 됩니다. ‘이유’를 열면 38일째 접점 없음, 기한 초과 작업 3개, 챔피언 없음이 보입니다.' },
-      { title: '약속은 회의에서 생깁니다', text: '3분기 비즈니스 리뷰에서 Selin이 모바일 채널용 샘플 여정을 요청합니다. Zeynep은 통화가 끝나기 전에 이를 다음 단계로 기록합니다.' },
+      { title: '약속은 회의에서 생깁니다', text: '3분기 비즈니스 리뷰에서 Selin이 재무팀용 사용 현황 보고서를 요청합니다. Zeynep은 통화가 끝나기 전에 이를 다음 단계로 기록합니다.' },
       { title: '저절로 작업이 됩니다', text: '회의를 저장하면 다음 단계가 작업이 됩니다. 담당자와 마감일이 있고, Marevo에 연결되며, 고객과 공유됩니다.' },
       { title: '스프린트가 전달합니다', text: '제품 팀은 약속에 연결된 카드로 스프린트 24에서 이를 개발합니다. 카드가 ‘완료’에 도달하면 스프린트 포인트도 함께 움직입니다.' },
       { title: 'Marevo는 자기 포털에서 확인합니다', text: 'Selin은 이메일의 링크로 로그인합니다. 작업은 완료로 표시되고, 그 아래에 Zeynep의 답장이 있습니다. 아무도 진행 상황 메일을 쓰지 않아도 됩니다.' },
       { title: '갱신을 지키고, 건강도가 회복됩니다', text: '최근 접점이 있고 기한 초과도 없으니 Marevo의 점수는 85로 돌아옵니다. 갱신 기회는 마감일보다 한참 전에 성사로 마무리됩니다.' },
     ],
-    ui: { opened: '작업이 생성됨', from: '출처 회의', board: '고객 성공', reply: '샘플 여정이 워크스페이스에 준비되어 있습니다.' },
+    ui: { opened: '작업이 생성됨', from: '출처 회의', board: '고객 성공', reply: '사용 현황 보고서가 워크스페이스에 준비되어 있습니다.' },
   },
   hi: {
     cue: "एक ग्राहक को फ़ॉलो करने के लिए स्क्रॉल करें",
@@ -1683,7 +1697,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
         text: "Marevo 60 से 48 पर फिसलता है और जोखिम में आ जाता है। “क्यों?” खोलें और वजहें दिखती हैं: 38 दिनों से कोई संपर्क नहीं, तीन देर वाले टास्क, कोई चैंपियन नहीं।",
       }, {
         title: "मीटिंग में एक वादा होता है",
-        text: "Q3 बिज़नेस रिव्यू में, Selin अपने मोबाइल चैनल के लिए एक सैंपल जर्नी मांगती हैं। कॉल खत्म होने से पहले Zeynep इसे अगले स्टेप के रूप में दर्ज करती हैं।",
+        text: "Q3 बिज़नेस रिव्यू में, Selin अपनी फ़ाइनेंस टीम के लिए एक यूसेज रिपोर्ट मांगती हैं। कॉल खत्म होने से पहले Zeynep इसे अगले स्टेप के रूप में दर्ज करती हैं।",
       }, {
         title: "यह अपने आप टास्क बन जाता है",
         text: "मीटिंग सेव करने पर अगला स्टेप एक टास्क बन जाता है: इसका एक ओनर और नियत तारीख है, यह Marevo से लिंक है, और उनके साथ शेयर किया गया है।",
@@ -1701,7 +1715,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: "टास्क खोला गया",
       from: "मीटिंग से",
       board: "कस्टमर सक्सेस",
-      reply: "सैंपल जर्नी आपके वर्कस्पेस में तैयार है।",
+      reply: "यूसेज रिपोर्ट आपके वर्कस्पेस में तैयार है।",
     },
   },
   ms: {
@@ -1713,7 +1727,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
         text: "Marevo merosot dari 60 ke 48 dan menjadi berisiko. Buka Mengapa? dan sebab-sebabnya disenaraikan: tiada hubungan selama 38 hari, tiga tugasan lewat, tiada juara.",
       }, {
         title: "Janji dibuat dalam bilik mesyuarat",
-        text: "Pada semakan perniagaan S3, Selin meminta contoh perjalanan untuk saluran mudah alih mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",
+        text: "Pada semakan perniagaan S3, Selin meminta laporan penggunaan untuk pasukan kewangan mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",
       }, {
         title: "Ia menjadi tugasan dengan sendirinya",
         text: "Menyimpan mesyuarat menjadikan langkah seterusnya tugasan: ia mempunyai pemilik dan tarikh akhir, dipautkan kepada Marevo, dan dikongsi dengan mereka.",
@@ -1731,7 +1745,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: "Tugasan dibuka",
       from: "Daripada mesyuarat",
       board: "Kejayaan pelanggan",
-      reply: "Contoh perjalanan sudah sedia dalam ruang kerja anda.",
+      reply: "Laporan penggunaan sudah sedia dalam ruang kerja anda.",
     },
   },
 };
