@@ -65,6 +65,9 @@ const STOP = new Set(
     've veya ama fakat ile icin gibi kadar bu su o bir da de mi mu ki ne nasil neden nicin nerede nereden hangi kim ben sen biz siz onlar benim senin bizim sizin ' +
     'var yok evet hayir cok daha en her hic bazi tum butun olarak olan olur oldu olmak etmek yapmak yapilir yapabilirim istiyorum lazim gerek lutfen bana bize ' +
     'neyi neye nedir neler nelerdir kimler kimi kime hangisi nasildir midir kadar ' +
+    // Short verbs in the polite imperative the help pages use ("… verin", "… alın"): "verin" starts like "veri" (data)
+    // and would answer every question about data with any page that says "give".
+    'verin alin edin olun yapin ' +
     // Malay.
     'bagaimana macam mana apa apakah di ke dari untuk dengan yang ini itu saya anda kami kita boleh tidak tak ada adakah sila tolong cara dalam pada atau dan juga akan sudah bila mengapa kenapa siapa mahu ingin perlu saja sahaja ' +
     // The product's own name is in nearly every question and every page: it finds nothing.
