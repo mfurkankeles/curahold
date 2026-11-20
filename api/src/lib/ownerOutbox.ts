@@ -86,8 +86,12 @@ export async function pushToOwner(deps: Deps, key: string, make: (locale: 'tr' |
 
 // ------------------------------------------------------------ sending
 
-/** Sends one push to every phone; forgets phones their browser gave up, counts failures on the others. */
-async function sendToPhones(deps: Deps, push: OwnerPush): Promise<{ state: 'sent' | 'pending' | 'failed' | 'skipped'; error: string | null }> {
+/**
+ * Sends one push to every phone; forgets phones their browser gave up, counts failures on the others. `tag` is the
+ * alert's own key: the phone replaces a notification only by one with the same tag, so two different alerts that
+ * open the same screen (two system alerts both on /system) both stay on the lock screen.
+ */
+async function sendToPhones(deps: Deps, push: OwnerPush, tag: string): Promise<{ state: 'sent' | 'pending' | 'failed' | 'skipped'; error: string | null }> {
   const vapid = deps.config.push;
   if (!vapid) return { state: 'skipped', error: 'push not configured' };
   const devices = await deps.db.system((q) => q.query<Pick<OwnerPushDevicesRow, 'id' | 'endpoint' | 'p256dh' | 'auth'>>(`select id, endpoint, p256dh, auth from owner_push_devices order by created_at limit 20`));
@@ -97,7 +101,7 @@ async function sendToPhones(deps: Deps, push: OwnerPush): Promise<{ state: 'sent
   let retry = false;
   let error: string | null = null;
   for (const d of devices) {
-    const out = await sendPush(fetcher, vapid, d, { title: push.title, body: push.body, url: push.url }, { urgency: push.urgency, ttl: push.urgency === 'high' ? 6 * 3600 : 24 * 3600 }).catch(
+    const out = await sendPush(fetcher, vapid, d, { title: push.title, body: push.body, url: push.url, tag: tag.slice(0, 64) }, { urgency: push.urgency, ttl: push.urgency === 'high' ? 6 * 3600 : 24 * 3600 }).catch(
       (e) => ({ state: 'retry' as const, status: 0, error: e instanceof Error ? e.message : String(e) }),
     );
     if (out.state === 'sent') {
@@ -143,7 +147,7 @@ export async function drainOwnerOutbox(deps: Deps, limit = 20): Promise<number> 
       if (row.kind === 'mail') {
         const m = row.payload as unknown as OwnerMail;
         await deps.email.send({ to: m.to, subject: m.subject, text: m.text });
-      } else ({ state, error } = await sendToPhones(deps, row.payload as unknown as OwnerPush));
+      } else ({ state, error } = await sendToPhones(deps, row.payload as unknown as OwnerPush, row.dedupe_key));
     } catch (e) {
       state = 'pending';
       error = e instanceof Error ? e.message : String(e);
