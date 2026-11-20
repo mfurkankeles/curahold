@@ -8,19 +8,25 @@
 //
 // Addresses can be changed for a preview with SITE_APP_URL, SITE_DEMO_URL,
 // SITE_DOCS_URL and SITE_BASE_DOMAIN.
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { PLANS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
+import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
+import { SITE_FONTS, SITE_LANGS } from '../site/locales';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
+import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
-import { DEPTS, FEATURES, PAGE, headerHtml, whyHtml, type Version } from './site-chrome';
+import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
+import { classesIn, minifyCss, pruneCss } from './site-css';
+import { hubPages } from './site-hub';
 import { innerPages, type InnerPage, type PageUrls } from './site-pages';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -49,9 +55,10 @@ const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" 
 const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8M6.9 5.1l.9-.9a2.1 2.1 0 0 1 3 3l-.9.9M9.1 10.9l-.9.9a2.1 2.1 0 0 1-3-3l.9-.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 const CURSOR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.2l13.4 8.2-5.9 1.5-2.9 5.6z" fill="#fff" stroke="#17133a" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.8" fill="currentColor"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
-const PLAY = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.3v9.4a.6.6 0 0 0 .9.5l7.6-4.7a.6.6 0 0 0 0-1L5.9 2.8a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>`;
 // The night sky behind every page: the grid is drawn by the stylesheet, these are the few glowing dots.
 const SKY = `<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
+/** The integrations strip's control: pause, and the play mark it turns into. */
+const PAUSE = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.5v7M8.5 2.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
@@ -128,12 +135,6 @@ const CONSENT_FLAGS = {
 const OG_IMAGE = existsSync(join(ROOT, 'site', 'og.png')) ? 'og.png' : 'og.svg';
 const OG_IMAGE_URL = `${ORIGIN}/assets/${OG_IMAGE}`;
 
-// og:locale wants language_TERRITORY; these are the conventional pairs.
-const OG_LOCALE: Record<SiteLocale, string> = {
-  en: 'en_US', tr: 'tr_TR', ar: 'ar_AR', he: 'he_IL', fa: 'fa_IR',
-  'zh-Hans': 'zh_CN', 'zh-Hant': 'zh_TW', ja: 'ja_JP', ko: 'ko_KR',
-};
-
 /** The root-relative path a locale's landing page is served at ('/', '/tr/', …). */
 const localeBase = (locale: SiteLocale) => (locale === 'en' ? '/' : `/${locale}/`);
 /** The blog's root-relative base for a locale, falling back to the English blog. */
@@ -150,15 +151,15 @@ function consentTags(locale: SiteLocale, rel: string, policyUrl: string): string
 }
 
 /** Canonical, Open Graph, Twitter card and robots tags shared by every page. */
-function seoTags(opts: { canonical: string; title: string; description: string; locale: SiteLocale; ogType: 'website' | 'article'; image: string }): string {
+function seoTags(opts: { canonical: string; title: string; description: string; locale: SiteLocale; ogType: 'website' | 'article'; image: string; noindex?: boolean }): string {
   const { canonical, title, description, locale, ogType, image } = opts;
   const alt = SITE_LOCALES.filter((l) => l !== locale)
-    .map((l) => `<meta property="og:locale:alternate" content="${OG_LOCALE[l]}">`)
+    .map((l) => `<meta property="og:locale:alternate" content="${SITE_LANGS[l]}">`)
     .join('\n');
   return [
     `<link rel="canonical" href="${esc(canonical)}">`,
     // Search engines yes; AI training and text-and-data mining no (shared/src/compliance/crawlers.ts).
-    `<meta name="robots" content="index, follow, max-image-preview:large, noai, noimageai">`,
+    `<meta name="robots" content="${opts.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'}, noai, noimageai">`,
     TDM_META,
     `<meta property="og:type" content="${ogType}">`,
     `<meta property="og:site_name" content="Curahold">`,
@@ -166,7 +167,7 @@ function seoTags(opts: { canonical: string; title: string; description: string; 
     `<meta property="og:description" content="${esc(description)}">`,
     `<meta property="og:url" content="${esc(canonical)}">`,
     `<meta property="og:image" content="${esc(image)}">`,
-    `<meta property="og:locale" content="${OG_LOCALE[locale]}">`,
+    `<meta property="og:locale" content="${SITE_LANGS[locale]}">`,
     alt,
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta name="twitter:title" content="${esc(title)}">`,
@@ -192,7 +193,8 @@ function landingJsonLd(locale: SiteLocale, canonical: string, description: strin
         operatingSystem: 'Web',
         description,
         url: canonical,
-        offers: { '@type': 'Offer', price: String(PLANS.team.price.month), priceCurrency: PRICE_CURRENCY },
+        // The landing page names only the lowest price (its summary says "from …"); every offer is on /pricing/.
+        offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` },
         publisher: { '@id': `${ORIGIN}/#org` },
       },
     ],
@@ -203,6 +205,21 @@ const breadcrumb = (items: { name: string; url: string }[]) => ({
   '@type': 'BreadcrumbList',
   itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: it.url })),
 });
+
+/**
+ * When the site's sources last changed (YYYY-MM-DD), for <lastmod>: SITE_LASTMOD if set, else the
+ * newest git commit touching site/ or the site scripts. undefined when neither can say: a wrong
+ * date is worse for crawling than none.
+ */
+function siteLastmod(): string | undefined {
+  if (process.env.SITE_LASTMOD) return process.env.SITE_LASTMOD;
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', 'site', 'scripts/build-site.ts', 'scripts/site-chrome.ts', 'scripts/site-pages.ts', 'scripts/site-concepts.ts'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 // --------------------------------------------------------- shared page parts
 
@@ -249,57 +266,141 @@ function chromeTail(locale: SiteLocale, rel: string, version: Version | 'page'):
 ${consentTags(locale, rel, urlsOf(locale).legal('cookies'))}`;
 }
 
-/** Sign in: every company has its own address. The same dialog on every page that has a header. */
+const CLOSE_X = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+/**
+ * Sign in: every company has its own address. The same dialog on every page that has a header.
+ * A <dialog> closes on Esc by itself; the close button sits in the end corner at 44 × 44 (owner rule for every popup).
+ */
 function signinDialog(locale: SiteLocale): string {
   const c = siteCopy(locale);
   return `<dialog class="signin" id="signin" data-base="${esc(BASE_DOMAIN)}" aria-labelledby="signin-title">
   <form>
+    <button class="signin__x" type="button" data-close aria-label="${esc(c.signIn.close)}" title="${esc(c.signIn.close)}">${CLOSE_X}</button>
     <h2 id="signin-title">${esc(c.signIn.title)}</h2>
     <p>${esc(c.signIn.text)}</p>
     <label class="signin__field"><input name="slug" autocomplete="organization" spellcheck="false" aria-label="${esc(c.signIn.label)}" placeholder="${esc(c.signIn.placeholder)}" required><span>.${esc(BASE_DOMAIN)}</span></label>
     <div class="signin__row">
-      <button class="hx__btn hx__btn--solid" type="submit">${esc(c.signIn.go)}</button>
-      <button class="hx__btn hx__btn--ghost" type="button" data-close>${esc(c.signIn.close)}</button>
+      <button class="hx__btn hx__btn--solid" type="submit">${ICON_GO}<span>${esc(c.signIn.go)}</span></button>
     </div>
     <p class="signin__none"><a href="${esc(TRIAL)}">${esc(c.signIn.none)}</a></p>
   </form>
 </dialog>`;
 }
 
-/** The plans, monthly or yearly: on the landing page and on /pricing/. */
-function pricingHtml(locale: SiteLocale, headed: boolean): string {
+/** US dollars as the site writes them in a language: "$15" everywhere, so the sign stays whole inside right-to-left text. */
+function moneyIn(locale: SiteLocale): (n: number) => string {
+  const nf = new Intl.NumberFormat(bcp47Of(locale), { style: 'currency', currency: PRICE_CURRENCY, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 });
+  return (n) => nf.formatToParts(n).map((p) => (p.type === 'currency' && PRICE_CURRENCY === 'USD' ? '$' : p.value)).join('');
+}
+
+/** The cheapest seat price a month (a yearly Team seat), for "from …" lines and AggregateOffer. */
+const LOWEST_PRICE = Math.min(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i])));
+const HIGHEST_PRICE = Math.max(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i])));
+
+/**
+ * The plans on /pricing/, yearly first with a monthly switch. Never hidden for a scroll
+ * animation: prices are what this page is for. Plan names are h2 (the page's h1 is "Pricing").
+ */
+function plansHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
-  const tag = bcp47Of(locale);
   const t = (k: MessageKey) => translate(locale, k);
-  const money = (n: number) =>
-    new Intl.NumberFormat(tag, { style: 'currency', currency: PRICE_CURRENCY, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 })
-      .formatToParts(n)
-      .map((p) => (p.type === 'currency' && PRICE_CURRENCY === 'USD' ? '$' : p.value))
-      .join('');
+  const money = moneyIn(locale);
   const plan = (key: PlanKey) => {
     const p = PLANS[key];
     const points = (key === 'team' ? TEAM_POINTS : BUSINESS_POINTS).map((k) => `<li>${CHECK}<span>${esc(t(k))}</span></li>`).join('');
     return `<div class="plan${key === 'business' ? ' plan--business' : ''}">
-          <h3>${esc(t(`billing.plan.${key}` as MessageKey))}</h3>
+          <h2 class="plan__name">${esc(t(`billing.plan.${key}` as MessageKey))}</h2>
           <p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>
           <ul>${key === 'business' ? `<li class="plan__plus">${esc(c.pricing.business)}</li>` : ''}${points}</ul>
-          <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${esc(c.pricing.choose)}</a>
+          <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${ICON_GO}<span>${esc(infoCopy(locale).nav.tryFree)}</span></a>
         </div>`;
   };
-  return `<section class="pricing calm pool" id="pricing">
+  return `<section class="pricing pricing--page" id="pricing">
     <div class="wrap">
       <div class="pricing__top">
-        <div>${headed ? `<h2 data-reveal>${esc(c.pricing.title)}</h2><p class="lead" data-reveal>${esc(c.pricing.lead)}</p>` : ''}</div>
-        <div class="pricing__switch" role="group" data-reveal aria-label="${esc(c.nav.pricing)}">
+        <div class="pricing__switch" role="group" aria-label="${esc(c.nav.pricing)}">
           <button type="button" data-interval="month" aria-pressed="false">${esc(c.pricing.monthly)}</button>
           <button type="button" data-interval="year" aria-pressed="true">${esc(c.pricing.yearly)}<small>${esc(c.pricing.save)}</small></button>
         </div>
       </div>
-      <div class="plans" data-reveal>${plan('team')}${plan('business')}</div>
+      <div class="plans">${plan('team')}${plan('business')}</div>
       <p class="pricing__fine">${esc(c.pricing.fine)}</p>
     </div>
   </section>`;
 }
+
+/** The comparison table under the plans: what each plan includes, from the same lists the plans and the app use. */
+function compareHtml(locale: SiteLocale): string {
+  const pp = infoCopy(locale).pricingPage;
+  const t = (k: MessageKey) => translate(locale, k);
+  const money = moneyIn(locale);
+  const yes = `<td>${CHECK}<span class="vh">${esc(pp.included)}</span></td>`;
+  const no = `<td><span class="cmp__no" aria-hidden="true">—</span><span class="vh">${esc(pp.notIncluded)}</span></td>`;
+  const row = (label: string, cells: string) => `<tr><th scope="row">${esc(label)}</th>${cells}</tr>`;
+  // Each amount isolated (<bdi>) so the yearly price comes first in reading order in either direction.
+  const price = (k: PlanKey) => `<td class="cmp__price"><bdi>${esc(money(PLANS[k].price.year))}</bdi> / <bdi>${esc(money(PLANS[k].price.month))}</bdi></td>`;
+  const rows = [
+    row(pp.priceRow, price('team') + price('business')),
+    ...TEAM_POINTS.map((k) => row(t(k), yes + yes)),
+    ...BUSINESS_POINTS.map((k) => row(t(k), no + yes)),
+    row(pp.viewers, `<td>${esc(pp.free)}</td><td>${esc(pp.free)}</td>`),
+  ].join('');
+  return `<section class="ip__body cmp" aria-labelledby="cmp-title"><div class="wrap">
+    <h2 class="ip__gh" id="cmp-title">${esc(pp.compareTitle)}</h2>
+    <div class="cmp__scroll"><table class="cmp__t"><colgroup><col><col class="cmp__plan"><col class="cmp__plan"></colgroup>
+      <thead><tr><th scope="col">${esc(pp.feature)}</th><th scope="col">${esc(t('billing.plan.team'))}</th><th scope="col">${esc(t('billing.plan.business'))}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="cmp__ent">${esc(pp.enterprise[0])} <a href="${esc(urlsOf(locale).contact)}">${esc(pp.enterprise[1])}</a></p>
+  </div></section>`;
+}
+
+/** A list of questions as the FAQ blocks draw them (<details>, open by tap, readable without script). */
+const faqList = (items: { q: string; a: string }[]) => items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+
+/** The pricing page's own questions. */
+function pricingFaqHtml(locale: SiteLocale): string {
+  const pp = infoCopy(locale).pricingPage;
+  return `<section class="faq calm" aria-labelledby="pfaq-title"><div class="wrap faq__in"><h2 id="pfaq-title">${esc(pp.faqTitle)}</h2><div class="faq__list">${faqList(pp.faq)}</div></div></section>`;
+}
+
+/** The landing page's pricing: two lines and a link to /pricing/ (the full table lives there). */
+function pricingSummaryHtml(locale: SiteLocale): string {
+  const c = siteCopy(locale);
+  return `<section class="psum" aria-labelledby="psum-title">
+    <div class="wrap psum__in">
+      <div><h2 id="psum-title">${esc(c.pricing.title)}</h2><p class="psum__line">${esc(c.pricing.summary.replace('{from}', moneyIn(locale)(LOWEST_PRICE)))}</p></div>
+      <a class="btn btn--ghost btn--big" href="${localeBase(locale)}${PAGE.pricing}">${ICON_GO}<span>${esc(c.pricing.see)}</span></a>
+    </div>
+  </section>`;
+}
+
+/**
+ * schema.org offers for /pricing/: one Offer per plan and billing interval, priced per seat
+ * a month exactly as the page shows them (money: shared/src/billing.ts is the only source).
+ */
+function offersLd(locale: SiteLocale, url: string): object {
+  const c = siteCopy(locale);
+  const offers = PLAN_KEYS.flatMap((k) =>
+    INTERVALS.map((i) => {
+      const price = String(PLANS[k].price[i]);
+      const per = i === 'year' ? c.pricing.perSeatYearly : c.pricing.perSeat;
+      return {
+        '@type': 'Offer',
+        name: `${translate(locale, `billing.plan.${k}` as MessageKey)} · ${i === 'year' ? c.pricing.yearly : c.pricing.monthly}`,
+        url,
+        price,
+        priceCurrency: PRICE_CURRENCY,
+        priceSpecification: { '@type': 'UnitPriceSpecification', price, priceCurrency: PRICE_CURRENCY, unitCode: 'MON', unitText: per, billingDuration: i === 'year' ? 'P1Y' : 'P1M', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'seat' } },
+      };
+    }),
+  );
+  return { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers }, publisher: { '@id': `${ORIGIN}/#org` } };
+}
+
+/** schema.org FAQPage for questions shown in full on one page (only one page carries each set). */
+const faqLd = (items: { q: string; a: string }[]) => ({ '@type': 'FAQPage', mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
 
 /** hreflang alternates for a path that exists in every language. */
 const alternatesFor = (path: string) =>
@@ -312,7 +413,7 @@ function innerDoc(locale: SiteLocale, p: InnerPage): string {
   const rel = upTo(depth);
   const canonical = `${ORIGIN}${localeBase(locale)}${p.path}`;
   const c = infoCopy(locale);
-  const ld = jsonLdTag({ '@context': 'https://schema.org', '@graph': [orgNode, { '@type': 'WebPage', name: p.title, url: canonical, inLanguage: bcp47Of(locale) }, breadcrumb([{ name: c.common.home, url: `${ORIGIN}${localeBase(locale)}` }, { name: p.title.split(' | ')[0], url: canonical }])] });
+  const ld = jsonLdTag({ '@context': 'https://schema.org', '@graph': [orgNode, { '@type': 'WebPage', name: p.title, url: canonical, inLanguage: bcp47Of(locale) }, breadcrumb([{ name: c.common.home, url: `${ORIGIN}${localeBase(locale)}` }, { name: p.crumb, url: canonical }]), ...(p.ld?.(canonical) ?? [])] });
   return `<!doctype html>
 <html lang="${bcp47Of(locale)}" dir="${info.dir}">
 <head>
@@ -325,12 +426,9 @@ ${seoTags({ canonical, title: p.title, description: p.description, locale, ogTyp
 <link rel="icon" href="${FAVICON}">
 ${alternatesFor(p.path)}
 ${ld}
-<link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+${fontPreload(locale, rel)}
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="${rel}assets/site.css">
-<link rel="stylesheet" href="${rel}assets/chrome.css">
-<link rel="stylesheet" href="${rel}assets/pages.css">
-<link rel="stylesheet" href="${rel}assets/consent.css">
+${cssSlot('page', rel)}
 </head>
 <body class="inner">
 ${SKY}
@@ -355,9 +453,12 @@ function conceptDoc(locale: SiteLocale, which: 'a' | 'c'): string {
   const canonical = `${ORIGIN}${localeBase(locale)}${path}`;
   const words = conceptAWords(locale);
   const title = which === 'a' ? words.title : words.title;
-  const head = `${seoTags({ canonical, title, description: words.desc, locale, ogType: 'website', image: OG_IMAGE_URL })}
+  // The animated versions tell the landing page's story again, so they stay out of search
+  // results (noindex, links still followed) and out of the sitemap. A canonical pointing to the
+  // landing page would be a hint search engines ignore when two pages differ this much;
+  // noindex is a rule they keep (docs/ADR/0020-site-seo-and-crawlers.md).
+  const head = `${seoTags({ canonical, title, description: words.desc, locale, ogType: 'website', image: OG_IMAGE_URL, noindex: true })}
 <link rel="icon" href="${FAVICON}">
-${alternatesFor(path)}
 <link rel="stylesheet" href="${rel}assets/chrome.css">
 <link rel="stylesheet" href="${rel}assets/consent.css">`;
   const u = urlsOf(locale);
@@ -373,7 +474,7 @@ ${alternatesFor(path)}
     tail: `${signinDialog(locale)}\n${chromeTail(locale, rel, which)}`,
     trial: TRIAL,
     demo: u.demo,
-    go: n.go,
+    tryFree: n.tryFree,
     demoLabel: n.demo,
   };
   return which === 'a' ? conceptAPage(parts) : conceptCPage(parts);
@@ -382,7 +483,7 @@ ${alternatesFor(path)}
 // ------------------------------------------------------------------- the footer
 
 // Shared by the landing page and the blog so the legal links and language list
-// never drift apart. Cross-page links are root-relative, so they are correct
+// never drift apart. Column titles are not headings: the footer is not part of a page's outline. Cross-page links are root-relative, so they are correct
 // whatever depth the page sits at.
 function footerHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
@@ -403,7 +504,7 @@ function footerHtml(locale: SiteLocale): string {
         <p class="foot__story">${esc(c.footer.story)}</p>
       </div>
       <div>
-        <h3>${esc(n.nav.product)}</h3>
+        <p class="foot__h">${esc(n.nav.product)}</p>
         <ul>
           ${DEPTS.map((k) => li(`${base}${PAGE.dept(k)}`, n.depts[k].name)).join('')}
           ${li(`${base}${PAGE.integrations}`, n.nav.integrations)}
@@ -411,23 +512,24 @@ function footerHtml(locale: SiteLocale): string {
         </ul>
       </div>
       <div>
-        <h3>${esc(n.nav.features)}</h3>
+        <p class="foot__h">${esc(n.nav.features)}</p>
         <ul>${FEATURES.slice(0, 6).map((k) => li(`${base}${PAGE.feature(k)}`, n.features[k].name)).join('')}</ul>
       </div>
       <div>
-        <h3>${esc(n.nav.resources)}</h3>
+        <p class="foot__h">${esc(n.nav.resources)}</p>
         <ul>
           ${li(u.demo, n.nav.demo)}
           ${li(u.docs, n.nav.help[0])}
           ${li(u.devDocs, n.nav.developers[0])}
           ${li(u.blog, n.nav.blog[0])}
+          ${li(`${base}resources/`, hubCopy(locale).nav[0])}
           ${li(`${base}${PAGE.faq}`, n.nav.faq[0])}
           ${li(`${base}${PAGE.why}`, n.nav.why)}
           ${li(`${base}${PAGE.about}`, n.nav.about)}
         </ul>
       </div>
       <div>
-        <h3>${esc(c.footer.legal)}</h3>
+        <p class="foot__h">${esc(c.footer.legal)}</p>
         <ul>
           ${li(`${base}${PAGE.trust}`, n.nav.trust[0])}
           ${li(u.legal('terms'), c.footer.links.terms)}
@@ -485,10 +587,8 @@ ${seoTags({ canonical: opts.canonical, title: opts.title, description: opts.desc
 <link rel="icon" href="${FAVICON}">
 ${alternates}
 ${opts.extraLd ?? ''}
-<link rel="preload" href="${opts.rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${opts.rel}assets/site.css">
-<link rel="stylesheet" href="${opts.rel}assets/chrome.css">
-<link rel="stylesheet" href="${opts.rel}assets/consent.css">
+${fontPreload(locale, opts.rel)}
+${cssSlot('blog', opts.rel)}
 </head>`;
 }
 
@@ -582,7 +682,7 @@ function blogPostPage(locale: SiteLocale, post: BlogPost): string {
     ],
   });
   const tags = post.tags.map((t) => `<li class="post-tag">${esc(t)}</li>`).join('');
-  return `${blogHead(locale, { title: `${post.title} — Curahold`, description: post.description, canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
+  return `${blogHead(locale, { title: post.seo[0], description: post.seo[1], canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
 <body class="blog">
 ${SKY}
 <a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
@@ -984,12 +1084,18 @@ export function page(locale: SiteLocale): string {
   // the copy allows it (U+200B) and after their own commas, so a line never ends on a
   // stray character — and get no space between the parts.
   let wordNo = 0;
-  const heroTitle = c.hero.title
+  const heroWords = c.hero.title
     .replace(/\u200b|(?<=[，、；])(?=\S)/g, '\u0001')
     .split(/(\s+|\u0001)/)
     .filter(Boolean)
     .map((w) => (w === '\u0001' ? '<wbr>' : /^\s+$/.test(w) ? ' ' : `<span class="w" style="--wi:${wordNo++}"><span>${esc(w)}</span></span>`))
     .join('');
+  // One H1 says what Curahold is (the category, small) and what it does for you (the outcome).
+  const heroTitle = `<span class="hero__k">${esc(c.hero.kicker)}</span> ${heroWords}`;
+  const n = infoCopy(locale).nav;
+  const [seoTitle, seoDesc] = infoCopy(locale).seo.home;
+  const ctas = `<a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>
+          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>`;
 
   // ------------------------------------------------------------------ the bento
   const tile = (i: number) => `<div class="tile__c"><h3>${esc(bento.tiles[i].h)}</h3><p>${esc(bento.tiles[i].p)}</p></div>`;
@@ -1104,7 +1210,7 @@ export function page(locale: SiteLocale): string {
           </div>
         </article>`;
 
-  const faq = c.faq.items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+  const faq = faqList(c.faq.items);
   const marquee = INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('');
   // The mark's own arc, drawn large behind the film: the C that holds.
   const arc = `<svg class="hero__arc" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="arcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c7dff"/><stop offset=".55" stop-color="#5b4de8"/><stop offset="1" stop-color="#3fb596"/></linearGradient></defs><path d="M319.3 79.8A170 170 0 1 0 319.3 340.2" pathLength="100"/></svg>`;
@@ -1114,18 +1220,16 @@ export function page(locale: SiteLocale): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(c.title)}</title>
-<meta name="description" content="${esc(c.description)}">
-${seoTags({ canonical, title: c.title, description: c.description, locale, ogType: 'website', image: OG_IMAGE_URL })}
+<title>${esc(seoTitle)}</title>
+<meta name="description" content="${esc(seoDesc)}">
+${seoTags({ canonical, title: seoTitle, description: seoDesc, locale, ogType: 'website', image: OG_IMAGE_URL })}
 <meta name="theme-color" content="#17133a">
 <link rel="icon" href="${FAVICON}">
 ${alternates}
-${landingJsonLd(locale, canonical, c.description)}
-<link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+${landingJsonLd(locale, canonical, seoDesc)}
+${fontPreload(locale, rel)}
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="${rel}assets/site.css">
-<link rel="stylesheet" href="${rel}assets/chrome.css">
-<link rel="stylesheet" href="${rel}assets/consent.css">
+${cssSlot('home', rel)}
 </head>
 <body class="home">
 ${SKY}
@@ -1138,8 +1242,7 @@ ${chromeHeader(locale, '', 'classic')}
         <h1 class="hero__h">${heroTitle}</h1>
         <p class="hero__lead">${esc(c.hero.lead)}</p>
         <div class="hero__ctas">
-          <a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${PLAY}${esc(c.nav.demo)}</a>
+          ${ctas}
         </div>
         <p class="hero__note">${esc(c.hero.note)}</p>
       </div>
@@ -1163,9 +1266,11 @@ ${chromeHeader(locale, '', 'classic')}
     ${cue}
     <div class="strip" aria-label="${esc(c.hero.works)}">
       <p class="strip__label">${esc(c.hero.works)}</p>
+      <button class="strip__toggle" type="button" aria-pressed="false" data-pause="${esc(c.hero.pause)}" data-play="${esc(c.hero.play)}">${PAUSE}<span>${esc(c.hero.pause)}</span></button>
       <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}</div></div>
     </div>
   </section>
+  <!--fold-->
 
   ${storyHtml}
 
@@ -1184,9 +1289,9 @@ ${chromeHeader(locale, '', 'classic')}
     </div>
   </section>
 
-  ${whyHtml(locale, { headingLevel: 2, urls: urlsOf(locale) })}
+  ${whyBriefHtml(locale)}
 
-  ${pricingHtml(locale, true)}
+  ${pricingSummaryHtml(locale)}
 
   <section class="faq calm">
     <div class="wrap faq__in">
@@ -1202,8 +1307,7 @@ ${chromeHeader(locale, '', 'classic')}
         <h2>${esc(cta.title)}</h2>
         <p>${esc(cta.text)}</p>
         <div class="cta__row">
-          <a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${PLAY}${esc(c.nav.demo)}</a>
+          ${ctas}
         </div>
       </div>
     </div>
@@ -1218,6 +1322,71 @@ ${chromeTail(locale, rel, 'classic')}
 `;
 }
 
+// ------------------------------------------------------------------ styles per kind of page
+
+type CssKind = 'home' | 'page' | 'blog';
+/** Which hand-written sheets each kind of page draws from (scripts/site-css.ts cuts them down). */
+const CSS_SOURCES: Record<CssKind, string[]> = {
+  home: ['site.css', 'chrome.css', 'consent.css'],
+  page: ['site.css', 'chrome.css', 'pages.css', 'consent.css'],
+  blog: ['site.css', 'chrome.css', 'consent.css'],
+};
+/** Where a page's styles go; build() fills it once every page of that kind is known. */
+const cssSlot = (kind: CssKind, rel: string) => `<!--css:${kind}:${rel}-->`;
+
+/**
+ * The font files a language preloads: both faces of each slice it lists in site/locales.ts
+ * (SITE_FONTS). Other scripts list no slice and read their system faces (site/chrome.css :lang
+ * rules), so they download no font. Turkish preloads latin-ext too (ş, ğ, İ): found only through
+ * the CSS, the headline face's file arrived after the first paint and its swap re-laid out every
+ * heading on the page (about 70 ms on a mid-range phone, counted as blocking time).
+ */
+const fontPreload = (locale: SiteLocale, rel: string) =>
+  SITE_FONTS[locale]
+    .flatMap((s) => [`bricolage-grotesque-${s}-wght-normal`, `figtree-${s}-wght-normal`])
+    .map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`)
+    .join('\n');
+
+/** Pages waiting for their styles: written once the styles of their kind are cut. */
+const pending: { file: string; html: string }[] = [];
+const emit = (file: string, html: string) => pending.push({ file, html });
+
+/**
+ * Cuts each kind of page's styles to the classes it uses, writes them as one hashed file
+ * (cached for good), inlines what the first screen needs (everything above <!--fold-->), and
+ * loads the file without blocking the first paint, at low priority (media=print until it
+ * arrives) so the fonts are fetched first. Then writes the pages.
+ */
+function writePages(): string {
+  const report: string[] = [];
+  for (const kind of Object.keys(CSS_SOURCES) as CssKind[]) {
+    const mine = pending.filter((p) => p.html.includes(`<!--css:${kind}:`));
+    if (!mine.length) continue;
+    const full = minifyCss(CSS_SOURCES[kind].map((f) => readFileSync(join(ROOT, 'site', f), 'utf8')).join('\n'));
+    const used = new Set<string>();
+    const first = new Set<string>();
+    for (const p of mine) {
+      for (const c of classesIn(p.html)) used.add(c);
+      const fold = p.html.indexOf('<!--fold-->');
+      // A page without a fold mark (the blog: short pages) is all first screen.
+      for (const c of classesIn(fold < 0 ? p.html : p.html.slice(0, fold))) first.add(c);
+    }
+    const sheet = pruneCss(full, used);
+    const critical = pruneCss(full, first);
+    const name = `${kind}.${createHash('sha256').update(sheet).digest('hex').slice(0, 10)}.css`;
+    writeFileSync(join(OUT, 'assets', name), sheet);
+    report.push(`${kind} ${Math.round(critical.length / 1024)} KB inline + ${Math.round(sheet.length / 1024)} KB file`);
+    for (const p of mine) {
+      p.html = p.html.replace(/<!--css:(\w+):([^>]*)-->/, (_m, _k, rel: string) =>
+        // Inline, a font's url() is read from the page, not from assets/: point it there.
+        `<style>${critical.replace(/url\((?![a-z]+:|\/|#)/g, `url(${rel}assets/`)}</style>\n<link rel="stylesheet" href="${rel}assets/${name}" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="${rel}assets/${name}"></noscript>`,
+      ).replace('<!--fold-->', '');
+    }
+  }
+  for (const p of pending) writeFileSync(p.file, p.html);
+  return report.join(', ');
+}
+
 // Run as a script, it writes the site; imported (by a test), it only lends page().
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) build();
 
@@ -1226,22 +1395,26 @@ function build() {
   for (const locale of SITE_LOCALES) {
     const dir = locale === 'en' ? OUT : join(OUT, locale);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), page(locale));
+    emit(join(dir, 'index.html'), page(locale));
     // The inner pages the menu points to, and the two animated versions.
-    for (const p of innerPages(locale, urlsOf(locale), pricingHtml(locale, false))) {
+    for (const p of innerPages(locale, urlsOf(locale), { plans: plansHtml(locale), compare: compareHtml(locale), faq: pricingFaqHtml(locale), offers: (url) => offersLd(locale, url), faqLd, fill: (t) => t.replace('{team}', moneyIn(locale)(PLANS.team.price.year)).replace('{business}', moneyIn(locale)(PLANS.business.price.year)) })) {
       mkdirSync(join(dir, p.path), { recursive: true });
-      writeFileSync(join(dir, p.path, 'index.html'), innerDoc(locale, p));
+      emit(join(dir, p.path, 'index.html'), innerDoc(locale, p));
+    }
+    for (const p of hubPages(locale, urlsOf(locale), ORIGIN)) {
+      mkdirSync(join(dir, p.path), { recursive: true });
+      emit(join(dir, p.path, 'index.html'), innerDoc(locale, p));
     }
     for (const [which, path] of [['a', PAGE.ai], ['c', PAGE.orbit]] as const) {
       mkdirSync(join(dir, path), { recursive: true });
       writeFileSync(join(dir, path, 'index.html'), conceptDoc(locale, which));
     }
   }
-  copyFileSync(join(ROOT, 'site', 'site.css'), join(OUT, 'assets', 'site.css'));
   copyFileSync(join(ROOT, 'site', 'site.js'), join(OUT, 'assets', 'site.js'));
   copyFileSync(join(ROOT, 'site', 'consent.css'), join(OUT, 'assets', 'consent.css'));
   copyFileSync(join(ROOT, 'site', 'consent.js'), join(OUT, 'assets', 'consent.js'));
-  for (const f of ['chrome.css', 'chrome.js', 'pages.css']) copyFileSync(join(ROOT, 'site', f), join(OUT, 'assets', f));
+  // The animated versions still link the shared header's and the consent banner's sheets as they are.
+  for (const f of ['chrome.css', 'chrome.js']) copyFileSync(join(ROOT, 'site', f), join(OUT, 'assets', f));
   copyFileSync(join(ROOT, 'site', 'ab', 'measure.js'), join(OUT, 'assets', 'measure.js'));
   // The A/B edge script ships only once the test is switched on (site/ab/config.ts).
   if (AB.enabled) writeFileSync(join(OUT, '_worker.js'), `const AB = ${JSON.stringify(AB)};\n${readFileSync(join(ROOT, 'site', 'ab', 'worker.js'), 'utf8')}`);
@@ -1267,31 +1440,40 @@ function build() {
   for (const locale of BLOG_LOCALES) {
     const dir = locale === 'en' ? join(OUT, 'blog') : join(OUT, locale, 'blog');
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), blogIndexPage(locale));
+    emit(join(dir, 'index.html'), blogIndexPage(locale));
     blogPageCount++;
     for (const post of blogPosts(locale)) {
       const pdir = join(dir, post.slug);
       mkdirSync(pdir, { recursive: true });
-      writeFileSync(join(pdir, 'index.html'), blogPostPage(locale, post));
+      emit(join(pdir, 'index.html'), blogPostPage(locale, post));
       blogPageCount++;
     }
   }
 
-  // sitemap.xml with hreflang alternates, and robots.txt pointing to it.
-  const today = new Date().toISOString().slice(0, 10);
-  const latestPost = (locale: SiteLocale) => blogPosts(locale).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01');
-  const sitemapUrl = (loc: string, lastmod: string, priority: string, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
+  const cssReport = writePages();
+
+  // The sitemaps: one per language (each page with its hreflang alternates) and an index
+  // (sitemap.xml) that robots.txt points to. No <priority> (search engines ignore it);
+  // <lastmod> is when the site's sources last changed in git, or a blog post's own date,
+  // and is left out rather than guessed when git cannot say.
+  const lastmod = siteLastmod();
+  const sitemapUrl = (loc: string, mod: string | undefined, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
     const links = [...alternates.map((l) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${pathOf(l)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${pathOf('en')}"/>`].join('\n');
-    return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>${priority}</priority>\n${links}\n  </url>`;
+    return `  <url>\n    <loc>${loc}</loc>\n${mod ? `    <lastmod>${mod}</lastmod>\n` : ''}${links}\n  </url>`;
   };
-  const entries: string[] = [];
-  for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}`, today, l === 'en' ? '1.0' : '0.8', SITE_LOCALES, localeBase));
-  const innerPaths = [...innerPages('en', urlsOf('en'), '').map((p) => p.path), PAGE.ai, PAGE.orbit];
-  for (const path of innerPaths) for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, today, '0.7', SITE_LOCALES, (x) => `${localeBase(x)}${path}`));
-  for (const l of BLOG_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, latestPost(l), '0.6', BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
-  for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
-  writeFileSync(join(OUT, 'sitemap.xml'), sitemap);
+  const indexedPaths = ['', ...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd, fill: (t) => t }).map((p) => p.path), ...hubPages('en', urlsOf('en'), ORIGIN).map((p) => p.path)];
+  const sitemaps: string[] = [];
+  for (const l of SITE_LOCALES) {
+    const entries = indexedPaths.map((path) => sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, lastmod, SITE_LOCALES, (x) => `${localeBase(x)}${path}`));
+    if (BLOG_LOCALES.includes(l)) {
+      entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, blogPosts(l).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01'), BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
+      for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
+    }
+    const name = `sitemap-${l}.xml`;
+    writeFileSync(join(OUT, name), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`);
+    sitemaps.push(`  <sitemap>\n    <loc>${ORIGIN}/${name}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}\n  </sitemap>`);
+  }
+  writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemaps.join('\n')}\n</sitemapindex>\n`);
   // The crawler policy (shared/src/compliance/crawlers.ts): search engines in, AI crawlers out, the TDM reservation.
   writeFileSync(join(OUT, 'robots.txt'), robotsTxt('site', { sitemap: `${ORIGIN}/sitemap.xml`, allowAiAnswers: process.env.SITE_AI_CRAWLERS === 'allow', allowScrapers: process.env.SITE_SEO_ROBOTS === 'allow' }));
   mkdirSync(join(OUT, '.well-known'), { recursive: true });
@@ -1301,5 +1483,6 @@ function build() {
   // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
   const HUB = join(ROOT, 'dist', 'demo-hub');
   if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
-  console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemap.xml + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
+  console.log(`styles: ${cssReport}`);
+  console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemaps + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
 }

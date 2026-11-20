@@ -5,6 +5,7 @@
 import { LOCALE_INFO, bcp47Of } from '../shared/src/i18n';
 import { MARK } from '../site/brand';
 import { SITE_LOCALES, type SiteLocale } from '../site/content';
+import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
 import type { DeptKey, FeatureKey, IntegrationGroup } from '../site/info/types';
 
@@ -80,9 +81,24 @@ export const GLYPH: Record<DeptKey | FeatureKey | 'help' | 'developers' | 'relea
   about: g('M8 7.2A2.6 2.6 0 1 0 8 2a2.6 2.6 0 0 0 0 5.2zM3 14c.5-2.6 2.6-4.4 5-4.4s4.5 1.8 5 4.4'),
 };
 const CARET = `<svg class="hx__caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.6L6 7.6l3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
 const GLOBE = `<svg class="hx__globe" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.2A6.2 6.2 0 1 0 8 1.8a6.2 6.2 0 0 0 0 12.4zM1.8 8h12.4M8 1.8c1.7 1.8 2.5 3.9 2.5 6.2S9.7 12.4 8 14.2M8 1.8C6.3 3.6 5.5 5.7 5.5 8s.8 4.4 2.5 6.2" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`;
 const BACK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 8h10.8M6.4 4.2L2.6 8l3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// Every button carries an icon and its words (owner rule). Arrows point to the reading direction's
+// end; the stylesheet mirrors `.ic-dir` right to left.
+/** The primary call to action's icon: an arrow toward the end of the line. */
+export const ICON_GO = `<svg class="ic-dir" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9.2 4.2L13 8l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** The live demo's icon. */
+export const ICON_PLAY = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.3v9.4a.6.6 0 0 0 .9.5l7.6-4.7a.6.6 0 0 0 0-1L5.9 2.8a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>`;
+/** Sign in: a door with an arrow going in. */
+export const ICON_SIGNIN = `<svg class="ic-dir" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3M2.5 8h7.5M7.2 5.2L10 8l-2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** Back to the page this one was opened from. */
+export const ICON_BACK = BACK.replace('<svg ', '<svg class="ic-dir" ');
+/** The two calls to action, the same words and icons on every page: the free trial and the live demo. */
+export function ctaPair(locale: SiteLocale, urls: { trial: string; demo: string }, size: 'big' | '' = 'big'): string {
+  const n = infoCopy(locale).nav;
+  const big = size ? ' hx__btn--big' : '';
+  return `<a class="hx__btn hx__btn--solid${big}" href="${esc(urls.trial)}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a><a class="hx__btn hx__btn--ghost${big}" href="${esc(urls.demo)}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>`;
+}
 
 export type Version = 'classic' | 'a' | 'c';
 
@@ -124,7 +140,7 @@ export function headerHtml(o: HeaderOpts): string {
     n.product,
     col(n.departments, DEPTS.map((k) => item(href(PAGE.dept(k)), GLYPH[k], c.depts[k].name, c.depts[k].short, SOON_DEPTS.has(k), OPTIONAL_DEPTS.has(k) ? n.optional : '')).join(''), ' hx__col--flow') +
       col(n.features, FEATURES.map((k) => item(href(PAGE.feature(k)), GLYPH[k], c.features[k].name, c.features[k].short)).join(''), ' hx__col--two') +
-      feat(n.featured.title, n.featured.text, `<a class="hx__btn hx__btn--solid" href="${esc(o.urls.demo)}" data-ab="demo">${esc(n.demo)}</a>`),
+      feat(n.featured.title, n.featured.text, `<a class="hx__btn hx__btn--solid" href="${esc(o.urls.demo)}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>`),
     'product',
   );
   const group = (title: string, id: string, list: [string, string][]) => col(title, list.map(([h, p], i) => plain(`${href(PAGE.solutions)}#${id}-${i + 1}`, h, p)).join(''));
@@ -133,7 +149,7 @@ export function headerHtml(o: HeaderOpts): string {
     n.solutions,
     `<div class="hx__stack">${group(n.byRole, 'role', c.solutions.roles)}${group(n.bySize, 'size', c.solutions.sizes)}</div>` +
       `<div class="hx__stack">${group(n.byIndustry, 'industry', c.solutions.industries)}${group(n.byRegion, 'region', c.solutions.regions)}</div>` +
-      feat(n.trialCard.title, n.trialCard.text, `<a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${esc(n.tryFree)}</a>`),
+      feat(n.trialCard.title, n.trialCard.text, `<a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>`),
     'wide',
   );
   const integrations = panel(
@@ -150,7 +166,9 @@ export function headerHtml(o: HeaderOpts): string {
   const resources = panel(
     'resources',
     n.resources,
-    col(n.learn, [item(o.urls.docs, GLYPH.help, ...n.help), item(o.urls.quickstart, GLYPH.releases, ...n.quickstart), item(o.urls.blog, GLYPH.blog, ...n.blog), item(href(PAGE.faq), GLYPH.faq, ...n.faq)].join('')) +
+    // The animated version lives here, not as a button in the bar: as a top-level switch it competed
+    // with the free trial and its name did not say what it opens.
+    col(n.learn, [item(o.urls.docs, GLYPH.help, ...n.help), item(o.urls.quickstart, GLYPH.releases, ...n.quickstart), item(o.urls.blog, GLYPH.blog, ...n.blog), item(href(PAGE.faq), GLYPH.faq, ...n.faq), item(href('resources/'), GLYPH.releases, ...hubCopy(o.locale).nav), item(href(o.aiVersion === 'a' ? PAGE.ai : PAGE.orbit), GLYPH.assistant, n.toAi, n.toAiHint)].join('')) +
       `<div class="hx__stack">${col(n.build, [item(o.urls.devDocs, GLYPH.developers, ...n.developers), item(o.urls.selfHost, GLYPH.product, ...n.selfHost)].join(''))}${col(n.trustGroup, [item(href(PAGE.trust), GLYPH.trust, ...n.trust), item(o.urls.legal, GLYPH.about, ...n.legal)].join(''))}</div>` +
       feat(n.news, n.releases[1], `${news}<a class="hx__more" href="${esc(o.urls.releases)}">${esc(n.releases[0])}</a>`),
     'wide',
@@ -169,16 +187,12 @@ export function headerHtml(o: HeaderOpts): string {
   );
   const direct = (p: string, label: string) => `<li class="hx__item"><a class="hx__top" href="${href(p)}"${o.page === p ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
 
-  // The version switch: classic → the chosen animated version; either animated version → classic.
-  const toAi = o.version === 'classic';
-  const switchHref = toAi ? href(o.aiVersion === 'a' ? PAGE.ai : PAGE.orbit) : base;
-  const switchBtn = `<a class="hx__switch" href="${switchHref}" data-ab="switch"${toAi ? '' : ' data-back'}>${toAi ? SPARK : BACK}<span>${esc(toAi ? n.toAi : n.toClassic)}</span></a>`;
+  // An animated version is a page opened from the menu, so it carries the way back to the classic site.
+  const switchBtn = o.version === 'classic' ? '' : `<a class="hx__switch" href="${base}" data-ab="switch" data-back>${ICON_BACK}<span>${esc(n.toClassic)}</span></a>`;
 
   const path = o.langPath ?? (() => o.page);
   const langs = SITE_LOCALES.map((l) => `<a href="${localeBase(l)}${path(l)}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}"${l === o.locale ? ' aria-current="true"' : ''}>${esc(LOCALE_INFO[l].name)}</a>`).join('');
   const lang = `<details class="hx__lang"><summary aria-label="${esc(n.language)}: ${esc(LOCALE_INFO[o.locale].name)}">${GLOBE}<span>${esc(LOCALE_INFO[o.locale].name)}</span>${CARET}</summary><div class="hx__langs">${langs}</div></details>`;
-  // On the animated versions the product is the primary action ("Go to the product"); on the classic site it is the free trial.
-  const primary = o.version === 'classic' ? n.tryFree : n.go;
 
   return `<header class="hx${o.version === 'classic' ? '' : ' hx--fixed'}" data-hx>
   <div class="hx__bar">
@@ -190,19 +204,19 @@ export function headerHtml(o: HeaderOpts): string {
       <div class="hx__end">
         ${switchBtn}
         ${lang}
-        <a class="hx__signin" href="${esc(o.signIn)}" data-signin>${esc(n.signIn)}</a>
-        <a class="hx__btn hx__btn--ghost" href="${esc(o.urls.demo)}" data-ab="demo">${esc(n.demo)}</a>
-        <a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${esc(primary)}</a>
+        <a class="hx__signin" href="${esc(o.signIn)}" data-signin>${ICON_SIGNIN}<span>${esc(n.signIn)}</span></a>
+        <a class="hx__btn hx__btn--ghost" href="${esc(o.urls.demo)}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>
+        <a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>
       </div>
     </div>
     <div class="hx__quick">
-      <a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${esc(primary)}</a>
-      ${o.version === 'classic' ? '' : `<a class="hx__btn hx__btn--ghost" href="${esc(o.urls.demo)}" data-ab="demo">${esc(n.demo)}</a>`}
+      <a class="hx__btn hx__btn--solid" href="${esc(o.urls.trial)}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>
       <button class="hx__burger" type="button" aria-expanded="false" aria-controls="hx-menu" aria-label="${esc(n.menu)}" data-close-label="${esc(n.close)}"><i></i><i></i><i></i></button>
     </div>
   </div>
 </header>
-<script>innerWidth<1240&&document.currentScript.previousElementSibling.classList.add('is-compact')</script>`;
+<script>innerWidth<1240&&document.currentScript.previousElementSibling.classList.add('is-compact')</script>${o.version === 'classic' ? `
+<div class="mbar" data-mbar>${ctaPair(o.locale, o.urls)}</div>` : ''}`;
 }
 
 /** "Why Curahold?": a strong line, six proof cards that each link to the page that shows it, and who it is for. */
@@ -213,11 +227,15 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
   const links = [PAGE.dept('inside'), PAGE.feature('meetings'), PAGE.feature('health'), `${PAGE.solutions}#region-1`, PAGE.trust, PAGE.integrations];
   const icons = [GLYPH.product, GLYPH.meetings, GLYPH.health, GLYPH.why, GLYPH.trust, GLYPH.sync];
   const h = opts.headingLevel === 1 ? 'h1' : 'h2';
+  // Card titles sit one level under the block's title, so the outline never skips (h1 → h2 on /why/, h2 → h3 elsewhere).
+  const ch = opts.headingLevel === 1 ? 'h2' : 'h3';
   const cards = w.proofs
-    .map(([t, p, l], i) => `<li class="wy__card"><span class="wy__ic">${icons[i]}</span><h3>${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${links[i]}">${esc(l)}</a></li>`)
+    .map(([t, p, l], i) => `<li class="wy__card"><span class="wy__ic">${icons[i]}</span><${ch} class="wy__ch">${esc(t)}</${ch}><p>${esc(p)}</p><a href="${base}${links[i]}">${esc(l)}</a></li>`)
     .join('');
   const contrast = `<div class="wy__vs" id="vs"><p class="wy__vsh">${esc(w.contrastTitle)}</p><div class="wy__cols"><ul class="wy__before">${w.before.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><ul class="wy__after">${w.after.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
   const forWho = `<ul class="wy__who">${w.forWho.map((x, i) => `<li><a href="${base}${PAGE.dept(DEPTS[i])}">${GLYPH[DEPTS[i]]}<span>${esc(x)}</span></a></li>`).join('')}</ul>`;
+  // Only on /why/ itself: the honest limits, so a visitor who is not a fit learns it before a trial.
+  const notFor = opts.headingLevel === 1 ? `<div class="wy__not" id="not-for"><h2>${esc(w.notForTitle)}</h2><p>${esc(w.notForLead)}</p><ul>${w.notFor.map(([h, p]) => `<li><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join('')}</ul></div>` : '';
   return `<section class="wy${opts.compact ? ' wy--compact' : ''}" id="why" aria-labelledby="why-title">
   <div class="wy__wrap">
     <${h} id="why-title">${esc(w.title)}</${h}>
@@ -226,7 +244,27 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
     ${flowHtml(locale)}
     ${contrast}
     ${forWho}
-    <div class="wy__ctas"><a class="hx__btn hx__btn--solid hx__btn--big" href="${esc(opts.urls.trial)}" data-ab="go">${esc(c.nav.go)}</a><a class="hx__btn hx__btn--ghost hx__btn--big" href="${esc(opts.urls.demo)}" data-ab="demo">${esc(c.nav.demo)}</a></div>
+    ${notFor}
+    <div class="wy__ctas">${ctaPair(locale, opts.urls)}</div>
+  </div>
+</section>`;
+}
+
+/**
+ * The landing page's "Why Curahold?": three of the reasons, each linking to the page that shows it,
+ * and a link to /why/ for the rest. The full block lives on /why/ only, so the two never repeat.
+ */
+export function whyBriefHtml(locale: SiteLocale): string {
+  const w = infoCopy(locale).why;
+  const base = localeBase(locale);
+  const picks: [number, string, string][] = [[0, PAGE.dept('inside'), GLYPH.product], [1, PAGE.feature('meetings'), GLYPH.meetings], [2, PAGE.feature('health'), GLYPH.health]];
+  const cards = picks.map(([i, link, icon]) => { const [t, p, l] = w.proofs[i]; return `<li class="wy__card"><span class="wy__ic">${icon}</span><h3 class="wy__ch">${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${link}">${esc(l)}</a></li>`; }).join('');
+  return `<section class="wy wy--brief" id="why" aria-labelledby="why-title">
+  <div class="wy__wrap">
+    <h2 id="why-title">${esc(w.title)}</h2>
+    <p class="wy__lead">${esc(w.lead)}</p>
+    <ul class="wy__grid">${cards}</ul>
+    <a class="wy__more" href="${base}${PAGE.why}"><span>${esc(w.more)}</span>${ICON_GO}</a>
   </div>
 </section>`;
 }

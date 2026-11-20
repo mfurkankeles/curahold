@@ -26,6 +26,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Sales site: a small content hub in all nine languages (/resources/): four templates (renewal playbook, business review (QBR)
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
+  contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
+  what Curahold does today. Linked from the Resources menu and the footer.
 - Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
   use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
   by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).
@@ -69,6 +73,33 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   Hebrew, Persian, Japanese, Korean, Chinese, Hindi) uses its own system font, size and line height.
 - Turkish: the whole product says "siz".
 
+- Sales site: the Turkish pages speak to visitors as "siz" everywhere (landing page, menus, inner pages, blog, animated versions, consent).
+- Sales site: the headline says what Curahold is and what it does ("Work management for customer teams" above "Every renewal, every
+  promise, every task, on time.") in all nine languages; every page uses the same two calls to action, "Try it free" and "Live demo",
+  each with an icon; "3 months free, no card needed" sits under them.
+- Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
+  to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.
+- Sales site pricing: the landing page shows a two-line summary ("from $15 per seat a month on a yearly plan") with a link instead of
+  the full plans; /pricing/ shows the prices in the first screen and adds a plan comparison table, pricing questions and a line for
+  larger companies. Its structured data now lists all four offers (Team and Business, monthly and yearly) at the prices the page shows,
+  instead of one $19 offer next to a page showing $15. Prices themselves are unchanged.
+- Sales site: the landing page is about a third shorter (about 7,900 px at 1440 wide, from 12,400): "Why Curahold" shows three reasons
+  and links to /why/, which now ends with an honest "Who it is not for" (a personal to-do list, a help desk, bookkeeping, a
+  critical-path schedule) and the two calls to action. The scroll story's steps are a little shorter.
+- Sales site search: every page has a title and description written for its language's searches (no page is now too
+  short or too long for search results); the animated versions are kept out of search results; the sitemap is an index
+  with one file per language; questions and prices carry structured data that matches the page; share links show a PNG
+  picture; footer column titles are no longer headings. The help centre's production build gets absolute canonical and
+  hreflang addresses (only to languages that really have the page), article structured data and its own sitemap, which
+  the docs host's robots.txt now names. New settings: `SITE_LASTMOD`, `DOCS_ORIGIN` (ADR 0020).
+- Sales site speed and motion: no stylesheet blocks the first paint any more (first-screen styles inline, the rest cut to
+  what each kind of page uses and loaded after); the headline and its buttons show at once instead of sliding in; Arabic,
+  Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
+  no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
+  a Pause button and stays still for anyone who asked their system for less motion.
+- Sales site speed on phones: the lower half of the landing page (the story's steps and window, the short "why" block,
+  the price summary, the footer) is laid out only as it comes near the screen, and Turkish pages preload the headline
+  face's Turkish letters too, so a late font no longer re-lays out every heading after the first paint.
 - Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
   `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched

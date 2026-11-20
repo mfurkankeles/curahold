@@ -44,6 +44,12 @@ const DATA_ONLY = ARGS.includes('--data-only') || process.env.DOCS_DATA_ONLY ===
 const RELATIVE = PREVIEW || ARGS.includes('--relative') || process.env.DOCS_RELATIVE === '1';
 const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
 /**
+ * Where the published docs live, for canonical, hreflang, structured data and the sitemap
+ * (the production build only; a relative copy is closed to crawlers and carries none of them).
+ * The sales site links to the app's address, so that is the default (docs/ENVIRONMENT.md).
+ */
+const DOCS_ORIGIN = (process.env.DOCS_ORIGIN ?? 'https://app.curahold.com').replace(/\/$/, '');
+/**
  * The languages the docs are written in: a folder per language under docs/site.
  * Adding a language is adding its folder. Its user guide (section help) must be
  * whole; any other page it does not have yet is shown in English, with a note
@@ -56,6 +62,8 @@ type Lang = Locale;
 /** English and Turkish carry every page themselves. */
 const WHOLE: Lang[] = ['en', 'tr'];
 const SECTIONS = ['help', 'developers', 'reference', 'releases', 'legal'] as const;
+/** Each page's slug → the languages that have it in their own words (a search engine is pointed only at those). */
+const OWN = new Map<string, Lang[]>();
 /** Preview only: `<lang>/<slug>` of every page a language shows in English (it links to the English page). */
 const BORROWED = new Set<string>();
 /** Preview only: the language whose page or picture a link really goes to. */
@@ -272,6 +280,29 @@ const icon = (k: keyof typeof ICONS) => `<svg class="entry__icon" viewBox="0 0 2
 
 const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe"/><path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" stroke="#191541" stroke-width="3" stroke-linecap="round"/><circle cx="16.5" cy="16" r="2.6" fill="#2f8f78"/></svg>`;
 
+/**
+ * The production build's search tags for one page: an absolute canonical, hreflang to the
+ * languages that have the page in their own words (and x-default English), and schema.org
+ * TechArticle + BreadcrumbList. A page shown in English inside another language is a copy:
+ * its canonical is the English page and it lists no alternates.
+ */
+function searchTags(lang: Lang, page: Page | null, path: string, site: string, sections: Record<Section, string>): string {
+  const abs = (l: Lang) => `${DOCS_ORIGIN}/docs/${l}/${path}`;
+  const canonical = abs(page?.borrowed ? 'en' : lang);
+  const langs = page ? (page.borrowed ? [] : (OWN.get(page.slug) ?? [lang])) : LANGS;
+  const alternates = langs.length > 1 ? [...langs.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${abs(l)}">`), `<link rel="alternate" hreflang="x-default" href="${abs('en')}">`] : [];
+  const home = `${DOCS_ORIGIN}/docs/${lang}/`;
+  const org = { '@type': 'Organization', name: 'Curahold', url: 'https://curahold.com/' };
+  const graph = page
+    ? [
+        { '@type': 'TechArticle', headline: page.title, description: page.summary, inLanguage: bcp47Of(page.borrowed ? 'en' : lang), dateModified: page.updated, url: canonical, publisher: org },
+        { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: site, item: home }, { '@type': 'ListItem', position: 2, name: sections[page.section] }, { '@type': 'ListItem', position: 3, name: page.title, item: canonical }] },
+      ]
+    : [{ '@type': 'WebSite', name: site, url: home, inLanguage: bcp47Of(lang), publisher: org }];
+  const ld = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
+  return [`<link rel="canonical" href="${canonical}">`, ...alternates, `<script type="application/ld+json">${ld}</script>`].join('\n');
+}
+
 /** A page of the docs. `path` is where it sits inside a language ('' for the start page, '<slug>/'), so the language menu lands on the same page. */
 function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path: string) {
   const ui = uiOf(lang);
@@ -297,7 +328,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path
 <meta name="description" content="${esc(page?.summary ?? ui.lead)}">
 <meta name="robots" content="${RELATIVE ? CLOSED_ROBOTS : 'index, follow, noai, noimageai'}">
 ${TDM_META}
-${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/${l}/${path}">`).join('\n')}
+${RELATIVE ? '' : searchTags(lang, page, path, ui.site, ui.sections)}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%2367c2a8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/docs/assets/docs.css">
 </head>
@@ -342,6 +373,7 @@ function build() {
     if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
     all[lang] = english.map((f) => parse(lang, f, own.has(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
     for (const p of all[lang]) if (p.borrowed) BORROWED.add(`${lang}/${p.slug}`);
+    for (const p of all[lang]) if (!p.borrowed) OWN.set(p.slug, [...(OWN.get(p.slug) ?? []), lang]);
   }
 
   for (const lang of LANGS) {
@@ -468,6 +500,14 @@ ${news}
     ...LANGS.filter((l) => l !== 'en').flatMap((l) => [`## ${LOCALE_INFO[l].name}`, '', ...all[l].filter((p) => !p.borrowed).map((p) => `- [${p.title}](/docs/${l}/${p.slug}.md): ${p.summary}`), '']),
   ].join('\n');
   if (!RELATIVE) writeFileSync(join(OUT, '..', 'llms.txt'), llms);
+  // The docs' own sitemap: every page in each language that has it, with the day it last changed.
+  if (!RELATIVE) {
+    const url = (l: Lang, path: string) => `${DOCS_ORIGIN}/docs/${l}/${path}`;
+    const entry = (l: Lang, path: string, langs: Lang[], mod?: string) =>
+      `  <url>\n    <loc>${url(l, path)}</loc>\n${mod ? `    <lastmod>${mod}</lastmod>\n` : ''}${[...langs.map((x) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(x)}" href="${url(x, path)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${url('en', path)}"/>`].join('\n')}\n  </url>`;
+    const rows = LANGS.flatMap((l) => [entry(l, '', LANGS), ...all[l].filter((p) => !p.borrowed).map((p) => entry(l, `${p.slug}/`, OWN.get(p.slug) ?? [l], p.updated))]);
+    writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${rows.join('\n')}\n</urlset>\n`);
+  }
   writeFileSync(join(OUT, 'llms-full.txt'), en.map((p) => `# ${p.title}\n\nSource: /docs/en/${p.slug}/\n\n${p.md.trim()}\n`).join('\n\n'));
   if (RELATIVE) {
     makeRelative(OUT);

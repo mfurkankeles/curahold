@@ -331,6 +331,26 @@ step is an issue at once: `openStepIssue` writes the step's own record
 lists (`onboarding_issues`, `source = 'setup_test'`, `source_ref` = the step);
 `closeStepIssue` resolves both when the step passes or is left out.
 
+### a sales-site language
+
+The site (curahold.com) publishes a language only when all of its copy exists: no half-English
+pages, no hreflang to a page that is not there (ADR 0020). Hindi and Malay are next; they are in
+`SITE_PENDING` today. To add one:
+
+1. `site/locales.ts`: add it to `SITE_LANGS` with its Open Graph locale (`hi_IN`, `ms_MY`), to
+   `SITE_FONTS` (`ms: ['latin']`; `hi: []`, it reads the system's Devanagari face), and take it
+   out of `SITE_PENDING`. From here TypeScript names every copy file still missing it.
+2. Write the copy, natively and with the glossary (`shared/src/i18n/glossary.ts` has `hi` and `ms`
+   columns): `site/content.ts` (`COPY`, and `STORY_COPY` if the scroll story ships), `site/info/<lang>.ts`
+   plus `site/info/index.ts`, `site/concepts/a-copy.ts` and `c-copy.ts`, `site/hub-content.ts`
+   (the same items as every other language). Every page needs a `seo` title and description in range.
+3. Non-Latin script (Hindi): give `site/chrome.css` a `:root:lang(hi)` text stack and body size
+   from the review's script table ('Nirmala UI', 'Kohinoor Devanagari', 'Noto Sans Devanagari';
+   18 px, line height 1.75, headings 1.4). No web font.
+4. Add it to `STORY_NOW` in `tests/site-copy.test.ts` if the story ships in it.
+5. Nothing else: hreflang, the language menu, sitemaps (one file per language) and Open Graph
+   alternates all loop over `SITE_LOCALES`. Run `npm run build:site` and `tests/site-*.test.ts`.
+
 ---
 
 ## 6. Tests

@@ -15,6 +15,9 @@ export type DeptKey = 'inside' | 'sales' | 'onboarding' | 'success' | 'product' 
 export type FeatureKey = 'health' | 'meetings' | 'sprints' | 'portal' | 'renewals' | 'assistant' | 'reports' | 'sync';
 export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation' | 'accounting';
 
+/** Every page that has its own search title and description. */
+export type SeoPage = 'home' | DeptKey | FeatureKey | 'solutions' | 'integrations' | 'pricing' | 'faq' | 'trust' | 'why' | 'about';
+
 export interface InfoCopy {
   nav: {
     product: string;
@@ -33,13 +36,12 @@ export interface InfoCopy {
     company: string;
     /** "See all" links at the foot of a menu panel. */
     allIntegrations: string;
-    /** The header's switch to the animated version, and the way back. */
+    /** The animated version: its name in the Resources menu, and the way back to the classic site from it. */
     toAi: string;
     toClassic: string;
-    /** One line under the switch inside the phone menu. */
+    /** One line under the animated version's name in the Resources menu. */
     toAiHint: string;
-    /** The quick actions. */
-    go: string;
+    /** The two calls to action, the same words on every page: the free trial (primary) and the live demo. */
     demo: string;
     tryFree: string;
     signIn: string;
@@ -113,7 +115,25 @@ export interface InfoCopy {
     missing: Point;
   };
   /** `dont`: what the price does not count, each checked against shared/src/billing.ts and api/src/lib/billing.ts. */
-  pricingPage: { title: string; lead: string; dontTitle: string; dont: Point[] };
+  pricingPage: {
+    title: string;
+    lead: string;
+    dontTitle: string;
+    dont: Point[];
+    /** The comparison table: its heading, the first column's heading, the words a screen reader says for ✓ and —, and two rows of its own. */
+    compareTitle: string;
+    feature: string;
+    included: string;
+    notIncluded: string;
+    priceRow: string;
+    viewers: string;
+    free: string;
+    /** Pricing questions, each answer checked against docs/site/<lang>/billing.md. */
+    faqTitle: string;
+    faq: { q: string; a: string }[];
+    /** The line for larger companies, and its link's words (to the help centre's contact page). */
+    enterprise: Point;
+  };
   faqPage: { title: string; lead: string; more: { q: string; a: string }[] };
   trust: { title: string; lead: string; points: Point[] };
   why: {
@@ -126,6 +146,12 @@ export interface InfoCopy {
     after: string[];
     /** "Who it is for": one line per department, in DeptKey order (six). */
     forWho: string[];
+    /** "Who it is not for": honest limits, each checked against what the product does today. */
+    notForTitle: string;
+    notForLead: string;
+    notFor: Point[];
+    /** The landing page's short version links to /why/ with these words. */
+    more: string;
   };
   about: {
     title: string;
@@ -134,4 +160,10 @@ export interface InfoCopy {
     /** Shown on the page until the owner has reviewed it. */
     review: string;
   };
+  /**
+   * The search title and description of each page, written for that language's searches
+   * (tests/site-seo.test.ts holds the lengths: 45–60 / 100–160 characters, or 25–40 / 70–100
+   * in Chinese, Japanese and Korean). {team} and {business} are filled with the yearly seat prices.
+   */
+  seo: Record<SeoPage, [title: string, description: string]>;
 }

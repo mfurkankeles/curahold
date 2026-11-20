@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { LOCALES } from '../shared/src/i18n';
 import { COPY, SITE_LOCALES, STORY_COPY, STORY_LOCALES, type SiteCopy, type SiteStoryCopy } from '../site/content';
+import { SITE_PENDING } from '../site/locales';
 import { page } from '../scripts/build-site';
 
 type Leaves = Map<string, string>;
@@ -29,8 +30,9 @@ const SAME_AS_ENGLISH: Record<string, string[]> = {
 const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(' ');
 
 describe('sales site copy', () => {
-  it('is written in every language the app speaks', () => {
-    expect([...SITE_LOCALES].sort()).toEqual([...LOCALES].sort());
+  it('is written in every language the app speaks, except those listed as not written yet', () => {
+    expect([...SITE_LOCALES].sort()).toEqual(LOCALES.filter((l) => !SITE_PENDING.includes(l)).sort());
+    expect(SITE_LOCALES.filter((l) => SITE_PENDING.includes(l))).toEqual([]);
   });
 
   for (const locale of SITE_LOCALES.filter((l) => l !== 'en')) {
