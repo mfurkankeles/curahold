@@ -1,7 +1,8 @@
+// Hebrew (עברית) dictionary: the reader addressed in the plural (ראו, עמדו), written right to left (the interface mirrors).
+// Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Hebrew (עברית). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const he: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'צוות',

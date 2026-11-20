@@ -41,7 +41,6 @@ function keep() {
   }
 }
 
-/** The screen a URL shows, leaving out what only opens a panel over it or filters it. */
 /** Whether moving from `from` to `to` opens a task or record panel over the same screen (`?task=` / `?record=` added or changed). */
 export function panelOpened(from: string, to: string): boolean {
   const q = (u: string) => new URLSearchParams(u.split('#')[0].split('?')[1] ?? '');
@@ -50,6 +49,7 @@ export function panelOpened(from: string, to: string): boolean {
   return ['task', 'record'].some((k) => !!b.get(k) && b.get(k) !== a.get(k));
 }
 
+/** The screen a URL shows, leaving out what only opens a panel over it or filters it. */
 export function screenOf(url: string): string {
   const [path, qs = ''] = url.split('#')[0].split('?');
   const p = new URLSearchParams(qs);

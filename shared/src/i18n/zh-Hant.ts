@@ -1,7 +1,8 @@
+// Traditional Chinese (繁體中文) dictionary, as Taiwan and Hong Kong business software writes it. Product and brand names
+// in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Traditional Chinese (繁體中文). Filled market surface by market surface; every
-// key not yet here falls back to English. Batch 1: frame, sign-in, navigation.
 export const zhHant: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': '團隊版',

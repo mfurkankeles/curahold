@@ -1,7 +1,8 @@
+// Türkçe sözlük (Turkish dictionary). Keys exactly as en.ts (the type checker enforces it). Every sentence addresses
+// the reader with "siz"; short button and menu labels may keep the bare verb ("Kaydet"). Plain Turkish for the general
+// market (görev, pano, son tarih). Job titles stay English. Words per concept: ./glossary.ts.
 import type { MessageKey } from './en';
 
-// Türkçe sözlük. Anahtarlar en.ts ile birebir aynı olmak zorunda.
-// Genel pazar için yalın Türkçe: görev, pano, son tarih.
 export const tr: Record<MessageKey, string> = {
   'common.save': 'Kaydet',
   'common.cancel': 'Vazgeç',

@@ -1,7 +1,8 @@
+// Arabic (العربية) dictionary: Modern Standard Arabic as business software writes it, the reader addressed formally;
+// written right to left (the interface mirrors). Product and brand names in Latin, Latin digits. Job titles stay English.
+// Words per concept: ./glossary.ts. Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Arabic (العربية). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const ar: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'الفريق',

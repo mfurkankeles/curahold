@@ -1,7 +1,8 @@
+// Persian (فارسی) dictionary: formal «شما», written right to left (the interface mirrors), never tied to one country.
+// Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Persian (فارسی). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const fa: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'تیم',

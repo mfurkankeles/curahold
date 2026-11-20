@@ -1,3 +1,6 @@
+// The sales site's header and inner pages in Arabic (formal), written for the Gulf and the wider Arab world; see ./types.ts.
+// Job titles and plan names stay English; terms from shared/src/i18n/glossary.ts. A line that depends on a build
+// setting carries both versions as ⟦price|…|…⟧ or ⟦eu|…|…⟧ (site/gates.ts); only claims on the claim table appear.
 import type { InfoCopy } from './types';
 
 export const ar: InfoCopy = {

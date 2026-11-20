@@ -1,7 +1,8 @@
+// Korean (한국어) dictionary: polite 합니다/하세요 in sentences, short labels on buttons, as Korean business software
+// writes them. Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Korean (한국어). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the frame, sign-in and navigation.
 export const ko: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': '팀',
