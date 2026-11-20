@@ -128,6 +128,14 @@ describe('trial requests', () => {
     expect(list.requests.find((r: any) => r.ref === again.ref).duplicateOf).toBe(first.ref);
 
     expect((await owner.req('POST', `/owner/requests/${first.id}/contacted`, { note: 'Called' })).status).toBe(200);
+    // The applicant's access request: their form, our note about them and the consent proof, as a download.
+    const file = await owner.req('GET', `/owner/requests/${first.id}/export`);
+    expect(file.status).toBe(200);
+    expect(file.json.requests.map((r: any) => r.ref)).toContain(first.ref);
+    expect(file.json.requests.find((r: any) => r.ref === first.ref).note).toBe('Called');
+    expect(Array.isArray(file.json.consents)).toBe(true);
+    expect(JSON.stringify(file.json)).not.toMatch(/code_hash|ip_hash/);
+    expect((await owner.req('GET', `/owner/requests/00000000-0000-4000-8000-000000000000/export`)).status).toBe(404);
     const ends = new Date(Date.now() + 40 * 86400_000).toISOString().slice(0, 10);
     const ok = await owner.req('POST', `/owner/requests/${first.id}/approve`, { departments: ['sales', 'success'], seatCap: 20, endsOn: ends });
     expect(ok.status, JSON.stringify(ok.json)).toBe(200);

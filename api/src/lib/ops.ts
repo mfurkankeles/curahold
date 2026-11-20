@@ -2,7 +2,7 @@
 // counted in this isolate (Worker) or process (self-host), and when too many
 // fail or the slow tail grows, an alert lands in the owner console's alerts
 // (company_log, kind 'alert') — where the traffic alerts already go — and,
-// once per alert, in the owner's mailbox. The hourly job adds one check across
+// once per alert, in the owner's mailbox and on his phones (Web Push, when set up). The hourly job adds one check across
 // every isolate: the server errors recorded in error_log in the last hour.
 //
 // Per isolate means each Worker copy counts only what it served: a fault that
@@ -10,7 +10,8 @@
 // error_log check. Switch off with OPS_ALERTS=off.
 import type { CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
-import { ownerWord } from '../../../shared/src/i18n/owner';
+import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
+import { pushToOwner } from './ownerOutbox';
 
 export const OPS_RULES = {
   /** The window counted, in ms. */
@@ -97,6 +98,8 @@ export async function raiseOpsAlert(deps: Deps, a: OpsAlert): Promise<boolean> {
       await deps.email
         .send({ to, subject: ownerWord('tr', 'ops.mail.subject', { rule: a.rule }), text: ownerWord('tr', 'ops.mail.body', { body: a.body, ref: a.ref }) })
         .catch((e) => console.error('[curahold] ops alert mail failed', e instanceof Error ? e.message : String(e)));
+    // And to the owner's phones, once per alert, when he added any (lib/ownerOutbox.ts; never throws).
+    await pushToOwner(deps, `push:${a.ref}`, (l) => ({ title: ownerWord(l, 'ops.push.title'), body: ownerWord(l, `ops.rule.${a.rule}` as OwnerKey), url: '/system', urgency: 'high' }));
     return true;
   } catch (e) {
     console.error('[curahold] ops alert not stored', e instanceof Error ? e.message : String(e));

@@ -96,7 +96,11 @@ class DeskError extends Error {
 /** Every change carries a header a form on another site could not set. */
 async function desk<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
-  if (!res.ok) throw new DeskError(res.status);
+  if (!res.ok) {
+    // An unread answer keeps its connection open for the life of the page (see release() in lib/api.ts).
+    void res.body?.cancel();
+    throw new DeskError(res.status);
+  }
   return (await res.json()) as T;
 }
 
@@ -688,7 +692,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
         {owner && where.section === 'trials' && <TrialsSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'requests' && <RequestsSection beat={beat} failed={failed} open={where.q ?? null} go={ownerGo} />}
         {owner && where.section === 'approvals' && <ApprovalsSection beat={beat} failed={failed} go={ownerGo} />}
-        {owner && where.section === 'plan' && <PlanSection beat={beat} failed={failed} />}
+        {owner && where.section === 'plan' && <PlanSection beat={beat} failed={failed} view={where.q ?? null} go={ownerGo} />}
         {owner && where.section === 'checklist' && <ChecklistSection beat={beat} failed={failed} />}
         {owner && where.section === 'supportview' && <SupportOverviewSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'system' && <SystemSection beat={beat} failed={failed} go={ownerGo} />}

@@ -341,7 +341,7 @@ await step('a new company signs up alone and lands in the setup wizard, signed i
   await p.waitForSelector('input[type=email]');
   // Eleven languages, chosen from a list; this founder works in Turkish.
   await p.select('.auth__langs select', 'tr');
-  await p.waitForFunction(() => document.documentElement.lang === 'tr' && document.querySelector('.auth__title')?.textContent === "Ekibin için Curahold'i kur");
+  await p.waitForFunction(() => document.documentElement.lang === 'tr' && document.querySelector('.auth__title')?.textContent === "Ekibiniz için Curahold'u kurun");
   await shot(p, 'p2-01-signup');
   await p.type('input[type=email]', 'deniz@yeni-sirket.example');
   // A person takes a moment to fill a form; the server answers faster ones as a bot does (api/src/lib/humanCheck.ts).
@@ -892,9 +892,9 @@ await step('help: a request with a screenshot and consent; support visits read o
   await p.reload({ waitUntil: 'networkidle0' });
   await p.waitForSelector('.cura__fab .cura__badge');
   await p.click('.cura__fab');
-  await p.waitForSelector('.cura__tool');
-  expect((await text(p, '.cura__tool .cura__badge')) === '1', 'the chat does not show the waiting answer');
-  await p.click('.cura__tool');
+  await p.waitForSelector('.cura__mine');
+  expect((await text(p, '.cura__mine .cura__badge')) === '1', 'the chat does not show the waiting answer');
+  await p.click('.cura__mine');
   await p.waitForSelector('.help__req[data-unread]');
   expect((await text(p, '.help__req[data-unread] .help__turn')).includes('Cevabınız bekleniyor'), 'the list does not say it is her turn');
   await p.click('.help__req[data-unread] .help__reqopen');
@@ -972,8 +972,10 @@ await step('the console: staff sign in with two steps, see the business today ch
   await appears('.oc .ctile[data-lead] .ctile__value');
   expect(d.url() === `${deskHost}/`, `the console did not open on Today: ${d.url()}`);
   const tiles = await d.$$eval('.ctile__label', (els) => els.map((e) => e.textContent ?? ''));
-  // The platform owner's console opens on his Overview (pages/OwnerConsole.tsx).
-  for (const want of ['MRR', 'Ödenen faturalar (30 gün)', 'Açık deneme talepleri', 'Onayını bekleyen', 'Bekleyen destek', 'Hatalar (24 sa)']) expect(tiles.includes(want), `Overview has no "${want}" tile: ${tiles.join(' | ')}`);
+  // The platform owner's console opens on his Overview (pages/OwnerConsole.tsx): what waits for him first, then the
+  // business, led by MRR. Other tiles show only when their number is not zero, so only the lead one is asked for here.
+  expect(tiles[0] === 'MRR', `Overview does not lead with MRR: ${tiles.join(' | ')}`);
+  expect((await text(d, '#oc-decide')).startsWith('Sizi bekleyenler'), 'Overview does not start with what waits for the owner');
   // A number changes without a reload: a company starts paying, the MRR on screen follows. The billing record is
   // written as the provider's notification writes it, and the console's live room is told as that request tells
   // it (app.ts → live/platform.ts; tests/live-platform.test.ts covers the request → signal step). Ten changes, for a p95.
@@ -993,7 +995,7 @@ await step('the console: staff sign in with two steps, see the business today ch
   console.log(`    console: MRR ${mrrFirst} → ${await text(d, '.ctile[data-lead] .ctile__value')} on screen after a billing change, no reload: p50 ${mrrWaits[4]} ms, p95 ${mrrP95} ms (10 changes)`);
   expect(mrrP95 <= 1000, `MRR reached the screen in p95 ${mrrP95} ms, over a second`);
   // Through the API alone: a company asks for help, and the console's "needs you" count follows.
-  const needBefore = await text(d, '#cneed-h');
+  const needBefore = await text(d, '#oc-decide');
   const askedAt = Date.now();
   const asked = await mert.page.evaluate(async () => {
     const r = await fetch('/api/help', {
@@ -1005,14 +1007,14 @@ await step('the console: staff sign in with two steps, see the business today ch
     return { status: r.status, id: ((await r.json()) as { request?: { id: string } }).request?.id ?? '' };
   });
   expect(asked.status === 201, `Mert could not ask again: ${asked.status}`);
-  await d.waitForFunction((b) => document.querySelector('#cneed-h')?.textContent !== b, { timeout: 5000 }, needBefore);
+  await d.waitForFunction((b) => document.querySelector('#oc-decide')?.textContent !== b, { timeout: 5000 }, needBefore);
   console.log(`    console: a company's new request on Today ${Date.now() - askedAt} ms after it was sent through the API, no reload`);
   // He finds the filter himself and settles it; it leaves Today the same way.
   const settledAt = Date.now();
   await mert.page.evaluate(async (id) => {
     await fetch(`/api/help/${id}/solve`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, credentials: 'include', body: '{}' });
   }, asked.id);
-  await d.waitForFunction((b) => document.querySelector('#cneed-h')?.textContent === b, { timeout: 5000 }, needBefore);
+  await d.waitForFunction((b) => document.querySelector('#oc-decide')?.textContent === b, { timeout: 5000 }, needBefore);
   console.log(`    console: and gone from Today ${Date.now() - settledAt} ms after he settled it`);
   await shot(d, 'p7-11-console-today');
   // Who needs the team: the blocking request is there; it opens straight into the conversation.
@@ -1061,7 +1063,7 @@ await step('the console: staff sign in with two steps, see the business today ch
   await d.click('.deskreply .btn--primary');
   await appears('.deskmsg[data-by="support"]');
   await appears('.desk__status[data-status="answered"]');
-  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sende'));
+  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sizde'));
   await pause(200);
   await shot(d, 'p7-08-desk');
   const [stored] = await sql(
@@ -1083,7 +1085,7 @@ await step('the console: staff sign in with two steps, see the business today ch
   await (await byText(d, '.deskreq__tools .btn', 'Bırak')).click();
   await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('henüz kimse almadı'));
   await (await byText(d, '.deskreq__tools .btn', 'Üstüme al')).click();
-  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sende'));
+  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sizde'));
   await (await byText(d, '.deskreq__tools .btn', 'Çözüldü işaretle')).click();
   await appears('.desk__status[data-status="solved"]');
   await d.waitForFunction(() => !document.querySelector('.desk__row'));
@@ -1324,7 +1326,7 @@ await step('tasks from a file: columns are recognised, cards appear, the import 
   const csv = join(SCREENS, 'e2e-import.csv');
   writeFileSync(csv, 'Task Name;Section;Assignee;Due Date\nDosyadan gelen bir\u0131;In progress;Mert;15.01.2027\nDosyadan gelen iki;;;\n');
   await mert.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
-  await mert.page.click('button[aria-label="Dosyadan görev aktar"]');
+  await mert.page.click('button[title="Dosyadan görev aktar"]');
   const input = await mert.page.waitForSelector('.dropzone input[type=file]');
   await (input as any).uploadFile(csv);
   await mert.page.waitForSelector('.map-table');
@@ -1341,7 +1343,7 @@ await step('tasks from a file: columns are recognised, cards appear, the import 
   const [doing] = await sql(`select status, due_date::text as due, cardinality(assignee_ids) as n from tasks where title = 'Dosyadan gelen birı'`);
   expect(doing?.status === 'doing' && doing?.due === '2027-01-15' && Number(doing?.n) === 1, `imported as ${JSON.stringify(doing)}`);
   // Undo from the list of earlier imports.
-  await mert.page.click('button[aria-label="Dosyadan görev aktar"]');
+  await mert.page.click('button[title="Dosyadan görev aktar"]');
   await mert.page.waitForSelector('.importer__past .linkbtn', { timeout: 8000 });
   await (await byText(mert.page, '.importer__past .linkbtn', 'Geri al')).click();
   await mert.page.waitForSelector('.importer .notice');
@@ -1718,14 +1720,15 @@ await step('a subtask opened from its task has a way back to it', async () => {
   // From My tasks: the task, then its subtask.
   await lena.page.goto(`${s.origin}/my?task=${made.parent}`, { waitUntil: 'networkidle0' });
   await lena.page.waitForSelector('.subtask__title');
-  expect((await lena.page.$('.panel__back')) === null, 'a task that is nobody’s subtask shows a way back');
+  // The phone's Back (it closes the panel) is in the page but hidden on a desktop; what must be absent is a way back to another task.
+  expect((await lena.page.$('.panel__back:not(.panel__phoneback)')) === null, 'a task that is nobody’s subtask shows a way back');
   await lena.page.click('.subtask__title');
   await lena.page.waitForSelector('.panel__back');
   expect(lena.page.url().includes(`task=${made.sub}`), `the subtask did not open: ${lena.page.url()}`);
   expect((await text(lena.page, '.panel__back')).includes('Kurulum planını hazırla'), 'the way back does not name the task it goes to');
   await shot(lena.page, 'p7-02-subtask-back');
   await lena.page.click('.panel__back');
-  await lena.page.waitForFunction((id) => location.search.includes(`task=${id}`) && !!document.querySelector('.subtask__title') && !document.querySelector('.panel__back'), {}, made.parent);
+  await lena.page.waitForFunction((id) => location.search.includes(`task=${id}`) && !!document.querySelector('.subtask__title') && !document.querySelector('.panel__back:not(.panel__phoneback)'), {}, made.parent);
   expect(lena.page.url().startsWith(`${s.origin}/my`), `going back left My tasks: ${lena.page.url()}`);
   expect(lena.errors.length === 0, lena.errors.join(' | '));
   await lena.page.browserContext().close();
@@ -1859,7 +1862,7 @@ await step('product team: a backlog with an epic and three estimated stories, re
   // A new board from the product-development workflow, visible only to the people on it.
   await page.goto(`${s.origin}/home`, { waitUntil: 'networkidle0' });
   await clearToasts(page);
-  await page.click('.sidebar__add[aria-label="Yeni pano"]');
+  await (await byText(page, '.sidebar__add', 'Yeni pano')).click();
   await page.waitForSelector('.dialog input.input');
   await page.type('.dialog input.input', 'Mobil uygulama');
   await page.select('.dialog select.select', 'private');
@@ -2500,11 +2503,11 @@ await step('admin: SSO is required and the provider is down; a backup administra
     // Only SSO is offered; the backup way is one quiet link under it.
     await b.waitForSelector('.auth__card .btn--primary');
     expect((await b.$('.auth__card input[type=email]')) === null, 'the email form shows while SSO is required');
-    await (await byText(b, '.auth__card .btn--quiet', 'Yedek yönetici misin?')).click();
+    await (await byText(b, '.auth__card .btn--quiet', 'Yedek yönetici misiniz?')).click();
     // Someone who is not a backup administrator is told the same and gets no link.
     await b.type('input[type=email]', 'mert@demo.example');
     await b.click('form button.btn--primary');
-    await b.waitForFunction(() => document.querySelector('.auth__title')?.textContent === 'Gelen kutunu kontrol et');
+    await b.waitForFunction(() => document.querySelector('.auth__title')?.textContent === 'Gelen kutunuzu kontrol edin');
     expect((await b.$('a.btn[href^="/auth/verify"]')) === null, 'a link was made for someone who is not a backup administrator');
     // Another address: still the backup way.
     await (await byText(b, '.auth__card .btn--quiet', 'Başka bir e-posta')).click();
@@ -2565,7 +2568,7 @@ await step('my data: someone downloads their own data after confirming it is the
     await p.type('.dialog .code-input', code!);
     await p.click('.dialog form button.btn--primary');
     // The download goes on by itself after the confirmation.
-    await p.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Verilerin indirildi')), { timeout: 10_000 });
+    await p.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Verileriniz indirildi')), { timeout: 10_000 });
     const [line] = await sql(`select a.actor_id from audit_log a join users u on u.id = a.actor_id where u.email = 'lena@demo.example' and a.action = 'user.self_exported'`);
     expect(line, 'the download is not in the activity log');
     console.log(`my data journey: ${Math.round((Date.now() - started) / 1000)} s`);

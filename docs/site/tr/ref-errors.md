@@ -35,7 +35,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
 | `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, OpenDocument, metin, CSV ve ZIP dosyaları eklenebilir. |
 | `portal_file_unsafe` | 400 | … eklenemiyor: içeriği güvenli görünmüyor (açılamayacak kadar büyük bir arşiv, içinde program veya makro, ya da kod çalıştıran bir PDF). Dosyayı sade hâliyle gönderin. |
-| `portal_internal_email` | 400 | Bu adres şirketindeki birine ait. Portal müşteriler içindir. |
+| `portal_internal_email` | 400 | Bu adres şirketinizden birine ait. Portal müşteriler içindir. |
 | `portal_method_off` | 400 | Bu giriş yolu kapalı. |
 | `portal_no_method` | 400 | En az bir giriş yolu açık kalmalı: e-posta, Google, Microsoft ya da şifre. |
 | `portal_not_shared` | 400 | Müşteri bu görevi göremiyor: önce paylaşın (görevin bir müşterisi olmalı ve panosu müşterilere açık olmalı). |
@@ -58,7 +58,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |
 | `consent_required` | 403 | Lütfen önce yapay zekâ asistanı bilgilendirmesini kabul edin ya da belge aramasını kullanmaya devam edin. |
 | `field_locked` | 403 | Rolünüz bu alanı görebilir ama değiştiremez (…). |
-| `forbidden` | 403 | Bunu yapma yetkin yok. |
+| `forbidden` | 403 | Bunu yapma yetkiniz yok. |
 | `join_closed` | 403 | Bu şirkete yalnızca davetle katılınabiliyor. |
 | `portal_invite_owner` | 403 | Portala yalnızca yöneticiler ya da müşterinin sorumlusu davet gönderebilir. |
 | `preview_read_only` | 403 | Şu an başkasının gözünden bakıyorsunuz, bu yüzden hiçbir şey değiştirilemez. Önce kendi görünümünüze dönün. |
@@ -108,6 +108,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden deneyin. |
 | `portal_locked` | 429 | Çok fazla yanlış deneme oldu. … dakika sonra tekrar deneyin ya da şifrenizi yenileyin. |
 | `too_many_requests` | 429 | Çok fazla deneme oldu. Birkaç dakika bekleyip tekrar deneyin. |
+| `country_not_offered` | 451 | Curahold bu ülkede sunulmuyor. |
 | `server` | 500 | Bizim tarafta bir sorun oldu. Lütfen tekrar deneyin. |
 | `billing_error` | 502 | Ödeme sağlayıcısı beklendiği gibi yanıt vermedi. Bir dakika sonra yeniden deneyin. |
 | `crm_error` | 502 | Bağlı servis şunu söyledi: … |

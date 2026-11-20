@@ -19,7 +19,28 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   the Gulf, Israel and East Asia, and says plainly that Curahold is not for anyone under 18.
 - The sales site's links to help and legal pages now open in the reader's language instead of English, and the trust
   page lists the SLA, acceptable use policy, order form and the page for reporting a security issue.
-
+- CuraAI: the panel has a visible Close (and Esc), Minimize is easier to hit, and **My requests** sits in the footer with
+  its name. The round button steps aside while you type or scroll, on every screen size. A question typed in English in
+  another language's interface is answered from the same help section in that language; "How do I add a renewal?" is
+  answered in all eleven languages, and Hindi "नवीनीकरण" or Chinese "续订" find the same page as the help's own words.
+- Toolbar buttons show their names next to their icons (board Import and Settings, Saved views, Home and Inbox actions on
+  phones, the sidebar's **New board**); **Choose a file** has its icon.
+- Settings: on a phone each topic has one way back. When billing is switched off for the workspace, its page says so
+  instead of telling an administrator to ask an administrator. The customer-word presets work in every language.
+- Connections: the service's own error message is folded under "What {app} said"; the plain sentence stays on top.
+- The in-app platform console and business metrics pages use the app's own frame and, when they cannot be shown, say why
+  and offer a way on.
+- Turkish speaks "siz" everywhere, including the owner console and the go-live guide.
+- The go-live guide sets backups to be deleted after 35 days, and the checklist has a matching item.
+- Phones: bottom sheets (filters, date picker, task and record panels) can be pulled down to close. Every save button shows
+  its saving ring and tick, not only the ones in dialogs. A task, record or opportunity card grows into its panel.
+- Sales site: prices are hidden until launch ("pricing announced at launch") and the EU data claim only shows once it is
+  confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; demo links open in the visitor's language
+  where the demo has it.
+- Billing refuses countries we never sell to, in the billing profile, at checkout and at sign-up.
+- Help centre: every picture is retaken in all eleven languages from the current product (today's labels, Turkish "siz",
+  the customer's own address instead of a developer's). A help page shared or found in search shows a fuller description,
+  in the page's own words, and the sales site's robots.txt points crawlers to the help centre's sitemap too.
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
@@ -34,10 +55,25 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Owner console, Plan & targets: two new views. **Budget & investors** shows the budget against what was really spent
+  with the runway your cash gives, the plan's two milestones (expanded and switched companies) counted on real data,
+  fundraising windows with their dates, target and status, and your own investor pipeline (stage, next step and its day;
+  a removed investor can be brought back for 30 days). **Load from the plan** fills targets, milestones, budget, windows
+  and tasks from the business plan's `targets.json` (also `scripts/plan/load-targets.ts`); loading again is safe.
+- Owner console: a **Monday summary** e-mail at 09:00 Istanbul time with last week's targets against actuals, trial
+  requests, revenue and invoices, errors and alerts and the AI team's proposals waiting for you — written without any AI
+  model, once a week, in Turkish or English, with a preview and an off switch in the console.
+- Owner console: **alerts on your phone** for help requests that block a customer, system alerts and the Monday summary,
+  by free Web Push (encrypted so only your device reads it), once the server has a VAPID key pair (`VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`).
 - Sales site: a small content hub in all eleven languages (/resources/): four templates (renewal playbook, business review (QBR)
-  agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
-  contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
-  what Curahold does today. Linked from the Resources menu and the footer.
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and nineteen plain definitions (among them customer health
+  score, churn, net revenue retention, ARR, business review, champion, time to value and the sales-to-success hand-over), the
+  same items in every language, each saying only what Curahold does today. Linked from the Resources menu and the footer.
+- Settings → Company: a privacy request log for objections, restrictions and other requests, with the due date the law of
+  the person's country sets, and a reply date. Trial requests can be exported for the person who sent them.
+- Report figures and the done tile on a customer show how they moved against the period before, with an icon and words,
+  not only a colour.
 - Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
   Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
   to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
@@ -130,6 +166,20 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
+  (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
+  The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
+- Support desk: a session replay keeps the look of screens the person opened after it started (their styles were
+  refused by the desk's content policy and the replay showed them unstyled).
+- Sign-up no longer promises a set-up time ("Ready in about 15 minutes" and minutes per step): it was never measured.
+  It now says there are five steps, in every language.
+- Owner console, Plan & targets: investors who passed and closed fundraising windows step back by colour and outline
+  instead of fading, so their words and buttons keep AA contrast.
+- On phones the customer page's **Next promise** shows two whole lines, never part of a third.
+- The CuraAI answer list no longer moves the page around it when a new answer arrives (an embedded demo slid up).
+- Team load says "1 customer", not "1 customers"; Arabic and Persian counts read naturally.
+- Portal: the welcome card comes before the request list on a first visit, and the onboarding banner's arrow points forward.
+
 - Single sign-on: a test sign-in now says what is wrong (the client secret was refused, the signature no longer matches
   the stored certificate, the token was for another app or out of date, or the provider could not be reached) and which
   field to fix; an identity provider that cannot be reached sends people back to the sign-in page instead of an error page.
@@ -172,6 +222,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Privacy: the server stores a hash of the consent words it actually served and refuses a consent without a policy version;
+  old assistant consents are purged (the latest yes is kept); an erased portal person's consent proof stays, anonymised;
+  AI drafts need the person's consent; a company's deletion certificate is e-mailed to its administrators.
 - A crawler with a made-up `Authorization: Bearer` header is refused like any other crawler; the bearer must be a live key
   or app token of the company. Scanners without a session now count towards the unknown-address limit (they saw 401,
   never 404); webhook receivers stay out of that count.

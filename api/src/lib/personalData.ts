@@ -45,6 +45,15 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
     teams: await q.query('select t.name from teams t join team_members m on m.team_id = t.id where t.org_id = $1 and m.user_id = $2', [org.id, userId]),
     // What they asked CuraAI, as long as the company keeps it (api/src/assistant).
     assistant: await q.query<Pick<AssistantLogRow, 'surface' | 'question' | 'kind' | 'created_at'>>('select surface, question, kind, created_at from assistant_log where org_id = $1 and user_id = $2 order by created_at', [org.id, userId]),
+    // Their answers to the assistant's notice and to the cookie/consent banner: consents are personal data too.
+    assistantConsents: await q.query<{ version: string; locale: string; granted: boolean; created_at: unknown }>(
+      `select version, locale, granted, created_at from assistant_consents where org_id = $1 and user_id = $2 order by created_at`,
+      [org.id, userId],
+    ),
+    consents: await q.query<{ analytics: boolean; marketing: boolean; source: string; policy_version: string | null; locale: string | null; action: string | null; created_at: unknown }>(
+      `select analytics, marketing, source, policy_version, locale, action, created_at from consent_log where org_id = $1 and user_id = $2 order by created_at`,
+      [org.id, userId],
+    ),
   }));
   return {
     exportedAt: new Date().toISOString(),
@@ -65,6 +74,8 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
     })),
     activity: own.activity.map((a) => ({ action: a.action, entity: a.entity, entityId: a.entity_id, at: iso(a.at) })),
     assistantQuestions: own.assistant.map((a) => ({ where: a.surface, question: a.question, reply: a.kind, at: iso(a.created_at) })),
+    assistantConsents: own.assistantConsents.map((a) => ({ version: a.version, locale: a.locale, granted: a.granted, at: iso(a.created_at) })),
+    consentChoices: own.consents.map((x) => ({ analytics: x.analytics, marketing: x.marketing, where: x.source, policyVersion: x.policy_version, locale: x.locale, action: x.action, at: iso(x.created_at) })),
   };
 }
 
@@ -88,6 +99,11 @@ export async function portalPersonalData(c: C, portalUserId: string) {
     const tasks = await q.query<Pick<TasksRow, 'id' | 'title' | 'created_at'>>('select id, title, created_at from tasks where org_id = $1 and portal_author_id = $2 order by created_at', p);
     const comments = await q.query<Pick<CommentsRow, 'task_id' | 'body' | 'created_at'>>('select task_id, body, created_at from comments where org_id = $1 and portal_author_id = $2 order by created_at', p);
     const files = await q.query<Pick<FilesRow, 'name' | 'size' | 'mime' | 'created_at'>>('select name, size, mime, created_at from files where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const assistant = await q.query<Pick<AssistantLogRow, 'question' | 'kind' | 'created_at'>>('select question, kind, created_at from assistant_log where org_id = $1 and portal_user_id = $2 order by created_at', p);
+    const assistantConsents = await q.query<{ version: string; locale: string; granted: boolean; created_at: unknown }>(
+      'select version, locale, granted, created_at from assistant_consents where org_id = $1 and portal_user_id = $2 order by created_at',
+      p,
+    );
     return {
       exportedAt: new Date().toISOString(),
       company: org.name,
@@ -97,6 +113,8 @@ export async function portalPersonalData(c: C, portalUserId: string) {
       requestsOpened: tasks.map((t) => ({ id: t.id, title: t.title, at: iso(t.created_at) })),
       comments: comments.map((x) => ({ taskId: x.task_id, body: x.body, at: iso(x.created_at) })),
       files: files.map((f) => ({ name: f.name, size: f.size, mime: f.mime, at: iso(f.created_at) })),
+      assistantQuestions: assistant.map((a) => ({ question: a.question, reply: a.kind, at: iso(a.created_at) })),
+      assistantConsents: assistantConsents.map((a) => ({ version: a.version, locale: a.locale, granted: a.granted, at: iso(a.created_at) })),
     };
   });
 }

@@ -6,7 +6,7 @@ import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requireFresh } from '../lib/identity';
-import { translate } from '../../../shared/src/i18n';
+import { LOCALES, translate, type Locale } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type PersonAccess, type Role } from '../../../shared/src/model';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
@@ -20,7 +20,8 @@ import { iso } from '../lib/mappers';
 import { personalData, portalPersonalData } from '../lib/personalData';
 import { erasePortalUser, eraseUserExtras } from '../lib/erasure';
 import { graceDaysOf } from '../lib/companyDeletion';
-import { body, email, localeField, param, uuid } from '../lib/validate';
+import { body, email, isoDate, localeField, param, uuid } from '../lib/validate';
+import { PRIVACY_LAWS, PRIVACY_LAW_KEYS, PRIVACY_REQUEST_KINDS, PRIVACY_REQUEST_STATUSES, privacyDueOn, type PrivacyLaw } from '../../../shared/src/privacyRequests';
 
 export const adminRoutes = new Hono<AppEnv>();
 
@@ -73,7 +74,8 @@ adminRoutes.patch('/org', async (c) => {
           }
         })
         .optional(),
-      terms: z.object({ account: z.object({ en: termWords.optional(), tr: termWords.optional() }).optional() }).optional(),
+      // Every shipped language may carry the company's own words (a preset fills them all).
+      terms: z.object({ account: z.object(Object.fromEntries(LOCALES.map((l) => [l, termWords.optional()])) as Record<Locale, z.ZodOptional<typeof termWords>>).optional() }).optional(),
       currency: z.string().regex(/^[A-Z]{3}$/).optional(),
       joinRequests: z.boolean().optional(),
       autoJoin: z.boolean().optional(),
@@ -690,6 +692,88 @@ adminRoutes.post('/portal-users/:id/erase', async (c) => {
 // ------------------------------------------------------------- deleting the company
 
 const deletionOf = (r: any) => (r ? { id: r.id, requestedAt: iso(r.requested_at), purgeAfter: iso(r.purge_after), cancelledAt: iso(r.cancelled_at), purgedAt: iso(r.purged_at) } : null);
+
+// ------------------------------------------------------------ requests about personal data
+// The company's log of requests people make about their data (migration 0250): objections and restrictions had no
+// record before. privacy.manage in the route and in row security; every change is in the audit log too.
+
+const privacyRequestInput = z.object({
+  kind: z.enum(PRIVACY_REQUEST_KINDS),
+  subjectName: z.string().trim().min(1).max(200),
+  subjectEmail: email.nullish(),
+  law: z.enum(PRIVACY_LAW_KEYS as [PrivacyLaw, ...PrivacyLaw[]]),
+  receivedOn: isoDate,
+  dueOn: isoDate.optional(),
+  note: z.string().trim().max(2000).nullish(),
+});
+type PrivacyRequestRow = { id: string; kind: string; subject_name: string; subject_email: string | null; law: string; received_on: unknown; due_on: unknown; status: string; note: string | null; closed_at: unknown; created_at: unknown };
+const dayOf = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
+const privacyRequestOut = (r: PrivacyRequestRow) => ({
+  id: r.id,
+  kind: r.kind,
+  subjectName: r.subject_name,
+  subjectEmail: r.subject_email,
+  law: r.law,
+  receivedOn: dayOf(r.received_on),
+  dueOn: dayOf(r.due_on),
+  status: r.status,
+  note: r.note,
+  closedAt: r.closed_at ? new Date(r.closed_at as string).toISOString() : null,
+});
+const PR_COLS = 'id, kind, subject_name, subject_email, law, received_on, due_on, status, note, closed_at, created_at';
+
+/** The privacy log: open requests first by due date, then the closed ones, newest first (at most 500). */
+adminRoutes.get('/privacy-requests', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  const rows = await run(c, (q) => q.query<PrivacyRequestRow>(`select ${PR_COLS} from privacy_requests order by (status = 'open') desc, case when status = 'open' then due_on end, created_at desc limit 500`));
+  return c.json({ requests: rows.map(privacyRequestOut), laws: PRIVACY_LAWS });
+});
+
+/** Logs a request; the due date comes from the law (shared/src/privacyRequests.ts) unless one is given. */
+adminRoutes.post('/privacy-requests', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  const input = await body(c, privacyRequestInput);
+  const dueOn = input.dueOn ?? privacyDueOn(input.receivedOn, input.law);
+  if (dueOn < input.receivedOn) fail('validation', { fields: 'dueOn' }, { fields: ['dueOn'] });
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const row = await run(c, async (q) => {
+    const [r] = await q.query<PrivacyRequestRow>(
+      `insert into privacy_requests (org_id, kind, subject_name, subject_email, law, received_on, due_on, note, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning ${PR_COLS}`,
+      [org.id, input.kind, input.subjectName, input.subjectEmail ?? null, input.law, input.receivedOn, dueOn, input.note ?? null, auth.userId],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'privacy.request_logged', entity: 'privacy_request', entityId: r.id, meta: { kind: input.kind, law: input.law, dueOn } });
+    return r;
+  });
+  return c.json({ request: privacyRequestOut(row) }, 201);
+});
+
+/** Closes a request as answered (done) or refused, or moves its due date or note while it is open. */
+adminRoutes.patch('/privacy-requests/:id', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ status: z.enum(PRIVACY_REQUEST_STATUSES).optional(), dueOn: isoDate.optional(), note: z.string().trim().max(2000).nullish() }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const row = await run(c, async (q) => {
+    const [r] = await q.query<PrivacyRequestRow>(
+      `update privacy_requests set
+         status = coalesce($2, status),
+         closed_at = case when coalesce($2, status) = 'open' then null when status = 'open' then now() else closed_at end,
+         closed_by = case when coalesce($2, status) = 'open' then null when status = 'open' then $5::uuid else closed_by end,
+         due_on = coalesce($3::date, due_on),
+         note = case when $6 then $4 else note end,
+         updated_at = now()
+       where id = $1 returning ${PR_COLS}`,
+      [id, input.status ?? null, input.dueOn ?? null, input.note ?? null, auth.userId, input.note !== undefined],
+    );
+    if (!r) return null;
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'privacy.request_updated', entity: 'privacy_request', entityId: id, meta: { status: input.status, dueOn: input.dueOn } });
+    return r;
+  });
+  if (!row) fail('not_found');
+  return c.json({ request: privacyRequestOut(row!) });
+});
 
 /** The company's open deletion request (or null), and the grace period on this installation. */
 adminRoutes.get('/company/deletion', async (c) => {

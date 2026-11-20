@@ -151,6 +151,7 @@ export function PortalApp() {
 const PATHS = {
   plus: 'M12 5v14M5 12h14',
   back: 'M15 18l-6-6 6-6',
+  next: 'M9 18l6-6-6-6',
   alert: 'M12 8v5M12 16.5v.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
   offline: 'M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.6 5M5 12.6a10 10 0 0 1 5.2-2.5M19 12.6a10 10 0 0 0-2-1.3M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M3 3l18 18',
   inbox: 'M22 12h-6l-2 3h-4l-2-3H2M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z',
@@ -1292,6 +1293,12 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
       </section>
       <div className="p-wrap p-page p-page--aside">
         <div className="p-page__main">
+          {/* The first visit starts with how it works, above the list it explains. */}
+          {welcome.show && !first && !failed && data && (
+            <div className="p-welcome-wrap">
+              <How ctx={ctx} org={org} me={me} onClose={welcome.done} />
+            </div>
+          )}
           {failed ? (
             <LoadFailed ctx={ctx} failure={failed} onRetry={reload} company={org.name} />
           ) : !data ? (
@@ -1347,11 +1354,6 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
                 </ul>
               )}
             </>
-          )}
-          {welcome.show && !first && !failed && data && (
-            <div className="p-welcome-wrap">
-              <How ctx={ctx} org={org} me={me} onClose={welcome.done} />
-            </div>
           )}
           {/* On a phone the side column is not shown: the questions box comes under the list. */}
           <div className="p-ask-narrow">

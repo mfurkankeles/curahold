@@ -33,7 +33,7 @@ Setiap pelanggan dalam program perakaunan dipadankan dengan seorang pelanggan da
 
 ## Siapa melihat angka
 
-Amaun ditunjukkan kepada peranan yang mempunyai **Lihat angka kewangan** (pentadbir dan pengurus pada permulaannya; ubahnya dalam Tetapan → Peranan). Semua orang lain yang melihat pelanggan itu hanya melihat, dalam skor kesihatan, berapa hari bayaran lewat — tidak pernah amaun.
+Amaun ditunjukkan kepada peranan yang mempunyai **Lihat angka kewangan** (pentadbir dan pengurus pada permulaannya; ubahnya dalam Tetapan → Peranan dan kebenaran). Semua orang lain yang melihat pelanggan itu hanya melihat, dalam skor kesihatan, berapa hari bayaran lewat — tidak pernah amaun.
 
 Orang dalam jabatan **Kewangan** juga melihat amaun, apa pun peranan mereka, begitu juga jabatan yang dipilih di bawah **Siapa melihat Kewangan pada halaman pelanggan** dalam Tetapan → Jabatan. Mematikan Kewangan menarik balik akses ini.
 

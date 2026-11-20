@@ -19,7 +19,10 @@ import { outputs as legalOutputs } from '../scripts/compliance/legal-pack';
 import { SUBPROCESSORS, consentPlaceholders } from '../shared/src/compliance/dataInventory';
 import { SUB_PAGE } from '../shared/src/compliance/subprocessorText';
 import { AGREEMENT_PACK } from '../shared/src/compliance/agreements';
-import { setup, type Env } from './helpers';
+import { login, setup, type Env } from './helpers';
+import { shownTextHash } from '../api/src/routes/consent';
+import { bannerText, sha256Hex } from '../shared/src/consent/core';
+import { CONSENT_STRINGS } from '../shared/src/consent/strings';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -322,6 +325,13 @@ describe('trial consent texts per country (research §1.15)', () => {
     expect(ids(consentSetFor({ declared: 'SA', locale: 'ar', vars, flags: { saConsentBox: false } }))).not.toContain('SA.C');
   });
 
+  it('lets the lawyer switch off the Indian consent box (inConsentBox), on by default', () => {
+    expect(ids(consentSetFor({ declared: 'IN', locale: 'hi', vars }))).toContain('IN.C');
+    const off = ids(consentSetFor({ declared: 'IN', locale: 'hi', vars, flags: { inConsentBox: false } }));
+    expect(off).not.toContain('IN.C');
+    expect(off).toContain('IN.N');
+  });
+
   it('gives India a notice with the grievance route and a separate consent box, and Malaysia its notice in Malay and English together', () => {
     expect(ids(consentSetFor({ declared: 'IN', locale: 'hi', vars }))).toEqual(['IN.N', 'IN.C', 'IN.M', 'ALL.A']);
     const inN = consentSetFor({ declared: 'IN', locale: 'en', vars }).blocks[0]!;
@@ -406,6 +416,20 @@ describe('consent and agreement evidence (migration 0160)', () => {
   it('refuses a choice made against another policy version (a stale page), so it is never proof of the current one', async () => {
     const res = await env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...event, consentId: crypto.randomUUID(), policyVersion: '2000-01-01.1' }) });
     expect(res.status).toBe(409);
+  });
+
+  it('signed in: refuses a stale or missing policy version, and stores the hash of the words it served, not the browser’s', async () => {
+    const zeynep = await login(env, 'acme', 'zeynep@demo.example');
+    const choice = { analytics: true, marketing: false, source: 'app', consentId: crypto.randomUUID(), action: 'custom', locale: 'tr', textHash: 'f'.repeat(64), inUse: { analytics: true, marketing: false } };
+    expect((await zeynep.post('/api/consent', { ...choice, policyVersion: '2000-01-01.1' })).status).toBe(409);
+    expect((await zeynep.post('/api/consent', choice)).status).toBe(409);
+    expect((await zeynep.post('/api/consent', { ...choice, policyVersion: CONSENT_POLICY_VERSION })).status).toBe(200);
+    const [row] = await env.db.system((q) => q.query('select text_hash, policy_version from consent_log where consent_id = $1', [choice.consentId]));
+    const want = await sha256Hex(bannerText(CONSENT_STRINGS.tr as unknown as Record<string, string>, { analytics: true, marketing: false }));
+    expect(row).toEqual({ text_hash: want, policy_version: CONSENT_POLICY_VERSION });
+    expect(await shownTextHash('tr', { analytics: true, marketing: false })).toBe(want);
+    // Another language is hashed with its own words.
+    expect(await shownTextHash('ko', { analytics: true, marketing: false })).not.toBe(want);
   });
 
   it('keeps the new consent_log fields for people signed in', async () => {

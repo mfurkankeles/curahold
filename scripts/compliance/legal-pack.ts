@@ -147,7 +147,7 @@ export function recordsOfProcessing(): string {
       `- **Personal data:** ${a.data.en}`,
       `- **Legal basis:** Türkiye — ${a.basis.tr.en}; EU/UK — ${a.basis.eu}; Gulf — ${a.basis.gulf}; elsewhere — ${a.basis.other}`,
       `- **Retention:** ${a.retention.en}`,
-      `- **Stored with / received by:** ${a.processors.map(company).join(', ')}${a.others ? `; ${a.others.en}` : ''}`,
+      `- **Stored with / received by:** ${a.processors.map((p) => (a.transfers?.[p] === 'separate controller' ? `${company(p)} (separate controller)` : company(p))).join(', ')}${a.others ? `; ${a.others.en}` : ''}`,
       `- **VERBİS categories:** ${a.verbis.join(', ')}`,
       '',
     );

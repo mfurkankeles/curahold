@@ -183,6 +183,13 @@ describe('reports and the timeline window', () => {
     expect(r.weeks).toHaveLength(12);
     expect(r.weeks.reduce((n: number, w: any) => n + w.created, 0)).toBeGreaterThan(0);
     expect(r.people.some((p: any) => p.userId === env.a.ids.lena)).toBe(true);
+    // The 30 days before the last 30, for the change under each figure: a task finished 45 days ago counts there only.
+    const old = (await lena.post('/api/tasks', { boardId: board, title: 'Finished six weeks ago' })).json.task;
+    await env.db.system((q) => q.query(`update tasks set done_at = now() - interval '45 days', created_at = now() - interval '50 days' where id = $1`, [old.id]));
+    const after = (await lena.get('/api/reports/work')).json;
+    expect(after.totals.done30Before).toBe(r.totals.done30Before + 1);
+    expect(after.totals.created30Before).toBe(r.totals.created30Before + 1);
+    expect(after.totals.done30).toBe(r.totals.done30);
     const one = (await lena.get(`/api/reports/work?board=${board}`)).json;
     expect(one.statuses.length).toBeGreaterThan(0);
     expect(one.boards.map((b: any) => b.boardId)).toEqual([board]);

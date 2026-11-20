@@ -2115,7 +2115,7 @@ export function SharedReport({ secret }: { secret: string }) {
   const [report, setReport] = useState<PlanReport | null | undefined>(undefined);
   useEffect(() => {
     void fetch(`/api/share/onboarding/${encodeURIComponent(secret)}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? r.json() : r.body?.cancel().then(() => null) ?? null)) // an unread answer would keep its connection open
       .then((r) => setReport(r?.report ?? null))
       .catch(() => setReport(null));
   }, [secret]);

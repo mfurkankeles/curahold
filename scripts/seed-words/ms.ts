@@ -55,7 +55,7 @@ export const words: SeedWords = {
     // 9–41 meetings: titles and next steps
     'Semakan perniagaan Q3',
     'Hantar sebut harga tempat duduk tambahan',
-    'Draf contoh perjalanan untuk saluran mudah alih',
+    'Draf pelan pelancaran untuk pasukan kedua',
     'Panggilan permulaan pembaharuan',
     'Draf kontrak jambatan',
     'Permulaan onboarding',
@@ -114,7 +114,7 @@ export const words: SeedWords = {
     'Procurement Specialist',
     'Marketing Director',
     // 67–95 timeline
-    'Semakan suku tahunan. Sofea berkongsi kalendar kempen baharu; mereka mahu mengembangkan saluran mudah alih. Mereka menunggu sebut harga untuk tempat duduk tambahan.',
+    'Semakan suku tahunan. Sofea berkongsi tarikh mula pasukan kedua; mereka mahu meluaskan penggunaan kepada pasukan itu juga. Mereka menunggu sebut harga untuk tempat duduk tambahan.',
     'Laporan penggunaan telah dihantar. Thomas bertanya tentang butiran harga.',
     'Panggilan pra-pembaharuan dengan Diana. Kewangan (Hakim) mahu membekukan bajet sehingga akhir suku tahun. Jalan tengah: kontrak jambatan tiga bulan.',
     'Hakim Ismail mungkin telah mengemukakan tawaran pesaing. Terangkan nilai dengan angka dalam mesyuarat pembaharuan.',

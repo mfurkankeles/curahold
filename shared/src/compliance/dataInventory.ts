@@ -252,6 +252,11 @@ export interface Activity {
   /** Where it is stored and who receives it. */
   processors: ProcessorId[];
   others?: Two;
+  /**
+   * How a recipient receives the data, where it is not simply our processor: Paddle, as merchant of record, is a
+   * separate controller — the transfer to it needs the controller-to-controller contract (KVKK art. 9; L1 re-check).
+   */
+  transfers?: Partial<Record<ProcessorId, 'processor' | 'separate controller'>>;
   /** VERBİS: personal-data categories (Turkish names used by VERBİS). */
   verbis: string[];
 }
@@ -353,6 +358,7 @@ export const ACTIVITIES: Activity[] = [
     basis: { tr: { tr: 'KVKK m. 5/2-c ve m. 5/2-ç (VUK, TTK)', en: 'KVKK art. 5/2-c and 5/2-ç (tax and commercial codes)' }, eu: 'Art. 6(1)(b) and (c)', gulf: 'Contract and legal obligation', other: 'Contract and legal obligation' },
     retention: { en: '10 years (Turkish Commercial Code art. 82)', tr: '10 yıl (TTK m. 82)' },
     processors: ['paddle', 'supabase'],
+    transfers: { paddle: 'separate controller', supabase: 'processor' },
     verbis: ['Finans', 'Müşteri işlem'],
   },
   {
@@ -376,6 +382,23 @@ export const ACTIVITIES: Activity[] = [
     retention: { en: 'Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training', tr: 'Konuşma kayıtları şirketin seçtiği süre (varsayılan 30 gün, hiç ile 365 arası); kişiyle birlikte silinir; sağlayıcıda [30 gün — teyit], eğitim yok' },
     processors: ['anthropic', 'supabase'],
     verbis: ['Kimlik', 'Müşteri işlem'],
+  },
+  {
+    id: 'aiDrafts',
+    role: 'processor',
+    subjects: { en: 'Users who ask for a draft; customer contacts and colleagues named in the record it is drafted from', tr: 'Taslak isteyen kullanıcılar; taslağın hazırlandığı kayıtta adı geçen müşteri kişileri ve çalışma arkadaşları' },
+    data: { en: 'The record the draft is made from (task, customer, meeting notes) and the draft text', tr: 'Taslağın hazırlandığı kayıt (görev, müşteri, toplantı notları) ve taslak metni' },
+    purpose: {
+      en: 'Drafting a reply, a follow-up or a summary for the person to read and change; nothing is saved or sent until they confirm it (off until an administrator turns AI on); never used to train models',
+      tr: 'Kişinin okuyup değiştireceği bir yanıt, takip ya da özet taslağı hazırlamak; kişi onaylamadan hiçbir şey kaydedilmez ya da gönderilmez (bir yönetici yapay zekâyı açana kadar kapalı); model eğitimi için asla kullanılmaz',
+    },
+    basis: { tr: { tr: 'Müşteri adına (veri işleyen); yurt dışındaki yapay zekâ sağlayıcısına aktarım KVKK m. 9 kapsamındadır', en: "On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
+    retention: {
+      en: 'The assistant keeps no draft: a confirmed draft lives in the record it was saved to, under that record’s retention; at the provider [30 days — confirm], no training',
+      tr: 'Asistan taslak saklamaz: onaylanan taslak kaydedildiği kayıtta, o kaydın saklama süresiyle durur; sağlayıcıda [30 gün — teyit], eğitim yok',
+    },
+    processors: ['anthropic', 'supabase'],
+    verbis: ['Kimlik', 'İletişim', 'Müşteri işlem'],
   },
   {
     id: 'humanCheck',

@@ -523,7 +523,7 @@ main[tabindex='-1']:focus { outline: none; }
   font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; background: var(--today); color: var(--on-status);
 }
 .navlink__count[data-tone='late'] { background: var(--late); }
-.sidebar__add { border: 0; background: transparent; color: var(--well-ink); cursor: pointer; border-radius: var(--r-s); width: 26px; height: 26px; display: grid; place-items: center; }
+.sidebar__add { border: 0; background: transparent; color: var(--well-ink); cursor: pointer; border-radius: var(--r-s); height: 26px; padding-inline: 4px 8px; display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: var(--fs-xs); font-weight: 600; }
 .sidebar__add:hover { background: var(--well-2); color: var(--well-hi); }
 .sidebar__foot { border-top: 1px solid var(--well-3); margin-top: 8px; padding-top: 8px; display: grid; gap: 4px; }
 .sidebar__memenu .popmenu { inset-inline-start: 0; inset-inline-end: auto; width: 100%; min-width: 264px; }
@@ -2226,6 +2226,11 @@ strong, b { font-weight: 700; }
 .stat__value { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat__sub { font-size: var(--fs-xs); color: var(--ink-3); }
 .stat__note { color: var(--late); font-weight: 600; }
+/* A figure's change since the period before (components/Change.tsx): words and arrow; colour only where "better" is known. */
+.change { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.change svg { flex: none; }
+.change[data-good='yes'] { color: var(--done-ink, var(--done)); }
+.change[data-good='no'] { color: var(--late-ink, var(--late)); }
 .page--board { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
 .page--board .board { padding: 0 0 20px; margin: 0; }
 .board--records .column { flex-basis: 280px; }
@@ -2598,11 +2603,13 @@ a.targetline:hover { border-color: var(--line-strong); }
   position: fixed; inset-inline-end: 22px; bottom: 22px; z-index: 28; display: inline-flex; align-items: center; gap: 8px; padding-block: 8px 8px; padding-inline-start: 8px; padding-inline-end: 16px;
   border: 0; border-radius: var(--r-pill); background: var(--grad, var(--brand)); color: var(--on-fill); font: inherit; font-weight: 700; font-size: var(--fs-m); letter-spacing: -.005em;
   box-shadow: var(--shadow-brand); cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur-fast) var(--ease), opacity var(--dur) var(--ease), visibility 0s linear 0s;
 }
 .cura__fab:hover { transform: translateY(-2px); box-shadow: var(--shadow-brand-hover); }
 .cura__fab:active { transform: translateY(0) scale(.98); }
 .cura__fab:focus-visible { outline: 3px solid var(--brand-wash); outline-offset: 2px; }
+/* It steps aside while the person types or scrolls down (CuraAI.tsx), on every width, and comes back when they scroll up. */
+.cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-in), opacity var(--dur) var(--ease-in), visibility 0s linear var(--dur); }
 .cura__fab .icon { animation: cura-twinkle var(--loop-twinkle) ease-in-out var(--loop-shine) 2 both; }
 @keyframes cura-twinkle { 0%, 82%, 100% { transform: none; } 88% { transform: rotate(-14deg) scale(1.18); } 94% { transform: rotate(10deg) scale(1.06); } }
 
@@ -2613,12 +2620,19 @@ a.targetline:hover { border-color: var(--line-strong); }
 }
 .cura[hidden] { display: none; }
 @keyframes cura-in { from { opacity: 0; transform: translateY(14px) scale(.96); } }
-.cura__head { display: flex; align-items: center; gap: 12px; padding-block: 16px 16px; padding-inline-start: 16px; padding-inline-end: 12px; background: var(--grad, var(--brand)); color: var(--on-fill); }
+@keyframes cura-out { to { opacity: 0; transform: translateY(14px) scale(.96); } }
+/* Closing: a shorter exit on --ease-in (motion.css), then CuraAI.tsx hides it. */
+.cura[data-closing] { animation: cura-out var(--dur-2) var(--ease-in) forwards; pointer-events: none; }
+/* The Close on the coloured header keeps its visible fill, in the header's own colours. */
+.cura__head .closex { margin-inline-start: 0; background: var(--tint-on-fill); border-color: transparent; color: var(--on-fill); }
+.cura__head .closex:hover { background: var(--tint-on-fill); border-color: var(--on-fill); }
+.cura__head .closex:focus-visible { outline: 2px solid var(--on-fill); outline-offset: 2px; }
+.cura__head { display: flex; align-items: center; gap: 8px; padding-block: 12px 12px; padding-inline-start: 16px; padding-inline-end: 12px; background: var(--grad, var(--brand)); color: var(--on-fill); }
 .cura__mark--head { width: 38px; height: 38px; }
 .cura__who { display: grid; gap: 0; min-width: 0; flex: 1; }
 .cura__who strong { font-size: var(--fs-l); font-weight: 750; letter-spacing: -.01em; line-height: 1.2; }
 .cura__who span { font-size: var(--fs-xs); opacity: .86; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cura__tool { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border: 0; border-radius: var(--r-m); background: transparent; color: var(--on-fill); cursor: pointer; }
+.cura__tool { width: var(--tap); height: var(--tap); display: grid; place-items: center; flex: none; border: 0; border-radius: var(--r-m); background: transparent; color: var(--on-fill); cursor: pointer; }
 .cura__tool:hover { background: var(--tint-on-fill); }
 .cura__tool:focus-visible { outline: 2px solid var(--on-fill); outline-offset: -2px; }
 
@@ -2631,8 +2645,8 @@ a.targetline:hover { border-color: var(--line-strong); }
 .cura .ask__form .input { border-radius: var(--r-pill); padding-inline-start: 16px; background: var(--surface-2); }
 .cura .ask__form .btn { border-radius: var(--r-pill); }
 .cura .ask__private { padding: 0 16px 8px; font-size: var(--fs-xs); text-align: center; background: var(--surface); }
-.cura__foot { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface-2); font-size: var(--fs-s); color: var(--ink-3); }
-.cura__write { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 4px 4px; border-radius: var(--r-s); font: inherit; font-weight: 600; color: var(--brand-ink); cursor: pointer; }
+.cura__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface-2); font-size: var(--fs-s); color: var(--ink-3); }
+.cura__write { position: relative; display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap); border: 0; background: none; padding: 4px 8px; border-radius: var(--r-s); font: inherit; font-weight: 600; color: var(--brand-ink); cursor: pointer; }
 .cura__write:hover { background: var(--brand-wash); }
 
 /* The button never sits on top of something to press: a page ends above it, and a bar that
@@ -2647,13 +2661,11 @@ a.targetline:hover { border-color: var(--line-strong); }
   /* A phone keeps its main menu at the bottom: the button stands above it, without its name. */
   .cura__fab { inset-inline-end: 12px; bottom: 16px; padding: 4px; }
   .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom)); }
-  /* It steps aside while the person types or scrolls down (CuraAI.tsx), and comes back when they scroll up. */
-  .cura__fab { transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), visibility 0s linear 0s; }
-  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-in), opacity var(--dur) var(--ease-in), visibility 0s linear var(--dur); }
   .cura__fabname { display: none; }
   .cura__mark { width: 40px; height: 40px; }
   /* The whole screen, measured from its edges: a width in vw can be wider than what a phone shows. */
   .cura { inset: 0; width: auto; height: auto; max-width: 100%; border: 0; border-radius: 0; z-index: 39; animation: none; }
+  .cura[data-closing] { animation: fade-out var(--dur-2) var(--ease-in) forwards; }
   .cura .ask__msg--bot { max-width: 100%; }
   .cura .ask__form { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 }
@@ -2665,6 +2677,7 @@ a.targetline:hover { border-color: var(--line-strong); }
 @media (prefers-reduced-motion: reduce) {
   .cura, .cura__fab .icon { animation: none; }
   .cura__fab { transition: none; }
+  .cura[data-closing] { animation: fade-out var(--dur-1) linear forwards; }
 }
 @media print { .cura, .cura__fab { display: none; } }
 

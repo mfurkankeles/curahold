@@ -10,9 +10,9 @@
 // first time opens Paddle's checkout (Paddle.js) over the page with the server's
 // signed company id; Paddle then tells the server by webhook, and this page
 // notices. Invoices and the payment method are in Paddle's own portal.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Access, Caps, Interval, PlanDef, PlanKey, Subscription } from '../../../shared/src/billing';
-import type { Locale, MessageKey } from '../../../shared/src/i18n';
+import { bcp47Of, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -21,6 +21,8 @@ import { useUnsaved } from '../lib/unsaved';
 import { formatMoney } from '../lib/format';
 import { Icon } from './icons';
 import { Confirm } from './ui';
+import { ALL_COUNTRIES } from '../../../shared/src/trialForm';
+import { NEVER_OFFERED } from '../../../shared/src/compliance/consentTexts';
 import '../surfaces/admin.css';
 
 interface Regional {
@@ -40,7 +42,7 @@ interface BillingInfo {
   seats: number;
   usage: Record<CapKind, { used: number; cap: number | null }>;
   subscription: Subscription | null;
-  profile: { taxNumber: string | null; billingEmail: string | null };
+  profile: { taxNumber: string | null; billingEmail: string | null; country?: string | null };
   checkout?: { env: 'sandbox' | 'live'; clientToken: string; email: string };
 }
 interface CheckoutHandle {
@@ -114,6 +116,19 @@ export function BillingSettings() {
   const [confirmExit, setConfirmExit] = useState(false);
   const [tax, setTax] = useState('');
   const [mail, setMail] = useState('');
+  const [country, setCountry] = useState('');
+  // Countries in the reader's language; the ones Curahold is never offered in are not choices (the API refuses them too).
+  const countries = useMemo(() => {
+    let names: Intl.DisplayNames | null = null;
+    try {
+      names = new Intl.DisplayNames([bcp47Of(locale)], { type: 'region' });
+    } catch {
+      names = null;
+    }
+    return ALL_COUNTRIES.filter((c) => !NEVER_OFFERED.includes(c))
+      .map((c) => ({ code: c, name: names?.of(c) ?? c }))
+      .sort((a, b) => a.name.localeCompare(b.name, bcp47Of(locale)));
+  }, [locale]);
 
   const load = useCallback(async () => {
     const r = await get<BillingInfo>('/billing');
@@ -121,17 +136,18 @@ export function BillingSettings() {
     if (r.subscription?.interval) setInterval_(r.subscription.interval);
     setTax(r.profile.taxNumber ?? '');
     setMail(r.profile.billingEmail ?? '');
+    setCountry(r.profile.country ?? '');
     return r;
   }, []);
   useEffect(() => {
     void load().catch(() => undefined);
   }, [load]);
 
-  const profileDirty = !!info && (tax !== (info.profile.taxNumber ?? '') || mail !== (info.profile.billingEmail ?? ''));
+  const profileDirty = !!info && (tax !== (info.profile.taxNumber ?? '') || mail !== (info.profile.billingEmail ?? '') || country !== (info.profile.country ?? ''));
   const saveProfile = async (): Promise<boolean> => {
     setBusy('profile');
     try {
-      await patch('/billing/profile', { taxNumber: tax.trim() || null, billingEmail: mail.trim() || null });
+      await patch('/billing/profile', { taxNumber: tax.trim() || null, billingEmail: mail.trim() || null, country: country || null });
       toast(t('billing.profile.saved'));
       await load();
       return true;
@@ -147,6 +163,7 @@ export function BillingSettings() {
     discard: () => {
       setTax(info?.profile.taxNumber ?? '');
       setMail(info?.profile.billingEmail ?? '');
+      setCountry(info?.profile.country ?? '');
     },
   });
 
@@ -311,7 +328,7 @@ export function BillingSettings() {
         <div className="seg" role="group" aria-label={t('billing.intervalLabel')}>
           {(['month', 'year'] as const).map((k) => (
             <button key={k} type="button" aria-pressed={interval === k} onClick={() => setInterval_(k)}>
-              {t(`billing.interval.${k}`)}
+              {t(`billing.intervalTab.${k}`)}
               {k === 'year' && savePct > 0 && <span className="billing__save">{t('billing.saveN', { n: savePct })}</span>}
             </button>
           ))}
@@ -382,6 +399,17 @@ export function BillingSettings() {
           <label className="field">
             <span className="field__label">{t('billing.profile.billingEmail')}</span>
             <input className="input" type="email" value={mail} onChange={(e) => setMail(e.target.value)} placeholder={t('billing.profile.billingEmailPlaceholder')} maxLength={200} />
+          </label>
+          <label className="field">
+            <span className="field__label">{t('billing.profile.country')}</span>
+            <select className="select" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country">
+              <option value="">{t('billing.profile.countryNone')}</option>
+              {countries.map((x) => (
+                <option key={x.code} value={x.code}>
+                  {x.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </section>

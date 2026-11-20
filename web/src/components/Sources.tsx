@@ -11,7 +11,7 @@ import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
-import { DEV_HOSTS, KEY_FIELDS, devKey, type DevHookInfo, type DevHost, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
+import { DEV_HOSTS, KEY_FIELDS, MESSAGE_PROVIDERS, devKey, type DevHookInfo, type DevHost, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
 import { ACCOUNTING_ALL } from '../../../shared/src/accounting';
 import { ApiFailure, api, del, get, patch, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -466,7 +466,10 @@ export function KeyConnect({ provider, onClose, reconnect }: { provider: Provide
             </label>
           ),
         )}
-        <p className="field__hint">{t(provider.twoWay ? 'sync.keyed.note' : 'support.readOnly', { app: name })}</p>
+        {/* A messaging app has no field matching: its next step is the webhook settings (B19 review), not the CRM's. */}
+        <p className="field__hint">
+          {t((MESSAGE_PROVIDERS as readonly string[]).includes(provider.id) ? 'sync.keyed.noteMessages' : provider.twoWay ? 'sync.keyed.note' : 'support.readOnly', { app: name })}
+        </p>
       </form>
     </Dialog>
   );
@@ -1600,7 +1603,7 @@ function StatusTab({ id, d, refresh, reload }: { id: string; d: Detail; refresh:
           <ul className="plainlist problem-list">
             {problems.map((p) => (
               <li key={`${p.entity}:${p.entityId}`}>
-                <strong>{p.name}</strong> <span className="muted">· {p.lastError}</span>
+                <strong>{p.name}</strong> <ConnectionTrouble app={appName(d.connection)} message={p.lastError} />
               </li>
             ))}
           </ul>

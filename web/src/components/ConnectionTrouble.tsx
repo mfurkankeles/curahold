@@ -17,7 +17,7 @@ const SENTENCE: Record<SyncErrorCode | 'other', MessageKey> = {
 
 /**
  * The plain explanation of `message` (one of the four kinds, or a neutral "it reported a problem") and, under it,
- * the vendor's text exactly as it came, marked as theirs. `code` wins over guessing from the text when the server
+ * the vendor's text exactly as it came, marked as theirs and folded away until asked for. `code` wins over guessing from the text when the server
  * already classified the failure.
  */
 export function ConnectionTrouble({ app, message, code }: { app: string; message: string | null | undefined; code?: SyncErrorCode | null }) {
@@ -26,10 +26,12 @@ export function ConnectionTrouble({ app, message, code }: { app: string; message
   return (
     <span className="conn-trouble" data-kind={kind}>
       <span className="conn-trouble__plain">{t(SENTENCE[kind], { app })}</span>
+      {/* The service's own words are for whoever fixes it: one click away, not in full under the sentence. */}
       {message && (
-        <span className="conn-trouble__vendor">
-          {app}: <bdi>{message}</bdi>
-        </span>
+        <details className="conn-trouble__vendor">
+          <summary>{t('conn.trouble.details', { app })}</summary>
+          <bdi>{message}</bdi>
+        </details>
       )}
     </span>
   );

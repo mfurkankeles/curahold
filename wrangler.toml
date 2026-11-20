@@ -97,6 +97,9 @@ MAX_DEVICES = "2"
 SUPPORT_EMAIL = "support@curahold.com"
 PADDLE_ENV = "sandbox"
 TEAM_SCHEDULER = "off"
+# No portal on staging (see above): empty on purpose, read as unset (api/src/worker.ts). Without it wrangler warns
+# that the top-level PORTAL_DOMAIN is not inherited (seen in `wrangler deploy --dry-run --env staging`).
+PORTAL_DOMAIN = ""
 [[env.staging.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "<staging-hyperdrive-config-id>"

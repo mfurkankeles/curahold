@@ -26,13 +26,15 @@ function groups(txt: string): { agents: string[]; rules: string[] }[] {
 
 describe('robots.txt per surface', () => {
   it('the sales site: search engines in (the demo excepted), every AI crawler and site-analysis robot out, the sitemap named', () => {
-    const txt = robotsTxt('site', { sitemap: 'https://curahold.com/sitemap.xml' });
+    const txt = robotsTxt('site', { sitemap: ['https://curahold.com/sitemap.xml', 'https://app.curahold.com/docs/sitemap.xml'] });
     const g = groups(txt);
     const blocked = g.find((x) => x.rules.includes('Disallow: /') && !x.agents.includes('*')) ?? { agents: [] };
     for (const a of [...AI_CRAWLERS, ...SCRAPERS]) expect(blocked.agents).toContain(a);
     for (const a of ['Googlebot', 'Bingbot', 'YandexBot']) expect(g.flatMap((x) => x.agents)).not.toContain(a);
     expect(g.find((x) => x.agents.includes('*'))?.rules).toEqual(['Allow: /', 'Disallow: /demo/']);
     expect(txt).toContain('Sitemap: https://curahold.com/sitemap.xml');
+    // The help centre is on the app host; the site names its sitemap too, so search engines find it from either door.
+    expect(txt).toContain('Sitemap: https://app.curahold.com/docs/sitemap.xml');
   });
 
   it('the owner switch lets AI answer robots read the marketing pages, never the training crawlers', () => {

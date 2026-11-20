@@ -30,7 +30,7 @@ const ago = (days: number, hour = 11) => {
 // who else from our side came, and the next steps agreed — [what, who, due in N days, done].
 // Who came from the customer's side is read from the notes (the first names in them).
 const MEETING_MORE: Record<string, { title: string; minutes: number; also?: string; steps?: [string, string, number | null, boolean][] }> = {
-  'Quillfield Retail|review|2': { title: '3. çeyrek iş değerlendirmesi', minutes: 60, also: 'ada', steps: [['Ek kullanıcı paketi teklifini gönder', 'zeynep', 3, false], ['Mobil kanal için örnek akış hazırla', 'lena', 10, false]] },
+  'Quillfield Retail|review|2': { title: '3. çeyrek iş değerlendirmesi', minutes: 60, also: 'ada', steps: [['Ek kullanıcı paketi teklifini gönder', 'zeynep', 3, false], ['İkinci ekip için yaygınlaştırma planını hazırla', 'lena', 10, false]] },
   'Harborline Bank|call|4': { title: 'Yenileme ön görüşmesi', minutes: 30, steps: [['Köprü sözleşme taslağını hazırla', 'omar', 5, false]] },
   'Cedarmoor Health|meeting|6': { title: 'Onboarding başlangıç toplantısı', minutes: 60, also: 'lena', steps: [['İlk eğitim oturumunu planla', 'lena', 4, true], ['İkinci eğitim için katılımcı listesini iste', 'lena', 9, false]] },
   'Velto Mobility|call|41': { title: 'Kullanım düşüşü görüşmesi', minutes: 25 },
@@ -55,7 +55,7 @@ const MEETING_MORE: Record<string, { title: string; minutes: number; also?: stri
 };
 
 const ACTIVITIES: [string, 'note' | 'call' | 'meeting' | 'email' | 'review', number, string][] = [
-  ['Quillfield Retail', 'review', 2, 'Çeyrek değerlendirmesi. Selin yeni kampanya takvimini paylaştı; mobil kanalı genişletmek istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.'],
+  ['Quillfield Retail', 'review', 2, 'Çeyrek değerlendirmesi. Selin ikinci ekibin başlangıç tarihini paylaştı; kullanımı o ekibe de yaymak istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.'],
   ['Quillfield Retail', 'email', 9, 'Kullanım raporunu gönderdim. Tomas fiyatlandırma detaylarını sordu.'],
   ['Harborline Bank', 'call', 4, 'Defne ile yenileme ön görüşmesi. Finans tarafı (Hakan) bütçeyi çeyrek sonuna kadar dondurmak istiyor. Ara çözüm: 3 aylık köprü sözleşme.'],
   ['Harborline Bank', 'note', 15, 'Hakan Ersoy rakip teklifi masaya koymuş olabilir. Yenileme görüşmesinde değer hikayesini rakamlarla anlatalım.'],

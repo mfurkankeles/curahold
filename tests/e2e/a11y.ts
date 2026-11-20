@@ -366,8 +366,8 @@ for (const v of part('app') ? VARIANTS : []) {
 
 // ---------------------------------------------------------------- the owner's console and its Office
 const desk = `http://desk.localhost:${PORT}`;
-const CONSOLE = ['/', '/customers', '/support', '/revenue', '/trials', '/requests', '/approvals', '/plan', '/checklist', '/system', '/activity', '/team', '/chats', '/meetings', '/office'];
-const CONSOLE_PHONE = ['/', '/support', '/approvals', '/office'];
+const CONSOLE = ['/', '/customers', '/support', '/revenue', '/trials', '/requests', '/approvals', '/plan', '/plan?q=investors', '/plan?q=summary', '/checklist', '/system', '/activity', '/team', '/chats', '/meetings', '/office'];
+const CONSOLE_PHONE = ['/', '/support', '/approvals', '/plan?q=investors', '/office'];
 const deskCode = () => s.email.sent.filter((m: any) => m.to === DESK_STAFF && /desk code/.test(m.subject)).map((m: any) => /\b(\d{6})\b/.exec(m.text)?.[1]).at(-1);
 if (part('console')) {
   // One sign-in (email code, then the authenticator) for the whole walk; each variant then changes the

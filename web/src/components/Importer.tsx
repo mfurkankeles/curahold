@@ -225,6 +225,7 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
           <strong>{t('import.drop')}</strong>
           <span className="muted">{t('import.dropHint')}</span>
           <span className="btn btn--small" aria-hidden="true">
+            <Icon name="upload" size={15} />
             {t('import.choose')}
           </span>
         </label>

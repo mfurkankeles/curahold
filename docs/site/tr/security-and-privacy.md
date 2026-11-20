@@ -49,6 +49,10 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 
 Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yazarak isteyebilir. 30 gün boyunca hiçbir şey silinmez: şirket her zamanki gibi çalışır, dışa aktarma yapılabilir ve herhangi bir yönetici iptal edebilir. Sonra dosyalar ve bağlantı anahtarları dahil her şey kalıcı olarak silinir ve neyin kaldırıldığını sayan bir silme belgesi saklanır (ad ya da adres içermez). Faturalar vergi mevzuatı gereği kalır. Yedekler barındırma sağlayıcısının takvimine göre silinir.
 
+### Kişisel veri talepleri
+
+**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK ve GDPR'de 30 gün, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
+
 ## Saklama süreleri
 
 | Veri | Süre |

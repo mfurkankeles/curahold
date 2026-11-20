@@ -200,14 +200,14 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         <span className="topbar__spacer" />
         {admin && (
           <div className="toolbar">
-            {/* On a phone the two keep to the title's line as icons, named for whoever cannot see them. */}
+            {/* Icon and label on every width (owner rule); on a phone the label is the short one. */}
             <button className="btn" onClick={() => setDraft(draftOf(current))} aria-label={t('home.edit')} title={t('home.edit')}>
               <Icon name="edit" size={16} />
-              <span className="hide-phone">{t('home.edit')}</span>
+              <span>{t('home.edit')}</span>
             </button>
             <button className="btn btn--quiet" onClick={newHome} aria-label={t('home.newPage')} title={t('home.newPage')}>
               <Icon name="plus" size={16} />
-              <span className="hide-phone">{t('home.newPage')}</span>
+              <span>{t('home.newPage')}</span>
             </button>
           </div>
         )}

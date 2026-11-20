@@ -37,7 +37,7 @@ reportRoutes.get('/reports/work', async (c) => {
     const [row] = await q.query(
       `with d as materialized (
          select (select app_today()) as today, date_trunc('week', now()) - interval '11 weeks' as w0,
-                now() - interval '30 days' as d30, now() - interval '90 days' as d90),
+                now() - interval '30 days' as d30, now() - interval '60 days' as d60, now() - interval '90 days' as d90),
        s as (
          select board_id, cw, dw, who, grouping(board_id) as gb,
                 count(*) filter (where open)::int as open,
@@ -46,13 +46,16 @@ reportRoutes.get('/reports/work', async (c) => {
                 count(*) filter (where open and cardinality(assignee_ids) = 0)::int as unassigned,
                 count(*) filter (where done_at > d30)::int as done_30,
                 count(*) filter (where created_at > d30)::int as created_30,
+                -- The 30 days before those, for the change shown under each figure (inside the 90 days RECENT reads).
+                count(*) filter (where done_at > d60 and done_at <= d30)::int as done_prev,
+                count(*) filter (where created_at > d60 and created_at <= d30)::int as created_prev,
                 sum(extract(epoch from (done_at - created_at)) / 86400) filter (where done_at > d90) as cycle_sum,
                 count(*) filter (where done_at > d90) as cycle_n,
                 count(*) filter (where done_at > d90 and due_date is not null and done_at::date <= due_date) as ontime_n,
                 count(*) filter (where done_at > d90 and due_date is not null) as ontime_d,
                 count(*)::int as n
            from (
-             select t.board_id, t.created_at, t.done_at, t.due_date, t.assignee_ids, d.today, d.d30, d.d90,
+             select t.board_id, t.created_at, t.done_at, t.due_date, t.assignee_ids, d.today, d.d30, d.d60, d.d90,
                     (${OPEN}) as open,
                     case when t.created_at >= d.w0 then date_trunc('week', t.created_at) end as cw,
                     case when t.done_at >= d.w0 then date_trunc('week', t.done_at) end as dw,
@@ -63,6 +66,7 @@ reportRoutes.get('/reports/work', async (c) => {
        select
          (select json_build_object('open', coalesce(sum(open), 0), 'overdue', coalesce(sum(overdue), 0), 'due_week', coalesce(sum(due_week), 0),
                    'unassigned', coalesce(sum(unassigned), 0), 'done_30', coalesce(sum(done_30), 0), 'created_30', coalesce(sum(created_30), 0),
+                   'done_prev', coalesce(sum(done_prev), 0), 'created_prev', coalesce(sum(created_prev), 0),
                    'cycle_days', round(sum(cycle_sum) / nullif(sum(cycle_n), 0))::int,
                    'on_time', round(100.0 * sum(ontime_n) / nullif(sum(ontime_d), 0))::int)
             from s where gb = 0) as totals,
@@ -113,6 +117,9 @@ reportRoutes.get('/reports/work', async (c) => {
       unassigned: n(out.totals.unassigned) ?? 0,
       done30: n(out.totals.done_30) ?? 0,
       created30: n(out.totals.created_30) ?? 0,
+      // The 30 days before the last 30: the change under "done" and "came in".
+      done30Before: n(out.totals.done_prev) ?? 0,
+      created30Before: n(out.totals.created_prev) ?? 0,
       cycleDays: n(out.totals.cycle_days),
       onTime: n(out.totals.on_time),
     },

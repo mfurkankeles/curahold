@@ -6,7 +6,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createOrg } from '../api/src/lib/orgs';
 import { purgeExpired, retentionFrom, RETENTION_DEFAULTS } from '../api/src/lib/retention';
-import { purgeDueCompanies } from '../api/src/lib/companyDeletion';
+import { companyDeletionCertificate, listCompanyDeletions, purgeDueCompanies } from '../api/src/lib/companyDeletion';
 import { login, setup, type Env } from './helpers';
 
 let env: Env;
@@ -59,7 +59,27 @@ describe('the nightly purge', () => {
     await consent('gone@demo.example', 'any.marketing.email', true, daysAgo(1500), null, 'marketing');
     await consent('gone@demo.example', 'any.marketing.email', false, daysAgo(1300), null, 'withdrawal');
 
+    // The assistant's consents: an old "yes" still in force stays; an old "yes" later answered "no" goes, the "no" too once old.
+    const ada = (await env.db.system((q) => q.query<{ id: string }>(`select id from users where org_id = $1 order by created_at limit 1`, [o])))[0].id;
+    await env.db.system(async (q) => {
+      await q.query(`delete from assistant_consents where org_id = $1`, [o]);
+      await q.query(
+        `insert into assistant_consents (org_id, user_id, surface, version, locale, granted, created_at) values ($1, $2, 'app', 'v1', 'en', true, $3), ($1, $2, 'app', 'v1', 'en', false, $4), ($1, $2, 'app', 'v2', 'en', true, $5)`,
+        [o, ada, daysAgo(1600), daysAgo(1500), daysAgo(1400)],
+      );
+      await q.query(
+        `insert into assistant_public_consents (consent_id, surface, version, locale, granted, created_at) values ('00000000-0000-4000-8000-0000000000a1', 'docs', 'v1', 'en', true, $1),
+          ('00000000-0000-4000-8000-0000000000a2', 'docs', 'v1', 'en', true, $1), ('00000000-0000-4000-8000-0000000000a2', 'docs', 'v1', 'en', false, $2)`,
+        [daysAgo(1500), daysAgo(1400)],
+      );
+    });
+
     const r = await purgeExpired(env.deps);
+    expect(r.assistantConsents).toBe(2);
+    expect(r.assistantPublicConsents).toBe(2);
+    const answers = await env.db.system((q) => q.query<{ version: string; granted: boolean }>(`select version, granted from assistant_consents where org_id = $1`, [o]));
+    expect(answers).toEqual([{ version: 'v2', granted: true }]);
+    expect((await env.db.system((q) => q.query(`select consent_id from assistant_public_consents where consent_id::text like '00000000-0000-4000-8000-0000000000a%'`))).map((x) => x.consent_id)).toEqual(['00000000-0000-4000-8000-0000000000a1']);
     expect(r.trialRequests).toBeGreaterThanOrEqual(1);
     expect(r.auditLog).toBeGreaterThanOrEqual(1);
     expect(r.helpRequests).toBeGreaterThanOrEqual(1);
@@ -143,6 +163,15 @@ describe('deleting a company', () => {
     expect(cert.certificate.files).toBe(1);
     expect(cert.certificate.kept.invoices).toBe(1);
     expect(JSON.stringify(cert.certificate)).not.toContain('dora@demo.example');
+    // The administrator gets the certificate and its hash after the delete (the mailer, not the company outbox, which went with it).
+    const mail = env.email.last('dora@demo.example');
+    expect(mail.subject).toContain('Doomed Co');
+    expect(mail.text).toContain(cert.certificate_hash);
+    expect(mail.text).toContain('"slug": "doomed"');
+    // The operator can read it back.
+    const listed = (await listCompanyDeletions(env.deps)).find((d) => d.slug === 'doomed' && d.purgedAt);
+    expect(listed?.certificateHash).toBe(cert.certificate_hash);
+    expect((await companyDeletionCertificate(env.deps, listed!.id))?.hash).toBe(cert.certificate_hash);
     // The other companies are untouched.
     expect(await acmeTasks()).toBe(before);
   });

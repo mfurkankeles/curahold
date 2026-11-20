@@ -43,6 +43,10 @@ Tukar antara empat paparan dengan butang di bahagian atas halaman Pelanggan; pil
 
 Ayat di bahagian atas menyatakan berapa ramai pelanggan perlu perhatian dan berapa banyak nilai yang berisiko; pautan "perlu perhatian" mengecilkan senarai kepada mereka. Pada telefon, penapis berada bersama pada satu helaian **Tapis**.
 
+## Menambah pembaharuan
+
+Pembaharuan ialah **Tarikh pembaharuan** pelanggan. Buka pelanggan dan isikannya di bawah **Butiran**, atau bawa masuk dalam satu lajur semasa mengimport. Selepas itu pelanggan muncul dalam **Pembaharuan**, pada bulannya dan bersama nilainya. Belum ada medan itu? Tambah medan tarikh dalam Tetapan → Medan pelanggan. Untuk kerja pembaharuan bermula dengan sendirinya, hidupkan **Mulakan pembaharuan dengan sendirinya** dalam Tetapan → **Sasaran dan rentak** dan pilih berapa awal serta dengan playbook yang mana.
+
 ## Mengimport
 
 Lepaskan fail Excel atau CSV, padankan lajur dengan medan, semak pratonton, import. Import yang salah boleh dibuat asal dengan satu klik dalam tempoh 30 hari.

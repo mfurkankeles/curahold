@@ -91,6 +91,11 @@ try {
       await page.goto(`${stack.origin}${path}`, { waitUntil: 'networkidle2' });
       await settle(page);
       await page.evaluate(ring(find, n));
+      // The pictures show the address a customer sees, never this machine's (site review #4: "demo.localhost:9771").
+      await page.evaluate((local: string) => {
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) if (n.nodeValue?.includes(local)) n.nodeValue = n.nodeValue.replaceAll(local, 'demo.curahold.com');
+      }, `demo.localhost:${PORT}`);
       await page.screenshot({ path: join(out, `${name}.webp`) as `${string}.webp`, type: 'webp', quality: 72 });
     };
     await shoot('sync-stops-1', '/settings/sources', bySel('a[href="/settings/sources"]'), 1);

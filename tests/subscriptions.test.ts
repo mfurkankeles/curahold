@@ -138,7 +138,7 @@ describe('billing-contact details', () => {
     const r = await acme('PATCH', '/billing/profile', { user: ada, body: { taxNumber: 'TR-00000', billingEmail: 'pay@demo.example' } });
     expect(r.status).toBe(200);
     const g = await acme('GET', '/billing/subscription', { user: ada });
-    expect(g.json.profile).toEqual({ taxNumber: 'TR-00000', billingEmail: 'pay@demo.example' });
+    expect(g.json.profile).toEqual({ taxNumber: 'TR-00000', billingEmail: 'pay@demo.example', country: null }); // country: fix wave 3, set separately
     expect((await acme('PATCH', '/billing/profile', { user: lena, body: { taxNumber: 'x' } })).status).toBe(403);
   });
 });

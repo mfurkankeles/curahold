@@ -118,7 +118,7 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
     const d = date ? (r.fields[date.key] as string | null) : null;
     const k = kind ? kind.options?.find((o) => o.key === r.fields[kind.key]) : null;
     return (
-      <article className={`card dealcard${overlay ? ' card--overlay' : ''}`} data-due={d ? dueState(d, isClosed(r), today) : undefined} onClick={() => onOpen(r)}>
+      <article className={`card dealcard${overlay ? ' card--overlay' : ''}`} data-hero-key={overlay ? undefined : r.id} data-due={d ? dueState(d, isClosed(r), today) : undefined} onClick={() => onOpen(r)}>
         <div className="card__title">{r.name}</div>
         {r.accountName && <div className="card__account">{r.accountName}</div>}
         <div className="card__meta">
@@ -192,7 +192,7 @@ const STAT_ICON = { late: 'alert', soon: 'clock', done: 'checkCircle' } as const
  * A figure tile. A `tone` (late, soon, done) shows as an icon beside the label and a side mark, and is said in words
  * to a screen reader: the state is never told by colour alone (WCAG 1.4.1). Without a tone the tile has no mark.
  */
-export function Stat({ label, value, sub, tone, note, n, fmt }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string; n?: number | null; fmt?: (n: number) => string }) {
+export function Stat({ label, value, sub, tone, note, n, fmt, change }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string; n?: number | null; fmt?: (n: number) => string; change?: React.ReactNode }) {
   const { t } = useI18n();
   return (
     <div className="stat" data-tone={tone}>
@@ -202,6 +202,7 @@ export function Stat({ label, value, sub, tone, note, n, fmt }: { label: string;
         {tone ? <span className="sr-only">{`, ${t(`stat.tone.${tone}`)}`}</span> : null}
       </span>
       <strong className="stat__value num">{n == null ? value : <CountUp value={n} format={fmt ?? String} />}</strong>
+      {change}
       {(sub || note) && (
         <span className="stat__sub">
           {sub}

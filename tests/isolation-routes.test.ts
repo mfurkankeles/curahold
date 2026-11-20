@@ -34,6 +34,7 @@ const KINDS: [RegExp, string, string?][] = [
   // caller may end (DELETE /me/sessions/:id is "sign this device out"), leaving the rest of the run signed out.
   [/^\/(admin|me)\/sessions\/:id/, 'sessions', `user_id = (select id from users u where u.email = 'zeynep@demo.example' and u.org_id = sessions.org_id)`],
   [/^\/admin\/join-requests\/:id/, 'join_requests'],
+  [/^\/admin\/privacy-requests\/:id/, 'privacy_requests'],
   [/^\/automations\/:id/, 'automations'],
   [/^\/sprints\/:id/, 'sprints'],
   [/^\/boards\/:id/, 'boards'],
@@ -99,11 +100,18 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
   'GET /desk/owner/requests/:id': 'a trial request: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
+  'GET /desk/owner/requests/:id/export': 'a trial applicant’s data: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
+  'GET /desk/owner/company-deletions/:id': 'a company deletion’s certificate: Curahold’s own record, owner session only (tests/retention.test.ts)',
   'POST /desk/owner/requests/:id/contacted': 'a trial request; owner session only (tests/owner-console.test.ts)',
   'POST /desk/owner/requests/:id/approve': 'a trial request; owner session only (tests/owner-console.test.ts)',
   'POST /desk/owner/requests/:id/reject': 'a trial request; owner session only (tests/owner-console.test.ts)',
   'PATCH /desk/owner/plan/tasks/:id': 'the owner’s own plan task; owner session only (tests/owner-console.test.ts)',
   'DELETE /desk/owner/plan/tasks/:id': 'the owner’s own plan task; owner session only (tests/owner-console.test.ts)',
+  'PATCH /desk/owner/plan/windows/:id': 'the owner’s own fundraising window; owner session only (tests/owner-plan.test.ts)',
+  'PATCH /desk/owner/plan/investors/:id': 'the owner’s own investor list; owner session only (tests/owner-plan.test.ts)',
+  'DELETE /desk/owner/plan/investors/:id': 'the owner’s own investor list; owner session only (tests/owner-plan.test.ts)',
+  'POST /desk/owner/plan/investors/:id/restore': 'the owner’s own investor list; owner session only (tests/owner-plan.test.ts)',
+  'DELETE /desk/owner/push/devices/:id': 'the owner’s own phone for alerts; owner session only (tests/owner-plan.test.ts)',
   'PUT /desk/owner/checklist/:item': 'a go-live checklist item from the repository; owner session only (tests/owner-console.test.ts)',
   'PUT /desk/office/seats/:seat': 'a seat of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
   'POST /desk/office/seats/:seat/key': 'a seat of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
@@ -206,6 +214,7 @@ beforeAll(async () => {
   await upload(lena, `/api/tasks/${task.id}/files`);
   await lena.post(`/api/accounts/${account}/activities`, { kind: 'note', body: 'A note' });
   await lena.post('/api/reports/saved', { name: 'A report', def: { ...blankDef('tasks'), groups: [{ field: 'board' }], chart: 'bar' } });
+  await ada.post('/api/admin/privacy-requests', { kind: 'objection', subjectName: 'Someone There', law: 'gdpr', receivedOn: '2026-11-02' });
   await ada.put('/api/portal/settings', { enabled: true });
   await lena.post('/api/portal/users', { accountId: account, email: 'someone@cedarmoor.example', name: 'Someone There' });
   await ada.post('/api/connections/demo', {});

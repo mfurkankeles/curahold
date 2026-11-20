@@ -105,6 +105,7 @@ export type ErrorCode =
   | 'staff_second_step'
   | 'analytics_query'
   | 'analytics_budget'
+  | 'country_not_offered'
   /** Mail could not be sent (lib/services.ts MailError): the app answers with this, never the mail server's words. */
   | 'mail_unavailable'
   | 'server';
@@ -220,6 +221,8 @@ const STATUS: Record<ErrorCode, number> = {
   // The analytics feed (routes/analytics.ts): a query it cannot read, and the company's daily row budget.
   analytics_query: 400,
   analytics_budget: 429,
+  // Sanctions: never offered there (NEVER_OFFERED). 451 is "unavailable for legal reasons".
+  country_not_offered: 451,
 };
 
 /**

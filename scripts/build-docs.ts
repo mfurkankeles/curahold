@@ -50,6 +50,9 @@ const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
  * The sales site links to the app's address, so that is the default (docs/ENVIRONMENT.md).
  */
 const DOCS_ORIGIN = (process.env.DOCS_ORIGIN ?? 'https://app.curahold.com').replace(/\/$/, '');
+// The share picture for a link to a help page: the site's own (scripts/build-site.ts), so a shared page looks like Curahold.
+const SITE_ORIGIN = (process.env.SITE_ORIGIN ?? `https://${process.env.SITE_BASE_DOMAIN ?? 'curahold.com'}`).replace(/\/$/, '');
+const OG_IMAGE = `${SITE_ORIGIN}/assets/${existsSync(join(import.meta.dirname, '..', 'site', 'og.png')) ? 'og.png' : 'og.svg'}`;
 /**
  * The languages the docs are written in: a folder per language under docs/site.
  * Adding a language is adding its folder. Its user guide (section help) must be
@@ -145,6 +148,8 @@ interface Page {
   slug: string;
   title: string;
   summary: string;
+  /** The search-result and share description: the summary, grown from the page's opening when it is short. */
+  description: string;
   section: Section;
   order: number;
   md: string;
@@ -225,6 +230,43 @@ function sectionsOf(lang: Lang, p: Page): DocSection[] {
   return out;
 }
 
+/**
+ * Search engines show about 155 characters of a description and many summaries are one short line
+ * ("Every error code, its HTTP status and what it means."), which reads as thin (site review #11). A summary
+ * under ~110 is grown with whole sentences from the page's own opening, never past ~160, so every word is
+ * still the writers' own. Chinese, Japanese and Korean characters count double (a result line fits about half
+ * as many); their summaries are mostly long enough already.
+ */
+function describe(summary: string, body: string): string {
+  const width = (t: string) => t.length + (t.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu) ?? []).length;
+  if (width(summary) >= 110) return summary;
+  const opening = body
+    .replace(/^#\s.*$/m, '') // the page title
+    .split(/^#{2,}\s/m)[0] // up to the first section heading
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^\s*\|.*$/gm, ' ') // tables are data, not sentences
+    .replace(/^\s*<.*$/gm, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links keep their words
+    .replace(/\{#[^}]*\}/g, ' ')
+    .replace(/^\s*(?:>|[-*]|\d+\.)\s?/gm, '')
+    .replace(/[*_`|]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Whole sentences only: Latin, Arabic and Persian question marks, the Devanagari danda and CJK full stops.
+  const sentences = opening.match(/[^.!?؟।。！？]+[.!?؟।。！？]+(?=\s|$)/gu) ?? [];
+  let out = summary.trim();
+  for (const raw of sentences) {
+    const next = raw.trim();
+    if (!next || out.includes(next) || next.includes(out)) continue;
+    const joined = out ? `${out}${/[。！？]$/u.test(out) ? '' : ' '}${next}` : next;
+    if (width(joined) > 160) continue; // too long to add whole: a later, shorter sentence may still fit
+    out = joined;
+    if (width(out) >= 110) break;
+  }
+  return out;
+}
+
 function parse(lang: Lang, file: string, from: Lang = lang): Page {
   const raw = readFileSync(join(SRC, from, file), 'utf8');
   const m = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(raw);
@@ -271,7 +313,7 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
   // About 220 words a minute; Chinese, Japanese and Korean are counted by character instead (about 450).
   const wide = (text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu) ?? []).length;
   const minutes = Math.max(1, Math.round(text.replace(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu, '').split(' ').filter(Boolean).length / 220 + wide / 450));
-  return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], updated: lastChange(join(SRC, from, file)), minutes, html, toc, text, borrowed: from !== lang };
+  return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', description: describe(meta.summary ?? '', m[2]), section, order: Number(meta.order ?? 99), md: m[2], updated: lastChange(join(SRC, from, file)), minutes, html, toc, text, borrowed: from !== lang };
 }
 
 /** The language menu's sign: a plain globe. */
@@ -302,12 +344,23 @@ function searchTags(lang: Lang, page: Page | null, path: string, site: string, s
   const org = { '@type': 'Organization', name: 'Curahold', url: 'https://curahold.com/' };
   const graph = page
     ? [
-        { '@type': 'TechArticle', headline: page.title, description: page.summary, inLanguage: bcp47Of(page.borrowed ? 'en' : lang), dateModified: page.updated, url: canonical, publisher: org },
+        { '@type': 'TechArticle', headline: page.title, description: page.description, inLanguage: bcp47Of(page.borrowed ? 'en' : lang), dateModified: page.updated, url: canonical, publisher: org },
         { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: site, item: home }, { '@type': 'ListItem', position: 2, name: sections[page.section] }, { '@type': 'ListItem', position: 3, name: page.title, item: canonical }] },
       ]
     : [{ '@type': 'WebSite', name: site, url: home, inLanguage: bcp47Of(lang), publisher: org }];
   const ld = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
-  return [`<link rel="canonical" href="${canonical}">`, ...alternates, `<script type="application/ld+json">${ld}</script>`].join('\n');
+  // A link to a help page shared in a chat or a post shows its title, summary and picture (site review #11).
+  const og = [
+    `<meta property="og:type" content="${page ? 'article' : 'website'}">`,
+    `<meta property="og:site_name" content="${esc(site)}">`,
+    `<meta property="og:title" content="${esc(page ? page.title : site)}">`,
+    ...(page?.description ? [`<meta property="og:description" content="${esc(page.description)}">`] : []),
+    `<meta property="og:url" content="${canonical}">`,
+    `<meta property="og:image" content="${OG_IMAGE}">`,
+    `<meta property="og:locale" content="${bcp47Of(page?.borrowed ? 'en' : lang).replace('-', '_')}">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+  ];
+  return [`<link rel="canonical" href="${canonical}">`, ...alternates, ...og, `<script type="application/ld+json">${ld}</script>`].join('\n');
 }
 
 /** A page of the docs. `path` is where it sits inside a language ('' for the start page, '<slug>/'), so the language menu lands on the same page. */
@@ -332,7 +385,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(page?.summary ?? ui.lead)}">
+<meta name="description" content="${esc(page?.description || ui.lead)}">
 <meta name="robots" content="${RELATIVE ? CLOSED_ROBOTS : 'index, follow, noai, noimageai'}">
 ${TDM_META}
 ${RELATIVE ? '' : searchTags(lang, page, path, ui.site, ui.sections)}

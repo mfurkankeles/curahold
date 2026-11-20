@@ -91,6 +91,7 @@ export function ImportPage() {
           <strong>{t('imp.page.drop')}</strong>
           <span className="muted">{t('imp.page.dropHint')}</span>
           <span className="btn btn--small" aria-hidden="true">
+            <Icon name="upload" size={15} />
             {t('import.choose')}
           </span>
         </label>

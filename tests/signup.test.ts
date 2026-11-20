@@ -27,6 +27,14 @@ async function signUp(email: string, over: Record<string, unknown> = {}) {
 }
 
 describe('self-serve sign-up', () => {
+  it('refuses the instant path from a country Curahold is never offered in (NEVER_OFFERED)', async () => {
+    const central = new Client(env, 'app');
+    const r = await central.req('POST', '/api/signup/start', { email: 'nora@northwind.example', locale: 'en' }, { 'cf-ipcountry': 'IR' });
+    expect(r.status).toBe(451);
+    expect(r.json.error).toBe('country_not_offered');
+    expect((await central.req('POST', '/api/signup/complete', { ticket: 'x'.repeat(40), company: 'A', slug: 'aaa', name: 'A', locale: 'en', timezone: 'UTC', currency: 'EUR', template: 'sales' }, { 'cf-ipcountry': 'IR' })).status).toBe(451);
+  });
+
   it('suggests a name and address from the work email', async () => {
     const central = new Client(env, 'app');
     const start = await central.post('/api/signup/start', { email: 'nora@northwind-traders.example', locale: 'en' });

@@ -79,6 +79,13 @@ const text: NoticeText = {
       basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses); pemindahan kepada pembekal AI di luar negara tertakluk pada KVKK perkara 9. Teluk: Pemproses. Rantau lain: Penyerahan.',
       retention: 'Log perbualan mengikut pilihan syarikat (30 hari secara lalai, tiada hingga 365); dipadam bersama individu itu; di pihak pembekal [30 hari — sahkan], tiada latihan',
     },
+    aiDrafts: {
+      purpose: 'Mendraf balasan, susulan atau ringkasan untuk dibaca dan diubah oleh individu itu; tiada apa-apa disimpan atau dihantar sehingga dia mengesahkannya (dimatikan sehingga pentadbir menghidupkan AI); tidak sekali-kali digunakan untuk melatih model',
+      data: 'Rekod yang menjadi asas draf (tugasan, pelanggan, nota mesyuarat) dan teks draf',
+      subjects: 'Pengguna yang meminta draf; kenalan pelanggan dan rakan sekerja yang disebut dalam rekod asasnya',
+      basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses); pemindahan kepada pembekal AI di luar negara tertakluk pada KVKK perkara 9. Teluk: Pemproses. Rantau lain: Penyerahan.',
+      retention: 'Pembantu tidak menyimpan draf: draf yang disahkan kekal dalam rekod tempat ia disimpan, mengikut tempoh simpanan rekod itu; di pihak pembekal [30 hari — sahkan], tiada latihan',
+    },
     humanCheck: {
       purpose: 'Menghalang bot daripada borang awam (Cloudflare Turnstile, tiada teka-teki, tiada kuki penjejakan)',
       data: 'Isyarat pelayar yang dibaca oleh semakan dan token sekali gunanya; widget dimuatkan dari Cloudflare, yang melihat alamat IP; Curahold sendiri menghantar alamat itu hanya jika pengendali menghidupkannya (TURNSTILE_SEND_IP)',

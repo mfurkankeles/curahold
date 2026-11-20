@@ -131,6 +131,10 @@ export interface Env {
   /** Ops alerts (lib/ops.ts): "off" stops them; OPS_ALERT_EMAIL=off keeps them in the console only. */
   OPS_ALERTS?: string;
   OPS_ALERT_EMAIL?: string;
+  /** Web Push to the owner's phones (lib/webpush.ts): both keys from `npx tsx scripts/plan/vapid-keys.ts`; VAPID_SUBJECT optional. */
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
   /** Robots refused by name (lib/botGuard.ts): unset = strict; "crawlers" or "off". */
   ROBOT_GUARD?: string;
   /** "allow" lets AI answer/search robots read the documentation (crawler policy; default: blocked). */
@@ -208,6 +212,10 @@ export function configFromEnv(env: Env): Config {
     assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
     team: teamConfigFrom(env as unknown as Record<string, string | undefined>),
     ops: { alerts: env.OPS_ALERTS !== 'off', email: env.OPS_ALERT_EMAIL !== 'off' },
+    push:
+      env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
+        ? { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT || `mailto:${(env.PLATFORM_OWNER || 'owner@localhost').trim()}` }
+        : undefined,
     retention: retentionFrom(env as unknown as Record<string, string | undefined>),
     support: {
       email: env.SUPPORT_EMAIL || undefined,

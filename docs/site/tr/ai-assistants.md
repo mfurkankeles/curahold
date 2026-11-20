@@ -2,7 +2,7 @@
 title: Claude ve ChatGPT'yi bağlama
 section: help
 order: 9
-summary: Yapay zekâ asistanınla müşterilerini sorgula, sunum hazırlat, görev açtır.
+summary: Yapay zekâ asistanınızla müşterilerinizi sorgulayın, sunum hazırlatın, görev açtırın.
 ---
 # Claude ve ChatGPT'yi bağlama
 
@@ -28,4 +28,4 @@ Curahold'u Claude, ChatGPT ya da MCP destekleyen başka bir asistana bağladığ
 - Asistan **sizin adınıza** çalışır. Yalnızca sizin görebildiğinizi görür, değiştirebildiğinizi değiştirir. Rol ve alan kurallarınız aynen geçerlidir.
 - İzin verirken "Değişiklik yapmasına da izin ver" kutusunu kapatırsanız asistan yalnızca okur. İzleyici koltuğundaysanız asistan zaten yalnızca okur.
 - Bağlantıyı istediğiniz zaman Ayarlarınız → API anahtarları ve bağlı uygulamalar'dan kesebilirsiniz.
-- Asistan kendi Claude ya da ChatGPT planınla çalışır; Curahold'a ek bir yapay zekâ ücreti yoktur.
+- Asistan kendi Claude ya da ChatGPT planınızla çalışır; Curahold'a ek bir yapay zekâ ücreti yoktur.

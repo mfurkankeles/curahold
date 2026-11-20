@@ -39,7 +39,7 @@ shared/src/         pure TypeScript for both sides: model.ts (types), i18n/ (one
                     billing, departments, onboarding, setupHealth, consent/, compliance/, team/ …
 web/src/            the React app: App.tsx (routing), pages/, components/, lib/ (api client, store, i18n), office/ (3D)
 web/portal/         the customer portal app (own bundle, own domain);  web/demo/ the in-browser demo page
-db/migrations/      the schema and row-security policies, append-only (0001 … 0246)
+db/migrations/      the schema and row-security policies, append-only (0001 … 0252)
 db/rollback/        hand-run undo scripts for big recent migrations (not migrations);  db/ops/ role separation template
 docs/site/<lang>/   the help centre — also what the assistant knows;  scripts/docs/ builds pictures and API reference
 site/               the sales site and demo hub generators (scripts/build-site.ts)

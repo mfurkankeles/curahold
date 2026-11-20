@@ -72,4 +72,17 @@ describe('motion tokens', () => {
     const uses = (file: string) => readFileSync(new URL(`../web/src/components/${file}`, import.meta.url), 'utf8').includes('useLeave<');
     for (const f of ['ui.tsx', 'TaskPanel.tsx', 'RecordPanel.tsx', 'Menus.tsx', 'SearchPalette.tsx', 'DateField.tsx', 'FilterSheet.tsx', 'QuickAdd.tsx', 'Bell.tsx', 'Shell.tsx']) expect(uses(f), f).toBe(true);
   });
+
+  it('lets every bottom sheet be pulled down to close, from a handle that keeps scrolling free', () => {
+    const src = (file: string) => readFileSync(new URL(`../web/src/${file}`, import.meta.url), 'utf8');
+    for (const f of ['FilterSheet.tsx', 'DateField.tsx', 'TaskPanel.tsx', 'RecordPanel.tsx']) expect(src(`components/${f}`), f).toMatch(/useDragClose\(/);
+    const hook = src('lib/dragClose.ts');
+    // Touch and pen only (a mouse keeps Close and the scrim), reduce motion keeps the sheet still.
+    expect(hook).toMatch(/pointerType === 'mouse'/);
+    expect(hook).toMatch(/prefers-reduced-motion: reduce/);
+    expect(motion).toMatch(/\.filtersheet__head \{ touch-action: none; \}/);
+    expect(motion).toMatch(/:is\(\.panel__head, \.datepop\) \{ touch-action: none; \}/);
+    // The exit starts where the finger let go: the stand-in keeps the dragged offset.
+    expect(motion).toMatch(/\[data-leaving\] \{ transform: translateY\(var\(--drag, 0px\)\); \}/);
+  });
 });

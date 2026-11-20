@@ -33,7 +33,7 @@ Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: 
 
 ## Rakamları kim görür
 
-Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsiniz). Müşteriyi gören diğer herkes yalnızca sağlık skorunun içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
+Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller ve yetkiler'den değiştirebilirsiniz). Müşteriyi gören diğer herkes yalnızca sağlık skorunun içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
 
 **Finans** departmanındaki kişiler de rolleri ne olursa olsun tutarları görür; Ayarlar → Departmanlar'da **Müşteri sayfasında Finans bölümünü kim görür** altında seçilen departmanlar da öyle. Finans kapatılırsa bu da kalkar.
 

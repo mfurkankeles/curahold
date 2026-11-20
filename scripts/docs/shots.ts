@@ -156,7 +156,8 @@ const SHOTS: Shot[] = [
   { name: 'customer', go: `__demo.navigate('/accounts'); await wait('.acard__name'); document.querySelector('.acard__name').click()`, ready: '.acc-band', width: 1280, height: 800 },
   { name: 'task', go: `document.querySelector('.navlink--board')?.click(); await wait('.board .card'); document.querySelector('.board .card').click()`, ready: '.panel', width: 1280, height: 800 },
   { name: 'home', go: `__demo.navigate('/home')`, ready: '.pane', width: 1280, height: 800 },
-  { name: 'portal', go: `await __demo.as('customer')`, ready: '.p-list', width: 1280, height: 800 },
+  // Taller than the rest: the portal's footer ends with the legal line, which must not be cut by the frame.
+  { name: 'portal', go: `await __demo.as('customer')`, ready: '.p-list', width: 1280, height: 880 },
   ...SETUP,
   { name: 'setup-phone', go: go('/setup-health'), ready: '.sh-item', width: 390, height: 780 },
   // The onboarding plan guide (docs/site/<lang>/onboarding-hub.md): one picture per step, the click target marked.

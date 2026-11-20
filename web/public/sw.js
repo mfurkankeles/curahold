@@ -125,3 +125,32 @@ self.addEventListener('fetch', (event) => {
   }
   if (path.startsWith('/assets/') || path.startsWith('/icons/')) event.respondWith(keptThenFresh(request));
 });
+
+// Alerts for the platform owner (owner console → Plan & targets → Monday summary → Phones): urgent help requests,
+// system alerts, the Monday summary. The message arrives encrypted for this browser alone (RFC 8291) and the
+// browser decrypts it before this runs; it carries a title, one short line and a console address to open.
+self.addEventListener('push', (event) => {
+  let m = {};
+  try {
+    m = event.data ? event.data.json() : {};
+  } catch {
+    m = {};
+  }
+  const title = typeof m.title === 'string' && m.title ? m.title.slice(0, 120) : 'Curahold';
+  const url = typeof m.url === 'string' && m.url.startsWith('/') && !m.url.startsWith('//') ? m.url : '/';
+  event.waitUntil(self.registration.showNotification(title, { body: typeof m.body === 'string' ? m.body.slice(0, 240) : '', icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: url, data: { url } }));
+});
+
+// A tap opens the console where the alert points, in a window already open when there is one.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url.startsWith(self.location.origin) && 'focus' in c) return (c.navigate ? c.navigate(url) : Promise.resolve()).then(() => c.focus());
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

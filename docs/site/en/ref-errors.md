@@ -108,6 +108,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `analytics_budget` | 429 | Today's analytics budget of … rows is used up. Try again later. |
 | `portal_locked` | 429 | Too many wrong tries. Try again in … minutes, or reset your password. |
 | `too_many_requests` | 429 | Too many attempts. Wait a few minutes and try again. |
+| `country_not_offered` | 451 | Curahold is not available in this country. |
 | `server` | 500 | Something went wrong on our side. Please try again. |
 | `billing_error` | 502 | The payment provider did not answer as expected. Please try again in a minute. |
 | `crm_error` | 502 | The connected service said: … |

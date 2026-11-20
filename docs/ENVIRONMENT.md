@@ -118,6 +118,8 @@ customer is the controller of where it is.
 | `TEAM_SCHEDULER` | `off` stops the team's 10-minute clock (cron `*/10 * * * *`, api/src/team/schedule.ts); chats and "Şimdi başlat" keep working | No | `auto`: runs only when a key is set; idle (no wake, no model call) when no cadence is due and nothing is queued. |
 | `OPS_ALERTS` | `off` stops the error-rate and latency alerts (lib/ops.ts) | No | On. |
 | `OPS_ALERT_EMAIL` | `off` keeps ops alerts in the owner console only (no e-mail to `PLATFORM_OWNER`) | No | On. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` **(S)** | Web Push to the owner's phones (urgent help requests, ops alerts, the Monday summary; api/src/lib/webpush.ts). Make the pair once with `npx tsx scripts/plan/vapid-keys.ts`; the private key is a secret. Free (the browsers' push services) | Both or neither | Unset: the console offers no phones; e-mail still goes. A new pair means adding every phone again. |
+| `VAPID_SUBJECT` | The contact the push services may write to: `mailto:…` or an `https://` address | No | `mailto:` + `PLATFORM_OWNER`. |
 | `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per profile | No | api/src/team/config.ts. |
 
 ## 4. Sign-in providers (each optional)
@@ -255,6 +257,8 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | `SITE_GA4_ID`, `SITE_META_PIXEL_ID`, `SITE_TIKTOK_PIXEL_ID` | Analytics / advertising ids for the sales site (loaded only after consent) | Empty. |
 | `CURAHOLD_MARKETING_PIXELS` | `1` allows the advertising pixels at all (they stay off by configuration otherwise, ADR 0014) | Off. |
 | `SITE_AI_CRAWLERS` | Sales-site `robots.txt`: `allow` lets AI **answer** engines (OAI-SearchBot, Claude-SearchBot, PerplexityBot …) read the marketing pages so they can cite them; AI **training** crawlers stay refused either way. The docs host has its own setting (`CRAWLERS_DOCS_AI`, §above). Owner decision, ADR 0020 | Blocked. |
+| `SITE_PRICES` | Sales site (`site/gates.ts`): `show` publishes the price figures — plan cards, the monthly/yearly switch, the comparison table's price row, the home "from …" line, the pricing description and the schema.org `Offer`/`AggregateOffer`. Until then every place says prices are announced at launch, in all 11 languages, and no Offer is emitted. Switch on after the owner's pricing workshop (MASTER-RULES 10) | Hidden. |
+| `SITE_EU_DATA` | Sales site (`site/gates.ts`): `confirmed` lets the site say the database is in the European Union (home facts, FAQ, Solutions › Europe, Trust). Set it only once the go-live checklist item `database-hosting` is proven (`shared/src/checklist-golive.ts`); until then those lines are left out | Not said. |
 | `SITE_SEO_ROBOTS` | Sales-site `robots.txt`: `allow` lets site-analysis robots in | Blocked. |
 | `SITE_LASTMOD` | Sales-site sitemaps: the `<lastmod>` day (YYYY-MM-DD) for every page that is not a blog post | The last git commit touching the site's sources; left out without git. |
 | `DOCS_ORIGIN` | Help centre production build: the address the docs are published at, for canonical, hreflang, structured data and `docs/sitemap.xml` (ADR 0020) | `https://app.curahold.com`. |

@@ -238,6 +238,11 @@ describe('drafts (assistant actions)', () => {
     const provider = mockProvider(() => ({ ...respondWith({}), content: [{ type: 'tool_use', id: 't1', name: 'draft', input: { text: 'Dear team, it is live.' } }] }));
     (env.deps as any).assistant = { provider };
     const [link] = await q('select id from request_links where story_id = $1 limit 1', [story]);
+    // Not before the person accepted the assistant's notice: the template, and the model is not called.
+    const before = (await mert.post('/api/assist/draft', { kind: 'shipped_message', linkId: link.id })).json.draft;
+    expect(before).toMatchObject({ ai: false, why: 'off' });
+    expect(provider.calls).toHaveLength(0);
+    expect((await mert.post('/api/assist/consent', { granted: true })).status).toBe(200);
     const d = (await mert.post('/api/assist/draft', { kind: 'shipped_message', linkId: link.id })).json.draft;
     expect(d).toMatchObject({ ai: true, text: 'Dear team, it is live.' });
     expect(provider.calls).toHaveLength(1);

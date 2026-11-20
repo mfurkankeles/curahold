@@ -95,11 +95,11 @@ export function InboxPage() {
         <div className="topbar__spacer" />
         <button className="btn btn--quiet" onClick={() => navigate('/profile')} aria-label={t('inbox.settings')} title={t('inbox.settings')}>
           <Icon name="sliders" size={16} />
-          <span className="hide-phone">{t('inbox.settings')}</span>
+          <span>{t('inbox.settings')}</span>
         </button>
         <button className="btn" disabled={!data?.unread} onClick={readAll} aria-label={t('bell.readAll')} title={t('bell.readAll')}>
           <Icon name="check" size={16} />
-          <span className="hide-phone">{t('bell.readAll')}</span>
+          <span>{t('bell.readAll')}</span>
         </button>
       </header>
       <div className="page inbox">

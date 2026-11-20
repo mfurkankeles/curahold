@@ -287,8 +287,8 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
         onClick={toggle}
       >
         <Icon name="bookmark" size={16} />
-        {/* The name read out is what is shown, with "Saved views" in front for a screen reader. */}
-        <span className="sr-only">{t('views.title')}</span>
+        {/* "Saved views" on the button until one is chosen; then its name, with "Saved views" in front for a screen reader. */}
+        <span className={active ? 'sr-only' : undefined}>{t('views.title')}</span>
         {active && <span className="savedviews__label">{active.name}</span>}
         {!active && list.length > 0 && <span className="fcount fcount--quiet num">{list.length}</span>}
       </button>

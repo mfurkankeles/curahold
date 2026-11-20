@@ -38,6 +38,11 @@ export const BASE: BaseCase[] = [
     q: { en: 'How do I import my customers from a CSV file?', tr: 'Müşterilerimi bir CSV dosyasından nasıl içe aktarırım?', ar: 'كيف أستورد عملائي من ملف CSV؟', he: 'איך מייבאים את הלקוחות שלי מקובץ CSV?', fa: 'چطور مشتریانم را از یک فایل CSV وارد کنم؟', 'zh-Hans': '如何从 CSV 文件导入我的客户？', 'zh-Hant': '如何從 CSV 檔案匯入我的客戶？', ja: 'CSV ファイルから顧客をインポートするには？', ko: 'CSV 파일에서 고객을 가져오려면 어떻게 하나요?', hi: "मैं CSV फ़ाइल से अपने ग्राहक कैसे इंपोर्ट करूं?", ms: "Bagaimana saya mengimport pelanggan daripada fail CSV?" },
   },
   {
+    id: 'howto-add-renewal', category: 'how_to', kinds: ['answer'], cite: 'customers',
+    rubric: "Explains that a renewal is the customer's renewal date, set under Details or imported, and that renewals can start by themselves; from the docs.",
+    q: { en: 'How do I add a renewal?', tr: 'Yenileme nasıl eklenir?', ar: 'كيف أضيف تجديدًا؟', he: 'איך מוסיפים חידוש?', fa: 'چطور یک تمدید اضافه کنم؟', 'zh-Hans': '如何添加续约？', 'zh-Hant': '如何新增續約？', ja: '更新を追加するには？', ko: '갱신은 어떻게 추가하나요?', hi: 'रिन्यूअल कैसे जोड़ूं?', ms: 'Bagaimana saya menambah pembaharuan?' },
+  },
+  {
     id: 'howto-api-key', category: 'how_to', kinds: ['answer'], cite: 'api-keys',
     rubric: 'Explains how to create an API key and where; mentions it is shown once or kept secret only if the docs say so.',
     q: { en: 'How do I make an API key?', tr: 'API anahtarı nasıl oluştururum?', ar: 'كيف أنشئ مفتاح API؟', he: 'איך יוצרים מפתח API?', fa: 'چطور یک کلید API بسازم؟', 'zh-Hans': '如何创建 API 密钥？', 'zh-Hant': '如何建立 API 金鑰？', ja: 'API キーを作成するには？', ko: 'API 키는 어떻게 만드나요?', hi: "मैं API की कैसे बनाऊं?", ms: "Bagaimana saya membuat kunci API?" },
@@ -102,6 +107,11 @@ export const BASE: BaseCase[] = [
     id: 'howto-my-data', category: 'how_to', kinds: ['answer'], cite: 'security-and-privacy',
     rubric: 'Explains that a person downloads everything Curahold holds about them themselves (their profile), and that an administrator can export or erase a person’s data.',
     q: { en: 'How do I download all the data Curahold holds about me?', tr: 'Kişisel verilerimin bir kopyasını nasıl indiririm?', ar: 'كيف أنزّل كل البيانات التي يحتفظ بها Curahold عني؟', he: 'איך מורידים את כל המידע ש-Curahold שומר עליי?', fa: 'چطور همهٔ داده‌هایی را که Curahold دربارهٔ من نگه می‌دارد دانلود کنم؟', 'zh-Hans': '如何下载 Curahold 保存的关于我的全部数据？', 'zh-Hant': '如何下載 Curahold 保存的關於我的全部資料？', ja: 'Curahold が保存している自分のデータをすべてダウンロードするには？', ko: 'Curahold가 보관한 내 데이터를 모두 내려받으려면 어떻게 하나요?', hi: "Curahold के पास मेरे बारे में जो सारा डेटा है, उसे कैसे डाउनलोड करूं?", ms: "Bagaimana saya memuat turun semua data yang dipegang Curahold tentang saya?" },
+  },
+  {
+    id: 'howto-privacy-requests', category: 'how_to', kinds: ['answer'], cite: 'security-and-privacy',
+    rubric: 'Explains logging a person’s request about their data (for example an objection or a restriction) in Settings → Company → Requests about personal data, that the due date follows the law that applies, and closing it as answered or refused.',
+    q: { en: 'Someone objected to us using their data. Where do I record it so we answer in time?', tr: 'Biri verilerinin kullanılmasına itiraz etti. Zamanında yanıt vermek için bunu nereye kaydederim?', ar: 'اعترض شخص على استخدامنا لبياناته. أين أسجّل ذلك لنرد في الوقت المحدد؟', he: 'מישהו התנגד לשימוש שלנו במידע שלו. איפה מתעדים את זה כדי לענות בזמן?', fa: 'کسی به استفادهٔ ما از داده‌هایش اعتراض کرده است. کجا ثبتش کنم تا به‌موقع پاسخ دهیم؟', 'zh-Hans': '有人反对我们使用其数据。我应在哪里记录，以便按时答复？', 'zh-Hant': '有人反對我們使用其資料。我該在哪裡記錄，才能準時回覆？', ja: 'データの利用に異議を申し立てられました。期限内に対応するには、どこに記録すればよいですか？', ko: '누군가 자신의 데이터 사용에 이의를 제기했습니다. 기한 안에 답하려면 어디에 기록하나요?', hi: "किसी ने अपने डेटा के इस्तेमाल पर आपत्ति की है। समय पर जवाब देने के लिए इसे कहां दर्ज करूं?", ms: "Seseorang membantah kami menggunakan data mereka. Di mana saya merekodkannya supaya kami menjawab tepat pada masanya?" },
   },
   {
     id: 'howto-cookies', category: 'how_to', kinds: ['answer'], cite: 'legal-cookies',

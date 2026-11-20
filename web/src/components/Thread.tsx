@@ -142,7 +142,10 @@ export const sizeText = (n: number, locale: Locale = 'en') => formatBytes(n, loc
  */
 async function fileBlob(id: string, inline: boolean): Promise<Blob> {
   const res = await fetch(`/api/files/${id}${inline ? '?inline=1' : ''}`, { headers: { 'x-curahold-device': getDeviceId() }, credentials: 'same-origin' });
-  if (!res.ok) throw new Error(String(res.status));
+  if (!res.ok) {
+    void res.body?.cancel(); // an unread answer would keep its connection open
+    throw new Error(String(res.status));
+  }
   return res.blob();
 }
 

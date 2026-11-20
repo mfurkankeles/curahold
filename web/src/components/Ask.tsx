@@ -15,7 +15,7 @@
 // before, on this device — still asking back on a question that means several things.
 import { Icon } from './icons';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { ask, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
+import { askAcross, looksEnglish, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 import type { AssistConsentState } from '../../../shared/src/assistConsent';
 import { AssistConsentNotice } from './AssistConsent';
@@ -168,9 +168,14 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
   // Start reading the docs as soon as the panel opens, so the first answer is instant.
   useEffect(() => void load(locale).catch(() => undefined), [locale]);
   // The start of the newest message is what should be on screen.
+  // Only the log scrolls: scrollIntoView would also scroll every page around it, the whole app, and the site
+  // or chat a demo is embedded in (the panel then slid up with an empty band under it).
   useEffect(() => {
-    const last = log.current?.lastElementChild;
-    if (messages.length > 1) last?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    const box = log.current;
+    const last = box?.lastElementChild as HTMLElement | null | undefined;
+    if (!box || !last || messages.length <= 1) return;
+    const top = last.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 8;
+    box.scrollTo({ top, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [messages]);
 
   const add = (...more: (Message extends infer M ? (M extends { id: number } ? Omit<M, 'id'> : never) : never)[]) =>
@@ -269,7 +274,9 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
       if (!intent && clarifyHere(q)) return;
       // A tapped choice: its own pages answer first.
       const pages = intentOf(intent)?.option.pages;
-      const a = ask(await load(locale), q, lastPage.current);
+      // A question typed in English is asked of the English docs and answered with this language's sections.
+      const english = locale !== 'en' && looksEnglish(q) ? await load('en').catch(() => null) : null;
+      const a = askAcross(await load(locale), english, q, lastPage.current);
       if (pages) {
         const mine = a.found.filter((f) => pages.some((p) => f.section.u.includes(`/${p}/`)));
         if (mine.length) {

@@ -15,7 +15,9 @@ import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { run } from '../context';
 import { body } from '../lib/validate';
-import { CONSENT_POLICY_VERSION, SURFACES, type Surface } from '../../../shared/src/consent/core';
+import { CONSENT_POLICY_VERSION, SURFACES, bannerText, sha256Hex, type Surface } from '../../../shared/src/consent/core';
+import { CONSENT_STRINGS } from '../../../shared/src/consent/strings';
+import { normalizeLocale } from '../../../shared/src/i18n';
 
 export const consentRoutes = new Hono<AppEnv>();
 
@@ -31,7 +33,18 @@ const consentInput = z.object({
   marketing: z.boolean(),
   source: z.enum(SURFACES as [Surface, ...Surface[]]).optional(),
   ...evidence,
+  /** Which optional categories the banner showed (its text, and so its hash, depends on them). */
+  inUse: z.object({ analytics: z.boolean(), marketing: z.boolean() }).optional(),
 });
+
+/**
+ * The hash of the words the in-app banner shows for this language and these categories, computed here from the same
+ * text builder the banner uses (shared/src/consent): the stored proof never rests on a value the browser sent.
+ */
+export async function shownTextHash(locale: string | undefined, inUse: { analytics: boolean; marketing: boolean }): Promise<string> {
+  const strings = CONSENT_STRINGS[normalizeLocale(locale)] ?? CONSENT_STRINGS.en!;
+  return sha256Hex(bannerText(strings as unknown as Record<string, string>, inUse));
+}
 const eventInput = z.object({
   analytics: z.boolean(),
   marketing: z.boolean(),
@@ -69,13 +82,17 @@ consentRoutes.get('/consent', async (c) => {
 });
 
 /**
- * Records the person's consent choice. Only the policy version in force is recorded (409 'stale_policy' otherwise),
- * so the stored proof always names the text the person actually saw (ADR 0014).
+ * Records the person's consent choice. Only the policy version in force is recorded (409 'stale_policy' otherwise, also
+ * when none is named), and the hash of the words shown is computed here, so the stored proof always names the text the
+ * person actually saw (ADR 0014).
  */
 consentRoutes.post('/consent', async (c) => {
   const input = await body(c, consentInput);
   // Same as the public door: a version other than the one in force is not recorded as proof of it.
-  if (input.policyVersion && input.policyVersion !== CONSENT_POLICY_VERSION) return c.json({ error: 'stale_policy' }, 409);
+  if (input.policyVersion !== CONSENT_POLICY_VERSION) return c.json({ error: 'stale_policy' }, 409);
+  // Without the categories named, the ones the choice speaks to (a "yes" can only be to a category that was shown).
+  const inUse = input.inUse ?? { analytics: input.analytics || !input.marketing, marketing: input.marketing };
+  const hash = await shownTextHash(input.locale, inUse);
   const auth = c.get('auth');
   const org = c.get('org');
   const agent = (c.req.header('user-agent') ?? '').slice(0, 400) || null;
@@ -91,8 +108,8 @@ consentRoutes.post('/consent', async (c) => {
         input.marketing,
         input.source ?? 'app',
         agent,
-        input.policyVersion ?? null,
-        input.textHash ?? null,
+        input.policyVersion,
+        hash || null,
         input.locale ?? null,
         countryOf(c.req.header('cf-ipcountry')),
         input.consentId ?? null,

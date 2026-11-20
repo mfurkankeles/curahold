@@ -81,8 +81,8 @@ export const AUTOMATION_TOOLS = ['HeadlessChrome', 'PhantomJS', 'Puppeteer', 'Pl
 export type Surface = 'site' | 'docs-host' | 'closed';
 
 export interface RobotsOptions {
-  /** Absolute sitemap address (the sales site). */
-  sitemap?: string;
+  /** Absolute sitemap address, or several (the sales site names its own and the help centre's, which lives on the app host). */
+  sitemap?: string | readonly string[];
   /** Let AI answer/search robots read the marketing pages or docs too (owner switch; default false). */
   allowAiAnswers?: boolean;
   /** Let site-analysis robots in (default false). */
@@ -106,7 +106,7 @@ export function robotsTxt(surface: Surface, o: RobotsOptions = {}): string {
         ['Allow: /', 'Disallow: /demo/']
       : // The app's central host: the documentation only.
         ['Allow: /docs/', 'Disallow: /'];
-  return [...head, ...group(blocked, ['Disallow: /']), ...group(['*'], everyone), ...(o.sitemap ? [`Sitemap: ${o.sitemap}`, ''] : [])].join('\n');
+  return [...head, ...group(blocked, ['Disallow: /']), ...group(['*'], everyone), ...(o.sitemap ? [...[o.sitemap].flat().map((u) => `Sitemap: ${u}`), ''] : [])].join('\n');
 }
 
 /** EU DSM Directive Art. 4(3) machine-readable reservation (W3C TDMRep): /.well-known/tdmrep.json. */

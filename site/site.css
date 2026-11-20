@@ -211,7 +211,8 @@ html.is-past .sky { opacity: .62; }
 .why ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .why li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; padding: 8px 10px; border-radius: 10px; background: var(--s2); }
 .why__t { font-size: 12.5px; line-height: 1.3; }
-.why__p { font-size: 12px; font-weight: 700; color: var(--bc); font-variant-numeric: tabular-nums; direction: ltr; }
+/* The points are text: they read in the text colour (the band's own colour was 3.25:1 on the risk band); the band colour stays on the bar. */
+.why__p { font-size: 12px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; direction: ltr; }
 .why__bar { grid-column: 1 / -1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .why--wide { display: none !important; }
 .why__bar i { display: block; height: 100%; width: max(4px, calc(var(--w) * 100%)); border-radius: 3px; background: var(--bc); }
@@ -880,12 +881,16 @@ html:not(.js) .story__steps { padding-block: 0; }
 .pricing__switch { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); }
 .pricing__switch button { border: 0; background: none; border-radius: 999px; padding: 9px 16px; font: 600 14px/1 var(--text); color: var(--ink-2); cursor: pointer; white-space: nowrap; }
 .pricing__switch button[aria-pressed='true'] { background: var(--iris); color: #fff; }
+/* A whole finger's target on a touch screen (MASTER-RULES 15). */
+@media (pointer: coarse), (max-width: 600px) { .pricing__switch button { min-height: 44px; } }
 /* The "save" note keeps its button's colour token: faded to .8 it fell to 4.25:1 on the iris fill (WCAG 1.4.3 asks 4.5);
    at full colour it is 5.7:1 on iris and 10.3:1 on paper. The lighter weight sets it apart. */
 .pricing__switch small { font-weight: 500; margin-inline-start: 6px; }
 .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
 .plan { display: grid; gap: 14px; align-content: start; padding: 34px; border-radius: 24px; background: var(--paper); border: 1px solid rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
 .plan__price { margin: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* While prices are not published (SITE_PRICES, site/gates.ts): a plain line where the figure would be. */
+.plan__price--soon { font: 600 18px/1.4 var(--text); color: var(--ink-2); }
 .plan__amount { font: 750 54px/1 var(--display); letter-spacing: -0.03em; }
 .plan__per { color: var(--ink-3); font-size: 15px; }
 .plan ul { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 9px; }

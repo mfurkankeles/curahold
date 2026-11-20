@@ -1,5 +1,6 @@
 // Thin fetch wrapper. Every call carries this device's id (the device limit
 // and request-forgery check rely on it) and the chosen language.
+import { trackChange } from './busy';
 import type { ApiError } from '../../../shared/src/model';
 import { normalizeLocale, translate } from '../../../shared/src/i18n';
 import { getDeviceId } from './device';
@@ -127,7 +128,8 @@ export function api<T = any>(method: string, path: string, body?: unknown): Prom
   const same = change && !(body instanceof FormData) ? `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}` : null;
   const first = same ? onTheWay.get(same) : undefined;
   if (first) return first as Promise<T>;
-  const sent = send<T>(method, path, body, change ? newKey() : null);
+  // A change gets the ring and tick on the button that sent it (lib/busy.ts), whatever screen it is on.
+  const sent = change ? trackChange(send<T>(method, path, body, newKey())) : send<T>(method, path, body, null);
   if (same) {
     onTheWay.set(same, sent);
     const forget = () => void onTheWay.delete(same);
@@ -206,18 +208,43 @@ async function sendCounted<T>(method: string, path: string, headers: Record<stri
  * (the same device, no preview).
  */
 function early(method: string, path: string, headers: Record<string, string>): Promise<Response> | null {
-  const w = window as { __early?: Record<string, [string, string, Promise<Response>]> };
+  const w = window as EarlyWindow;
   const hit = method === 'GET' ? w.__early?.[path] : undefined;
   if (!hit) return null;
   // Only while the page is opening: an answer left unused is never handed out later as if fresh.
-  if (performance.now() > 15_000) {
-    w.__early = undefined;
+  if (performance.now() > EARLY_MS) {
+    dropEarly();
     return null;
   }
   delete w.__early![path];
   const [device, locale, answer] = hit;
-  return device === headers['x-curahold-device'] && locale === (headers['x-curahold-locale'] ?? '') && !headers['x-curahold-preview-as'] ? answer : null;
+  if (device === headers['x-curahold-device'] && locale === (headers['x-curahold-locale'] ?? '') && !headers['x-curahold-preview-as']) return answer;
+  release(answer);
+  return null;
 }
+
+type EarlyWindow = { __early?: Record<string, [string, string, Promise<Response>]> };
+const EARLY_MS = 15_000;
+
+/**
+ * Lets go of an early answer nobody will read. Workaround: the browser keeps an unread response body's
+ * connection open (one of the few it allows per host, and the page never counts as idle), so a
+ * mismatched, late or never-asked answer is cancelled instead of left to the garbage collector.
+ */
+function release(answer: Promise<Response>) {
+  void answer.then((r) => r.body?.cancel()).catch(() => undefined);
+}
+
+/** Every early answer still waiting is released (for example a first screen this page never shows). */
+function dropEarly() {
+  const w = window as EarlyWindow;
+  for (const [, , answer] of Object.values(w.__early ?? {})) release(answer);
+  w.__early = undefined;
+}
+
+// Answers the app never asks for (a signed-out visitor's home data, a first screen not shown) are released once
+// the page has opened, so they do not hold their connections for the life of the page.
+if (typeof window !== 'undefined') setTimeout(dropEarly, Math.max(0, EARLY_MS - performance.now()));
 
 // Requests on their way: the rest of the language waits until the first screen's are in.
 let inFlight = 0;

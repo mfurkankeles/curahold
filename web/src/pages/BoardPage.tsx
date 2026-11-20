@@ -158,8 +158,10 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     </button>
   );
   const settingsButton = board.canManage && (
-    <button className="btn btn--icon" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
+    // The name read out is the label shown (WCAG 2.5.3); the longer wording is the tooltip.
+    <button className="btn" onClick={() => setSettings(true)} title={t('board.settings')}>
       <Icon name="sliders" size={16} />
+      <span className={phone ? 'sr-only' : undefined}>{t('board.settingsShort')}</span>
     </button>
   );
   return (
@@ -189,8 +191,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           {!phone && view === 'list' && exportMenu}
           {!phone && formButton}
           {view !== 'archive' && canWrite && (
-            <button className="btn btn--icon hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
+            <button className="btn hide-phone" onClick={() => setImporting(true)} title={t('timport.title')}>
               <Icon name="upload" size={16} />
+              {t('board.importShort')}
             </button>
           )}
           {!phone && settingsButton}
@@ -619,6 +622,7 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
   return (
     <article
       className={`card${overlay ? ' card--overlay' : ''}`}
+      data-hero-key={overlay ? undefined : task.id}
       data-due={railState(task.dueDate, done)}
       onClick={() => (seedTask(task), setQuery('task', task.id))}
       onKeyDown={(e) => {
@@ -813,7 +817,7 @@ export function ListView({
                 {/* One line that gives the title the room left; a button in a cut cell would vanish whole into "…". */}
                 <span className="tasklist__line">
                   <Tick task={x} done={done} />
-                  <button className="rowlink" data-done={done || undefined} onClick={() => (seedTask(x), setQuery('task', x.id))}>
+                  <button className="rowlink" data-hero-key={x.id} data-done={done || undefined} onClick={() => (seedTask(x), setQuery('task', x.id))}>
                     {x.title}
                   </button>
                   {x.repeat && <span className="repeat-mark" title={repeatText(t, x.repeat)} aria-label={repeatText(t, x.repeat)}>↻</span>}

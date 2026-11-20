@@ -1,9 +1,11 @@
 // The content hub's words (/resources/, /templates/<slug>/, /glossary/<slug>/), in every site
-// language: four templates a customer team can copy and six plain definitions, each with one
+// language: four templates a customer team can copy and nineteen plain definitions, each with one
 // line on what Curahold does about it. Written per language, not translated word for word;
 // every "In Curahold" line names only what the product does today (checked against the app:
 // renewal playbooks 90 days ahead, meetings whose next steps become tasks, the explainable
-// health score, the portal, the hand-over card of a won deal, the Cost to serve report).
+// health score, the portal, the hand-over card of a won deal, the Cost to serve report, the
+// products view, backlog stories linked to customer requests, deal stakeholders with stance,
+// review rhythms and onboarding plans).
 // The same items exist in every language: a smaller hub in all eleven beats a bigger one in two.
 // Pages: scripts/site-hub.ts. Lengths: tests/site-seo.test.ts.
 import type { SiteLocale } from './locales';
@@ -370,6 +372,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "The Cost to serve report shows, for each customer, the hours spent in the last 12 months for every 1,000 of yearly value, so you can see who costs most to look after."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "Net revenue retention (NRR)",
+        "seo": [
+          "What is net revenue retention (NRR)? Formula | Curahold",
+          "Net revenue retention shows how much recurring revenue a group of customers brings a year later, counting renewals, expansion, downgrades and churn."
+        ],
+        "lead": "Net revenue retention (NRR) is the recurring revenue a group of customers brings today, as a share of what the same customers brought a year ago.",
+        "body": [
+          {
+            "h": "How it is worked out"
+          },
+          {
+            "p": "Take the recurring revenue of the customers you had at the start of the period. Add what they expanded, subtract downgrades and churn, and divide by where you started. New customers are left out."
+          },
+          {
+            "h": "Why teams watch it"
+          },
+          {
+            "ul": [
+              "Above 100% means existing customers grow on their own.",
+              "It shows whether renewals and expansion outweigh losses.",
+              "It moves slowly, so it rewards steady account work."
+            ]
+          }
+        ],
+        "curahold": "Renewal and expansion opportunities sit in the same pipeline as new deals, and the Renewals view lists every customer by renewal month with the amount at stake."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "Annual recurring revenue (ARR)",
+        "seo": [
+          "What is annual recurring revenue (ARR)? | Curahold",
+          "Annual recurring revenue is the yearly value of the subscriptions a company has signed: what counts, what does not, and how teams use it per customer."
+        ],
+        "lead": "Annual recurring revenue (ARR) is the yearly value of the subscriptions in force: what customers will pay over twelve months if nothing changes.",
+        "body": [
+          {
+            "h": "What counts"
+          },
+          {
+            "ul": [
+              "Subscription fees, turned into a yearly amount.",
+              "Recurring add-ons and extra seats.",
+              "Not one-off fees such as setup or training."
+            ]
+          },
+          {
+            "h": "Why it matters per customer"
+          },
+          {
+            "p": "ARR on each customer shows where the revenue sits, so a team can give its largest renewals the attention they need and see how much is at risk when a customer goes quiet."
+          }
+        ],
+        "curahold": "ARR can be a field on each customer, and a report can sum it by owner, health band or renewal month, under each reader's own rights."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "Business review (QBR)",
+        "seo": [
+          "What is a business review (QBR)? Agenda | Curahold",
+          "A business review is a regular meeting where a customer and their supplier look at results, open promises and the plan ahead, usually once a quarter."
+        ],
+        "lead": "A business review, often quarterly and called a QBR, is a meeting where a customer and their supplier look back at results and agree the plan ahead.",
+        "body": [
+          {
+            "h": "What it covers"
+          },
+          {
+            "ul": [
+              "Results against the goals set last time.",
+              "What changed on the customer's side.",
+              "Open requests and promises, and where each stands.",
+              "The plan and owners for the next period."
+            ]
+          },
+          {
+            "h": "What makes it useful"
+          },
+          {
+            "p": "It ends with next steps that have owners and dates. A review whose actions are not written down is forgotten by the next one."
+          }
+        ],
+        "curahold": "A business review is a meeting on the customer's timeline, and the next steps written in it become tasks with an owner and a date."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "What does a Customer Success Manager (CSM) do? | Curahold",
+          "A Customer Success Manager looks after a set of customers after the sale: onboarding, adoption, business reviews, renewals and spotting risk early."
+        ],
+        "lead": "A Customer Success Manager (CSM) looks after a set of customers after the sale, so they get the value they bought and stay.",
+        "body": [
+          {
+            "h": "What the role usually covers"
+          },
+          {
+            "ul": [
+              "Onboarding new customers, or taking them over from an onboarding team.",
+              "Regular check-ins and business reviews.",
+              "Watching health and acting on early warnings.",
+              "Preparing renewals and spotting room to grow."
+            ]
+          },
+          {
+            "h": "Where the time goes"
+          },
+          {
+            "p": "A CSM often looks after dozens of customers. Knowing which of them needs attention this week matters more than covering everyone equally."
+          }
+        ],
+        "curahold": "Each customer has an owner in every department, and each person's list is ordered by who needs them, with the reason and the next step."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "Expansion revenue",
+        "seo": [
+          "What is expansion revenue? Upsell and cross-sell | Curahold",
+          "Expansion revenue is extra recurring revenue from existing customers: more seats, a higher plan or another product. Where it comes from and how to find it."
+        ],
+        "lead": "Expansion revenue is the extra recurring revenue that comes from customers you already have: more seats, a higher plan or another product.",
+        "body": [
+          {
+            "h": "Where it comes from"
+          },
+          {
+            "ul": [
+              "Upsell: more of what they use, or a higher plan.",
+              "Cross-sell: a product they do not have yet.",
+              "Growth on their side: new teams, sites or countries."
+            ]
+          },
+          {
+            "h": "When to raise it"
+          },
+          {
+            "p": "Expansion follows value. It is easiest after a result the customer can name, and hardest when promises from the last request are still open."
+          }
+        ],
+        "curahold": "The Products view shows which customer has which product, so the gaps are visible, and opening a task for one takes a click."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "Time to value",
+        "seo": [
+          "What is time to value? Definition and tips | Curahold",
+          "Time to value is how long a new customer waits between signing and the first result they can name. Why it matters for renewals and how teams shorten it."
+        ],
+        "lead": "Time to value is how long a new customer waits between signing and the first result they can see and name.",
+        "body": [
+          {
+            "h": "Why it matters"
+          },
+          {
+            "p": "The first renewal conversation starts on the day of the signature. A customer who sees value in weeks talks about growth; one still waiting talks about price."
+          },
+          {
+            "h": "How teams shorten it"
+          },
+          {
+            "ul": [
+              "Agree one first result at the kickoff, with a date.",
+              "Hand over what sales promised, so nothing is asked twice.",
+              "Share the plan with the customer, so both sides see the next step."
+            ]
+          }
+        ],
+        "curahold": "Onboarding plans have steps, goals and dates, and the steps you choose can be shared with the customer in their portal."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "Success plan",
+        "seo": [
+          "What is a customer success plan? Parts | Curahold",
+          "A success plan writes down what a customer wants to achieve, how both sides will get there and how progress is measured, so every review has a reference."
+        ],
+        "lead": "A success plan writes down what a customer wants to achieve, the steps both sides will take, and how progress will be measured.",
+        "body": [
+          {
+            "h": "What it usually holds"
+          },
+          {
+            "ul": [
+              "The customer's goals in their own words.",
+              "The steps, owners and dates on both sides.",
+              "The measures that show progress."
+            ]
+          },
+          {
+            "h": "How it is used"
+          },
+          {
+            "p": "It is the reference for every check-in and business review. Updated together, it keeps both sides working towards the same result."
+          }
+        ],
+        "curahold": "An onboarding plan holds goals, steps with owners and dates, and the measures you track, and its customer-facing steps can be shared in the portal."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "Stakeholder map",
+        "seo": [
+          "What is a stakeholder map? B2B definition | Curahold",
+          "A stakeholder map lists the people at a customer who influence a decision, their role and where they stand, so the team knows whom to involve and when."
+        ],
+        "lead": "A stakeholder map lists the people at a customer who take part in a decision, their role and where each of them stands.",
+        "body": [
+          {
+            "h": "What it records"
+          },
+          {
+            "ul": [
+              "Each person's role and influence.",
+              "Their stance: supporter, neutral or blocker.",
+              "Who has not been met yet."
+            ]
+          },
+          {
+            "h": "Why it matters after the sale"
+          },
+          {
+            "p": "Decisions at renewal are rarely made by one person. When the champion leaves, a map shows who else knows the value and who needs to hear it."
+          }
+        ],
+        "curahold": "Each deal keeps its stakeholders with their title and stance, and they travel with the hand-over card to the team that takes the customer over."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "Champion",
+        "seo": [
+          "What is a champion in B2B customer relationships? | Curahold",
+          "A champion is the person at a customer who believes in your product and argues for it internally. Why one matters and what to do when they leave."
+        ],
+        "lead": "A champion is the person at a customer who believes in what you provide and argues for it inside their company.",
+        "body": [
+          {
+            "h": "Why one matters"
+          },
+          {
+            "p": "A champion gets meetings booked, budgets defended and problems raised early. Customers with an active champion renew more easily."
+          },
+          {
+            "h": "When the champion leaves"
+          },
+          {
+            "ul": [
+              "Find out who takes over their part of the work.",
+              "Show the value again to the people who remain.",
+              "Treat it as a risk until a new champion is in place."
+            ]
+          }
+        ],
+        "curahold": "Having a champion can be a signal in the health score, so a customer without one, or whose champion left, comes forward."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "Sales-to-success handover",
+        "seo": [
+          "Sales to customer success handover checklist | Curahold",
+          "A handover from sales to customer success passes on what was promised, who matters and the key dates, so the customer never has to explain it all again."
+        ],
+        "lead": "A handover from sales to customer success passes on everything the next team needs, so the customer never has to explain it all again.",
+        "body": [
+          {
+            "h": "What to pass on"
+          },
+          {
+            "ul": [
+              "The stakeholders and where each one stands.",
+              "What was promised during the sale.",
+              "Open requests and product questions.",
+              "The close date and the renewal date."
+            ]
+          },
+          {
+            "h": "What goes wrong"
+          },
+          {
+            "p": "Promises made in a sales call that nobody wrote down. The customer remembers them; the new team does not."
+          }
+        ],
+        "curahold": "A won deal reaches the next team as one hand-over card with the stakeholders, the promises made, open product requests and the key dates."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "Feature request",
+        "seo": [
+          "How to handle customer feature requests in B2B | Curahold",
+          "A feature request is a customer asking for something the product does not do yet. How to record it, link it to the customer and tell them when it ships."
+        ],
+        "lead": "A feature request is a customer asking for something the product does not do yet, often during a meeting or a support conversation.",
+        "body": [
+          {
+            "h": "How to handle them well"
+          },
+          {
+            "ul": [
+              "Record who asked, and why it matters to them.",
+              "Link requests for the same thing together.",
+              "Weigh them by the customers and value waiting."
+            ]
+          },
+          {
+            "h": "Closing the loop"
+          },
+          {
+            "p": "The part most teams miss is telling the customer when the work ships. A request answered with a release note builds more trust than the feature itself."
+          }
+        ],
+        "curahold": "Several customer requests can be linked to one story; the backlog shows the customers waiting, their value and the nearest renewal, and when the work is done the owner gets a ready draft to send."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "Touchpoint",
+        "seo": [
+          "What is a customer touchpoint? Definition | Curahold",
+          "A touchpoint is any moment of contact between a customer and your team: a call, a meeting, a reply. Why their rhythm matters more than their number."
+        ],
+        "lead": "A touchpoint is any moment of contact between a customer and your team: a call, a meeting, an email or a reply to a request.",
+        "body": [
+          {
+            "h": "Why the rhythm matters"
+          },
+          {
+            "p": "Long silences are an early warning. A customer nobody has spoken to in six weeks is harder to renew than one met every month."
+          },
+          {
+            "h": "What to keep from each one"
+          },
+          {
+            "ul": [
+              "When it happened and who took part.",
+              "What was decided.",
+              "The next step, with an owner and a date."
+            ]
+          }
+        ],
+        "curahold": "Meetings, calls and notes are kept on each customer's timeline, the time since the last contact feeds the health score, and each customer can have a review rhythm."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "Meeting follow-up",
+        "seo": [
+          "Customer meeting follow-up that gets done | Curahold",
+          "Meeting follow-up turns what was agreed in a customer meeting into work with owners and dates, so promises are kept and the customer sees them kept."
+        ],
+        "lead": "Meeting follow-up is turning what was agreed in a customer meeting into work with an owner and a date, before the details fade.",
+        "body": [
+          {
+            "h": "Why it slips"
+          },
+          {
+            "p": "Next steps live in someone's notes. A week later nobody remembers who said they would do what, and the customer notices first."
+          },
+          {
+            "h": "What good follow-up looks like"
+          },
+          {
+            "ul": [
+              "Next steps written down before the call ends.",
+              "Each one with an owner and a date.",
+              "A short note to the customer confirming them."
+            ]
+          }
+        ],
+        "curahold": "Next steps written in a meeting's notes become tasks with an owner and a date, linked to the customer, and promises can be shared with the customer in their portal."
       }
     ]
   },
@@ -705,6 +1087,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Hizmet maliyeti raporu, her müşteri için son 12 ayda yıllık değerin her 1.000’i için harcanan saati gösterir; bakımı en pahalı olanları görürsünüz."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "Net gelir tutma oranı (NRR)",
+        "seo": [
+          "Net gelir tutma oranı (NRR) nedir? Formülü | Curahold",
+          "Net gelir tutma oranı, bir müşteri grubunun bir yıl sonra ne kadar yinelenen gelir getirdiğini gösterir: yenileme, büyüme, küçülme ve kayıp birlikte."
+        ],
+        "lead": "Net gelir tutma oranı (NRR), bir müşteri grubunun bugün getirdiği yinelenen gelirin, aynı müşterilerin bir yıl önce getirdiğine oranıdır.",
+        "body": [
+          {
+            "h": "Nasıl hesaplanır"
+          },
+          {
+            "p": "Dönem başındaki müşterilerin yinelenen gelirini alın. Büyüdükleri kadarını ekleyin, küçülmeleri ve kayıpları çıkarın, sonucu başlangıçtaki tutara bölün. Yeni müşteriler hesaba katılmaz."
+          },
+          {
+            "h": "Ekipler neden izler"
+          },
+          {
+            "ul": [
+              "%100'ün üstü, mevcut müşterilerin kendiliğinden büyüdüğünü gösterir.",
+              "Yenileme ve büyümenin kayıpları aşıp aşmadığını gösterir.",
+              "Yavaş değişir; düzenli müşteri çalışmasını ödüllendirir."
+            ]
+          }
+        ],
+        "curahold": "Yenileme ve büyüme fırsatları yeni fırsatlarla aynı satış hunisinde durur; Yenilemeler görünümü her müşteriyi yenileme ayına göre, riskteki tutarla birlikte listeler."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "Yıllık yinelenen gelir (ARR)",
+        "seo": [
+          "Yıllık yinelenen gelir (ARR) nedir? Kısa tanım | Curahold",
+          "Yıllık yinelenen gelir, imzalı aboneliklerin yıllık değeridir: neyin sayıldığı, neyin sayılmadığı ve ekiplerin bunu müşteri bazında nasıl kullandığı."
+        ],
+        "lead": "Yıllık yinelenen gelir (ARR), yürürlükteki aboneliklerin yıllık değeridir: hiçbir şey değişmezse müşterilerin on iki ayda ödeyeceği tutar.",
+        "body": [
+          {
+            "h": "Neler sayılır"
+          },
+          {
+            "ul": [
+              "Yıllık tutara çevrilmiş abonelik ücretleri.",
+              "Yinelenen ek modüller ve ek kullanıcılar.",
+              "Kurulum ya da eğitim gibi tek seferlik ücretler sayılmaz."
+            ]
+          },
+          {
+            "h": "Müşteri bazında neden önemli"
+          },
+          {
+            "p": "Her müşterideki ARR gelirin nerede durduğunu gösterir; ekip en büyük yenilemelere gereken ilgiyi verir ve sessizleşen bir müşteride ne kadar tutarın risk altında olduğunu görür."
+          }
+        ],
+        "curahold": "ARR her müşteride bir alan olabilir; bir rapor bunu sahibine, sağlık skoru bandına ya da yenileme ayına göre, her okuyucunun kendi yetkisiyle toplar."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "İş değerlendirmesi (QBR)",
+        "seo": [
+          "İş değerlendirmesi (QBR) nedir? Amacı ve gündemi | Curahold",
+          "İş değerlendirmesi, müşteriyle tedarikçinin sonuçlara, açık sözlere ve önümüzdeki plana birlikte baktığı düzenli toplantıdır; çoğu zaman üç ayda bir yapılır."
+        ],
+        "lead": "Çoğunlukla üç ayda bir yapılan ve QBR diye anılan iş değerlendirmesi, müşteriyle tedarikçinin sonuçlara bakıp önümüzdeki planı kararlaştırdığı toplantıdır.",
+        "body": [
+          {
+            "h": "Neleri kapsar"
+          },
+          {
+            "ul": [
+              "Geçen sefer konan hedeflere göre sonuçlar.",
+              "Müşteri tarafında neyin değiştiği.",
+              "Açık talepler ve verilen sözler, her birinin durumu.",
+              "Gelecek dönemin planı ve sorumluları."
+            ]
+          },
+          {
+            "h": "Onu yararlı kılan"
+          },
+          {
+            "p": "Sorumlusu ve tarihi olan sonraki adımlarla biter. Aksiyonları yazılmayan bir değerlendirme, bir sonrakine kadar unutulur."
+          }
+        ],
+        "curahold": "İş değerlendirmesi müşterinin zaman çizelgesinde bir toplantıdır; içine yazılan sonraki adımlar sorumlusu ve tarihi olan görevlere dönüşür."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "Customer Success Manager (CSM) ne yapar? | Curahold",
+          "Customer Success Manager satıştan sonra bir grup müşteriyle ilgilenir: onboarding, kullanım, iş değerlendirmeleri, yenilemeler ve riskin erken fark edilmesi."
+        ],
+        "lead": "Customer Success Manager (CSM), satıştan sonra bir grup müşteriyle ilgilenir; müşteriler satın aldıkları değeri alır ve kalır.",
+        "body": [
+          {
+            "h": "Rol genellikle neleri kapsar"
+          },
+          {
+            "ul": [
+              "Yeni müşterilerin onboarding'i ya da onboarding ekibinden devralınması.",
+              "Düzenli görüşmeler ve iş değerlendirmeleri.",
+              "Sağlık durumunu izlemek ve erken uyarılarda harekete geçmek.",
+              "Yenilemeleri hazırlamak, büyüme fırsatlarını görmek."
+            ]
+          },
+          {
+            "h": "Zaman nereye gider"
+          },
+          {
+            "p": "Bir CSM çoğu zaman onlarca müşteriye bakar. Bu hafta hangisinin ilgiye ihtiyaç duyduğunu bilmek, herkese eşit zaman ayırmaktan daha önemlidir."
+          }
+        ],
+        "curahold": "Her müşterinin her departmanda bir sahibi olur; her kişinin listesi, nedeni ve sonraki adımıyla birlikte, kimin ona ihtiyaç duyduğuna göre sıralanır."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "Büyüme geliri",
+        "seo": [
+          "Büyüme geliri nedir? Upsell ve çapraz satış | Curahold",
+          "Büyüme geliri, mevcut müşterilerden gelen ek yinelenen gelirdir: daha çok kullanıcı, üst bir plan ya da başka bir ürün. Nereden geldiği ve nasıl bulunduğu."
+        ],
+        "lead": "Büyüme geliri, zaten sahip olduğunuz müşterilerden gelen ek yinelenen gelirdir: daha çok kullanıcı, üst bir plan ya da başka bir ürün.",
+        "body": [
+          {
+            "h": "Nereden gelir"
+          },
+          {
+            "ul": [
+              "Upsell: kullandıklarından daha fazlası ya da üst bir plan.",
+              "Çapraz satış: henüz sahip olmadıkları bir ürün.",
+              "Onların büyümesi: yeni ekipler, şubeler ya da ülkeler."
+            ]
+          },
+          {
+            "h": "Ne zaman açılmalı"
+          },
+          {
+            "p": "Büyüme değerin ardından gelir. Müşterinin adını koyabildiği bir sonuçtan sonra en kolay, son talebe verilen sözler hâlâ açıkken en zordur."
+          }
+        ],
+        "curahold": "Ürünler görünümü hangi müşteride hangi ürünün olduğunu gösterir; boşluklar görünür ve biri için görev açmak tek tık sürer."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "Değere ulaşma süresi",
+        "seo": [
+          "Değere ulaşma süresi nedir? Nasıl kısalır | Curahold",
+          "Değere ulaşma süresi, yeni bir müşterinin imzadan adını koyabileceği ilk sonuca kadar beklediği süredir. Yenileme için neden önemli ve nasıl kısalır."
+        ],
+        "lead": "Değere ulaşma süresi, yeni bir müşterinin imza ile görüp adını koyabileceği ilk sonuç arasında beklediği süredir.",
+        "body": [
+          {
+            "h": "Neden önemli"
+          },
+          {
+            "p": "İlk yenileme görüşmesi imza günü başlar. Değeri birkaç haftada gören müşteri büyümeyi konuşur; hâlâ bekleyen müşteri fiyatı."
+          },
+          {
+            "h": "Ekipler nasıl kısaltır"
+          },
+          {
+            "ul": [
+              "Açılış toplantısında tek bir ilk sonucu tarihiyle kararlaştırın.",
+              "Satışın verdiği sözleri devredin; hiçbir şey iki kez sorulmasın.",
+              "Planı müşteriyle paylaşın; böylece iki taraf da sonraki adımı görür."
+            ]
+          }
+        ],
+        "curahold": "Onboarding planlarının adımları, hedefleri ve tarihleri olur; seçtiğiniz adımlar müşteriyle portalında paylaşılabilir."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "Başarı planı",
+        "seo": [
+          "Müşteri başarı planı nedir? Bölümleri | Curahold",
+          "Başarı planı müşterinin neye ulaşmak istediğini, iki tarafın oraya nasıl gideceğini ve ilerlemenin nasıl ölçüleceğini yazar; her görüşmede referans olur."
+        ],
+        "lead": "Başarı planı, müşterinin neye ulaşmak istediğini, iki tarafın atacağı adımları ve ilerlemenin nasıl ölçüleceğini yazar.",
+        "body": [
+          {
+            "h": "Genellikle neleri içerir"
+          },
+          {
+            "ul": [
+              "Müşterinin kendi sözleriyle hedefleri.",
+              "İki taraftaki adımlar, sorumlular ve tarihler.",
+              "İlerlemeyi gösteren ölçüler."
+            ]
+          },
+          {
+            "h": "Nasıl kullanılır"
+          },
+          {
+            "p": "Her görüşmenin ve iş değerlendirmesinin referansıdır. Birlikte güncellendiğinde iki tarafı aynı sonuca doğru çalıştırır."
+          }
+        ],
+        "curahold": "Bir onboarding planı hedefleri, sorumlusu ve tarihi olan adımları ve izlediğiniz ölçüleri tutar; müşteriye yönelik adımları portalda paylaşılabilir."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "Paydaş haritası",
+        "seo": [
+          "Paydaş haritası nedir? B2B için kısa tanım | Curahold",
+          "Paydaş haritası, müşteride bir karara etki eden kişileri, rollerini ve tutumlarını listeler; ekip kimi ne zaman sürece katacağını bilir."
+        ],
+        "lead": "Paydaş haritası, müşteride bir karara katılan kişileri, rollerini ve her birinin nerede durduğunu listeler.",
+        "body": [
+          {
+            "h": "Neleri kaydeder"
+          },
+          {
+            "ul": [
+              "Her kişinin rolü ve etkisi.",
+              "Tutumu: destekçi, tarafsız ya da engelleyici.",
+              "Henüz tanışılmamış kişiler."
+            ]
+          },
+          {
+            "h": "Satıştan sonra neden önemli"
+          },
+          {
+            "p": "Yenileme kararını nadiren tek kişi verir. Güçlü destekçi ayrıldığında harita, değeri başka kimin bildiğini ve kimin duyması gerektiğini gösterir."
+          }
+        ],
+        "curahold": "Her fırsat paydaşlarını unvan ve tutumlarıyla tutar; bunlar devir kartıyla müşteriyi devralan ekibe geçer."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "Güçlü destekçi (champion)",
+        "seo": [
+          "B2B ilişkide champion (güçlü destekçi) nedir? | Curahold",
+          "Champion, müşteri tarafında ürününüze inanan ve şirket içinde onu savunan kişidir. Neden önemli olduğu ve ayrıldığında ne yapılması gerektiği."
+        ],
+        "lead": "Güçlü destekçi (champion), müşteride sunduğunuz şeye inanan ve şirketinin içinde onu savunan kişidir.",
+        "body": [
+          {
+            "h": "Neden önemli"
+          },
+          {
+            "p": "Toplantıların ayarlanmasını, bütçenin korunmasını ve sorunların erken dile getirilmesini sağlar. Etkin bir destekçisi olan müşteriler daha kolay yeniler."
+          },
+          {
+            "h": "Destekçi ayrıldığında"
+          },
+          {
+            "ul": [
+              "Onun işini kimin devraldığını öğrenin.",
+              "Değeri kalanlara yeniden gösterin.",
+              "Yeni bir destekçi bulunana kadar bunu risk sayın."
+            ]
+          }
+        ],
+        "curahold": "Güçlü bir destekçinin olması sağlık skorunda bir sinyal olabilir; destekçisi olmayan ya da destekçisi ayrılan müşteri öne çıkar."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "Satıştan müşteri başarısına devir",
+        "seo": [
+          "Satıştan müşteri başarısına devir rehberi | Curahold",
+          "Satıştan müşteri başarısına devir verilen sözleri, önemli kişileri ve kilit tarihleri aktarır; müşteri hiçbir şeyi baştan anlatmak zorunda kalmaz."
+        ],
+        "lead": "Satıştan müşteri başarısına devir, sonraki ekibin ihtiyaç duyduğu her şeyi aktarır; müşteri hiçbir şeyi baştan anlatmak zorunda kalmaz.",
+        "body": [
+          {
+            "h": "Neler aktarılmalı"
+          },
+          {
+            "ul": [
+              "Paydaşlar ve her birinin tutumu.",
+              "Satış sırasında verilen sözler.",
+              "Açık talepler ve ürün soruları.",
+              "Kapanış tarihi ve yenileme tarihi."
+            ]
+          },
+          {
+            "h": "Ne ters gider"
+          },
+          {
+            "p": "Satış görüşmesinde verilip kimsenin yazmadığı sözler. Müşteri hatırlar; yeni ekip hatırlamaz."
+          }
+        ],
+        "curahold": "Kazanılan bir fırsat sonraki ekibe tek bir devir kartı olarak ulaşır: paydaşlar, verilen sözler, açık ürün talepleri ve kilit tarihler."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "Özellik talebi",
+        "seo": [
+          "B2B'de müşteri özellik talepleri nasıl yönetilir? | Curahold",
+          "Özellik talebi, müşterinin ürünün henüz yapmadığı bir şeyi istemesidir. Nasıl kaydedilir, müşteriye nasıl bağlanır ve hazır olunca nasıl haber verilir."
+        ],
+        "lead": "Özellik talebi, müşterinin ürünün henüz yapmadığı bir şeyi istemesidir; çoğu zaman bir toplantıda ya da destek görüşmesinde gelir.",
+        "body": [
+          {
+            "h": "İyi yönetmek için"
+          },
+          {
+            "ul": [
+              "Kimin istediğini ve onun için neden önemli olduğunu kaydedin.",
+              "Aynı şeye dair talepleri birbirine bağlayın.",
+              "Bekleyen müşterilere ve değere göre önceliklendirin."
+            ]
+          },
+          {
+            "h": "Döngüyü kapatmak"
+          },
+          {
+            "p": "Çoğu ekibin atladığı kısım, iş tamamlandığında müşteriye haber vermektir. Bir sürüm notuyla yanıtlanan talep, özelliğin kendisinden daha çok güven kurar."
+          }
+        ],
+        "curahold": "Birden çok müşteri talebi tek bir story’ye bağlanabilir; Backlog bekleyen müşterileri, değerlerini ve en yakın yenilemeyi gösterir, iş bitince sahibine gönderilmeye hazır bir taslak gelir."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "Temas noktası",
+        "seo": [
+          "Müşteri temas noktası nedir? Tanım ve örnekler | Curahold",
+          "Temas noktası, müşteriyle ekibiniz arasındaki her temas anıdır: bir arama, bir toplantı, bir yanıt. Sayılarından çok ritimlerinin neden önemli olduğu."
+        ],
+        "lead": "Temas noktası, müşteriyle ekibiniz arasındaki her temas anıdır: bir arama, bir toplantı, bir e-posta ya da bir talebe verilen yanıt.",
+        "body": [
+          {
+            "h": "Ritim neden önemli"
+          },
+          {
+            "p": "Uzun sessizlikler erken bir uyarıdır. Altı haftadır kimsenin konuşmadığı bir müşteriyi yenilemek, her ay görüşülen birini yenilemekten daha zordur."
+          },
+          {
+            "h": "Her birinden ne kalmalı"
+          },
+          {
+            "ul": [
+              "Ne zaman olduğu ve kimlerin katıldığı.",
+              "Ne kararlaştırıldığı.",
+              "Sorumlusu ve tarihi olan sonraki adım."
+            ]
+          }
+        ],
+        "curahold": "Toplantılar, aramalar ve notlar her müşterinin zaman çizelgesinde tutulur; son temastan bu yana geçen süre sağlık skoruna katılır ve her müşterinin bir görüşme ritmi olabilir."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "Toplantı takibi",
+        "seo": [
+          "Müşteri toplantısı takibi: sonraki adımlar | Curahold",
+          "Toplantı takibi, müşteri toplantısında kararlaştırılanları sorumlusu ve tarihi olan işe dönüştürür; sözler tutulur ve müşteri bunun tutulduğunu görür."
+        ],
+        "lead": "Toplantı takibi, müşteri toplantısında kararlaştırılanları ayrıntılar unutulmadan sorumlusu ve tarihi olan işe dönüştürmektir.",
+        "body": [
+          {
+            "h": "Neden kaçar"
+          },
+          {
+            "p": "Sonraki adımlar birinin notlarında kalır. Bir hafta sonra kimin neyi yapacağını kimse hatırlamaz; bunu ilk müşteri fark eder."
+          },
+          {
+            "h": "İyi bir takip nasıl görünür"
+          },
+          {
+            "ul": [
+              "Sonraki adımlar görüşme bitmeden yazılır.",
+              "Her birinin sorumlusu ve tarihi olur.",
+              "Müşteriye bunları teyit eden kısa bir not gider."
+            ]
+          }
+        ],
+        "curahold": "Bir toplantının notlarına yazılan sonraki adımlar, müşteriye bağlı, sorumlusu ve tarihi olan görevlere dönüşür; verilen sözler müşteriyle portalında paylaşılabilir."
       }
     ]
   },
@@ -1040,6 +1802,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "يعرض تقرير تكلفة الخدمة لكل عميل الساعات المستغرقة في آخر 12 شهرًا لكل 1,000 من القيمة السنوية، فترى من الأكثر تكلفة في الرعاية."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "صافي الاحتفاظ بالإيرادات (NRR)",
+        "seo": [
+          "ما صافي الاحتفاظ بالإيرادات (NRR)؟ وكيف يُحسب | Curahold",
+          "يوضح صافي الاحتفاظ بالإيرادات كم تجلب مجموعة من العملاء من إيرادات متكررة بعد عام، مع احتساب التجديد والتوسع والتخفيض والفقد."
+        ],
+        "lead": "صافي الاحتفاظ بالإيرادات (NRR) هو الإيراد المتكرر الذي تجلبه مجموعة من العملاء اليوم، منسوبًا إلى ما جلبه العملاء أنفسهم قبل عام.",
+        "body": [
+          {
+            "h": "كيف يُحسب"
+          },
+          {
+            "p": "خذوا الإيراد المتكرر للعملاء الموجودين في بداية الفترة، وأضيفوا ما توسعوا فيه، واطرحوا التخفيضات والفقد، ثم اقسموا الناتج على نقطة البداية. لا يدخل العملاء الجدد في الحساب."
+          },
+          {
+            "h": "لماذا تتابعه الفرق"
+          },
+          {
+            "ul": [
+              "فوق 100% يعني أن العملاء الحاليين ينمون من تلقاء أنفسهم.",
+              "يبيّن ما إذا كان التجديد والتوسع يفوقان الخسائر.",
+              "يتحرك ببطء، فيكافئ العمل المنتظم مع العملاء."
+            ]
+          }
+        ],
+        "curahold": "تقع فرص التجديد والتوسع في مسار المبيعات نفسه مع الصفقات الجديدة، وتعرض شاشة التجديدات كل عميل حسب شهر تجديده مع المبلغ المعرّض للخطر."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "الإيرادات السنوية المتكررة (ARR)",
+        "seo": [
+          "ما الإيرادات السنوية المتكررة (ARR)؟ تعريف موجز | Curahold",
+          "الإيرادات السنوية المتكررة هي القيمة السنوية للاشتراكات الموقّعة: ما الذي يُحتسب وما الذي لا يُحتسب، وكيف تستخدمها الفرق لكل عميل."
+        ],
+        "lead": "الإيرادات السنوية المتكررة (ARR) هي القيمة السنوية للاشتراكات السارية: ما سيدفعه العملاء خلال اثني عشر شهرًا إن لم يتغير شيء.",
+        "body": [
+          {
+            "h": "ما الذي يُحتسب"
+          },
+          {
+            "ul": [
+              "رسوم الاشتراك محوّلة إلى مبلغ سنوي.",
+              "الإضافات المتكررة والمقاعد الإضافية.",
+              "لا تُحتسب الرسوم لمرة واحدة مثل الإعداد أو التدريب."
+            ]
+          },
+          {
+            "h": "لماذا تهم لكل عميل"
+          },
+          {
+            "p": "تُظهر قيمتها لدى كل عميل أين يقع الإيراد، فيمنح الفريق أكبر التجديدات ما تحتاجه من اهتمام، ويرى حجم المبلغ المعرّض للخطر حين يصمت عميل."
+          }
+        ],
+        "curahold": "يمكن أن تكون ARR حقلًا لدى كل عميل، ويجمعها التقرير حسب المسؤول أو نطاق مؤشر الصحة أو شهر التجديد، وفق صلاحيات كل قارئ."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "مراجعة الأعمال (QBR)",
+        "seo": [
+          "ما مراجعة الأعمال (QBR)؟ الغرض وجدول الأعمال | Curahold",
+          "مراجعة الأعمال اجتماع منتظم يراجع فيه العميل والمورّد النتائج والوعود المفتوحة والخطة القادمة، وتُعقد عادةً مرة كل ربع سنة."
+        ],
+        "lead": "مراجعة الأعمال، وغالبًا ما تكون ربع سنوية وتُعرف باسم QBR، اجتماع يراجع فيه العميل والمورّد النتائج ويتفقان على الخطة القادمة.",
+        "body": [
+          {
+            "h": "ما الذي تغطيه"
+          },
+          {
+            "ul": [
+              "النتائج مقارنةً بالأهداف التي حُددت في المرة السابقة.",
+              "ما تغيّر لدى العميل.",
+              "الطلبات والوعود المفتوحة وحالة كل منها.",
+              "خطة الفترة القادمة والمسؤولون عنها."
+            ]
+          },
+          {
+            "h": "ما الذي يجعلها مفيدة"
+          },
+          {
+            "p": "أن تنتهي بخطوات تالية لها مسؤولون وتواريخ. المراجعة التي لا تُدوَّن إجراءاتها تُنسى قبل المراجعة التالية."
+          }
+        ],
+        "curahold": "مراجعة الأعمال اجتماع على الخط الزمني للعميل، والخطوات التالية المكتوبة فيه تتحول إلى مهام لها مسؤول وتاريخ."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "ما دور Customer Success Manager (CSM)؟ المهام | Curahold",
+          "يتولى Customer Success Manager مجموعة من العملاء بعد البيع: التأهيل والاستخدام ومراجعات الأعمال والتجديدات واكتشاف المخاطر مبكرًا."
+        ],
+        "lead": "يتولى Customer Success Manager (CSM) مجموعة من العملاء بعد البيع، ليحصلوا على القيمة التي اشتروها ويبقوا.",
+        "body": [
+          {
+            "h": "ما الذي يشمله الدور عادةً"
+          },
+          {
+            "ul": [
+              "تأهيل العملاء الجدد، أو استلامهم من فريق التأهيل.",
+              "لقاءات متابعة منتظمة ومراجعات أعمال.",
+              "مراقبة الصحة والتحرك عند الإنذارات المبكرة.",
+              "التحضير للتجديدات ورصد فرص النمو."
+            ]
+          },
+          {
+            "h": "أين يذهب الوقت"
+          },
+          {
+            "p": "كثيرًا ما يتولى CSM عشرات العملاء. ومعرفة من منهم يحتاج إلى الاهتمام هذا الأسبوع أهم من توزيع الوقت على الجميع بالتساوي."
+          }
+        ],
+        "curahold": "لكل عميل مسؤول في كل قسم، وقائمة كل شخص مرتبة حسب من يحتاج إليه، مع السبب والخطوة التالية."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "إيرادات التوسع",
+        "seo": [
+          "ما إيرادات التوسع؟ البيع الإضافي والبيع المتقاطع | Curahold",
+          "إيرادات التوسع هي الإيرادات المتكررة الإضافية من العملاء الحاليين: مقاعد أكثر أو خطة أعلى أو منتج آخر. من أين تأتي وكيف تجدها الفرق."
+        ],
+        "lead": "إيرادات التوسع هي الإيرادات المتكررة الإضافية التي تأتي من عملاء لديكم بالفعل: مقاعد أكثر، أو خطة أعلى، أو منتج آخر.",
+        "body": [
+          {
+            "h": "من أين تأتي"
+          },
+          {
+            "ul": [
+              "البيع الإضافي: مزيد مما يستخدمونه أو خطة أعلى.",
+              "البيع المتقاطع: منتج لا يملكونه بعد.",
+              "نموهم هم: فرق أو فروع أو دول جديدة."
+            ]
+          },
+          {
+            "h": "متى يُطرح الأمر"
+          },
+          {
+            "p": "يأتي التوسع بعد القيمة. يكون أسهل بعد نتيجة يستطيع العميل تسميتها، وأصعب حين تبقى وعود الطلب الأخير مفتوحة."
+          }
+        ],
+        "curahold": "تعرض شاشة المنتجات أي عميل لديه أي منتج، فتظهر الفجوات، وفتح مهمة لإحداها يحتاج نقرة واحدة."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "الوقت حتى تحقيق القيمة",
+        "seo": [
+          "ما الوقت حتى تحقيق القيمة؟ التعريف وطرق تقليصه | Curahold",
+          "الوقت حتى تحقيق القيمة هو المدة بين توقيع العميل الجديد وأول نتيجة يستطيع تسميتها. لماذا يهم للتجديد وكيف تقلّصه الفرق."
+        ],
+        "lead": "الوقت حتى تحقيق القيمة هو المدة التي ينتظرها العميل الجديد بين التوقيع وأول نتيجة يراها ويستطيع تسميتها.",
+        "body": [
+          {
+            "h": "لماذا يهم"
+          },
+          {
+            "p": "يبدأ حديث التجديد الأول يوم التوقيع. العميل الذي يرى القيمة خلال أسابيع يتحدث عن النمو، ومن لا يزال ينتظر يتحدث عن السعر."
+          },
+          {
+            "h": "كيف تقلّصه الفرق"
+          },
+          {
+            "ul": [
+              "الاتفاق في اجتماع الانطلاق على نتيجة أولى واحدة بتاريخ محدد.",
+              "تسليم ما وعدت به المبيعات حتى لا يُسأل العميل مرتين.",
+              "مشاركة الخطة مع العميل ليرى الطرفان الخطوة التالية."
+            ]
+          }
+        ],
+        "curahold": "لخطط التأهيل خطوات وأهداف وتواريخ، ويمكن مشاركة الخطوات التي تختارونها مع العميل في بوابته."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "خطة النجاح",
+        "seo": [
+          "ما خطة نجاح العميل؟ مكوّناتها وطريقة استخدامها | Curahold",
+          "تدوّن خطة النجاح ما يريد العميل تحقيقه، وكيف سيصل الطرفان إليه، وكيف يُقاس التقدم، لتكون مرجعًا في كل لقاء ومراجعة."
+        ],
+        "lead": "تدوّن خطة النجاح ما يريد العميل تحقيقه، والخطوات التي سيتخذها الطرفان، وكيف سيُقاس التقدم.",
+        "body": [
+          {
+            "h": "ما الذي تحتويه عادةً"
+          },
+          {
+            "ul": [
+              "أهداف العميل بكلماته هو.",
+              "الخطوات والمسؤولون والتواريخ لدى الطرفين.",
+              "المقاييس التي تُظهر التقدم."
+            ]
+          },
+          {
+            "h": "كيف تُستخدم"
+          },
+          {
+            "p": "هي المرجع في كل لقاء متابعة ومراجعة أعمال. وحين تُحدَّث معًا تُبقي الطرفين يعملان نحو النتيجة نفسها."
+          }
+        ],
+        "curahold": "تحتوي خطة التأهيل على الأهداف، والخطوات بمسؤوليها وتواريخها، والمقاييس التي تتابعونها، ويمكن مشاركة الخطوات الموجّهة للعميل في البوابة."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "خريطة أصحاب المصلحة",
+        "seo": [
+          "ما خريطة أصحاب المصلحة في المبيعات ونجاح العملاء؟ | Curahold",
+          "تسرد خريطة أصحاب المصلحة الأشخاص المؤثرين في قرار لدى العميل وأدوارهم ومواقفهم، ليعرف الفريق من يُشرك ومتى."
+        ],
+        "lead": "تسرد خريطة أصحاب المصلحة الأشخاص الذين يشاركون في قرار لدى العميل، وأدوارهم، وموقف كل منهم.",
+        "body": [
+          {
+            "h": "ما الذي تسجّله"
+          },
+          {
+            "ul": [
+              "دور كل شخص ومدى تأثيره.",
+              "موقفه: داعم أو محايد أو معارض.",
+              "من لم يُلتقَ به بعد."
+            ]
+          },
+          {
+            "h": "لماذا تهم بعد البيع"
+          },
+          {
+            "p": "نادرًا ما يتخذ شخص واحد قرار التجديد. وحين يغادر الداعم الأبرز، تُظهر الخريطة من غيره يعرف القيمة ومن يحتاج إلى سماعها."
+          }
+        ],
+        "curahold": "تحتفظ كل صفقة بأصحاب المصلحة مع مسمياتهم ومواقفهم، وينتقلون مع بطاقة التسليم إلى الفريق الذي يتسلّم العميل."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "الداعم الأبرز (Champion)",
+        "seo": [
+          "من هو الداعم الأبرز (Champion) لدى العميل؟ | Curahold",
+          "الداعم الأبرز هو الشخص لدى العميل الذي يؤمن بمنتجكم ويدافع عنه داخل شركته. لماذا يهم وجوده، وماذا تفعلون حين يغادر."
+        ],
+        "lead": "الداعم الأبرز هو الشخص لدى العميل الذي يؤمن بما تقدّمونه ويدافع عنه داخل شركته.",
+        "body": [
+          {
+            "h": "لماذا يهم"
+          },
+          {
+            "p": "يحجز الاجتماعات، ويدافع عن الميزانية، ويطرح المشكلات مبكرًا. والعملاء الذين لديهم داعم نشط يجدّدون بسهولة أكبر."
+          },
+          {
+            "h": "حين يغادر الداعم"
+          },
+          {
+            "ul": [
+              "اعرفوا من يتولى الجزء الذي كان يقوم به.",
+              "أظهروا القيمة من جديد لمن بقي.",
+              "تعاملوا مع الأمر كخطر إلى أن يظهر داعم جديد."
+            ]
+          }
+        ],
+        "curahold": "يمكن أن يكون وجود داعم أبرز إشارة في مؤشر الصحة، فيتقدّم العميل الذي لا داعم له أو غادره داعمه."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "التسليم من المبيعات إلى نجاح العملاء",
+        "seo": [
+          "التسليم من المبيعات إلى نجاح العملاء: ماذا يُنقل | Curahold",
+          "ينقل التسليم من المبيعات إلى نجاح العملاء ما وُعد به ومن يهم من الأشخاص والتواريخ الأساسية، فلا يضطر العميل إلى إعادة الشرح."
+        ],
+        "lead": "ينقل التسليم من المبيعات إلى نجاح العملاء كل ما يحتاجه الفريق التالي، فلا يضطر العميل إلى شرح كل شيء من جديد.",
+        "body": [
+          {
+            "h": "ما الذي يُنقل"
+          },
+          {
+            "ul": [
+              "أصحاب المصلحة وموقف كل منهم.",
+              "ما وُعد به خلال البيع.",
+              "الطلبات المفتوحة وأسئلة المنتج.",
+              "تاريخ الإغلاق وتاريخ التجديد."
+            ]
+          },
+          {
+            "h": "ما الذي يسوء"
+          },
+          {
+            "p": "وعود قُطعت في مكالمة بيع ولم يدوّنها أحد. العميل يتذكرها، والفريق الجديد لا يعرفها."
+          }
+        ],
+        "curahold": "تصل الصفقة الرابحة إلى الفريق التالي في بطاقة تسليم واحدة تضم أصحاب المصلحة والوعود المقطوعة وطلبات المنتج المفتوحة والتواريخ الأساسية."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "طلب ميزة",
+        "seo": [
+          "كيف تُدار طلبات الميزات من العملاء في B2B؟ | Curahold",
+          "طلب الميزة هو أن يطلب العميل شيئًا لا يقوم به المنتج بعد. كيف يُسجَّل، ويُربط بالعميل، ويُبلَّغ العميل حين يصبح جاهزًا."
+        ],
+        "lead": "طلب الميزة هو أن يطلب العميل شيئًا لا يقوم به المنتج بعد، وغالبًا ما يأتي في اجتماع أو محادثة دعم.",
+        "body": [
+          {
+            "h": "كيف تُدار جيدًا"
+          },
+          {
+            "ul": [
+              "سجّلوا من طلبها ولماذا تهمه.",
+              "اربطوا الطلبات المتعلقة بالأمر نفسه معًا.",
+              "رتّبوها حسب العملاء المنتظرين والقيمة."
+            ]
+          },
+          {
+            "h": "إغلاق الحلقة"
+          },
+          {
+            "p": "الجزء الذي تغفله معظم الفرق هو إبلاغ العميل حين يكتمل العمل. والطلب الذي يُجاب بملاحظة إصدار يبني ثقة أكثر من الميزة نفسها."
+          }
+        ],
+        "curahold": "يمكن ربط عدة طلبات من العملاء بقصة واحدة، وتعرض قائمة الأعمال المتراكمة العملاء المنتظرين وقيمتهم وأقرب تجديد، وحين يكتمل العمل تصل إلى المسؤول مسودة جاهزة للإرسال."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "نقطة التواصل",
+        "seo": [
+          "ما نقطة التواصل مع العميل؟ التعريف وأمثلة | Curahold",
+          "نقطة التواصل هي أي لحظة تواصل بين العميل وفريقكم: مكالمة أو اجتماع أو رد. لماذا يهم إيقاعها أكثر من عددها."
+        ],
+        "lead": "نقطة التواصل هي أي لحظة تواصل بين العميل وفريقكم: مكالمة، أو اجتماع، أو بريد، أو رد على طلب.",
+        "body": [
+          {
+            "h": "لماذا يهم الإيقاع"
+          },
+          {
+            "p": "فترات الصمت الطويلة إنذار مبكر. فالعميل الذي لم يتحدث إليه أحد منذ ستة أسابيع أصعب تجديدًا من عميل يُلتقى به كل شهر."
+          },
+          {
+            "h": "ما الذي يُحفظ من كل نقطة"
+          },
+          {
+            "ul": [
+              "متى حدثت ومن شارك فيها.",
+              "ما الذي تقرّر.",
+              "الخطوة التالية بمسؤولها وتاريخها."
+            ]
+          }
+        ],
+        "curahold": "تُحفظ الاجتماعات والمكالمات والملاحظات على الخط الزمني لكل عميل، وتدخل المدة منذ آخر تواصل في مؤشر الصحة، ويمكن أن يكون لكل عميل إيقاع مراجعة."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "متابعة الاجتماع",
+        "seo": [
+          "متابعة اجتماعات العملاء: خطوات تالية تُنفَّذ | Curahold",
+          "تحوّل متابعة الاجتماع ما اتُّفق عليه مع العميل إلى عمل له مسؤول وتاريخ، فتُحفظ الوعود ويرى العميل أنها محفوظة."
+        ],
+        "lead": "متابعة الاجتماع هي تحويل ما اتُّفق عليه في اجتماع العميل إلى عمل له مسؤول وتاريخ، قبل أن تتلاشى التفاصيل.",
+        "body": [
+          {
+            "h": "لماذا تفلت"
+          },
+          {
+            "p": "تبقى الخطوات التالية في ملاحظات شخص ما. وبعد أسبوع لا يتذكر أحد من قال إنه سيفعل ماذا، والعميل أول من يلاحظ."
+          },
+          {
+            "h": "كيف تبدو المتابعة الجيدة"
+          },
+          {
+            "ul": [
+              "تُكتب الخطوات التالية قبل انتهاء المكالمة.",
+              "لكل منها مسؤول وتاريخ.",
+              "ملاحظة قصيرة إلى العميل تؤكدها."
+            ]
+          }
+        ],
+        "curahold": "تتحول الخطوات التالية المكتوبة في ملاحظات الاجتماع إلى مهام لها مسؤول وتاريخ ومرتبطة بالعميل، ويمكن مشاركة الوعود مع العميل في بوابته."
       }
     ]
   },
@@ -1375,6 +2517,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "דוח עלות השירות מציג לכל לקוח את השעות שהושקעו ב־12 החודשים האחרונים לכל 1,000 של ערך שנתי, כך שרואים על מי הכי יקר לשמור."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "שימור הכנסות נטו (NRR)",
+        "seo": [
+          "מהו שימור הכנסות נטו (NRR)? הגדרה ונוסחה | Curahold",
+          "שימור הכנסות נטו מראה כמה הכנסה חוזרת קבוצת לקוחות מביאה כעבור שנה, כולל חידושים, הרחבות, הקטנות ונטישה."
+        ],
+        "lead": "שימור הכנסות נטו (NRR) הוא ההכנסה החוזרת שקבוצת לקוחות מביאה היום, כאחוז ממה שאותם לקוחות הביאו לפני שנה.",
+        "body": [
+          {
+            "h": "איך מחשבים"
+          },
+          {
+            "p": "קחו את ההכנסה החוזרת של הלקוחות שהיו לכם בתחילת התקופה. הוסיפו את ההרחבות, הורידו הקטנות ונטישה, וחלקו בנקודת ההתחלה. לקוחות חדשים לא נכללים."
+          },
+          {
+            "h": "למה צוותים עוקבים אחריו"
+          },
+          {
+            "ul": [
+              "מעל 100% אומר שהלקוחות הקיימים גדלים בעצמם.",
+              "הוא מראה אם חידושים והרחבות גוברים על ההפסדים.",
+              "הוא משתנה לאט, ולכן מתגמל עבודה עקבית מול לקוחות."
+            ]
+          }
+        ],
+        "curahold": "הזדמנויות חידוש והרחבה נמצאות באותו צינור מכירות עם עסקאות חדשות, ותצוגת החידושים מציגה כל לקוח לפי חודש החידוש עם הסכום שבסיכון."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "הכנסה שנתית חוזרת (ARR)",
+        "seo": [
+          "מהי הכנסה שנתית חוזרת (ARR)? הגדרה קצרה | Curahold",
+          "הכנסה שנתית חוזרת היא הערך השנתי של המינויים שנחתמו: מה נספר, מה לא, ואיך צוותים משתמשים בה ברמת הלקוח."
+        ],
+        "lead": "הכנסה שנתית חוזרת (ARR) היא הערך השנתי של המינויים בתוקף: מה שהלקוחות ישלמו בשנים עשר חודשים אם שום דבר לא ישתנה.",
+        "body": [
+          {
+            "h": "מה נספר"
+          },
+          {
+            "ul": [
+              "דמי מינוי, מומרים לסכום שנתי.",
+              "תוספות חוזרות ומושבים נוספים.",
+              "לא תשלומים חד-פעמיים כמו הקמה או הדרכה."
+            ]
+          },
+          {
+            "h": "למה זה חשוב ברמת הלקוח"
+          },
+          {
+            "p": "ARR אצל כל לקוח מראה איפה נמצאת ההכנסה, כך שהצוות נותן לחידושים הגדולים את תשומת הלב הדרושה ורואה כמה בסיכון כשלקוח משתתק."
+          }
+        ],
+        "curahold": "ARR יכול להיות שדה אצל כל לקוח, ודוח יכול לסכם אותו לפי אחראי, טווח ציון בריאות או חודש חידוש, לפי ההרשאות של כל קורא."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "סקירה עסקית (QBR)",
+        "seo": [
+          "מהי סקירה עסקית (QBR)? מטרה וסדר יום | Curahold",
+          "סקירה עסקית היא פגישה קבועה שבה הלקוח והספק בוחנים תוצאות, הבטחות פתוחות ואת התוכנית הבאה, בדרך כלל פעם ברבעון."
+        ],
+        "lead": "סקירה עסקית, לרוב רבעונית ומכונה QBR, היא פגישה שבה הלקוח והספק בוחנים תוצאות ומסכימים על התוכנית הבאה.",
+        "body": [
+          {
+            "h": "מה היא כוללת"
+          },
+          {
+            "ul": [
+              "תוצאות מול היעדים שנקבעו בפעם הקודמת.",
+              "מה השתנה אצל הלקוח.",
+              "בקשות והבטחות פתוחות ומצב כל אחת.",
+              "התוכנית והאחראים לתקופה הבאה."
+            ]
+          },
+          {
+            "h": "מה הופך אותה למועילה"
+          },
+          {
+            "p": "היא מסתיימת בצעדים הבאים עם אחראים ותאריכים. סקירה שהפעולות שלה לא נכתבו נשכחת עד הבאה."
+          }
+        ],
+        "curahold": "סקירה עסקית היא פגישה בציר הזמן של הלקוח, והצעדים הבאים שנכתבים בה הופכים למשימות עם אחראי ותאריך."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "מה עושה Customer Success Manager (CSM)? התפקיד | Curahold",
+          "Customer Success Manager מלווה קבוצת לקוחות אחרי המכירה: קליטה, אימוץ, סקירות עסקיות, חידושים וזיהוי סיכונים מוקדם."
+        ],
+        "lead": "Customer Success Manager (CSM) מלווה קבוצת לקוחות אחרי המכירה, כדי שיקבלו את הערך שקנו וימשיכו.",
+        "body": [
+          {
+            "h": "מה התפקיד כולל בדרך כלל"
+          },
+          {
+            "ul": [
+              "קליטת לקוחות חדשים, או קבלתם מצוות הקליטה.",
+              "שיחות קבועות וסקירות עסקיות.",
+              "מעקב אחר בריאות הלקוח ותגובה לאזהרות מוקדמות.",
+              "הכנת חידושים וזיהוי מקום לצמיחה."
+            ]
+          },
+          {
+            "h": "לאן הולך הזמן"
+          },
+          {
+            "p": "CSM מלווה לעיתים עשרות לקוחות. לדעת מי מהם צריך תשומת לב השבוע חשוב יותר מלחלק זמן שווה לכולם."
+          }
+        ],
+        "curahold": "לכל לקוח יש אחראי בכל מחלקה, והרשימה של כל אדם מסודרת לפי מי שצריך אותו, עם הסיבה והצעד הבא."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "הכנסות מהרחבה",
+        "seo": [
+          "מהן הכנסות מהרחבה? אפסייל ומכירה צולבת | Curahold",
+          "הכנסות מהרחבה הן הכנסה חוזרת נוספת מלקוחות קיימים: עוד מושבים, תוכנית גבוהה יותר או מוצר נוסף. מאיפה הן מגיעות ואיך מוצאים אותן."
+        ],
+        "lead": "הכנסות מהרחבה הן הכנסה חוזרת נוספת מלקוחות שכבר יש לכם: עוד מושבים, תוכנית גבוהה יותר או מוצר נוסף.",
+        "body": [
+          {
+            "h": "מאיפה הן מגיעות"
+          },
+          {
+            "ul": [
+              "אפסייל: יותר ממה שהם משתמשים בו, או תוכנית גבוהה יותר.",
+              "מכירה צולבת: מוצר שעדיין אין להם.",
+              "צמיחה אצלם: צוותים, סניפים או מדינות חדשים."
+            ]
+          },
+          {
+            "h": "מתי להעלות את זה"
+          },
+          {
+            "p": "הרחבה באה אחרי ערך. הכי קל אחרי תוצאה שהלקוח יכול לנקוב בשמה, והכי קשה כשהבטחות מהבקשה האחרונה עדיין פתוחות."
+          }
+        ],
+        "curahold": "תצוגת המוצרים מראה לאיזה לקוח יש איזה מוצר, כך שהפערים גלויים, ופתיחת משימה לאחד מהם לוקחת לחיצה."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "זמן לערך",
+        "seo": [
+          "מהו זמן לערך (Time to value)? הגדרה ודרכי קיצור | Curahold",
+          "זמן לערך הוא הזמן שלקוח חדש מחכה בין החתימה לתוצאה הראשונה שהוא יכול לנקוב בשמה. למה זה חשוב לחידוש ואיך מקצרים אותו."
+        ],
+        "lead": "זמן לערך הוא הזמן שלקוח חדש מחכה בין החתימה לתוצאה הראשונה שהוא רואה ויכול לנקוב בשמה.",
+        "body": [
+          {
+            "h": "למה זה חשוב"
+          },
+          {
+            "p": "שיחת החידוש הראשונה מתחילה ביום החתימה. לקוח שרואה ערך בתוך שבועות מדבר על צמיחה; לקוח שעדיין מחכה מדבר על מחיר."
+          },
+          {
+            "h": "איך צוותים מקצרים אותו"
+          },
+          {
+            "ul": [
+              "סכמו בפגישת הפתיחה על תוצאה ראשונה אחת עם תאריך.",
+              "העבירו את מה שהמכירות הבטיחו, כדי ששום דבר לא יישאל פעמיים.",
+              "שתפו את התוכנית עם הלקוח, כך ששני הצדדים רואים את הצעד הבא."
+            ]
+          }
+        ],
+        "curahold": "לתוכניות קליטה יש צעדים, יעדים ותאריכים, ואת הצעדים שתבחרו אפשר לשתף עם הלקוח בפורטל שלו."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "תוכנית הצלחה",
+        "seo": [
+          "מהי תוכנית הצלחה ללקוח? חלקים ושימוש | Curahold",
+          "תוכנית הצלחה כותבת מה הלקוח רוצה להשיג, איך שני הצדדים יגיעו לשם ואיך מודדים התקדמות, כדי שלכל סקירה תהיה נקודת ייחוס."
+        ],
+        "lead": "תוכנית הצלחה כותבת מה הלקוח רוצה להשיג, אילו צעדים יעשו שני הצדדים ואיך תימדד ההתקדמות.",
+        "body": [
+          {
+            "h": "מה היא כוללת בדרך כלל"
+          },
+          {
+            "ul": [
+              "היעדים של הלקוח במילים שלו.",
+              "הצעדים, האחראים והתאריכים בשני הצדדים.",
+              "המדדים שמראים התקדמות."
+            ]
+          },
+          {
+            "h": "איך משתמשים בה"
+          },
+          {
+            "p": "היא נקודת הייחוס לכל שיחה ולכל סקירה עסקית. כשמעדכנים אותה יחד, שני הצדדים עובדים לעבר אותה תוצאה."
+          }
+        ],
+        "curahold": "תוכנית קליטה מחזיקה יעדים, צעדים עם אחראים ותאריכים והמדדים שאתם עוקבים אחריהם, ואת הצעדים שמיועדים ללקוח אפשר לשתף בפורטל."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "מפת בעלי עניין",
+        "seo": [
+          "מהי מפת בעלי עניין במכירות ובהצלחת לקוחות? | Curahold",
+          "מפת בעלי עניין מפרטת את האנשים אצל הלקוח שמשפיעים על החלטה, את תפקידם ואת עמדתם, כדי שהצוות יידע את מי לשתף ומתי."
+        ],
+        "lead": "מפת בעלי עניין מפרטת את האנשים אצל הלקוח שלוקחים חלק בהחלטה, את תפקידם ואת העמדה של כל אחד.",
+        "body": [
+          {
+            "h": "מה היא מתעדת"
+          },
+          {
+            "ul": [
+              "התפקיד וההשפעה של כל אדם.",
+              "העמדה: תומך, ניטרלי או חוסם.",
+              "מי עוד לא פגשתם."
+            ]
+          },
+          {
+            "h": "למה היא חשובה אחרי המכירה"
+          },
+          {
+            "p": "החלטת חידוש כמעט אף פעם לא מתקבלת בידי אדם אחד. כשהאלוף עוזב, המפה מראה מי עוד מכיר את הערך ומי צריך לשמוע עליו."
+          }
+        ],
+        "curahold": "כל עסקה שומרת את בעלי העניין עם התפקיד והעמדה שלהם, והם עוברים עם כרטיס המסירה לצוות שמקבל את הלקוח."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "אלוף (Champion)",
+        "seo": [
+          "מיהו אלוף (Champion) אצל לקוח ב-B2B? | Curahold",
+          "אלוף הוא האדם אצל הלקוח שמאמין במוצר שלכם ומקדם אותו בתוך החברה. למה הוא חשוב, ומה עושים כשהוא עוזב את החברה."
+        ],
+        "lead": "אלוף (Champion) הוא האדם אצל הלקוח שמאמין במה שאתם מספקים ומקדם אותו בתוך החברה שלו.",
+        "body": [
+          {
+            "h": "למה הוא חשוב"
+          },
+          {
+            "p": "הוא דואג שפגישות ייקבעו, שתקציבים יישמרו ושבעיות יעלו מוקדם. לקוחות עם אלוף פעיל מחדשים ביתר קלות."
+          },
+          {
+            "h": "כשהאלוף עוזב"
+          },
+          {
+            "ul": [
+              "ביררו מי לוקח את החלק שלו בעבודה.",
+              "הציגו את הערך מחדש למי שנשאר.",
+              "התייחסו לזה כסיכון עד שיש אלוף חדש."
+            ]
+          }
+        ],
+        "curahold": "קיומו של אלוף יכול להיות אות בציון הבריאות, כך שלקוח בלי אלוף, או שהאלוף שלו עזב, עולה לראש הרשימה."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "מסירה ממכירות להצלחת לקוחות",
+        "seo": [
+          "מסירה ממכירות להצלחת לקוחות: מה להעביר | Curahold",
+          "מסירה ממכירות להצלחת לקוחות מעבירה את מה שהובטח, את האנשים החשובים ואת התאריכים המרכזיים, כך שהלקוח לא צריך להסביר הכול שוב."
+        ],
+        "lead": "מסירה ממכירות להצלחת לקוחות מעבירה את כל מה שהצוות הבא צריך, כך שהלקוח אף פעם לא צריך להסביר הכול מחדש.",
+        "body": [
+          {
+            "h": "מה להעביר"
+          },
+          {
+            "ul": [
+              "בעלי העניין והעמדה של כל אחד.",
+              "מה הובטח במהלך המכירה.",
+              "בקשות פתוחות ושאלות על המוצר.",
+              "תאריך הסגירה ותאריך החידוש."
+            ]
+          },
+          {
+            "h": "מה משתבש"
+          },
+          {
+            "p": "הבטחות שניתנו בשיחת מכירה ואף אחד לא כתב. הלקוח זוכר אותן; הצוות החדש לא."
+          }
+        ],
+        "curahold": "עסקה שנסגרה מגיעה לצוות הבא ככרטיס מסירה אחד עם בעלי העניין, ההבטחות שניתנו, בקשות המוצר הפתוחות והתאריכים המרכזיים."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "בקשת פיצ'ר",
+        "seo": [
+          "איך מטפלים בבקשות פיצ'רים של לקוחות ב-B2B | Curahold",
+          "בקשת פיצ'ר היא לקוח שמבקש משהו שהמוצר עוד לא עושה. איך מתעדים אותה, מקשרים ללקוח ומעדכנים אותו כשהיא מוכנה."
+        ],
+        "lead": "בקשת פיצ'ר היא לקוח שמבקש משהו שהמוצר עדיין לא עושה, לרוב במהלך פגישה או שיחת תמיכה.",
+        "body": [
+          {
+            "h": "איך לטפל בהן נכון"
+          },
+          {
+            "ul": [
+              "תעדו מי ביקש ולמה זה חשוב לו.",
+              "קשרו יחד בקשות על אותו דבר.",
+              "תעדפו לפי הלקוחות שמחכים והערך."
+            ]
+          },
+          {
+            "h": "לסגור את המעגל"
+          },
+          {
+            "p": "החלק שרוב הצוותים מפספסים הוא לעדכן את הלקוח כשהעבודה מוכנה. בקשה שנענית בהערת גרסה בונה יותר אמון מהפיצ'ר עצמו."
+          }
+        ],
+        "curahold": "אפשר לקשר כמה בקשות של לקוחות לסטורי אחד; הבקלוג מראה את הלקוחות שמחכים, את הערך שלהם ואת החידוש הקרוב, וכשהעבודה מסתיימת האחראי מקבל טיוטה מוכנה לשליחה."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "נקודת מגע",
+        "seo": [
+          "מהי נקודת מגע עם לקוח? הגדרה ודוגמאות | Curahold",
+          "נקודת מגע היא כל רגע של קשר בין הלקוח לצוות שלכם: שיחה, פגישה, תשובה. למה הקצב שלהן חשוב יותר מהמספר."
+        ],
+        "lead": "נקודת מגע היא כל רגע של קשר בין הלקוח לצוות שלכם: שיחה, פגישה, אימייל או תשובה לבקשה.",
+        "body": [
+          {
+            "h": "למה הקצב חשוב"
+          },
+          {
+            "p": "שתיקות ארוכות הן אזהרה מוקדמת. לקוח שאיש לא דיבר איתו שישה שבועות קשה יותר לחדש מלקוח שנפגשים איתו כל חודש."
+          },
+          {
+            "h": "מה לשמור מכל אחת"
+          },
+          {
+            "ul": [
+              "מתי זה קרה ומי השתתף.",
+              "מה הוחלט.",
+              "הצעד הבא, עם אחראי ותאריך."
+            ]
+          }
+        ],
+        "curahold": "פגישות, שיחות והערות נשמרות בציר הזמן של כל לקוח, הזמן מאז הקשר האחרון נכנס לציון הבריאות, ולכל לקוח יכול להיות קצב סקירה."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "מעקב אחרי פגישה",
+        "seo": [
+          "מעקב אחרי פגישת לקוח: צעדים הבאים שמתבצעים | Curahold",
+          "מעקב אחרי פגישה הופך את מה שסוכם עם הלקוח לעבודה עם אחראי ותאריך, כך שההבטחות נשמרות והלקוח רואה שהן נשמרות."
+        ],
+        "lead": "מעקב אחרי פגישה הוא להפוך את מה שסוכם בפגישה עם הלקוח לעבודה עם אחראי ותאריך, לפני שהפרטים מיטשטשים.",
+        "body": [
+          {
+            "h": "למה זה מתפספס"
+          },
+          {
+            "p": "הצעדים הבאים נשארים בהערות של מישהו. אחרי שבוע אף אחד לא זוכר מי אמר שיעשה מה, והלקוח שם לב ראשון."
+          },
+          {
+            "h": "איך נראה מעקב טוב"
+          },
+          {
+            "ul": [
+              "הצעדים הבאים נכתבים לפני שהשיחה נגמרת.",
+              "לכל אחד יש אחראי ותאריך.",
+              "הודעה קצרה ללקוח שמאשרת אותם."
+            ]
+          }
+        ],
+        "curahold": "צעדים הבאים שנכתבים בהערות של פגישה הופכים למשימות עם אחראי ותאריך, מקושרות ללקוח, ואת ההבטחות אפשר לשתף עם הלקוח בפורטל שלו."
       }
     ]
   },
@@ -1710,6 +3232,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "گزارش هزینهٔ خدمت‌رسانی برای هر مشتری ساعت‌های صرف‌شده در ۱۲ ماه گذشته به‌ازای هر ۱٬۰۰۰ از ارزش سالانه را نشان می‌دهد تا ببینید نگهداری چه کسی گران‌تر است."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "نرخ حفظ خالص درآمد (NRR)",
+        "seo": [
+          "نرخ حفظ خالص درآمد (NRR) چیست؟ تعریف و فرمول | Curahold",
+          "نرخ حفظ خالص درآمد نشان می‌دهد گروهی از مشتریان یک سال بعد چقدر درآمد تکرارشونده می‌آورند، با احتساب تمدید، گسترش، کاهش و ریزش."
+        ],
+        "lead": "نرخ حفظ خالص درآمد (NRR) درآمد تکرارشونده‌ای است که گروهی از مشتریان امروز می‌آورند، به‌صورت درصدی از آنچه همان مشتریان یک سال پیش می‌آوردند.",
+        "body": [
+          {
+            "h": "چگونه حساب می‌شود"
+          },
+          {
+            "p": "درآمد تکرارشوندهٔ مشتریانی را که در آغاز دوره داشتید بردارید. گسترش‌ها را اضافه و کاهش‌ها و ریزش را کم کنید، سپس بر نقطهٔ شروع تقسیم کنید. مشتریان تازه حساب نمی‌شوند."
+          },
+          {
+            "h": "چرا تیم‌ها دنبالش می‌کنند"
+          },
+          {
+            "ul": [
+              "بالای ۱۰۰٪ یعنی مشتریان فعلی خودبه‌خود رشد می‌کنند.",
+              "نشان می‌دهد تمدید و گسترش از زیان‌ها بیشتر است یا نه.",
+              "آهسته تغییر می‌کند و کار پیوسته با مشتری را پاداش می‌دهد."
+            ]
+          }
+        ],
+        "curahold": "فرصت‌های تمدید و گسترش در همان قیف فروشِ معامله‌های تازه قرار دارند و نمای تمدیدها هر مشتری را بر پایهٔ ماه تمدید، همراه با مبلغ در خطر، فهرست می‌کند."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "درآمد تکرارشوندهٔ سالانه (ARR)",
+        "seo": [
+          "درآمد تکرارشوندهٔ سالانه (ARR) چیست؟ تعریف کوتاه | Curahold",
+          "درآمد تکرارشوندهٔ سالانه ارزش سالانهٔ اشتراک‌های امضاشده است: چه چیزی حساب می‌شود، چه چیزی نه، و تیم‌ها چطور آن را برای هر مشتری به کار می‌برند."
+        ],
+        "lead": "درآمد تکرارشوندهٔ سالانه (ARR) ارزش سالانهٔ اشتراک‌های جاری است: مبلغی که مشتریان، اگر چیزی تغییر نکند، در دوازده ماه می‌پردازند.",
+        "body": [
+          {
+            "h": "چه چیزی حساب می‌شود"
+          },
+          {
+            "ul": [
+              "هزینهٔ اشتراک، تبدیل‌شده به مبلغ سالانه.",
+              "افزونه‌های تکرارشونده و صندلی‌های اضافه.",
+              "نه هزینه‌های یک‌باره مثل راه‌اندازی یا آموزش."
+            ]
+          },
+          {
+            "h": "چرا برای هر مشتری مهم است"
+          },
+          {
+            "p": "ARR هر مشتری نشان می‌دهد درآمد کجاست؛ تیم به بزرگ‌ترین تمدیدها توجه لازم را می‌دهد و می‌بیند وقتی مشتری‌ای ساکت می‌شود چه مبلغی در خطر است."
+          }
+        ],
+        "curahold": "ARR می‌تواند فیلدی روی هر مشتری باشد و یک گزارش آن را بر پایهٔ مسئول، بازهٔ امتیاز سلامت یا ماه تمدید، با دسترسی خود هر خواننده، جمع می‌زند."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "بازبینی کسب‌وکار (QBR)",
+        "seo": [
+          "بازبینی کسب‌وکار (QBR) چیست؟ هدف و دستور جلسه | Curahold",
+          "بازبینی کسب‌وکار جلسه‌ای منظم است که در آن مشتری و تأمین‌کننده نتایج، قول‌های باز و برنامهٔ پیش رو را مرور می‌کنند؛ معمولاً هر فصل یک بار."
+        ],
+        "lead": "بازبینی کسب‌وکار، که اغلب فصلی است و QBR نامیده می‌شود، جلسه‌ای است که در آن مشتری و تأمین‌کننده نتایج را مرور و برنامهٔ بعدی را توافق می‌کنند.",
+        "body": [
+          {
+            "h": "چه چیزهایی را پوشش می‌دهد"
+          },
+          {
+            "ul": [
+              "نتایج در برابر هدف‌های دفعهٔ قبل.",
+              "آنچه در سمت مشتری تغییر کرده است.",
+              "درخواست‌ها و قول‌های باز و وضعیت هرکدام.",
+              "برنامه و مسئولان دورهٔ بعد."
+            ]
+          },
+          {
+            "h": "چه چیزی آن را مفید می‌کند"
+          },
+          {
+            "p": "با گام‌های بعدیِ دارای مسئول و تاریخ تمام می‌شود. بازبینی‌ای که اقدام‌هایش نوشته نشود، تا بازبینی بعدی فراموش می‌شود."
+          }
+        ],
+        "curahold": "بازبینی کسب‌وکار جلسه‌ای روی خط زمانی مشتری است و گام‌های بعدیِ نوشته‌شده در آن به وظیفه‌هایی با مسئول و تاریخ تبدیل می‌شوند."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "Customer Success Manager (CSM) چه کاری می‌کند؟ | Curahold",
+          "Customer Success Manager پس از فروش از گروهی از مشتریان مراقبت می‌کند: راه‌اندازی، استفاده، بازبینی‌ها، تمدیدها و تشخیص زودهنگام ریسک."
+        ],
+        "lead": "Customer Success Manager (CSM) پس از فروش از گروهی از مشتریان مراقبت می‌کند تا ارزشی را که خریده‌اند به دست آورند و بمانند.",
+        "body": [
+          {
+            "h": "این نقش معمولاً شامل چیست"
+          },
+          {
+            "ul": [
+              "راه‌اندازی مشتریان تازه یا تحویل گرفتنشان از تیم راه‌اندازی.",
+              "گفت‌وگوهای منظم و بازبینی‌های کسب‌وکار.",
+              "پایش سلامت و اقدام در برابر هشدارهای زودهنگام.",
+              "آماده‌سازی تمدیدها و دیدن فرصت رشد."
+            ]
+          },
+          {
+            "h": "زمان کجا صرف می‌شود"
+          },
+          {
+            "p": "یک CSM اغلب از ده‌ها مشتری مراقبت می‌کند. دانستن اینکه این هفته کدام‌یک به توجه نیاز دارد، از تقسیم برابر زمان میان همه مهم‌تر است."
+          }
+        ],
+        "curahold": "هر مشتری در هر دپارتمان یک مسئول دارد و فهرست هر فرد بر پایهٔ اینکه چه کسی به او نیاز دارد، با دلیل و گام بعدی، مرتب می‌شود."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "درآمد گسترش",
+        "seo": [
+          "درآمد گسترش چیست؟ فروش بیشتر و فروش متقابل | Curahold",
+          "درآمد گسترش درآمد تکرارشوندهٔ اضافه از مشتریان فعلی است: صندلی بیشتر، طرح بالاتر یا محصولی دیگر. از کجا می‌آید و تیم‌ها چطور پیدایش می‌کنند."
+        ],
+        "lead": "درآمد گسترش درآمد تکرارشوندهٔ اضافه‌ای است که از مشتریان فعلی‌تان می‌آید: صندلی بیشتر، طرح بالاتر یا محصولی دیگر.",
+        "body": [
+          {
+            "h": "از کجا می‌آید"
+          },
+          {
+            "ul": [
+              "فروش بیشتر: بیشتر از آنچه استفاده می‌کنند، یا طرح بالاتر.",
+              "فروش متقابل: محصولی که هنوز ندارند.",
+              "رشد خودشان: تیم‌ها، شعبه‌ها یا کشورهای تازه."
+            ]
+          },
+          {
+            "h": "چه زمانی مطرحش کنیم"
+          },
+          {
+            "p": "گسترش پس از ارزش می‌آید. پس از نتیجه‌ای که مشتری بتواند نامش را ببرد آسان‌تر است و وقتی قول‌های درخواست قبلی هنوز باز است، سخت‌تر."
+          }
+        ],
+        "curahold": "نمای محصولات نشان می‌دهد کدام مشتری کدام محصول را دارد، پس جاهای خالی پیداست و باز کردن وظیفه برای هرکدام یک کلیک است."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "زمان رسیدن به ارزش",
+        "seo": [
+          "زمان رسیدن به ارزش چیست؟ تعریف و راه کوتاه‌کردن | Curahold",
+          "زمان رسیدن به ارزش مدتی است که مشتری تازه از امضا تا نخستین نتیجه‌ای که بتواند نامش را ببرد منتظر می‌ماند. چرا برای تمدید مهم است و چطور کوتاهش کنیم."
+        ],
+        "lead": "زمان رسیدن به ارزش مدتی است که مشتری تازه میان امضا و نخستین نتیجه‌ای که می‌بیند و می‌تواند نامش را ببرد منتظر می‌ماند.",
+        "body": [
+          {
+            "h": "چرا مهم است"
+          },
+          {
+            "p": "نخستین گفت‌وگوی تمدید از روز امضا آغاز می‌شود. مشتری‌ای که در چند هفته ارزش را می‌بیند از رشد حرف می‌زند؛ آنکه هنوز منتظر است از قیمت."
+          },
+          {
+            "h": "تیم‌ها چطور کوتاهش می‌کنند"
+          },
+          {
+            "ul": [
+              "در جلسهٔ آغاز روی یک نتیجهٔ نخست با تاریخ توافق کنید.",
+              "قول‌های فروش را تحویل دهید تا چیزی دوبار پرسیده نشود.",
+              "برنامه را با مشتری به اشتراک بگذارید تا هر دو طرف گام بعدی را ببینند."
+            ]
+          }
+        ],
+        "curahold": "برنامه‌های راه‌اندازی گام، هدف و تاریخ دارند و گام‌هایی را که انتخاب می‌کنید می‌توان در پورتال مشتری با او به اشتراک گذاشت."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "برنامهٔ موفقیت",
+        "seo": [
+          "برنامهٔ موفقیت مشتری چیست؟ بخش‌ها و کاربرد | Curahold",
+          "برنامهٔ موفقیت می‌نویسد مشتری به چه می‌خواهد برسد، دو طرف چطور به آن می‌رسند و پیشرفت چگونه سنجیده می‌شود؛ مرجعی برای هر بازبینی."
+        ],
+        "lead": "برنامهٔ موفقیت می‌نویسد مشتری به چه می‌خواهد برسد، دو طرف چه گام‌هایی برمی‌دارند و پیشرفت چگونه سنجیده می‌شود.",
+        "body": [
+          {
+            "h": "معمولاً چه چیزهایی دارد"
+          },
+          {
+            "ul": [
+              "هدف‌های مشتری با زبان خودش.",
+              "گام‌ها، مسئولان و تاریخ‌ها در هر دو طرف.",
+              "سنجه‌هایی که پیشرفت را نشان می‌دهند."
+            ]
+          },
+          {
+            "h": "چگونه به کار می‌رود"
+          },
+          {
+            "p": "مرجع هر گفت‌وگو و بازبینی کسب‌وکار است. وقتی با هم به‌روز شود، هر دو طرف به سوی همان نتیجه کار می‌کنند."
+          }
+        ],
+        "curahold": "یک برنامهٔ راه‌اندازی هدف‌ها، گام‌ها با مسئول و تاریخ و سنجه‌هایی را که دنبال می‌کنید نگه می‌دارد و گام‌های مربوط به مشتری را می‌توان در پورتال به اشتراک گذاشت."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "نقشهٔ ذی‌نفعان",
+        "seo": [
+          "نقشهٔ ذی‌نفعان در فروش و موفقیت مشتری چیست؟ | Curahold",
+          "نقشهٔ ذی‌نفعان افرادی را که در سمت مشتری بر تصمیم اثر دارند، نقششان و موضعشان را فهرست می‌کند تا تیم بداند چه کسی را و چه زمانی درگیر کند."
+        ],
+        "lead": "نقشهٔ ذی‌نفعان افرادی را که در سمت مشتری در یک تصمیم نقش دارند، جایگاهشان و موضع هرکدام را فهرست می‌کند.",
+        "body": [
+          {
+            "h": "چه چیزی را ثبت می‌کند"
+          },
+          {
+            "ul": [
+              "نقش و اثرگذاری هر فرد.",
+              "موضعش: حامی، بی‌طرف یا مانع.",
+              "کسانی که هنوز با آنها دیدار نشده است."
+            ]
+          },
+          {
+            "h": "چرا پس از فروش مهم است"
+          },
+          {
+            "p": "تصمیم تمدید به‌ندرت را یک نفر می‌گیرد. وقتی حامی اصلی می‌رود، نقشه نشان می‌دهد چه کس دیگری ارزش را می‌شناسد و چه کسی باید آن را بشنود."
+          }
+        ],
+        "curahold": "هر معامله ذی‌نفعانش را با عنوان و موضعشان نگه می‌دارد و آنها همراه کارت تحویل به تیمی می‌روند که مشتری را تحویل می‌گیرد."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "حامی اصلی (Champion)",
+        "seo": [
+          "حامی اصلی (Champion) در رابطه با مشتری کیست؟ | Curahold",
+          "حامی اصلی کسی در سمت مشتری است که به محصول شما باور دارد و در شرکتش از آن دفاع می‌کند. چرا مهم است و وقتی می‌رود چه باید کرد."
+        ],
+        "lead": "حامی اصلی (Champion) کسی در سمت مشتری است که به آنچه ارائه می‌دهید باور دارد و درون شرکتش از آن دفاع می‌کند.",
+        "body": [
+          {
+            "h": "چرا مهم است"
+          },
+          {
+            "p": "جلسه‌ها را هماهنگ می‌کند، از بودجه دفاع می‌کند و مشکلات را زود مطرح می‌کند. مشتریانی که حامی فعال دارند آسان‌تر تمدید می‌کنند."
+          },
+          {
+            "h": "وقتی حامی می‌رود"
+          },
+          {
+            "ul": [
+              "بفهمید چه کسی بخش کار او را برعهده می‌گیرد.",
+              "ارزش را دوباره به کسانی که مانده‌اند نشان دهید.",
+              "تا پیدا شدن حامی تازه آن را ریسک بدانید."
+            ]
+          }
+        ],
+        "curahold": "داشتن حامی اصلی می‌تواند نشانه‌ای در امتیاز سلامت باشد، پس مشتری‌ای که حامی ندارد یا حامی‌اش رفته، جلو می‌آید."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "تحویل از فروش به موفقیت مشتری",
+        "seo": [
+          "تحویل از فروش به موفقیت مشتری: چه چیزی منتقل شود | Curahold",
+          "تحویل از فروش به موفقیت مشتری قول‌ها، افراد مهم و تاریخ‌های کلیدی را منتقل می‌کند تا مشتری مجبور نشود همه‌چیز را دوباره توضیح دهد."
+        ],
+        "lead": "تحویل از فروش به موفقیت مشتری هر آنچه تیم بعدی لازم دارد را منتقل می‌کند تا مشتری هرگز مجبور نشود همه‌چیز را از نو توضیح دهد.",
+        "body": [
+          {
+            "h": "چه چیزی منتقل شود"
+          },
+          {
+            "ul": [
+              "ذی‌نفعان و موضع هرکدام.",
+              "آنچه در فروش قول داده شد.",
+              "درخواست‌های باز و پرسش‌های محصول.",
+              "تاریخ بستن معامله و تاریخ تمدید."
+            ]
+          },
+          {
+            "h": "چه چیزی خراب می‌شود"
+          },
+          {
+            "p": "قول‌هایی که در تماس فروش داده شد و کسی ننوشت. مشتری آنها را به یاد دارد؛ تیم تازه نه."
+          }
+        ],
+        "curahold": "معاملهٔ برنده‌شده به‌صورت یک کارت تحویل به تیم بعدی می‌رسد: ذی‌نفعان، قول‌های داده‌شده، درخواست‌های باز محصول و تاریخ‌های کلیدی."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "درخواست قابلیت",
+        "seo": [
+          "درخواست قابلیت از سوی مشتری را چطور مدیریت کنیم؟ | Curahold",
+          "درخواست قابلیت یعنی مشتری چیزی بخواهد که محصول هنوز انجام نمی‌دهد. چطور ثبتش کنیم، به مشتری پیوندش دهیم و وقتی آماده شد خبر دهیم."
+        ],
+        "lead": "درخواست قابلیت یعنی مشتری چیزی بخواهد که محصول هنوز انجام نمی‌دهد؛ اغلب در یک جلسه یا گفت‌وگوی پشتیبانی.",
+        "body": [
+          {
+            "h": "چطور خوب مدیریتش کنیم"
+          },
+          {
+            "ul": [
+              "ثبت کنید چه کسی خواست و چرا برایش مهم است.",
+              "درخواست‌های مربوط به یک چیز را به هم پیوند دهید.",
+              "بر پایهٔ مشتریان منتظر و ارزش اولویت بدهید."
+            ]
+          },
+          {
+            "h": "بستن چرخه"
+          },
+          {
+            "p": "بخشی که بیشتر تیم‌ها جا می‌اندازند، خبر دادن به مشتری هنگام آماده شدن کار است. درخواستی که با یادداشت انتشار پاسخ داده شود، بیش از خود قابلیت اعتماد می‌سازد."
+          }
+        ],
+        "curahold": "چند درخواست مشتری را می‌توان به یک استوری پیوند داد؛ بک‌لاگ مشتریان منتظر، ارزششان و نزدیک‌ترین تمدید را نشان می‌دهد و وقتی کار تمام شد، پیش‌نویسی آماده برای ارسال به مسئول می‌رسد."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "نقطهٔ تماس",
+        "seo": [
+          "نقطهٔ تماس با مشتری چیست؟ تعریف و نمونه‌ها | Curahold",
+          "نقطهٔ تماس هر لحظهٔ ارتباط میان مشتری و تیم شماست: تماس، جلسه، پاسخ. چرا آهنگ آنها از تعدادشان مهم‌تر است."
+        ],
+        "lead": "نقطهٔ تماس هر لحظهٔ ارتباط میان مشتری و تیم شماست: یک تماس، جلسه، ایمیل یا پاسخ به درخواست.",
+        "body": [
+          {
+            "h": "چرا آهنگ مهم است"
+          },
+          {
+            "p": "سکوت‌های طولانی هشداری زودهنگام‌اند. تمدید مشتری‌ای که شش هفته کسی با او حرف نزده، سخت‌تر از مشتری‌ای است که هر ماه دیده می‌شود."
+          },
+          {
+            "h": "از هرکدام چه باید بماند"
+          },
+          {
+            "ul": [
+              "کی رخ داد و چه کسانی بودند.",
+              "چه تصمیمی گرفته شد.",
+              "گام بعدی، با مسئول و تاریخ."
+            ]
+          }
+        ],
+        "curahold": "جلسه‌ها، تماس‌ها و یادداشت‌ها روی خط زمانی هر مشتری می‌مانند، فاصله از آخرین تماس در امتیاز سلامت حساب می‌شود و هر مشتری می‌تواند آهنگ بازبینی داشته باشد."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "پیگیری جلسه",
+        "seo": [
+          "پیگیری جلسهٔ مشتری: گام‌های بعدی که انجام شوند | Curahold",
+          "پیگیری جلسه آنچه را با مشتری توافق شد به کاری با مسئول و تاریخ تبدیل می‌کند تا قول‌ها نگه داشته شوند و مشتری هم این را ببیند."
+        ],
+        "lead": "پیگیری جلسه یعنی تبدیل آنچه در جلسه با مشتری توافق شد به کاری با مسئول و تاریخ، پیش از آنکه جزئیات از یاد بروند.",
+        "body": [
+          {
+            "h": "چرا جا می‌ماند"
+          },
+          {
+            "p": "گام‌های بعدی در یادداشت‌های یک نفر می‌مانند. یک هفته بعد کسی به یاد ندارد چه کسی گفت چه کاری می‌کند و نخستین کسی که می‌فهمد مشتری است."
+          },
+          {
+            "h": "پیگیری خوب چه شکلی است"
+          },
+          {
+            "ul": [
+              "گام‌های بعدی پیش از پایان تماس نوشته می‌شوند.",
+              "هرکدام مسئول و تاریخ دارد.",
+              "یادداشتی کوتاه برای مشتری که آنها را تأیید می‌کند."
+            ]
+          }
+        ],
+        "curahold": "گام‌های بعدیِ نوشته‌شده در یادداشت‌های جلسه به وظیفه‌هایی با مسئول و تاریخ، پیوندخورده به مشتری، تبدیل می‌شوند و قول‌ها را می‌توان در پورتال با مشتری به اشتراک گذاشت."
       }
     ]
   },
@@ -2045,6 +3947,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "服务成本报表按客户列出近 12 个月每 1,000 年度价值花费的小时，让你看出谁的服务成本最高。"
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "净收入留存率（NRR）",
+        "seo": [
+          "什么是净收入留存率（NRR）？定义与公式 | Curahold",
+          "净收入留存率显示一组现有客户一年后带来多少经常性收入，计入续约、增购、降级和流失，不含新客户。本文说明它的计算方法、为什么高于 100% 很重要，以及团队如何提升它。"
+        ],
+        "lead": "净收入留存率（NRR）是一组客户今天带来的经常性收入，占同一批客户一年前收入的比例。",
+        "body": [
+          {
+            "h": "如何计算"
+          },
+          {
+            "p": "取期初已有客户的经常性收入，加上他们的增购，减去降级和流失，再除以期初数值。新客户不计入。"
+          },
+          {
+            "h": "团队为什么关注它"
+          },
+          {
+            "ul": [
+              "高于 100% 说明现有客户自己在增长。",
+              "它能看出续约和增购是否超过损失。",
+              "它变化缓慢，奖励的是持续的客户工作。"
+            ]
+          }
+        ],
+        "curahold": "续约和增购商机与新商机位于同一个销售管道中，续约视图按续约月份列出每个客户及其面临风险的金额。"
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "年度经常性收入（ARR）",
+        "seo": [
+          "什么是年度经常性收入（ARR）？简明定义 | Curahold",
+          "年度经常性收入是已签订阅的年度价值。本文说明哪些收入计入、哪些不计入，以及团队如何按客户查看 ARR，把精力放在最大的续约上，并看清客户沉默时有多少收入面临风险。"
+        ],
+        "lead": "年度经常性收入（ARR）是有效订阅的年度价值：如果一切不变，客户在十二个月内将支付的金额。",
+        "body": [
+          {
+            "h": "哪些计入"
+          },
+          {
+            "ul": [
+              "订阅费，折算为年度金额。",
+              "经常性的附加功能和额外席位。",
+              "不含设置、培训等一次性费用。"
+            ]
+          },
+          {
+            "h": "为什么要按客户看"
+          },
+          {
+            "p": "每个客户的 ARR 显示收入在哪里，团队可以给最大的续约应有的关注，并在客户沉默时看到有多少收入面临风险。"
+          }
+        ],
+        "curahold": "ARR 可以是每个客户的一个字段，报表可按负责人、健康评分区间或续约月份汇总，并遵循每位读者自己的权限。"
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "业务回顾（QBR）",
+        "seo": [
+          "什么是业务回顾（QBR）？目的与议程 | Curahold",
+          "业务回顾是客户与供应商定期回顾成果、未兑现的承诺和下一阶段计划的会议，通常每季度一次。本文介绍它应涵盖的内容，以及为什么好的回顾要以有负责人和日期的下一步结束。"
+        ],
+        "lead": "业务回顾通常按季度进行，也称 QBR，是客户与供应商回顾成果并商定下一阶段计划的会议。",
+        "body": [
+          {
+            "h": "涵盖哪些内容"
+          },
+          {
+            "ul": [
+              "对照上次设定目标的成果。",
+              "客户方发生了什么变化。",
+              "未完成的请求和承诺及其进展。",
+              "下一阶段的计划和负责人。"
+            ]
+          },
+          {
+            "h": "怎样才有用"
+          },
+          {
+            "p": "以有负责人和日期的下一步结束。行动没有写下来的回顾，到下一次之前就会被忘记。"
+          }
+        ],
+        "curahold": "业务回顾是客户时间线上的一次会议，会上写下的下一步会变成有负责人和日期的任务。"
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager（CSM）",
+        "seo": [
+          "Customer Success Manager 做什么？ | Curahold",
+          "Customer Success Manager 在成交后负责一组客户：上线、使用、定期沟通、业务回顾、续约，以及及早发现风险，让客户获得所买的价值并留下来。本文介绍这个角色的职责和时间分配。"
+        ],
+        "lead": "Customer Success Manager（CSM）在成交后负责一组客户，让他们获得所购买的价值并留下来。",
+        "body": [
+          {
+            "h": "这个角色通常包括"
+          },
+          {
+            "ul": [
+              "带新客户上线，或从上线团队接手。",
+              "定期沟通和业务回顾。",
+              "关注健康状况，对早期预警采取行动。",
+              "准备续约，发现增长空间。"
+            ]
+          },
+          {
+            "h": "时间花在哪里"
+          },
+          {
+            "p": "一位 CSM 往往负责几十个客户。知道本周哪一个最需要关注，比平均分配时间更重要。"
+          }
+        ],
+        "curahold": "每个客户在每个部门都有一位负责人，每个人的列表按谁最需要他排序，并附上原因和下一步。"
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "增购收入",
+        "seo": [
+          "什么是增购收入？追加销售与交叉销售 | Curahold",
+          "增购收入是来自现有客户的额外经常性收入：更多席位、更高套餐或另一款产品。本文说明它来自追加销售、交叉销售还是客户自身的增长，以及在什么时候提出最合适。"
+        ],
+        "lead": "增购收入是来自现有客户的额外经常性收入：更多席位、更高的套餐或另一款产品。",
+        "body": [
+          {
+            "h": "从哪里来"
+          },
+          {
+            "ul": [
+              "追加销售：更多已在用的，或更高的套餐。",
+              "交叉销售：他们还没有的产品。",
+              "客户自身的增长：新团队、新站点或新国家。"
+            ]
+          },
+          {
+            "h": "何时提出"
+          },
+          {
+            "p": "增购跟随价值而来。在客户能说出的成果之后最容易，在上次请求的承诺仍未兑现时最难。"
+          }
+        ],
+        "curahold": "产品视图显示哪个客户拥有哪款产品，空白一目了然，为其中一项创建任务只需一次点击。"
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "价值实现时间",
+        "seo": [
+          "什么是价值实现时间（TTV）？如何缩短 | Curahold",
+          "价值实现时间是新客户从签约到获得第一个可说出的成果所等待的时间。本文说明它为什么直接影响第一次续约，以及团队如何通过启动会、交接和共享计划来缩短它。"
+        ],
+        "lead": "价值实现时间是新客户从签约到看到并能说出第一个成果之间所等待的时间。",
+        "body": [
+          {
+            "h": "为什么重要"
+          },
+          {
+            "p": "第一次续约对话从签约当天就开始了。几周内看到价值的客户谈增长，仍在等待的客户谈价格。"
+          },
+          {
+            "h": "团队如何缩短它"
+          },
+          {
+            "ul": [
+              "在启动会上商定一个有日期的首个成果。",
+              "交接销售做出的承诺，避免重复询问。",
+              "与客户共享计划，让双方都看到下一步。"
+            ]
+          }
+        ],
+        "curahold": "上线计划包含步骤、目标和日期，你选择的步骤可以在客户门户中与客户共享。"
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "成功计划",
+        "seo": [
+          "什么是客户成功计划？组成与用法 | Curahold",
+          "成功计划写下客户想要达成的目标、双方要采取的步骤、负责人和日期，以及衡量进展的指标。本文说明它通常包含哪些部分，以及如何在每次沟通和业务回顾中使用它。"
+        ],
+        "lead": "成功计划写下客户想要达成什么、双方将采取哪些步骤，以及如何衡量进展。",
+        "body": [
+          {
+            "h": "通常包含"
+          },
+          {
+            "ul": [
+              "客户用自己的话表述的目标。",
+              "双方的步骤、负责人和日期。",
+              "体现进展的衡量指标。"
+            ]
+          },
+          {
+            "h": "如何使用"
+          },
+          {
+            "p": "它是每次沟通和业务回顾的参照。双方一起更新，就能朝着同一个结果努力。"
+          }
+        ],
+        "curahold": "上线计划记录目标、有负责人和日期的步骤以及你跟踪的指标，面向客户的步骤可以在门户中共享。"
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "干系人地图",
+        "seo": [
+          "什么是干系人地图？B2B 中的用法 | Curahold",
+          "干系人地图列出客户方影响决策的人、他们的角色、影响力和立场，以及还没见过的人。本文说明它记录什么，以及为什么在成交之后、尤其是续约之前也同样重要。"
+        ],
+        "lead": "干系人地图列出客户方参与决策的人、他们的角色以及各自的立场。",
+        "body": [
+          {
+            "h": "记录什么"
+          },
+          {
+            "ul": [
+              "每个人的角色和影响力。",
+              "立场：支持、中立或反对。",
+              "尚未见过面的人。"
+            ]
+          },
+          {
+            "h": "为什么在成交后也重要"
+          },
+          {
+            "p": "续约决定很少由一个人做出。当内部支持者离开时，地图能显示还有谁了解价值、谁需要听到它。"
+          }
+        ],
+        "curahold": "每个商机都保存干系人及其职务和立场，并随交接卡片一起转给接手客户的团队。"
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "内部支持者（Champion）",
+        "seo": [
+          "什么是客户方的内部支持者（Champion）？ | Curahold",
+          "内部支持者是客户方相信你的产品、并在公司内部为它争取的人。本文说明为什么有活跃支持者的客户更容易续约，以及当支持者离职时团队应该采取哪些步骤。"
+        ],
+        "lead": "内部支持者（Champion）是客户方相信你所提供的东西，并在其公司内部为它争取的人。",
+        "body": [
+          {
+            "h": "为什么重要"
+          },
+          {
+            "p": "他推动会议安排、维护预算并及早提出问题。有活跃内部支持者的客户更容易续约。"
+          },
+          {
+            "h": "支持者离开时"
+          },
+          {
+            "ul": [
+              "弄清由谁接手他的那部分工作。",
+              "向留下的人重新展示价值。",
+              "在找到新的支持者之前把它当作风险。"
+            ]
+          }
+        ],
+        "curahold": "是否有内部支持者可以作为健康评分中的一个信号，没有支持者或支持者已离开的客户会排到前面。"
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "从销售到客户成功的交接",
+        "seo": [
+          "销售到客户成功的交接：要传递什么 | Curahold",
+          "从销售到客户成功的交接要传递干系人、销售中做出的承诺、未完成的请求和关键日期，让客户不必把一切重新解释一遍。本文列出要传递的内容和最常见的问题。"
+        ],
+        "lead": "从销售到客户成功的交接，把下一个团队需要的一切传递过去，让客户永远不必把一切重新解释一遍。",
+        "body": [
+          {
+            "h": "要传递什么"
+          },
+          {
+            "ul": [
+              "干系人以及各自的立场。",
+              "销售过程中做出的承诺。",
+              "未完成的请求和产品问题。",
+              "成交日期和续约日期。"
+            ]
+          },
+          {
+            "h": "常见问题"
+          },
+          {
+            "p": "销售通话中做出却没人记下的承诺。客户记得，新团队却不知道。"
+          }
+        ],
+        "curahold": "赢单的商机以一张交接卡片送达下一个团队，包含干系人、做出的承诺、未完成的产品请求和关键日期。"
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "功能请求",
+        "seo": [
+          "如何处理 B2B 客户的功能请求？ | Curahold",
+          "功能请求是客户要求产品目前还做不到的事。本文说明如何记录是谁提出的、为什么重要，如何把同类请求关联起来并排优先级，以及如何在完成时告诉客户、形成闭环。"
+        ],
+        "lead": "功能请求是客户要求产品目前还做不到的事，常常出现在会议或支持对话中。",
+        "body": [
+          {
+            "h": "如何处理好"
+          },
+          {
+            "ul": [
+              "记录是谁提出的，以及为什么对他重要。",
+              "把关于同一件事的请求关联起来。",
+              "按等待的客户和价值排优先级。"
+            ]
+          },
+          {
+            "h": "形成闭环"
+          },
+          {
+            "p": "大多数团队忽略的是在工作完成时告诉客户。用一条发布说明回应的请求，比功能本身更能建立信任。"
+          }
+        ],
+        "curahold": "多个客户请求可以关联到同一个用户故事；待办事项显示等待的客户、其价值和最近的续约，工作完成时负责人会收到一份可直接发送的草稿。"
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "客户接触点",
+        "seo": [
+          "什么是客户接触点？定义与示例 | Curahold",
+          "客户接触点是客户与团队之间的每一次接触：电话、会议、邮件或对请求的回复。本文说明为什么接触的节奏比次数更重要，以及每次接触之后应该留下哪些信息。"
+        ],
+        "lead": "客户接触点是客户与你的团队之间的每一次接触：一次通话、一次会议、一封邮件或对请求的回复。",
+        "body": [
+          {
+            "h": "为什么节奏重要"
+          },
+          {
+            "p": "长时间的沉默是早期预警。六周没人联系过的客户，比每月见面的客户更难续约。"
+          },
+          {
+            "h": "每次要留下什么"
+          },
+          {
+            "ul": [
+              "发生时间和参与者。",
+              "做出的决定。",
+              "有负责人和日期的下一步。"
+            ]
+          }
+        ],
+        "curahold": "会议、通话和备注保存在每个客户的时间线上，距上次联系的时间计入健康评分，每个客户都可以设置回顾节奏。"
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "会议跟进",
+        "seo": [
+          "客户会议跟进：真正落实的下一步 | Curahold",
+          "会议跟进是把与客户商定的事项变成有负责人和日期的工作，让承诺得到兑现，客户也看得到。本文说明下一步为什么容易被遗漏，以及好的跟进具体是什么样子。"
+        ],
+        "lead": "会议跟进是在细节淡忘之前，把客户会议上商定的事项变成有负责人和日期的工作。",
+        "body": [
+          {
+            "h": "为什么会遗漏"
+          },
+          {
+            "p": "下一步留在某个人的笔记里。一周后没人记得谁说过要做什么，而客户最先察觉。"
+          },
+          {
+            "h": "好的跟进是什么样"
+          },
+          {
+            "ul": [
+              "通话结束前写下下一步。",
+              "每一项都有负责人和日期。",
+              "给客户发一条简短的确认。"
+            ]
+          }
+        ],
+        "curahold": "写在会议备注中的下一步会变成关联到客户、有负责人和日期的任务，承诺也可以在客户门户中与客户共享。"
       }
     ]
   },
@@ -2380,6 +4662,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "服務成本報表依客戶列出近 12 個月每 1,000 年度價值花費的小時，讓你看出誰的服務成本最高。"
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "淨收入留存率（NRR）",
+        "seo": [
+          "什麼是淨收入留存率（NRR）？定義與公式 | Curahold",
+          "淨收入留存率顯示一組現有客戶一年後帶來多少經常性收入，計入續約、加購、降級和流失，不含新客戶。本文說明計算方法、為什麼高於 100% 很重要，以及團隊如何提升它。"
+        ],
+        "lead": "淨收入留存率（NRR）是一組客戶今天帶來的經常性收入，佔同一批客戶一年前收入的比例。",
+        "body": [
+          {
+            "h": "如何計算"
+          },
+          {
+            "p": "取期初已有客戶的經常性收入，加上他們的加購，減去降級和流失，再除以期初數值。新客戶不計入。"
+          },
+          {
+            "h": "團隊為什麼關注它"
+          },
+          {
+            "ul": [
+              "高於 100% 表示現有客戶自己在成長。",
+              "它能看出續約和加購是否超過損失。",
+              "它變化緩慢，獎勵的是持續的客戶經營。"
+            ]
+          }
+        ],
+        "curahold": "續約和加購交易與新交易位於同一個銷售漏斗中，續約檢視依續約月份列出每個客戶及其面臨風險的金額。"
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "年度經常性收入（ARR）",
+        "seo": [
+          "什麼是年度經常性收入（ARR）？簡明定義 | Curahold",
+          "年度經常性收入是已簽訂閱的年度價值。本文說明哪些收入計入、哪些不計入，以及團隊如何依客戶查看 ARR，把心力放在最大的續約上，並看清客戶沉默時有多少收入面臨風險。"
+        ],
+        "lead": "年度經常性收入（ARR）是有效訂閱的年度價值：如果一切不變，客戶在十二個月內將支付的金額。",
+        "body": [
+          {
+            "h": "哪些計入"
+          },
+          {
+            "ul": [
+              "訂閱費，換算為年度金額。",
+              "經常性的附加功能和額外席次。",
+              "不含設定、教育訓練等一次性費用。"
+            ]
+          },
+          {
+            "h": "為什麼要依客戶看"
+          },
+          {
+            "p": "每個客戶的 ARR 顯示收入在哪裡，團隊可以給最大的續約應有的關注，並在客戶沉默時看到有多少收入面臨風險。"
+          }
+        ],
+        "curahold": "ARR 可以是每個客戶的一個欄位，報表可依負責人、健康評分區間或續約月份加總，並遵循每位讀者自己的權限。"
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "業務檢視（QBR）",
+        "seo": [
+          "什麼是業務檢視（QBR）？目的與議程 | Curahold",
+          "業務檢視是客戶與供應商定期檢視成果、尚未兌現的承諾和下一階段計畫的會議，通常每季一次。本文介紹它應涵蓋的內容，以及為什麼好的檢視要以有負責人和日期的下一步結束。"
+        ],
+        "lead": "業務檢視通常每季進行，也稱 QBR，是客戶與供應商檢視成果並議定下一階段計畫的會議。",
+        "body": [
+          {
+            "h": "涵蓋哪些內容"
+          },
+          {
+            "ul": [
+              "對照上次設定目標的成果。",
+              "客戶端發生了哪些變化。",
+              "尚未完成的請求和承諾及其進度。",
+              "下一階段的計畫和負責人。"
+            ]
+          },
+          {
+            "h": "怎樣才有用"
+          },
+          {
+            "p": "以有負責人和日期的下一步結束。行動沒有寫下來的檢視，到下一次之前就會被忘記。"
+          }
+        ],
+        "curahold": "業務檢視是客戶時間軸上的一場會議，會中寫下的下一步會變成有負責人和日期的任務。"
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager（CSM）",
+        "seo": [
+          "Customer Success Manager 做什麼？ | Curahold",
+          "Customer Success Manager 在成交後負責一組客戶：導入、使用、定期溝通、業務檢視、續約，以及及早發現風險，讓客戶獲得所買的價值並留下來。本文介紹這個角色的職責和時間分配。"
+        ],
+        "lead": "Customer Success Manager（CSM）在成交後負責一組客戶，讓他們獲得所購買的價值並留下來。",
+        "body": [
+          {
+            "h": "這個角色通常包括"
+          },
+          {
+            "ul": [
+              "帶新客戶完成導入，或從導入團隊接手。",
+              "定期溝通和業務檢視。",
+              "關注健康狀況，對早期警訊採取行動。",
+              "準備續約，找出成長空間。"
+            ]
+          },
+          {
+            "h": "時間花在哪裡"
+          },
+          {
+            "p": "一位 CSM 往往負責幾十個客戶。知道本週哪一個最需要關注，比平均分配時間更重要。"
+          }
+        ],
+        "curahold": "每個客戶在每個部門都有一位負責人，每個人的清單依誰最需要他排序，並附上原因和下一步。"
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "加購收入",
+        "seo": [
+          "什麼是加購收入？追加銷售與交叉銷售 | Curahold",
+          "加購收入是來自現有客戶的額外經常性收入：更多席次、更高方案或另一項產品。本文說明它來自追加銷售、交叉銷售還是客戶自身的成長，以及在什麼時候提出最合適。"
+        ],
+        "lead": "加購收入是來自現有客戶的額外經常性收入：更多席次、更高的方案或另一項產品。",
+        "body": [
+          {
+            "h": "從哪裡來"
+          },
+          {
+            "ul": [
+              "追加銷售：更多已在用的，或更高的方案。",
+              "交叉銷售：他們還沒有的產品。",
+              "客戶自身的成長：新團隊、新據點或新國家。"
+            ]
+          },
+          {
+            "h": "何時提出"
+          },
+          {
+            "p": "加購跟隨價值而來。在客戶說得出的成果之後最容易，在上次請求的承諾仍未兌現時最難。"
+          }
+        ],
+        "curahold": "產品檢視顯示哪個客戶擁有哪項產品，空白一目了然，為其中一項建立任務只需點一下。"
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "價值實現時間",
+        "seo": [
+          "什麼是價值實現時間（TTV）？如何縮短 | Curahold",
+          "價值實現時間是新客戶從簽約到獲得第一個說得出的成果所等待的時間。本文說明它為什麼直接影響第一次續約，以及團隊如何透過啟動會議、交接和共享計畫來縮短它。"
+        ],
+        "lead": "價值實現時間是新客戶從簽約到看到並說得出第一個成果之間所等待的時間。",
+        "body": [
+          {
+            "h": "為什麼重要"
+          },
+          {
+            "p": "第一次續約對話從簽約當天就開始了。幾週內看到價值的客戶談成長，仍在等待的客戶談價格。"
+          },
+          {
+            "h": "團隊如何縮短它"
+          },
+          {
+            "ul": [
+              "在啟動會議上議定一個有日期的首個成果。",
+              "交接業務做出的承諾，避免重複詢問。",
+              "與客戶共享計畫，讓雙方都看到下一步。"
+            ]
+          }
+        ],
+        "curahold": "導入計畫包含步驟、目標和日期，你選擇的步驟可以在客戶入口網站中與客戶共享。"
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "成功計畫",
+        "seo": [
+          "什麼是客戶成功計畫？組成與用法 | Curahold",
+          "成功計畫寫下客戶想達成的目標、雙方要採取的步驟、負責人和日期，以及衡量進展的指標。本文說明它通常包含哪些部分，以及如何在每次溝通和業務檢視中使用它。"
+        ],
+        "lead": "成功計畫寫下客戶想達成什麼、雙方將採取哪些步驟，以及如何衡量進展。",
+        "body": [
+          {
+            "h": "通常包含"
+          },
+          {
+            "ul": [
+              "客戶用自己的話描述的目標。",
+              "雙方的步驟、負責人和日期。",
+              "呈現進展的衡量指標。"
+            ]
+          },
+          {
+            "h": "如何使用"
+          },
+          {
+            "p": "它是每次溝通和業務檢視的參照。雙方一起更新，就能朝同一個結果努力。"
+          }
+        ],
+        "curahold": "導入計畫記錄目標、有負責人和日期的步驟以及你追蹤的指標，面向客戶的步驟可以在入口網站中共享。"
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "關係人地圖",
+        "seo": [
+          "什麼是關係人地圖？B2B 中的用法 | Curahold",
+          "關係人地圖列出客戶端影響決策的人、他們的角色、影響力和立場，以及還沒見過的人。本文說明它記錄什麼，以及為什麼在成交之後、尤其是續約之前也同樣重要。"
+        ],
+        "lead": "關係人地圖列出客戶端參與決策的人、他們的角色以及各自的立場。",
+        "body": [
+          {
+            "h": "記錄什麼"
+          },
+          {
+            "ul": [
+              "每個人的角色和影響力。",
+              "立場：支持、中立或反對。",
+              "尚未見過面的人。"
+            ]
+          },
+          {
+            "h": "為什麼成交後也重要"
+          },
+          {
+            "p": "續約決定很少由一個人做出。當內部支持者離開時，地圖能顯示還有誰了解價值、誰需要聽到它。"
+          }
+        ],
+        "curahold": "每筆交易都保存關係人及其職稱和立場，並隨交接卡片一起轉給接手客戶的團隊。"
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "內部支持者（Champion）",
+        "seo": [
+          "什麼是客戶端的內部支持者（Champion）？ | Curahold",
+          "內部支持者是客戶端相信你的產品、並在公司內部為它爭取的人。本文說明為什麼有活躍支持者的客戶更容易續約，以及當支持者離職時團隊應該採取哪些步驟。"
+        ],
+        "lead": "內部支持者（Champion）是客戶端相信你所提供的東西，並在其公司內部為它爭取的人。",
+        "body": [
+          {
+            "h": "為什麼重要"
+          },
+          {
+            "p": "他推動會議安排、守住預算並及早提出問題。有活躍內部支持者的客戶更容易續約。"
+          },
+          {
+            "h": "支持者離開時"
+          },
+          {
+            "ul": [
+              "弄清楚由誰接手他的那部分工作。",
+              "向留下的人重新展示價值。",
+              "在找到新的支持者之前把它當作風險。"
+            ]
+          }
+        ],
+        "curahold": "是否有內部支持者可以作為健康評分中的一個訊號，沒有支持者或支持者已離開的客戶會排到前面。"
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "從業務到客戶成功的交接",
+        "seo": [
+          "業務到客戶成功的交接：要傳遞什麼 | Curahold",
+          "從業務到客戶成功的交接要傳遞關係人、銷售中做出的承諾、尚未完成的請求和關鍵日期，讓客戶不必把一切重新解釋一遍。本文列出要傳遞的內容和最常見的問題。"
+        ],
+        "lead": "從業務到客戶成功的交接，把下一個團隊需要的一切傳遞過去，讓客戶永遠不必把一切重新解釋一遍。",
+        "body": [
+          {
+            "h": "要傳遞什麼"
+          },
+          {
+            "ul": [
+              "關係人以及各自的立場。",
+              "銷售過程中做出的承諾。",
+              "尚未完成的請求和產品問題。",
+              "成交日期和續約日期。"
+            ]
+          },
+          {
+            "h": "常見問題"
+          },
+          {
+            "p": "銷售通話中做出卻沒人記下的承諾。客戶記得，新團隊卻不知道。"
+          }
+        ],
+        "curahold": "贏得的交易以一張交接卡片送達下一個團隊，包含關係人、做出的承諾、尚未完成的產品請求和關鍵日期。"
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "功能需求",
+        "seo": [
+          "如何處理 B2B 客戶的功能需求？ | Curahold",
+          "功能需求是客戶要求產品目前還做不到的事。本文說明如何記錄是誰提出的、為什麼重要，如何把同類需求連結起來並排定優先順序，以及如何在完成時告訴客戶、形成閉環。"
+        ],
+        "lead": "功能需求是客戶要求產品目前還做不到的事，常常出現在會議或支援對話中。",
+        "body": [
+          {
+            "h": "如何處理得好"
+          },
+          {
+            "ul": [
+              "記錄是誰提出的，以及為什麼對他重要。",
+              "把同一件事的需求連結起來。",
+              "依等待的客戶和價值排定優先順序。"
+            ]
+          },
+          {
+            "h": "形成閉環"
+          },
+          {
+            "p": "大多數團隊忽略的是在工作完成時告訴客戶。用一則版本說明回應的需求，比功能本身更能建立信任。"
+          }
+        ],
+        "curahold": "多個客戶需求可以連結到同一個使用者故事；待辦事項顯示等待的客戶、其價值和最近的續約，工作完成時負責人會收到一份可直接寄出的草稿。"
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "客戶接觸點",
+        "seo": [
+          "什麼是客戶接觸點？定義與範例 | Curahold",
+          "客戶接觸點是客戶與團隊之間的每一次接觸：電話、會議、電子郵件或對請求的回覆。本文說明為什麼接觸的節奏比次數更重要，以及每次接觸之後應該留下哪些資訊。"
+        ],
+        "lead": "客戶接觸點是客戶與你的團隊之間的每一次接觸：一通電話、一場會議、一封電子郵件或對請求的回覆。",
+        "body": [
+          {
+            "h": "為什麼節奏重要"
+          },
+          {
+            "p": "長時間的沉默是早期警訊。六週沒人聯絡過的客戶，比每月見面的客戶更難續約。"
+          },
+          {
+            "h": "每次要留下什麼"
+          },
+          {
+            "ul": [
+              "發生時間和參與者。",
+              "做出的決定。",
+              "有負責人和日期的下一步。"
+            ]
+          }
+        ],
+        "curahold": "會議、通話和備註保存在每個客戶的時間軸上，距上次聯絡的時間計入健康評分，每個客戶都可以設定檢視節奏。"
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "會議追蹤",
+        "seo": [
+          "客戶會議追蹤：真正落實的下一步 | Curahold",
+          "會議追蹤是把與客戶議定的事項變成有負責人和日期的工作，讓承諾得到兌現，客戶也看得到。本文說明下一步為什麼容易被遺漏，以及好的追蹤具體是什麼樣子。"
+        ],
+        "lead": "會議追蹤是在細節淡忘之前，把客戶會議上議定的事項變成有負責人和日期的工作。",
+        "body": [
+          {
+            "h": "為什麼會遺漏"
+          },
+          {
+            "p": "下一步留在某個人的筆記裡。一週後沒人記得誰說過要做什麼，而客戶最先察覺。"
+          },
+          {
+            "h": "好的追蹤是什麼樣"
+          },
+          {
+            "ul": [
+              "通話結束前寫下下一步。",
+              "每一項都有負責人和日期。",
+              "給客戶一則簡短的確認。"
+            ]
+          }
+        ],
+        "curahold": "寫在會議備註中的下一步會變成連結到客戶、有負責人和日期的任務，承諾也可以在客戶入口網站中與客戶共享。"
       }
     ]
   },
@@ -2715,6 +5377,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "サービス提供コストのレポートは、顧客ごとに直近12か月で年間価値1,000あたりに費やした時間を示すので、手のかかる顧客がひと目でわかります。"
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "売上継続率（NRR）",
+        "seo": [
+          "売上継続率（NRR）とは？定義と計算式 | Curahold",
+          "売上継続率は、既存顧客のグループが1年後にどれだけの継続収益をもたらしているかを示す指標です。更新、拡大、ダウングレード、解約を含めた計算方法と、100%を超える意味を解説します。"
+        ],
+        "lead": "売上継続率（NRR）は、ある顧客グループが今もたらしている継続収益を、同じ顧客の1年前の継続収益と比べた割合です。",
+        "body": [
+          {
+            "h": "計算方法"
+          },
+          {
+            "p": "期首にいた顧客の継続収益から始め、拡大分を足し、ダウングレードと解約を引いて、期首の値で割ります。新規顧客は含めません。"
+          },
+          {
+            "h": "チームが注目する理由"
+          },
+          {
+            "ul": [
+              "100%を超えれば、既存顧客だけで成長していることになります。",
+              "更新と拡大が損失を上回っているかが分かります。",
+              "ゆっくり動く指標なので、地道な顧客対応が報われます。"
+            ]
+          }
+        ],
+        "curahold": "更新と拡大の商談は新規の商談と同じパイプラインにあり、更新ビューでは更新月ごとに全顧客と影響を受ける金額を一覧できます。"
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "年間経常収益（ARR）",
+        "seo": [
+          "年間経常収益（ARR）とは？簡潔な定義 | Curahold",
+          "年間経常収益は、契約中のサブスクリプションの年間価値です。何を含め何を含めないか、そして顧客ごとのARRを見て大きな更新に注力し、リスクのある金額を把握する方法を解説します。"
+        ],
+        "lead": "年間経常収益（ARR）は、有効なサブスクリプションの年間価値です。何も変わらなければ、顧客が12か月で支払う金額にあたります。",
+        "body": [
+          {
+            "h": "含めるもの"
+          },
+          {
+            "ul": [
+              "年額に換算したサブスクリプション料金。",
+              "継続的なアドオンと追加シート。",
+              "初期設定やトレーニングなどの一時費用は含めません。"
+            ]
+          },
+          {
+            "h": "顧客ごとに見る理由"
+          },
+          {
+            "p": "顧客ごとのARRを見れば収益の所在が分かり、大きな更新に必要な手をかけられます。連絡が途絶えた顧客で、どれだけの金額がリスクにあるかも見えます。"
+          }
+        ],
+        "curahold": "ARRは各顧客の項目として持て、レポートで担当者別、ヘルススコアの帯別、更新月別に集計できます。集計は見る人自身の権限の範囲で行われます。"
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "ビジネスレビュー（QBR）",
+        "seo": [
+          "ビジネスレビュー（QBR）とは？目的と議題 | Curahold",
+          "ビジネスレビューは、顧客とベンダーが成果、未完了の約束、次の計画を定期的に確認する会議で、多くは四半期ごとに行います。扱う内容と、担当者と期日つきの次のステップで締める理由を解説します。"
+        ],
+        "lead": "ビジネスレビューは、多くの場合四半期ごとに行う QBR とも呼ばれる会議で、顧客とベンダーが成果を振り返り、次の計画に合意します。",
+        "body": [
+          {
+            "h": "扱う内容"
+          },
+          {
+            "ul": [
+              "前回決めた目標に対する成果。",
+              "顧客側で変わったこと。",
+              "未完了の依頼と約束、それぞれの状況。",
+              "次の期間の計画と担当者。"
+            ]
+          },
+          {
+            "h": "役に立つ会議にするには"
+          },
+          {
+            "p": "担当者と期日のある次のステップで締めくくります。アクションを書き留めないレビューは、次のレビューまでに忘れられます。"
+          }
+        ],
+        "curahold": "ビジネスレビューは顧客のタイムライン上の会議として記録され、そこに書いた次のステップは担当者と期日つきのタスクになります。"
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager（CSM）",
+        "seo": [
+          "CSMの仕事とは？役割と時間の使い方 | Curahold",
+          "Customer Success Managerは、契約後に担当顧客を支える役割です。オンボーディング、活用支援、ビジネスレビュー、更新、リスクの早期発見まで、仕事の中身と時間の使い方を解説します。"
+        ],
+        "lead": "Customer Success Manager（CSM）は契約後に担当顧客を支え、購入した価値を得て使い続けてもらう役割です。",
+        "body": [
+          {
+            "h": "主な仕事"
+          },
+          {
+            "ul": [
+              "新規顧客のオンボーディング、またはオンボーディングチームからの引き継ぎ。",
+              "定期的な打ち合わせとビジネスレビュー。",
+              "ヘルスの確認と、早期の警告への対応。",
+              "更新の準備と拡大の機会の発見。"
+            ]
+          },
+          {
+            "h": "時間の使い方"
+          },
+          {
+            "p": "CSMは数十社を担当することも少なくありません。全社に均等に時間を割くより、今週どの顧客に手が必要かを知ることが大切です。"
+          }
+        ],
+        "curahold": "各顧客には部門ごとに担当者がいて、各自のリストは理由と次のステップつきで、手が必要な順に並びます。"
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "拡大収益",
+        "seo": [
+          "拡大収益とは？アップセルとクロスセル | Curahold",
+          "拡大収益は、既存顧客からの追加の継続収益です。シートの追加、上位プラン、別製品など、アップセル、クロスセル、顧客自身の成長という3つの源泉と、提案に適したタイミングを解説します。"
+        ],
+        "lead": "拡大収益は、既存顧客からの追加の継続収益です。シートの追加、上位プランへの変更、別の製品などから生まれます。",
+        "body": [
+          {
+            "h": "生まれるところ"
+          },
+          {
+            "ul": [
+              "アップセル：今使っているものの追加や上位プラン。",
+              "クロスセル：まだ使っていない製品。",
+              "顧客自身の成長：新しいチーム、拠点、国。"
+            ]
+          },
+          {
+            "h": "提案のタイミング"
+          },
+          {
+            "p": "拡大は価値のあとに来ます。顧客が名前を挙げられる成果のあとが最も提案しやすく、前回の依頼の約束が残っているときが最も難しくなります。"
+          }
+        ],
+        "curahold": "製品ビューでどの顧客がどの製品を使っているかが分かるので、空白が見え、そのためのタスクもワンクリックで作れます。"
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "価値実現までの時間",
+        "seo": [
+          "価値実現までの時間（TTV）とは？短縮のコツ | Curahold",
+          "価値実現までの時間は、新規顧客が契約から最初の成果を実感するまでの期間です。最初の更新に直結する理由と、キックオフ、引き継ぎ、計画の共有で短くする方法を解説します。"
+        ],
+        "lead": "価値実現までの時間は、新規顧客が契約してから、目に見えて名前を挙げられる最初の成果を得るまでの期間です。",
+        "body": [
+          {
+            "h": "なぜ重要か"
+          },
+          {
+            "p": "最初の更新の話は契約の日から始まっています。数週間で価値を感じた顧客は成長の話をし、まだ待っている顧客は価格の話をします。"
+          },
+          {
+            "h": "短くする方法"
+          },
+          {
+            "ul": [
+              "キックオフで、期日つきの最初の成果をひとつ決める。",
+              "営業の約束を引き継ぎ、同じ質問を二度しない。",
+              "計画を顧客と共有し、双方が次のステップを見られるようにする。"
+            ]
+          }
+        ],
+        "curahold": "オンボーディング計画にはステップ、目標、期日があり、選んだステップは顧客のポータルで共有できます。"
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "サクセスプラン",
+        "seo": [
+          "カスタマーサクセスプランとは？構成と使い方 | Curahold",
+          "サクセスプランは、顧客が達成したいこと、双方の取り組み、担当者と期日、進捗の測り方をまとめたものです。主な構成要素と、毎回の打ち合わせやレビューでの使い方を解説します。"
+        ],
+        "lead": "サクセスプランは、顧客が達成したいこと、双方が取るステップ、進捗の測り方を書き留めたものです。",
+        "body": [
+          {
+            "h": "主な内容"
+          },
+          {
+            "ul": [
+              "顧客自身の言葉で書いた目標。",
+              "双方のステップ、担当者、期日。",
+              "進捗を示す指標。"
+            ]
+          },
+          {
+            "h": "使い方"
+          },
+          {
+            "p": "すべての打ち合わせとビジネスレビューの基準になります。一緒に更新していけば、双方が同じ成果に向かって動けます。"
+          }
+        ],
+        "curahold": "オンボーディング計画で目標、担当者と期日つきのステップ、追う指標を管理でき、顧客向けのステップはポータルで共有できます。"
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "ステークホルダーマップ",
+        "seo": [
+          "ステークホルダーマップとは？B2Bでの使い方 | Curahold",
+          "ステークホルダーマップは、顧客側で意思決定に関わる人、その役割と影響力、立場、まだ会っていない人をまとめたものです。何を記録するかと、契約後や更新前にも重要な理由を解説します。"
+        ],
+        "lead": "ステークホルダーマップは、顧客側で意思決定に関わる人、その役割、それぞれの立場をまとめたものです。",
+        "body": [
+          {
+            "h": "記録すること"
+          },
+          {
+            "ul": [
+              "各人の役割と影響力。",
+              "立場：推進派、中立、反対派。",
+              "まだ会っていない人。"
+            ]
+          },
+          {
+            "h": "契約後も重要な理由"
+          },
+          {
+            "p": "更新の判断を一人で下すことはまれです。推進役が去ったとき、マップを見れば、価値を知る人と価値を伝えるべき人が分かります。"
+          }
+        ],
+        "curahold": "各商談がステークホルダーを役職と立場つきで保持し、引き継ぎカードとともに顧客を受け持つチームへ渡ります。"
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "チャンピオン",
+        "seo": [
+          "顧客側のチャンピオンとは？B2Bでの役割 | Curahold",
+          "チャンピオンは、顧客側で自社製品を信頼し、社内で後押ししてくれる人です。活発なチャンピオンがいる顧客が更新しやすい理由と、その人が異動や退職したときに取るべき手順を解説します。"
+        ],
+        "lead": "チャンピオンは、顧客側で提供するものを信頼し、社内で後押ししてくれる人です。",
+        "body": [
+          {
+            "h": "なぜ重要か"
+          },
+          {
+            "p": "会議を設定し、予算を守り、問題を早めに知らせてくれます。活発なチャンピオンがいる顧客は更新しやすくなります。"
+          },
+          {
+            "h": "チャンピオンが去ったとき"
+          },
+          {
+            "ul": [
+              "その人の仕事を誰が引き継ぐかを確認する。",
+              "残った人に改めて価値を示す。",
+              "新しいチャンピオンが見つかるまでリスクとして扱う。"
+            ]
+          }
+        ],
+        "curahold": "チャンピオンの有無をヘルススコアのシグナルにでき、チャンピオンがいない顧客や去った顧客が上位に表示されます。"
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "営業からカスタマーサクセスへの引き継ぎ",
+        "seo": [
+          "営業からカスタマーサクセスへの引き継ぎ | Curahold",
+          "営業からカスタマーサクセスへの引き継ぎでは、ステークホルダー、商談中の約束、未完了の依頼、主要な日付を渡し、顧客が同じ説明を繰り返さずに済むようにします。渡す内容とよくある失敗を解説します。"
+        ],
+        "lead": "営業からカスタマーサクセスへの引き継ぎは、次のチームに必要なことをすべて渡し、顧客が一から説明し直さずに済むようにするものです。",
+        "body": [
+          {
+            "h": "渡すこと"
+          },
+          {
+            "ul": [
+              "ステークホルダーとそれぞれの立場。",
+              "商談中に約束したこと。",
+              "未完了の依頼と製品に関する質問。",
+              "成約日と更新日。"
+            ]
+          },
+          {
+            "h": "よくある失敗"
+          },
+          {
+            "p": "商談の電話で約束したのに誰も書き留めなかったこと。顧客は覚えていますが、新しいチームは知りません。"
+          }
+        ],
+        "curahold": "受注した商談は、ステークホルダー、約束、未完了の製品要望、主要な日付をまとめた1枚の引き継ぎカードとして次のチームに届きます。"
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "機能要望",
+        "seo": [
+          "B2Bの機能要望をどう扱うか | Curahold",
+          "機能要望は、製品がまだできないことを顧客が求めることです。誰がなぜ求めたかの記録、同じ要望の関連づけと優先順位づけ、完成したときに顧客へ伝えて輪を閉じる方法を解説します。"
+        ],
+        "lead": "機能要望は、製品がまだできないことを顧客が求めるもので、会議やサポートのやり取りの中で出てくることが多くあります。",
+        "body": [
+          {
+            "h": "うまく扱うには"
+          },
+          {
+            "ul": [
+              "誰が求めたか、なぜ重要かを記録する。",
+              "同じ内容の要望を関連づける。",
+              "待っている顧客と価値で優先順位をつける。"
+            ]
+          },
+          {
+            "h": "輪を閉じる"
+          },
+          {
+            "p": "多くのチームが見落とすのは、完成したときに顧客へ伝えることです。リリースノートで応えた要望は、機能そのもの以上に信頼を生みます。"
+          }
+        ],
+        "curahold": "複数の顧客要望を1つのストーリーに関連づけられ、バックログには待っている顧客、その価値、直近の更新が表示されます。作業が終わると担当者に送信用の下書きが届きます。"
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "タッチポイント",
+        "seo": [
+          "顧客とのタッチポイントとは？定義と例 | Curahold",
+          "タッチポイントは、顧客とチームのあいだのあらゆる接点です。電話、会議、メール、依頼への返信など、回数より頻度のリズムが大切な理由と、毎回残しておくべき情報を解説します。"
+        ],
+        "lead": "タッチポイントは、顧客とチームのあいだのあらゆる接点です。電話、会議、メール、依頼への返信などが含まれます。",
+        "body": [
+          {
+            "h": "リズムが大切な理由"
+          },
+          {
+            "p": "長い沈黙は早期の警告です。6週間誰も話していない顧客は、毎月会っている顧客より更新が難しくなります。"
+          },
+          {
+            "h": "毎回残すこと"
+          },
+          {
+            "ul": [
+              "いつ、誰が参加したか。",
+              "何が決まったか。",
+              "担当者と期日つきの次のステップ。"
+            ]
+          }
+        ],
+        "curahold": "会議、電話、メモは各顧客のタイムラインに残り、最後の接点からの日数はヘルススコアに反映されます。顧客ごとにレビューの頻度も設定できます。"
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "会議のフォローアップ",
+        "seo": [
+          "顧客との会議のフォローアップ | Curahold",
+          "会議のフォローアップは、顧客と合意したことを担当者と期日つきの仕事に変え、約束を守り、顧客にもそれが見えるようにすることです。次のステップが漏れる理由と、よいフォローアップの形を解説します。"
+        ],
+        "lead": "会議のフォローアップは、顧客との会議で合意したことを、細部を忘れないうちに担当者と期日つきの仕事に変えることです。",
+        "body": [
+          {
+            "h": "漏れてしまう理由"
+          },
+          {
+            "p": "次のステップが誰かのメモに残ったままになります。1週間後には誰が何をすると言ったか誰も覚えておらず、最初に気づくのは顧客です。"
+          },
+          {
+            "h": "よいフォローアップとは"
+          },
+          {
+            "ul": [
+              "通話が終わる前に次のステップを書く。",
+              "それぞれに担当者と期日をつける。",
+              "顧客に確認の短いメモを送る。"
+            ]
+          }
+        ],
+        "curahold": "会議のメモに書いた次のステップは、顧客に紐づいた担当者と期日つきのタスクになり、約束は顧客のポータルで共有できます。"
       }
     ]
   },
@@ -3050,6 +6092,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "서비스 비용 보고서는 고객별로 최근 12개월 동안 연간 가치 1,000당 들인 시간을 보여 주므로, 관리 비용이 가장 큰 고객을 알 수 있습니다."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "순매출 유지율(NRR)",
+        "seo": [
+          "순매출 유지율(NRR)이란? 정의와 계산법 | Curahold",
+          "순매출 유지율은 기존 고객 그룹이 1년 뒤 얼마나 많은 반복 매출을 가져오는지 보여 줍니다. 갱신, 확장, 다운그레이드, 이탈을 반영한 계산법과 100%를 넘는 의미를 설명합니다."
+        ],
+        "lead": "순매출 유지율(NRR)은 한 고객 그룹이 지금 가져오는 반복 매출을, 같은 고객들이 1년 전에 가져온 매출과 비교한 비율입니다.",
+        "body": [
+          {
+            "h": "계산 방법"
+          },
+          {
+            "p": "기간 초에 있던 고객의 반복 매출에서 시작해 확장분을 더하고 다운그레이드와 이탈을 뺀 뒤, 시작 값으로 나눕니다. 신규 고객은 포함하지 않습니다."
+          },
+          {
+            "h": "팀이 주목하는 이유"
+          },
+          {
+            "ul": [
+              "100%를 넘으면 기존 고객만으로 성장하고 있다는 뜻입니다.",
+              "갱신과 확장이 손실보다 큰지 알 수 있습니다.",
+              "천천히 움직이는 지표라 꾸준한 고객 관리가 보상받습니다."
+            ]
+          }
+        ],
+        "curahold": "갱신과 확장 거래는 신규 거래와 같은 파이프라인에 있고, 갱신 화면은 갱신 월별로 모든 고객과 위험에 놓인 금액을 보여 줍니다."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "연간 반복 매출(ARR)",
+        "seo": [
+          "연간 반복 매출(ARR)이란? 간단한 정의 | Curahold",
+          "연간 반복 매출은 계약된 구독의 연간 가치입니다. 무엇을 포함하고 무엇을 빼는지, 그리고 고객별 ARR을 보며 큰 갱신에 집중하고 위험한 금액을 파악하는 방법을 설명합니다."
+        ],
+        "lead": "연간 반복 매출(ARR)은 유효한 구독의 연간 가치입니다. 아무것도 바뀌지 않는다면 고객이 12개월 동안 낼 금액입니다.",
+        "body": [
+          {
+            "h": "포함하는 것"
+          },
+          {
+            "ul": [
+              "연 단위로 환산한 구독료.",
+              "반복되는 부가 기능과 추가 좌석.",
+              "설정이나 교육 같은 일회성 비용은 포함하지 않습니다."
+            ]
+          },
+          {
+            "h": "고객별로 봐야 하는 이유"
+          },
+          {
+            "p": "고객별 ARR을 보면 매출이 어디에 있는지 알 수 있어, 가장 큰 갱신에 필요한 관심을 기울이고 연락이 끊긴 고객에게 얼마가 걸려 있는지 볼 수 있습니다."
+          }
+        ],
+        "curahold": "ARR을 각 고객의 필드로 두고, 보고서에서 담당자, 헬스 스코어 구간, 갱신 월별로 합산할 수 있습니다. 합산은 보는 사람의 권한 범위에서 이뤄집니다."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "비즈니스 리뷰(QBR)",
+        "seo": [
+          "비즈니스 리뷰(QBR)란? 목적과 안건 | Curahold",
+          "비즈니스 리뷰는 고객과 공급사가 성과, 남은 약속, 다음 계획을 정기적으로 점검하는 회의입니다. 다룰 내용과 담당자와 기한이 있는 다음 단계로 마무리해야 하는 이유를 설명합니다."
+        ],
+        "lead": "비즈니스 리뷰는 보통 분기마다 열려 QBR이라고도 하며, 고객과 공급사가 성과를 돌아보고 다음 계획에 합의하는 회의입니다.",
+        "body": [
+          {
+            "h": "다루는 내용"
+          },
+          {
+            "ul": [
+              "지난번에 정한 목표 대비 성과.",
+              "고객 쪽에서 달라진 점.",
+              "남은 요청과 약속, 각각의 진행 상황.",
+              "다음 기간의 계획과 담당자."
+            ]
+          },
+          {
+            "h": "쓸모 있는 리뷰로 만들려면"
+          },
+          {
+            "p": "담당자와 기한이 있는 다음 단계로 마무리하세요. 할 일을 적어 두지 않은 리뷰는 다음 리뷰 전에 잊힙니다."
+          }
+        ],
+        "curahold": "비즈니스 리뷰는 고객 타임라인의 회의로 남고, 거기에 적은 다음 단계는 담당자와 기한이 있는 작업이 됩니다."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager(CSM)",
+        "seo": [
+          "CSM은 무슨 일을 하나요? 역할과 시간 배분 | Curahold",
+          "Customer Success Manager는 계약 뒤 담당 고객의 온보딩, 활용, 리뷰, 갱신, 위험 조기 발견을 책임집니다. 이 역할이 하는 일과 시간 배분을 설명합니다."
+        ],
+        "lead": "Customer Success Manager(CSM)는 계약 뒤 담당 고객을 맡아, 고객이 산 가치를 얻고 계속 쓰도록 돕는 역할입니다.",
+        "body": [
+          {
+            "h": "주요 업무"
+          },
+          {
+            "ul": [
+              "신규 고객 온보딩, 또는 온보딩 팀으로부터 인계.",
+              "정기 미팅과 비즈니스 리뷰.",
+              "헬스 상태를 살피고 초기 경고에 대응.",
+              "갱신 준비와 확장 기회 발견."
+            ]
+          },
+          {
+            "h": "시간은 어디에 쓰나"
+          },
+          {
+            "p": "CSM은 수십 개 고객을 맡는 경우가 많습니다. 모두에게 똑같이 시간을 나누기보다 이번 주 어느 고객에게 손이 필요한지 아는 것이 더 중요합니다."
+          }
+        ],
+        "curahold": "각 고객은 부서마다 담당자가 있고, 각자의 목록은 이유와 다음 단계와 함께 도움이 필요한 순서로 정렬됩니다."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "확장 매출",
+        "seo": [
+          "확장 매출이란? 업셀과 크로스셀 | Curahold",
+          "확장 매출은 기존 고객에게서 나오는 추가 반복 매출입니다. 업셀, 크로스셀, 고객 자체의 성장이라는 세 가지 출처와 제안하기 좋은 시점을 설명합니다."
+        ],
+        "lead": "확장 매출은 이미 있는 고객에게서 나오는 추가 반복 매출입니다. 좌석 추가, 상위 요금제, 다른 제품 등에서 생깁니다.",
+        "body": [
+          {
+            "h": "어디서 오나"
+          },
+          {
+            "ul": [
+              "업셀: 이미 쓰는 것을 더 많이, 또는 상위 요금제.",
+              "크로스셀: 아직 쓰지 않는 제품.",
+              "고객의 성장: 새 팀, 지점, 국가."
+            ]
+          },
+          {
+            "h": "언제 제안하나"
+          },
+          {
+            "p": "확장은 가치 뒤에 옵니다. 고객이 이름을 댈 수 있는 성과 뒤가 가장 쉽고, 지난 요청에 대한 약속이 아직 남아 있을 때가 가장 어렵습니다."
+          }
+        ],
+        "curahold": "제품 화면에서 어느 고객이 어떤 제품을 쓰는지 보여 주므로 빈자리가 드러나고, 그중 하나에 대한 작업도 클릭 한 번으로 만들 수 있습니다."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "가치 실현 시간",
+        "seo": [
+          "가치 실현 시간(TTV)이란? 줄이는 방법 | Curahold",
+          "가치 실현 시간은 신규 고객이 계약부터 첫 성과까지 기다리는 시간입니다. 첫 갱신에 영향을 주는 이유와 킥오프, 인계, 계획 공유로 줄이는 방법을 설명합니다."
+        ],
+        "lead": "가치 실현 시간은 신규 고객이 계약한 뒤, 눈으로 보고 이름을 댈 수 있는 첫 성과를 얻기까지 걸리는 시간입니다.",
+        "body": [
+          {
+            "h": "왜 중요한가"
+          },
+          {
+            "p": "첫 갱신 대화는 계약하는 날 시작됩니다. 몇 주 만에 가치를 본 고객은 성장을 이야기하고, 아직 기다리는 고객은 가격을 이야기합니다."
+          },
+          {
+            "h": "줄이는 방법"
+          },
+          {
+            "ul": [
+              "킥오프에서 기한이 있는 첫 성과 하나에 합의하세요.",
+              "영업이 한 약속을 인계해 같은 질문을 두 번 하지 않게 하세요.",
+              "계획을 고객과 공유해 양쪽 모두 다음 단계를 보게 하세요."
+            ]
+          }
+        ],
+        "curahold": "온보딩 계획에는 단계, 목표, 기한이 있고, 고른 단계는 고객 포털에서 고객과 공유할 수 있습니다."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "성공 계획",
+        "seo": [
+          "고객 성공 계획이란? 구성과 활용법 | Curahold",
+          "성공 계획은 고객이 이루고 싶은 목표, 양쪽이 밟을 단계와 담당자와 기한, 진행을 재는 지표를 적어 둔 것입니다. 보통 담는 내용과 매번의 미팅과 리뷰에서 쓰는 방법을 설명합니다."
+        ],
+        "lead": "성공 계획은 고객이 이루고 싶은 것, 양쪽이 밟을 단계, 진행을 어떻게 잴지를 적어 둔 것입니다.",
+        "body": [
+          {
+            "h": "보통 담는 내용"
+          },
+          {
+            "ul": [
+              "고객 자신의 말로 쓴 목표.",
+              "양쪽의 단계, 담당자, 기한.",
+              "진행을 보여 주는 지표."
+            ]
+          },
+          {
+            "h": "활용법"
+          },
+          {
+            "p": "모든 미팅과 비즈니스 리뷰의 기준이 됩니다. 함께 업데이트하면 양쪽이 같은 결과를 향해 일하게 됩니다."
+          }
+        ],
+        "curahold": "온보딩 계획에 목표, 담당자와 기한이 있는 단계, 추적하는 지표를 담을 수 있고, 고객용 단계는 포털에서 공유할 수 있습니다."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "이해관계자 지도",
+        "seo": [
+          "이해관계자 지도란? B2B에서의 활용 | Curahold",
+          "이해관계자 지도는 고객 쪽에서 의사결정에 영향을 주는 사람과 그 역할, 입장을 정리한 것입니다. 무엇을 기록하는지와 계약 뒤에도 중요한 이유를 설명합니다."
+        ],
+        "lead": "이해관계자 지도는 고객 쪽에서 의사결정에 참여하는 사람, 그 역할, 각자의 입장을 정리한 것입니다.",
+        "body": [
+          {
+            "h": "기록하는 것"
+          },
+          {
+            "ul": [
+              "각 사람의 역할과 영향력.",
+              "입장: 지지, 중립, 반대.",
+              "아직 만나지 않은 사람."
+            ]
+          },
+          {
+            "h": "계약 뒤에도 중요한 이유"
+          },
+          {
+            "p": "갱신 결정을 한 사람이 내리는 경우는 드뭅니다. 챔피언이 떠나면 지도를 보고 누가 가치를 알고 누구에게 알려야 하는지 찾을 수 있습니다."
+          }
+        ],
+        "curahold": "각 거래는 이해관계자를 직함과 입장과 함께 보관하고, 인계 카드와 함께 고객을 넘겨받는 팀으로 전달됩니다."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "챔피언",
+        "seo": [
+          "고객 쪽 챔피언이란? B2B에서의 역할 | Curahold",
+          "챔피언은 고객 쪽에서 우리 제품을 믿고 회사 안에서 밀어 주는 사람입니다. 활발한 챔피언이 있는 고객이 더 쉽게 갱신하는 이유와 챔피언이 떠났을 때 밟아야 할 단계를 설명합니다."
+        ],
+        "lead": "챔피언은 고객 쪽에서 우리가 제공하는 것을 믿고 회사 안에서 밀어 주는 사람입니다.",
+        "body": [
+          {
+            "h": "왜 중요한가"
+          },
+          {
+            "p": "회의를 잡고, 예산을 지키고, 문제를 일찍 알려 줍니다. 활발한 챔피언이 있는 고객은 더 쉽게 갱신합니다."
+          },
+          {
+            "h": "챔피언이 떠나면"
+          },
+          {
+            "ul": [
+              "그 사람의 업무를 누가 이어받는지 확인하세요.",
+              "남은 사람들에게 가치를 다시 보여 주세요.",
+              "새 챔피언이 생길 때까지 위험으로 다루세요."
+            ]
+          }
+        ],
+        "curahold": "챔피언 유무를 헬스 스코어의 신호로 쓸 수 있어, 챔피언이 없거나 떠난 고객이 위로 올라옵니다."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "영업에서 고객 성공으로의 인계",
+        "seo": [
+          "영업에서 고객 성공으로의 인계 체크리스트 | Curahold",
+          "영업에서 고객 성공으로의 인계는 이해관계자, 영업 중 한 약속, 남은 요청, 주요 날짜를 넘겨 고객이 같은 설명을 반복하지 않게 합니다. 넘길 내용과 가장 흔한 실수를 설명합니다."
+        ],
+        "lead": "영업에서 고객 성공으로의 인계는 다음 팀에 필요한 모든 것을 넘겨, 고객이 처음부터 다시 설명하지 않게 하는 일입니다.",
+        "body": [
+          {
+            "h": "넘길 것"
+          },
+          {
+            "ul": [
+              "이해관계자와 각자의 입장.",
+              "영업 중에 한 약속.",
+              "남은 요청과 제품 관련 질문.",
+              "계약 체결일과 갱신일."
+            ]
+          },
+          {
+            "h": "흔한 실수"
+          },
+          {
+            "p": "영업 통화에서 약속했지만 아무도 적지 않은 것들입니다. 고객은 기억하지만 새 팀은 모릅니다."
+          }
+        ],
+        "curahold": "성사된 거래는 이해관계자, 약속, 남은 제품 요청, 주요 날짜를 담은 인계 카드 한 장으로 다음 팀에 전달됩니다."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "기능 요청",
+        "seo": [
+          "B2B 고객의 기능 요청 다루는 법 | Curahold",
+          "기능 요청은 제품이 아직 못 하는 것을 고객이 요청하는 것입니다. 누가 왜 요청했는지 기록하고, 묶어서 우선순위를 정하고, 완성되면 알리는 방법을 설명합니다."
+        ],
+        "lead": "기능 요청은 제품이 아직 못 하는 것을 고객이 요청하는 것으로, 회의나 지원 대화 중에 나오는 경우가 많습니다.",
+        "body": [
+          {
+            "h": "잘 다루려면"
+          },
+          {
+            "ul": [
+              "누가 요청했고 왜 중요한지 기록하세요.",
+              "같은 내용의 요청을 서로 연결하세요.",
+              "기다리는 고객과 가치로 우선순위를 정하세요."
+            ]
+          },
+          {
+            "h": "고리 닫기"
+          },
+          {
+            "p": "대부분의 팀이 놓치는 것은 작업이 끝났을 때 고객에게 알리는 일입니다. 릴리스 노트로 답한 요청은 기능 자체보다 더 큰 신뢰를 쌓습니다."
+          }
+        ],
+        "curahold": "여러 고객 요청을 하나의 스토리에 연결할 수 있고, 백로그는 기다리는 고객과 그 가치, 가장 가까운 갱신을 보여 줍니다. 작업이 끝나면 담당자에게 보낼 준비가 된 초안이 도착합니다."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "터치포인트",
+        "seo": [
+          "고객 터치포인트란? 정의와 예시 | Curahold",
+          "터치포인트는 고객과 팀 사이의 모든 접점입니다. 전화, 회의, 이메일, 요청에 대한 답변까지, 횟수보다 리듬이 중요한 이유와 매번 남겨야 할 정보를 설명합니다."
+        ],
+        "lead": "터치포인트는 고객과 팀 사이의 모든 접점입니다. 전화, 회의, 이메일, 요청에 대한 답변이 모두 해당합니다.",
+        "body": [
+          {
+            "h": "리듬이 중요한 이유"
+          },
+          {
+            "p": "긴 침묵은 초기 경고입니다. 6주 동안 아무도 연락하지 않은 고객은 매달 만나는 고객보다 갱신이 어렵습니다."
+          },
+          {
+            "h": "매번 남길 것"
+          },
+          {
+            "ul": [
+              "언제, 누가 참여했는지.",
+              "무엇을 결정했는지.",
+              "담당자와 기한이 있는 다음 단계."
+            ]
+          }
+        ],
+        "curahold": "회의, 통화, 메모는 각 고객의 타임라인에 남고, 마지막 연락 이후 지난 시간은 헬스 스코어에 반영되며, 고객마다 리뷰 주기를 정할 수 있습니다."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "회의 후속 조치",
+        "seo": [
+          "고객 회의 후속 조치: 실행되는 다음 단계 | Curahold",
+          "회의 후속 조치는 고객과 합의한 내용을 담당자와 기한이 있는 일로 바꾸는 것입니다. 다음 단계가 빠지는 이유와 좋은 후속 조치의 모습을 설명합니다."
+        ],
+        "lead": "회의 후속 조치는 고객 회의에서 합의한 내용을, 세부 사항이 흐려지기 전에 담당자와 기한이 있는 일로 바꾸는 것입니다.",
+        "body": [
+          {
+            "h": "빠지는 이유"
+          },
+          {
+            "p": "다음 단계가 누군가의 메모에만 남습니다. 일주일 뒤에는 누가 무엇을 하겠다고 했는지 아무도 기억하지 못하고, 고객이 가장 먼저 알아챕니다."
+          },
+          {
+            "h": "좋은 후속 조치란"
+          },
+          {
+            "ul": [
+              "통화가 끝나기 전에 다음 단계를 적습니다.",
+              "각각 담당자와 기한을 정합니다.",
+              "고객에게 이를 확인하는 짧은 메모를 보냅니다."
+            ]
+          }
+        ],
+        "curahold": "회의 메모에 적은 다음 단계는 고객과 연결된, 담당자와 기한이 있는 작업이 되고, 약속은 고객 포털에서 공유할 수 있습니다."
       }
     ]
   },
@@ -3385,6 +6807,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "सेवा देने की लागत रिपोर्ट हर ग्राहक के लिए दिखाती है कि हर 1,000 की सालाना वैल्यू पर पिछले 12 महीनों में कितने घंटे लगे, ताकि आप देख सकें कि किसकी देखभाल सबसे महंगी है।"
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "नेट रेवेन्यू रिटेंशन (NRR)",
+        "seo": [
+          "नेट रेवेन्यू रिटेंशन (NRR) क्या है? फ़ॉर्मूला | Curahold",
+          "नेट रेवेन्यू रिटेंशन बताता है कि ग्राहकों का एक समूह एक साल बाद कितना रेकरिंग रेवेन्यू लाता है, जिसमें रिन्यूअल, एक्सपैंशन, डाउनग्रेड और चर्न शामिल हैं।"
+        ],
+        "lead": "नेट रेवेन्यू रिटेंशन (NRR) वह रेकरिंग रेवेन्यू है जो ग्राहकों का एक समूह आज लाता है, उसी समूह के एक साल पहले के रेवेन्यू के प्रतिशत के रूप में।",
+        "body": [
+          {
+            "h": "इसकी गणना कैसे होती है"
+          },
+          {
+            "p": "अवधि की शुरुआत में मौजूद ग्राहकों का रेकरिंग रेवेन्यू लें। उनका एक्सपैंशन जोड़ें, डाउनग्रेड और चर्न घटाएं, और शुरुआती आंकड़े से भाग दें। नए ग्राहक इसमें शामिल नहीं होते।"
+          },
+          {
+            "h": "टीमें इस पर नज़र क्यों रखती हैं"
+          },
+          {
+            "ul": [
+              "100% से ऊपर का मतलब है कि मौजूदा ग्राहक अपने आप बढ़ रहे हैं।",
+              "इससे पता चलता है कि रिन्यूअल और एक्सपैंशन नुकसान से ज़्यादा हैं या नहीं।",
+              "यह धीरे बदलता है, इसलिए लगातार ग्राहक के साथ काम का फल देता है।"
+            ]
+          }
+        ],
+        "curahold": "रिन्यूअल और एक्सपैंशन के मौके नई डील्स के साथ उसी पाइपलाइन में रहते हैं, और रिन्यूअल व्यू हर ग्राहक को रिन्यूअल महीने के हिसाब से जोखिम वाली रकम के साथ दिखाता है।"
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "एनुअल रेकरिंग रेवेन्यू (ARR)",
+        "seo": [
+          "एनुअल रेकरिंग रेवेन्यू (ARR) क्या है? | Curahold",
+          "एनुअल रेकरिंग रेवेन्यू साइन किए गए सब्सक्रिप्शन का सालाना मूल्य है: क्या गिना जाता है, क्या नहीं, और टीमें इसे हर ग्राहक के लिए कैसे इस्तेमाल करती हैं।"
+        ],
+        "lead": "एनुअल रेकरिंग रेवेन्यू (ARR) चालू सब्सक्रिप्शन का सालाना मूल्य है: अगर कुछ न बदले तो ग्राहक बारह महीनों में जितना भुगतान करेंगे।",
+        "body": [
+          {
+            "h": "क्या गिना जाता है"
+          },
+          {
+            "ul": [
+              "सब्सक्रिप्शन फ़ीस, सालाना रकम में बदली हुई।",
+              "रेकरिंग ऐड-ऑन और अतिरिक्त सीटें।",
+              "सेटअप या ट्रेनिंग जैसी एक बार की फ़ीस नहीं।"
+            ]
+          },
+          {
+            "h": "हर ग्राहक के लिए यह क्यों मायने रखता है"
+          },
+          {
+            "p": "हर ग्राहक का ARR बताता है कि रेवेन्यू कहां है, ताकि टीम सबसे बड़े रिन्यूअल पर ज़रूरी ध्यान दे सके और देख सके कि किसी ग्राहक के चुप होने पर कितनी रकम जोखिम में है।"
+          }
+        ],
+        "curahold": "ARR हर ग्राहक पर एक फ़ील्ड हो सकता है, और रिपोर्ट इसे ओनर, हेल्थ स्कोर बैंड या रिन्यूअल महीने के हिसाब से जोड़ सकती है, हर पढ़ने वाले की अपनी अनुमति के अनुसार।"
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "बिज़नेस रिव्यू (QBR)",
+        "seo": [
+          "बिज़नेस रिव्यू (QBR) क्या है? उद्देश्य और एजेंडा | Curahold",
+          "बिज़नेस रिव्यू एक नियमित मीटिंग है जिसमें ग्राहक और सप्लायर नतीजे, खुले वादे और आगे की योजना देखते हैं, आमतौर पर हर तिमाही में एक बार।"
+        ],
+        "lead": "बिज़नेस रिव्यू, जो अक्सर हर तिमाही होता है और QBR कहलाता है, वह मीटिंग है जिसमें ग्राहक और सप्लायर नतीजों को देखते हैं और आगे की योजना तय करते हैं।",
+        "body": [
+          {
+            "h": "इसमें क्या शामिल होता है"
+          },
+          {
+            "ul": [
+              "पिछली बार तय लक्ष्यों के मुकाबले नतीजे।",
+              "ग्राहक की तरफ़ क्या बदला।",
+              "खुले अनुरोध और वादे, और हर एक की स्थिति।",
+              "अगली अवधि की योजना और ओनर।"
+            ]
+          },
+          {
+            "h": "इसे उपयोगी क्या बनाता है"
+          },
+          {
+            "p": "यह ओनर और तारीख वाले अगले स्टेप्स के साथ खत्म होता है। जिस रिव्यू के काम लिखे नहीं जाते, वह अगले रिव्यू तक भुला दिया जाता है।"
+          }
+        ],
+        "curahold": "बिज़नेस रिव्यू ग्राहक की टाइमलाइन पर एक मीटिंग है, और उसमें लिखे अगले स्टेप्स ओनर और तारीख वाले टास्क बन जाते हैं।"
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "Customer Success Manager (CSM) क्या करता है? | Curahold",
+          "Customer Success Manager बिक्री के बाद ग्राहकों के एक समूह की देखभाल करता है: ऑनबोर्डिंग, इस्तेमाल, बिज़नेस रिव्यू, रिन्यूअल और जोखिम को जल्दी पहचानना।"
+        ],
+        "lead": "Customer Success Manager (CSM) बिक्री के बाद ग्राहकों के एक समूह की देखभाल करता है, ताकि उन्हें खरीदी गई वैल्यू मिले और वे बने रहें।",
+        "body": [
+          {
+            "h": "इस भूमिका में आमतौर पर क्या आता है"
+          },
+          {
+            "ul": [
+              "नए ग्राहकों की ऑनबोर्डिंग, या ऑनबोर्डिंग टीम से उन्हें लेना।",
+              "नियमित बातचीत और बिज़नेस रिव्यू।",
+              "हेल्थ पर नज़र रखना और शुरुआती चेतावनियों पर काम करना।",
+              "रिन्यूअल की तैयारी और बढ़त के मौके पहचानना।"
+            ]
+          },
+          {
+            "h": "समय कहां जाता है"
+          },
+          {
+            "p": "एक CSM अक्सर दर्जनों ग्राहकों को देखता है। सबको बराबर समय देने से ज़्यादा ज़रूरी यह जानना है कि इस हफ़्ते किसे ध्यान चाहिए।"
+          }
+        ],
+        "curahold": "हर ग्राहक का हर विभाग में एक ओनर होता है, और हर व्यक्ति की सूची इस हिसाब से लगती है कि किसे उसकी ज़रूरत है, कारण और अगले स्टेप के साथ।"
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "एक्सपैंशन रेवेन्यू",
+        "seo": [
+          "एक्सपैंशन रेवेन्यू क्या है? अपसेल और क्रॉस-सेल | Curahold",
+          "एक्सपैंशन रेवेन्यू मौजूदा ग्राहकों से आने वाला अतिरिक्त रेकरिंग रेवेन्यू है: ज़्यादा सीटें, ऊंचा प्लान या कोई और प्रोडक्ट। यह कहां से आता है।"
+        ],
+        "lead": "एक्सपैंशन रेवेन्यू उन ग्राहकों से आने वाला अतिरिक्त रेकरिंग रेवेन्यू है जो आपके पास पहले से हैं: ज़्यादा सीटें, ऊंचा प्लान या कोई और प्रोडक्ट।",
+        "body": [
+          {
+            "h": "यह कहां से आता है"
+          },
+          {
+            "ul": [
+              "अपसेल: जो इस्तेमाल करते हैं उसका ज़्यादा हिस्सा, या ऊंचा प्लान।",
+              "क्रॉस-सेल: ऐसा प्रोडक्ट जो उनके पास अभी नहीं है।",
+              "उनकी अपनी बढ़त: नई टीमें, साइटें या देश।"
+            ]
+          },
+          {
+            "h": "कब बात करें"
+          },
+          {
+            "p": "एक्सपैंशन वैल्यू के बाद आता है। जब ग्राहक किसी नतीजे का नाम ले सके तब यह सबसे आसान है, और जब पिछले अनुरोध के वादे अभी खुले हों तब सबसे मुश्किल।"
+          }
+        ],
+        "curahold": "प्रोडक्ट्स व्यू दिखाता है कि किस ग्राहक के पास कौन-सा प्रोडक्ट है, ताकि खाली जगहें दिखें, और उनमें से किसी के लिए टास्क खोलना एक क्लिक का काम है।"
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "टाइम टू वैल्यू",
+        "seo": [
+          "टाइम टू वैल्यू क्या है और इसे कैसे कम करें | Curahold",
+          "टाइम टू वैल्यू वह समय है जो नया ग्राहक साइन करने से पहले नतीजे तक इंतज़ार करता है। रिन्यूअल के लिए यह क्यों मायने रखता है और टीमें इसे कैसे कम करती हैं।"
+        ],
+        "lead": "टाइम टू वैल्यू वह समय है जो नया ग्राहक साइन करने और पहला ऐसा नतीजा देखने के बीच इंतज़ार करता है जिसका वह नाम ले सके।",
+        "body": [
+          {
+            "h": "यह क्यों मायने रखता है"
+          },
+          {
+            "p": "पहली रिन्यूअल बातचीत साइन करने के दिन ही शुरू हो जाती है। जो ग्राहक कुछ हफ़्तों में वैल्यू देखता है वह बढ़त की बात करता है; जो अब भी इंतज़ार में है वह कीमत की।"
+          },
+          {
+            "h": "टीमें इसे कैसे कम करती हैं"
+          },
+          {
+            "ul": [
+              "किकऑफ़ में तारीख के साथ एक पहला नतीजा तय करें।",
+              "सेल्स के वादे आगे सौंपें, ताकि कुछ भी दोबारा न पूछना पड़े।",
+              "योजना ग्राहक के साथ शेयर करें, ताकि दोनों तरफ़ अगला स्टेप दिखे।"
+            ]
+          }
+        ],
+        "curahold": "ऑनबोर्डिंग प्लान में स्टेप्स, लक्ष्य और तारीखें होती हैं, और आप जो स्टेप्स चुनें उन्हें ग्राहक के पोर्टल में उनके साथ शेयर किया जा सकता है।"
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "सक्सेस प्लान",
+        "seo": [
+          "कस्टमर सक्सेस प्लान क्या है? हिस्से और इस्तेमाल | Curahold",
+          "सक्सेस प्लान लिखता है कि ग्राहक क्या हासिल करना चाहता है, दोनों पक्ष वहां कैसे पहुंचेंगे और प्रगति कैसे मापी जाएगी, ताकि हर रिव्यू का एक आधार हो।"
+        ],
+        "lead": "सक्सेस प्लान लिखता है कि ग्राहक क्या हासिल करना चाहता है, दोनों पक्ष कौन-से स्टेप्स लेंगे और प्रगति कैसे मापी जाएगी।",
+        "body": [
+          {
+            "h": "इसमें आमतौर पर क्या होता है"
+          },
+          {
+            "ul": [
+              "ग्राहक के अपने शब्दों में उसके लक्ष्य।",
+              "दोनों तरफ़ के स्टेप्स, ओनर और तारीखें।",
+              "प्रगति दिखाने वाले पैमाने।"
+            ]
+          },
+          {
+            "h": "इसका इस्तेमाल कैसे होता है"
+          },
+          {
+            "p": "यह हर बातचीत और बिज़नेस रिव्यू का आधार है। साथ मिलकर अपडेट करने पर दोनों पक्ष एक ही नतीजे की ओर काम करते हैं।"
+          }
+        ],
+        "curahold": "एक ऑनबोर्डिंग प्लान में लक्ष्य, ओनर और तारीख वाले स्टेप्स और आपके मापे जाने वाले पैमाने रहते हैं, और ग्राहक से जुड़े स्टेप्स पोर्टल में शेयर किए जा सकते हैं।"
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "स्टेकहोल्डर मैप",
+        "seo": [
+          "स्टेकहोल्डर मैप क्या है? B2B सेल्स और सक्सेस में | Curahold",
+          "स्टेकहोल्डर मैप ग्राहक की तरफ़ फ़ैसले पर असर डालने वाले लोगों, उनकी भूमिका और उनके रुख की सूची है, ताकि टीम जाने कि किसे और कब शामिल करना है।"
+        ],
+        "lead": "स्टेकहोल्डर मैप ग्राहक की तरफ़ किसी फ़ैसले में हिस्सा लेने वाले लोगों, उनकी भूमिका और हर एक के रुख की सूची है।",
+        "body": [
+          {
+            "h": "यह क्या दर्ज करता है"
+          },
+          {
+            "ul": [
+              "हर व्यक्ति की भूमिका और असर।",
+              "उसका रुख: समर्थक, तटस्थ या विरोधी।",
+              "जिनसे अभी तक मुलाकात नहीं हुई।"
+            ]
+          },
+          {
+            "h": "बिक्री के बाद यह क्यों ज़रूरी है"
+          },
+          {
+            "p": "रिन्यूअल का फ़ैसला शायद ही कभी एक व्यक्ति लेता है। जब चैंपियन चला जाए, तो मैप दिखाता है कि वैल्यू और कौन जानता है और किसे इसके बारे में सुनना चाहिए।"
+          }
+        ],
+        "curahold": "हर डील अपने स्टेकहोल्डर्स को उनके पद और रुख के साथ रखती है, और वे हैंडओवर कार्ड के साथ उस टीम तक जाते हैं जो ग्राहक को संभालती है।"
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "चैंपियन",
+        "seo": [
+          "B2B ग्राहक रिश्ते में चैंपियन कौन होता है? | Curahold",
+          "चैंपियन ग्राहक की तरफ़ वह व्यक्ति है जो आपके प्रोडक्ट पर भरोसा करता है और कंपनी के अंदर उसकी वकालत करता है। यह क्यों ज़रूरी है और उसके जाने पर क्या करें।"
+        ],
+        "lead": "चैंपियन ग्राहक की तरफ़ वह व्यक्ति है जो आपकी पेशकश पर भरोसा करता है और अपनी कंपनी के अंदर उसकी वकालत करता है।",
+        "body": [
+          {
+            "h": "यह क्यों ज़रूरी है"
+          },
+          {
+            "p": "चैंपियन मीटिंग्स तय करवाता है, बजट बचाता है और समस्याएं जल्दी उठाता है। सक्रिय चैंपियन वाले ग्राहक आसानी से रिन्यू करते हैं।"
+          },
+          {
+            "h": "जब चैंपियन चला जाए"
+          },
+          {
+            "ul": [
+              "पता करें कि उसका काम कौन संभाल रहा है।",
+              "बचे हुए लोगों को वैल्यू फिर से दिखाएं।",
+              "नया चैंपियन मिलने तक इसे जोखिम मानें।"
+            ]
+          }
+        ],
+        "curahold": "चैंपियन का होना हेल्थ स्कोर में एक सिग्नल हो सकता है, ताकि बिना चैंपियन वाला या जिसका चैंपियन चला गया हो, वह ग्राहक सबसे ऊपर आए।"
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "सेल्स से सक्सेस को हैंडओवर",
+        "seo": [
+          "सेल्स से कस्टमर सक्सेस को हैंडओवर: क्या सौंपें | Curahold",
+          "सेल्स से कस्टमर सक्सेस को हैंडओवर किए गए वादे, अहम लोग और ज़रूरी तारीखें आगे सौंपता है, ताकि ग्राहक को सब कुछ दोबारा न समझाना पड़े।"
+        ],
+        "lead": "सेल्स से कस्टमर सक्सेस को हैंडओवर अगली टीम की ज़रूरत की हर चीज़ आगे सौंपता है, ताकि ग्राहक को कभी सब कुछ दोबारा न समझाना पड़े।",
+        "body": [
+          {
+            "h": "क्या सौंपें"
+          },
+          {
+            "ul": [
+              "स्टेकहोल्डर्स और हर एक का रुख।",
+              "बिक्री के दौरान किए गए वादे।",
+              "खुले अनुरोध और प्रोडक्ट से जुड़े सवाल।",
+              "क्लोज़ की तारीख और रिन्यूअल की तारीख।"
+            ]
+          },
+          {
+            "h": "क्या गड़बड़ होता है"
+          },
+          {
+            "p": "सेल्स कॉल में किए गए वादे जिन्हें किसी ने नहीं लिखा। ग्राहक उन्हें याद रखता है; नई टीम नहीं।"
+          }
+        ],
+        "curahold": "जीती गई डील अगली टीम तक एक हैंडओवर कार्ड के रूप में पहुंचती है, जिसमें स्टेकहोल्डर्स, किए गए वादे, खुले प्रोडक्ट अनुरोध और ज़रूरी तारीखें होती हैं।"
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "फ़ीचर रिक्वेस्ट",
+        "seo": [
+          "B2B में ग्राहकों की फ़ीचर रिक्वेस्ट कैसे संभालें | Curahold",
+          "फ़ीचर रिक्वेस्ट तब होती है जब ग्राहक ऐसी चीज़ मांगे जो प्रोडक्ट अभी नहीं करता। इसे कैसे दर्ज करें, ग्राहक से जोड़ें और तैयार होने पर उन्हें बताएं।"
+        ],
+        "lead": "फ़ीचर रिक्वेस्ट तब होती है जब ग्राहक ऐसी चीज़ मांगे जो प्रोडक्ट अभी नहीं करता, अक्सर किसी मीटिंग या सपोर्ट बातचीत के दौरान।",
+        "body": [
+          {
+            "h": "इन्हें अच्छी तरह कैसे संभालें"
+          },
+          {
+            "ul": [
+              "दर्ज करें कि किसने मांगा और उनके लिए यह क्यों ज़रूरी है।",
+              "एक ही चीज़ की रिक्वेस्ट्स को आपस में जोड़ें।",
+              "इंतज़ार कर रहे ग्राहकों और वैल्यू के हिसाब से प्राथमिकता दें।"
+            ]
+          },
+          {
+            "h": "चक्र पूरा करना"
+          },
+          {
+            "p": "ज़्यादातर टीमें जो हिस्सा छोड़ देती हैं, वह है काम पूरा होने पर ग्राहक को बताना। रिलीज़ नोट से जवाब दी गई रिक्वेस्ट फ़ीचर से भी ज़्यादा भरोसा बनाती है।"
+          }
+        ],
+        "curahold": "कई ग्राहक रिक्वेस्ट्स को एक स्टोरी से जोड़ा जा सकता है; बैकलॉग इंतज़ार कर रहे ग्राहक, उनकी वैल्यू और सबसे नज़दीकी रिन्यूअल दिखाता है, और काम पूरा होने पर ओनर को भेजने के लिए तैयार ड्राफ़्ट मिलता है।"
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "टचपॉइंट",
+        "seo": [
+          "कस्टमर टचपॉइंट क्या है? परिभाषा और उदाहरण | Curahold",
+          "टचपॉइंट ग्राहक और आपकी टीम के बीच संपर्क का हर पल है: कॉल, मीटिंग, जवाब। इनकी गिनती से ज़्यादा इनकी लय क्यों मायने रखती है।"
+        ],
+        "lead": "टचपॉइंट ग्राहक और आपकी टीम के बीच संपर्क का हर पल है: कॉल, मीटिंग, ईमेल या किसी अनुरोध का जवाब।",
+        "body": [
+          {
+            "h": "लय क्यों मायने रखती है"
+          },
+          {
+            "p": "लंबी चुप्पी शुरुआती चेतावनी है। जिस ग्राहक से छह हफ़्तों से किसी ने बात नहीं की, उसे रिन्यू करना हर महीने मिलने वाले ग्राहक से ज़्यादा मुश्किल है।"
+          },
+          {
+            "h": "हर एक से क्या बचाकर रखें"
+          },
+          {
+            "ul": [
+              "कब हुआ और कौन शामिल था।",
+              "क्या तय हुआ।",
+              "ओनर और तारीख के साथ अगला स्टेप।"
+            ]
+          }
+        ],
+        "curahold": "मीटिंग, कॉल और नोट्स हर ग्राहक की टाइमलाइन पर रहते हैं, आखिरी संपर्क के बाद का समय हेल्थ स्कोर में जुड़ता है, और हर ग्राहक की एक रिव्यू लय हो सकती है।"
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "मीटिंग फ़ॉलो-अप",
+        "seo": [
+          "ग्राहक मीटिंग फ़ॉलो-अप: पूरे होने वाले स्टेप्स | Curahold",
+          "मीटिंग फ़ॉलो-अप ग्राहक के साथ तय बातों को ओनर और तारीख वाले काम में बदलता है, ताकि वादे निभें और ग्राहक भी उन्हें निभते देखे।"
+        ],
+        "lead": "मीटिंग फ़ॉलो-अप का मतलब है ग्राहक मीटिंग में तय बातों को, ब्योरे धुंधले होने से पहले, ओनर और तारीख वाले काम में बदलना।",
+        "body": [
+          {
+            "h": "यह क्यों छूट जाता है"
+          },
+          {
+            "p": "अगले स्टेप्स किसी के नोट्स में रह जाते हैं। एक हफ़्ते बाद किसी को याद नहीं रहता कि किसने क्या करने को कहा था, और सबसे पहले ग्राहक को पता चलता है।"
+          },
+          {
+            "h": "अच्छा फ़ॉलो-अप कैसा दिखता है"
+          },
+          {
+            "ul": [
+              "कॉल खत्म होने से पहले अगले स्टेप्स लिखे जाते हैं।",
+              "हर एक का ओनर और तारीख होती है।",
+              "ग्राहक को उनकी पुष्टि करता एक छोटा नोट जाता है।"
+            ]
+          }
+        ],
+        "curahold": "मीटिंग के नोट्स में लिखे अगले स्टेप्स ग्राहक से जुड़े, ओनर और तारीख वाले टास्क बन जाते हैं, और वादे ग्राहक के पोर्टल में उनके साथ शेयर किए जा सकते हैं।"
       }
     ]
   },
@@ -3720,6 +7522,386 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Laporan Kos untuk melayan menunjukkan, bagi setiap pelanggan, jam yang dibelanjakan dalam 12 bulan lepas bagi setiap 1,000 nilai tahunan, supaya anda dapat melihat siapa yang paling mahal untuk dijaga."
+      },
+      {
+        "slug": "net-revenue-retention",
+        "kind": "term",
+        "name": "Pengekalan hasil bersih (NRR)",
+        "seo": [
+          "Apakah pengekalan hasil bersih (NRR)? | Curahold",
+          "Pengekalan hasil bersih menunjukkan hasil berulang sekumpulan pelanggan setahun kemudian, termasuk pembaharuan, pengembangan dan churn."
+        ],
+        "lead": "Pengekalan hasil bersih (NRR) ialah hasil berulang yang dibawa oleh sekumpulan pelanggan hari ini, sebagai peratusan daripada hasil kumpulan yang sama setahun lalu.",
+        "body": [
+          {
+            "h": "Cara mengiranya"
+          },
+          {
+            "p": "Ambil hasil berulang pelanggan yang ada pada awal tempoh. Tambah pengembangan mereka, tolak penurunan pelan dan churn, kemudian bahagikan dengan angka permulaan. Pelanggan baharu tidak dikira."
+          },
+          {
+            "h": "Mengapa pasukan memantaunya"
+          },
+          {
+            "ul": [
+              "Melebihi 100% bermakna pelanggan sedia ada berkembang dengan sendirinya.",
+              "Ia menunjukkan sama ada pembaharuan dan pengembangan mengatasi kerugian.",
+              "Ia berubah perlahan, jadi ia memberi ganjaran kepada kerja yang konsisten bersama pelanggan."
+            ]
+          }
+        ],
+        "curahold": "Peluang pembaharuan dan pengembangan berada dalam saluran jualan yang sama dengan urus niaga baharu, dan paparan pembaharuan menunjukkan setiap pelanggan mengikut bulan pembaharuan bersama jumlah yang berisiko."
+      },
+      {
+        "slug": "annual-recurring-revenue",
+        "kind": "term",
+        "name": "Hasil berulang tahunan (ARR)",
+        "seo": [
+          "Apakah hasil berulang tahunan (ARR)? | Curahold",
+          "Hasil berulang tahunan ialah nilai setahun bagi langganan yang ditandatangani: apa yang dikira, apa yang tidak, dan kegunaannya."
+        ],
+        "lead": "Hasil berulang tahunan (ARR) ialah nilai setahun bagi langganan aktif: jumlah yang akan dibayar oleh pelanggan dalam dua belas bulan jika tiada apa-apa berubah.",
+        "body": [
+          {
+            "h": "Apa yang dikira"
+          },
+          {
+            "ul": [
+              "Yuran langganan, ditukar kepada jumlah setahun.",
+              "Tambahan dan tempat duduk berulang.",
+              "Bukan yuran sekali sahaja seperti persediaan atau latihan."
+            ]
+          },
+          {
+            "h": "Mengapa ia penting bagi setiap pelanggan"
+          },
+          {
+            "p": "ARR bagi setiap pelanggan menunjukkan di mana hasil berada, supaya pasukan memberi perhatian sewajarnya kepada pembaharuan terbesar dan dapat melihat jumlah yang berisiko apabila pelanggan senyap."
+          }
+        ],
+        "curahold": "ARR boleh menjadi medan pada setiap pelanggan, dan laporan boleh menjumlahkannya mengikut pemilik, jalur skor kesihatan atau bulan pembaharuan, mengikut kebenaran setiap pembaca."
+      },
+      {
+        "slug": "business-review",
+        "kind": "term",
+        "name": "Semakan perniagaan (QBR)",
+        "seo": [
+          "Apakah semakan perniagaan (QBR)? Tujuan | Curahold",
+          "Semakan perniagaan ialah mesyuarat berkala untuk melihat hasil, janji terbuka dan rancangan seterusnya, biasanya setiap suku tahun."
+        ],
+        "lead": "Semakan perniagaan, sering diadakan setiap suku tahun dan dipanggil QBR, ialah mesyuarat di mana pelanggan dan pembekal menilai hasil dan bersetuju tentang langkah seterusnya.",
+        "body": [
+          {
+            "h": "Apa yang diliputi"
+          },
+          {
+            "ul": [
+              "Hasil berbanding matlamat yang dipersetujui kali lepas.",
+              "Apa yang berubah di pihak pelanggan.",
+              "Permintaan dan janji yang masih terbuka, serta status setiap satu.",
+              "Rancangan dan pemilik untuk tempoh seterusnya."
+            ]
+          },
+          {
+            "h": "Apa yang menjadikannya berguna"
+          },
+          {
+            "p": "Ia berakhir dengan langkah seterusnya yang mempunyai pemilik dan tarikh. Semakan yang tindakannya tidak dicatat akan dilupakan sebelum semakan berikutnya."
+          }
+        ],
+        "curahold": "Semakan perniagaan ialah mesyuarat pada garis masa pelanggan, dan langkah seterusnya yang dicatat di dalamnya menjadi tugasan dengan pemilik dan tarikh."
+      },
+      {
+        "slug": "customer-success-manager",
+        "kind": "term",
+        "name": "Customer Success Manager (CSM)",
+        "seo": [
+          "Apakah tugas Customer Success Manager? | Curahold",
+          "Customer Success Manager menjaga pelanggan selepas jualan: onboarding, penggunaan, semakan perniagaan, pembaharuan dan risiko awal."
+        ],
+        "lead": "Customer Success Manager (CSM) menjaga sekumpulan pelanggan selepas jualan, supaya mereka mendapat nilai yang dibeli dan terus kekal.",
+        "body": [
+          {
+            "h": "Apa yang biasanya termasuk dalam peranan ini"
+          },
+          {
+            "ul": [
+              "Onboarding pelanggan baharu, atau mengambil alih daripada pasukan onboarding.",
+              "Hubungan berkala dan semakan perniagaan.",
+              "Memantau kesihatan dan bertindak atas amaran awal.",
+              "Menyediakan pembaharuan dan mengenal pasti peluang pengembangan."
+            ]
+          },
+          {
+            "h": "Ke mana masa dihabiskan"
+          },
+          {
+            "p": "Seorang CSM sering menjaga berpuluh-puluh pelanggan. Mengetahui siapa yang memerlukan perhatian minggu ini lebih penting daripada memberi masa yang sama kepada semua."
+          }
+        ],
+        "curahold": "Setiap pelanggan mempunyai pemilik dalam setiap jabatan, dan senarai setiap orang disusun mengikut siapa yang memerlukan mereka, bersama sebab dan langkah seterusnya."
+      },
+      {
+        "slug": "expansion-revenue",
+        "kind": "term",
+        "name": "Hasil pengembangan",
+        "seo": [
+          "Apakah hasil pengembangan? Upsell, cross-sell | Curahold",
+          "Hasil pengembangan ialah hasil berulang tambahan daripada pelanggan sedia ada: lebih banyak tempat duduk, pelan lebih tinggi atau produk lain."
+        ],
+        "lead": "Hasil pengembangan ialah hasil berulang tambahan daripada pelanggan yang sudah anda miliki: lebih banyak tempat duduk, pelan lebih tinggi atau produk lain.",
+        "body": [
+          {
+            "h": "Dari mana ia datang"
+          },
+          {
+            "ul": [
+              "Upsell: lebih banyak daripada apa yang mereka gunakan, atau pelan lebih tinggi.",
+              "Cross-sell: produk yang belum mereka miliki.",
+              "Pertumbuhan mereka sendiri: pasukan, lokasi atau negara baharu."
+            ]
+          },
+          {
+            "h": "Bila hendak membincangkannya"
+          },
+          {
+            "p": "Pengembangan datang selepas nilai. Ia paling mudah apabila pelanggan boleh menyebut satu hasil, dan paling sukar apabila janji daripada permintaan lepas masih terbuka."
+          }
+        ],
+        "curahold": "Paparan produk menunjukkan pelanggan mana memiliki produk mana, supaya ruang kosong kelihatan, dan membuka tugasan untuk mana-mana satu hanya memerlukan satu klik."
+      },
+      {
+        "slug": "time-to-value",
+        "kind": "term",
+        "name": "Masa untuk mencapai nilai",
+        "seo": [
+          "Masa untuk mencapai nilai dan cara memendekkannya | Curahold",
+          "Masa untuk mencapai nilai ialah tempoh pelanggan baharu menunggu hasil pertama. Mengapa ia penting untuk pembaharuan dan cara memendekkannya."
+        ],
+        "lead": "Masa untuk mencapai nilai ialah tempoh pelanggan baharu menunggu antara menandatangani dan melihat hasil pertama yang boleh mereka sebut.",
+        "body": [
+          {
+            "h": "Mengapa ia penting"
+          },
+          {
+            "p": "Perbualan pembaharuan pertama bermula pada hari mereka menandatangani. Pelanggan yang melihat nilai dalam beberapa minggu bercakap tentang pertumbuhan; pelanggan yang masih menunggu bercakap tentang harga."
+          },
+          {
+            "h": "Cara pasukan memendekkannya"
+          },
+          {
+            "ul": [
+              "Persetujui satu hasil pertama dengan tarikh semasa mesyuarat permulaan.",
+              "Serahkan janji jualan supaya tiada apa-apa perlu ditanya semula.",
+              "Kongsi rancangan dengan pelanggan supaya kedua-dua pihak melihat langkah seterusnya."
+            ]
+          }
+        ],
+        "curahold": "Rancangan onboarding mempunyai langkah, matlamat dan tarikh, dan langkah yang anda pilih boleh dikongsi dengan pelanggan dalam portal mereka."
+      },
+      {
+        "slug": "success-plan",
+        "kind": "term",
+        "name": "Rancangan kejayaan",
+        "seo": [
+          "Apakah rancangan kejayaan pelanggan? | Curahold",
+          "Rancangan kejayaan mencatat matlamat pelanggan, langkah kedua-dua pihak dan cara kemajuan diukur, sebagai asas bagi setiap semakan."
+        ],
+        "lead": "Rancangan kejayaan mencatat apa yang ingin dicapai oleh pelanggan, langkah yang akan diambil oleh kedua-dua pihak dan cara kemajuan akan diukur.",
+        "body": [
+          {
+            "h": "Apa yang biasanya terkandung"
+          },
+          {
+            "ul": [
+              "Matlamat pelanggan, dalam kata-kata mereka sendiri.",
+              "Langkah di kedua-dua pihak, dengan pemilik dan tarikh.",
+              "Ukuran yang menunjukkan kemajuan."
+            ]
+          },
+          {
+            "h": "Cara ia digunakan"
+          },
+          {
+            "p": "Ia menjadi asas bagi setiap perbualan dan semakan perniagaan. Apabila dikemas kini bersama, kedua-dua pihak bekerja ke arah hasil yang sama."
+          }
+        ],
+        "curahold": "Rancangan onboarding menyimpan matlamat, langkah dengan pemilik dan tarikh serta ukuran yang anda pantau, dan langkah yang melibatkan pelanggan boleh dikongsi dalam portal."
+      },
+      {
+        "slug": "stakeholder-map",
+        "kind": "term",
+        "name": "Peta pihak berkepentingan",
+        "seo": [
+          "Apakah peta pihak berkepentingan dalam B2B? | Curahold",
+          "Peta pihak berkepentingan menyenaraikan orang yang mempengaruhi keputusan pelanggan, peranan dan pendirian mereka, dan bila melibatkan mereka."
+        ],
+        "lead": "Peta pihak berkepentingan ialah senarai orang di pihak pelanggan yang terlibat dalam sesuatu keputusan, peranan mereka dan pendirian setiap seorang.",
+        "body": [
+          {
+            "h": "Apa yang dicatat"
+          },
+          {
+            "ul": [
+              "Peranan dan pengaruh setiap orang.",
+              "Pendirian mereka: penyokong, neutral atau penentang.",
+              "Orang yang belum pernah anda temui."
+            ]
+          },
+          {
+            "h": "Mengapa ia penting selepas jualan"
+          },
+          {
+            "p": "Keputusan pembaharuan jarang dibuat oleh seorang sahaja. Apabila juara anda pergi, peta menunjukkan siapa lagi yang tahu tentang nilai dan siapa yang perlu mendengarnya."
+          }
+        ],
+        "curahold": "Setiap urus niaga menyimpan pihak berkepentingannya bersama jawatan dan pendirian mereka, dan mereka dibawa dalam kad serahan kepada pasukan yang menjaga pelanggan."
+      },
+      {
+        "slug": "champion",
+        "kind": "term",
+        "name": "Juara",
+        "seo": [
+          "Siapakah juara dalam hubungan pelanggan B2B? | Curahold",
+          "Juara ialah orang di pihak pelanggan yang memperjuangkan produk anda di dalam syarikat. Mengapa ia penting dan apa dibuat apabila mereka pergi."
+        ],
+        "lead": "Juara ialah orang di pihak pelanggan yang mempercayai apa yang anda tawarkan dan memperjuangkannya di dalam syarikat mereka.",
+        "body": [
+          {
+            "h": "Mengapa ia penting"
+          },
+          {
+            "p": "Juara mendapatkan mesyuarat, melindungi bajet dan membangkitkan masalah lebih awal. Pelanggan yang mempunyai juara aktif memperbaharui dengan lebih mudah."
+          },
+          {
+            "h": "Apabila juara pergi"
+          },
+          {
+            "ul": [
+              "Ketahui siapa yang mengambil alih tugas mereka.",
+              "Tunjukkan semula nilai kepada orang yang masih ada.",
+              "Anggap ia sebagai risiko sehingga juara baharu muncul."
+            ]
+          }
+        ],
+        "curahold": "Kewujudan juara boleh menjadi isyarat dalam skor kesihatan, supaya pelanggan tanpa juara, atau yang juaranya telah pergi, naik ke atas senarai."
+      },
+      {
+        "slug": "sales-to-success-handover",
+        "kind": "term",
+        "name": "Serahan daripada jualan kepada kejayaan pelanggan",
+        "seo": [
+          "Serahan jualan kepada kejayaan pelanggan | Curahold",
+          "Serahan daripada jualan kepada kejayaan pelanggan membawa janji, orang penting dan tarikh utama, supaya pelanggan tidak menerangkan semula."
+        ],
+        "lead": "Serahan daripada jualan kepada kejayaan pelanggan membawa semua yang diperlukan oleh pasukan seterusnya, supaya pelanggan tidak perlu menerangkan semuanya semula.",
+        "body": [
+          {
+            "h": "Apa yang perlu diserahkan"
+          },
+          {
+            "ul": [
+              "Pihak berkepentingan dan pendirian setiap seorang.",
+              "Janji yang dibuat semasa jualan.",
+              "Permintaan terbuka dan soalan tentang produk.",
+              "Tarikh tutup dan tarikh pembaharuan."
+            ]
+          },
+          {
+            "h": "Apa yang sering silap"
+          },
+          {
+            "p": "Janji yang dibuat dalam panggilan jualan yang tidak dicatat oleh sesiapa. Pelanggan mengingatinya; pasukan baharu tidak."
+          }
+        ],
+        "curahold": "Urus niaga yang dimenangi sampai kepada pasukan seterusnya sebagai kad serahan dengan pihak berkepentingan, janji yang dibuat, permintaan produk yang terbuka dan tarikh utama."
+      },
+      {
+        "slug": "feature-request",
+        "kind": "term",
+        "name": "Permintaan ciri",
+        "seo": [
+          "Cara mengurus permintaan ciri pelanggan B2B | Curahold",
+          "Permintaan ciri ialah apabila pelanggan meminta sesuatu yang belum ada. Cara mencatatnya, mengaitkannya dengan pelanggan dan memaklumkan mereka."
+        ],
+        "lead": "Permintaan ciri berlaku apabila pelanggan meminta sesuatu yang belum dilakukan oleh produk, selalunya semasa mesyuarat atau perbualan sokongan.",
+        "body": [
+          {
+            "h": "Cara mengurusnya dengan baik"
+          },
+          {
+            "ul": [
+              "Catat siapa yang meminta dan mengapa ia penting bagi mereka.",
+              "Gabungkan permintaan untuk perkara yang sama.",
+              "Utamakan mengikut pelanggan yang menunggu dan nilai mereka."
+            ]
+          },
+          {
+            "h": "Menutup kitaran"
+          },
+          {
+            "p": "Bahagian yang paling kerap dilangkau ialah memberitahu pelanggan apabila kerja siap. Permintaan yang dijawab dengan nota keluaran membina lebih banyak kepercayaan daripada ciri itu sendiri."
+          }
+        ],
+        "curahold": "Beberapa permintaan pelanggan boleh dikaitkan dengan satu cerita; backlog menunjukkan pelanggan yang menunggu, nilai mereka dan pembaharuan terdekat, dan apabila kerja siap pemilik mendapat draf yang sedia untuk dihantar."
+      },
+      {
+        "slug": "touchpoint",
+        "kind": "term",
+        "name": "Titik sentuh",
+        "seo": [
+          "Apakah titik sentuh pelanggan? Definisi | Curahold",
+          "Titik sentuh ialah setiap hubungan antara pelanggan dan pasukan anda: panggilan, mesyuarat, balasan. Mengapa rentaknya lebih penting."
+        ],
+        "lead": "Titik sentuh ialah setiap saat hubungan antara pelanggan dan pasukan anda: panggilan, mesyuarat, e-mel atau balasan kepada permintaan.",
+        "body": [
+          {
+            "h": "Mengapa rentak penting"
+          },
+          {
+            "p": "Senyap yang panjang ialah amaran awal. Pelanggan yang tidak dihubungi oleh sesiapa selama enam minggu lebih sukar diperbaharui berbanding pelanggan yang ditemui setiap bulan."
+          },
+          {
+            "h": "Apa yang perlu disimpan daripada setiap satu"
+          },
+          {
+            "ul": [
+              "Bila ia berlaku dan siapa yang terlibat.",
+              "Apa yang dipersetujui.",
+              "Langkah seterusnya dengan pemilik dan tarikh."
+            ]
+          }
+        ],
+        "curahold": "Mesyuarat, panggilan dan nota berada pada garis masa setiap pelanggan, masa sejak hubungan terakhir dimasukkan ke dalam skor kesihatan, dan setiap pelanggan boleh mempunyai rentak semakan."
+      },
+      {
+        "slug": "meeting-follow-up",
+        "kind": "term",
+        "name": "Susulan mesyuarat",
+        "seo": [
+          "Susulan mesyuarat pelanggan yang benar-benar siap | Curahold",
+          "Susulan mesyuarat menukar apa yang dipersetujui dengan pelanggan kepada kerja dengan pemilik dan tarikh, supaya janji ditepati dan kelihatan."
+        ],
+        "lead": "Susulan mesyuarat bermaksud menukar apa yang dipersetujui dalam mesyuarat pelanggan kepada kerja yang mempunyai pemilik dan tarikh, sebelum butirannya dilupakan.",
+        "body": [
+          {
+            "h": "Mengapa ia terlepas"
+          },
+          {
+            "p": "Langkah seterusnya tinggal dalam nota seseorang. Seminggu kemudian tiada siapa ingat siapa berjanji untuk melakukan apa, dan pelangganlah yang pertama menyedarinya."
+          },
+          {
+            "h": "Rupa susulan yang baik"
+          },
+          {
+            "ul": [
+              "Langkah seterusnya ditulis sebelum panggilan tamat.",
+              "Setiap satu mempunyai pemilik dan tarikh.",
+              "Pelanggan menerima nota ringkas yang mengesahkannya."
+            ]
+          }
+        ],
+        "curahold": "Langkah seterusnya yang ditulis dalam nota mesyuarat menjadi tugasan yang dikaitkan dengan pelanggan, dengan pemilik dan tarikh, dan janji boleh dikongsi dengan pelanggan dalam portal mereka."
       }
     ]
   },

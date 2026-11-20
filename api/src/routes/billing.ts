@@ -10,7 +10,7 @@
 //   POST  /billing/portal       Paddle's customer portal: invoices, payment method
 //   POST  /billing/cancel       leave at the end of the paid period (the monthly exit right)
 //   POST  /billing/resume       undo that before the period ends
-//   PATCH /billing/profile      tax number and billing e-mail on invoices
+//   PATCH /billing/profile      tax number, billing e-mail and billing country on invoices
 //   POST  /api/inbound/billing/paddle (and the older /api/billing/webhook): Paddle's notifications
 //
 // With billing off (no Paddle settings: self-hosted, demo, development) the
@@ -25,6 +25,15 @@ import { LIVE, SEATS_SQL, applyWebhook, changePlan, ensureSubscription, provider
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { body, email } from '../lib/validate';
+import { NEVER_OFFERED } from '../../../shared/src/compliance/consentTexts';
+
+/**
+ * Curahold is never sold where sanctions apply (NEVER_OFFERED, MASTER-RULES: Iran is always excluded): not as a
+ * billing country, and not to a connection from there. Checked where money is taken, not only on the trial form.
+ */
+function refuseNotOffered(...countries: (string | null | undefined)[]) {
+  if (countries.some((x) => !!x && NEVER_OFFERED.includes(x.toUpperCase()))) fail('country_not_offered');
+}
 
 export const billingRoutes = new Hono<AppEnv>();
 
@@ -43,7 +52,7 @@ async function overview(c: C) {
     const caps = await capsForOrg(q, org.id, access);
     return {
       sub: await readSubscription(q, nowOf(deps)),
-      profile: (await q.query<{ tax_number: string | null; billing_email: string | null }>('select tax_number, billing_email from orgs where id = $1', [org.id]))[0],
+      profile: (await q.query<{ tax_number: string | null; billing_email: string | null; billing_country: string | null }>('select tax_number, billing_email, billing_country from orgs where id = $1', [org.id]))[0],
       caps,
       usage: await usageOf(q, org.id, caps),
     };
@@ -61,7 +70,7 @@ async function overview(c: C) {
     caps,
     usage,
     subscription: sub,
-    profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null },
+    profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null },
     // Public values Paddle.js needs, for the people who may pay. Never a secret: the API key and webhook secret stay on the server.
     ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, email: c.get('auth').email } } : {}),
   });
@@ -83,7 +92,8 @@ billingRoutes.post('/billing/checkout', async (c) => {
   if (!provider) return fail('billing_off');
   const input = await body(c, z.object({ plan: planKey, interval: z.enum(INTERVALS).optional() }));
   const org = c.get('org');
-  const [{ seats }] = await run(c, (q) => q.query<{ seats: number }>(`select ${SEATS_SQL} as seats from orgs o where o.id = $1`, [org.id]));
+  const [{ seats, billing_country }] = await run(c, (q) => q.query<{ seats: number; billing_country: string | null }>(`select ${SEATS_SQL} as seats, o.billing_country from orgs o where o.id = $1`, [org.id]));
+  refuseNotOffered(billing_country, c.req.header('cf-ipcountry'));
   // A plan with a seat limit cannot be bought for more full seats than it allows.
   withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, Number(seats)));
   const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval: input.interval ?? 'month', quantity: Math.max(1, Number(seats)), email: c.get('auth').email });
@@ -158,13 +168,24 @@ billingRoutes.post('/billing/resume', async (c) => {
   return c.json({ ok: true });
 });
 
-/** The billing-contact details shown on invoices. */
+/** The billing-contact details shown on invoices. A country Curahold is never offered in is refused. */
 billingRoutes.patch('/billing/profile', async (c) => {
   requirePerm(c, 'org.manage');
-  const input = await body(c, z.object({ taxNumber: z.string().trim().max(60).nullish(), billingEmail: email.nullish() }));
+  const input = await body(
+    c,
+    z.object({ taxNumber: z.string().trim().max(60).nullish(), billingEmail: email.nullish(), country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/).nullish() }),
+  );
+  refuseNotOffered(input.country);
   const org = c.get('org');
   await run(c, async (q) => {
-    await q.query('update orgs set tax_number = $2, billing_email = $3 where id = $1', [org.id, input.taxNumber ?? null, input.billingEmail ?? null]);
+    // `country` left out keeps the one on file (older clients send only the tax number and e-mail).
+    await q.query('update orgs set tax_number = $2, billing_email = $3, billing_country = case when $5 then $4 else billing_country end where id = $1', [
+      org.id,
+      input.taxNumber ?? null,
+      input.billingEmail ?? null,
+      input.country ?? null,
+      input.country !== undefined,
+    ]);
     await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'org.updated', entity: 'org', entityId: org.id, meta: { billing: true } });
   });
   return c.json({ ok: true, taxNumber: input.taxNumber ?? null, billingEmail: input.billingEmail ?? null });
