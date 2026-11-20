@@ -20,13 +20,13 @@ const FIELDS: Record<HookTarget, (keyof HookMapping)[]> = {
   deal_note: ['body', 'dealId', 'dealName'],
 };
 
-/** Settings: incoming webhooks from recipes, with their address, secret and deliveries. */
 /** A delivery's problem in the reader's language (the log stores a code, never English words). */
 function whyText(t: (key: MessageKey, vars?: Record<string, string>) => string, error: string | null): string {
   const p = problemOf(error);
   return p ? t(`hooks.why.${p.code}` as MessageKey, { value: p.value }) : '—';
 }
 
+/** Settings: incoming webhooks from recipes, with their address, secret and deliveries. */
 export function InboundHooks() {
   const { t, locale } = useI18n();
   const { toast } = useStore();
