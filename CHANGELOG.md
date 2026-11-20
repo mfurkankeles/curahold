@@ -169,6 +169,8 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
   (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
   The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
+- Support desk: a session replay keeps the look of screens the person opened after it started (their styles were
+  refused by the desk's content policy and the replay showed them unstyled).
 - Sign-up no longer promises a set-up time ("Ready in about 15 minutes" and minutes per step): it was never measured.
   It now says there are five steps, in every language.
 - Owner console, Plan & targets: investors who passed and closed fundraising windows step back by colour and outline
