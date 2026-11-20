@@ -155,6 +155,47 @@ const SINGULAR: Partial<Record<Locale, Record<string, string>>> = {
       .map((w) => (w.includes(':') ? (w.split(':') as [string, string]) : [w, w.slice(0, -1)])),
   ),
 };
+// Hebrew: a dictionary writes "{n} ימים"; for exactly 1 Hebrew says the noun and then "one", which agrees in gender
+// ("יום אחד", "משימה אחת"), not "1 ימים". An adjective right after the noun turns singular too and "one" moves after
+// it ("משימה פתוחה אחת"). Each entry: plural: singular/gender. A key's own "<key>.one" form still wins.
+const HE_ONE: Record<string, [string, 'm' | 'f']> = Object.fromEntries(
+  (
+    'ימים:יום/m משימות:משימה/f שורות:שורה/f אנשים:אדם/m קבצים:קובץ/m שינויים:שינוי/m שבועות:שבוע/m רשומות:רשומה/f ' +
+    'צעדים:צעד/m פריטים:פריט/m פעמים:פעם/f פניות:פנייה/f מפתחות:מפתח/m מושבים:מושב/m דברים:דבר/m תשובות:תשובה/f ' +
+    'תפקידים:תפקיד/m תגובות:תגובה/f שלבים:שלב/m שדות:שדה/m רשימות:רשימה/f קריאות:קריאה/f כלים:כלי/m ' +
+    'חשבוניות:חשבונית/f חודשים:חודש/m הזמנות:הזמנה/f אוטומציות:אוטומציה/f שעות:שעה/f דקות:דקה/f מכשירים:מכשיר/m ' +
+    'לקוחות:לקוח/m כרטיסים:כרטיס/m עסקאות:עסקה/f חידושים:חידוש/m הודעות:הודעה/f שאלות:שאלה/f ערכים:ערך/m ' +
+    'כללים:כלל/m חשבונות:חשבון/m סיורים:סיור/m שניות:שנייה/f שנים:שנה/f לוחות:לוח/m קישורים:קישור/m מסמכים:מסמך/m'
+  )
+    .split(' ')
+    .map((e) => {
+      const [plural, rest] = e.split(':');
+      const [singular, g] = rest.split('/');
+      return [plural, [singular, g as 'm' | 'f']];
+    }),
+);
+const HE_ADJ: Record<string, string> = {
+  פתוחות: 'פתוחה', פתוחים: 'פתוח', ממתינים: 'ממתין', ממתינות: 'ממתינה', תקועים: 'תקוע', תקועות: 'תקועה',
+  חדשים: 'חדש', חדשות: 'חדשה', נוספים: 'נוסף', נוספות: 'נוספת', פעילים: 'פעיל', פעילות: 'פעילה',
+  מלאים: 'מלא', מלאות: 'מלאה', מחוברים: 'מחובר', מחוברות: 'מחוברת', מקושרים: 'מקושר', מקושרות: 'מקושרת',
+  אחרים: 'אחר', אחרות: 'אחרת', דחופים: 'דחוף', דחופות: 'דחופה',
+};
+// A verb right before or after the counted noun agrees with it once it is singular: [masculine, feminine].
+const HE_VERB: Record<string, [string, string]> = {
+  הועברו: ['הועבר', 'הועברה'], שונו: ['שונה', 'שונתה'], נוספו: ['נוסף', 'נוספה'], נותרו: ['נותר', 'נותרה'],
+  נפתחו: ['נפתח', 'נפתחה'], נכנסו: ['נכנס', 'נכנסה'], הושמטו: ['הושמט', 'הושמטה'], הוסרו: ['הוסר', 'הוסרה'],
+  יוצאו: ['יוצא', 'יוצאה'], נשלחו: ['נשלח', 'נשלחה'], נשמרו: ['נשמר', 'נשמרה'], הושלמו: ['הושלם', 'הושלמה'],
+  עודכנו: ['עודכן', 'עודכנה'], נמחקו: ['נמחק', 'נמחקה'], עברו: ['עבר', 'עברה'], יתווספו: ['יתווסף', 'תתווסף'],
+  דורשות: ['דורש', 'דורשת'], דורשים: ['דורש', 'דורשת'], ממתינות: ['ממתין', 'ממתינה'], ממתינים: ['ממתין', 'ממתינה'],
+  מגיעים: ['מגיע', 'מגיעה'], מגיעות: ['מגיע', 'מגיעה'], עוברים: ['עובר', 'עוברת'], נכשלים: ['נכשל', 'נכשלת'],
+  יכולים: ['יכול', 'יכולה'], יוכלו: ['יוכל', 'תוכל'], מחכים: ['מחכה', 'מחכה'],
+};
+const heWords = (o: object) => Object.keys(o).join('|');
+const heOnePattern = new RegExp(
+  `(?:(ש?)(${heWords(HE_VERB)}) )?(?:(?<![\\p{L}\\p{M}])([ובלמכהש]{1,3})-)?\\{(\\w+)\\} (${heWords(HE_ONE)})(?: (${heWords(HE_ADJ)}))?(?: (ש?)(${heWords(HE_VERB)}))?(?![\\p{L}\\p{M}])`,
+  'gu',
+);
+const heEveryPattern = new RegExp(`(?<![\\p{L}\\p{M}])כל \\{(\\w+)\\} (${heWords(HE_ONE)})(?![\\p{L}\\p{M}])`, 'gu');
 const singularPattern = new Map<Locale, RegExp>();
 const pluralRules = new Map<Locale, Intl.PluralRules>();
 const countedPattern = new Map<Locale, { re: RegExp; forms: Map<string, [string, string, string]> }>();
@@ -165,6 +206,21 @@ function agreeNumbers(locale: Locale, template: string, vars: Vars): string {
     let re = singularPattern.get(locale);
     if (!re) singularPattern.set(locale, (re = new RegExp(`\\{(\\w+)\\} (${Object.keys(single).join('|')})(?![\\p{L}\\p{M}])`, 'gu')));
     return template.replace(re, (m, name: string, word: string) => (String(vars[name]) === '1' ? `{${name}} ${single[word]}` : m));
+  }
+  if (locale === 'he' && template.includes('{')) {
+    // "Every 1 day" is just "every day" (כל יום).
+    const every = template.replace(heEveryPattern, (m, name: string, noun: string) => (String(vars[name]) === '1' ? `כל ${HE_ONE[noun][0]}` : m));
+    // The company's own word for customers counts too ("{n} {accounts}"); its gender is not recorded, so the default
+    // word's (לקוח, masculine) is used.
+    const own = every.replace(/\{(\w+)\} \{(accounts|accounts_l)\}/g, (m, name: string, word: string) => (String(vars[name]) === '1' ? `{${word === 'accounts' ? 'account' : 'account_l'}} אחד` : m));
+    return own.replace(heOnePattern, (m, preSh: string, pre: string | undefined, prefix: string | undefined, name: string, noun: string, adj?: string, postSh?: string, post?: string) => {
+      if (String(vars[name]) !== '1') return m;
+      const [singular, g] = HE_ONE[noun];
+      const verb = (v: string) => HE_VERB[v][g === 'f' ? 1 : 0];
+      // A one-letter prefix takes a hyphen before a numeral ("ב-3") and attaches to a word ("בשורה").
+      const phrase = `${prefix ?? ''}${singular}${adj ? ` ${HE_ADJ[adj]}` : ''} ${g === 'f' ? 'אחת' : 'אחד'}`;
+      return `${pre ? `${preSh}${verb(pre)} ` : ''}${phrase}${post ? ` ${postSh ?? ''}${verb(post)}` : ''}`;
+    });
   }
   const nouns = COUNTED[locale];
   if (!nouns || !template.includes('{')) return template;

@@ -11,13 +11,13 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 | Yol | Ne için | Kimlik |
 | --- | --- | --- |
 | [REST API](/docs/tr/api-reference/) | Kendi betiklerin, Zapier, Make, raporlar | Kişisel API anahtarı (`chk_…`) |
-| [Webhook'lar](/docs/tr/webhooks/) | Bir şey değişince senin sistemine haber | İmzalı mesaj (HMAC-SHA256) |
+| [Webhook'lar](/docs/tr/webhooks/) | Bir şey değişince sisteminize haber | İmzalı mesaj (HMAC-SHA256) |
 | [AI bağlayıcısı (MCP)](/docs/tr/mcp-and-oauth/) | Claude, ChatGPT ve diğer asistanlar | OAuth 2.1 |
-| [OAuth uygulamaları](/docs/tr/mcp-and-oauth/#kendi-uygulaman-icin-oauth) | Başkalarının kullanacağı uygulamalar | OAuth 2.1 + PKCE |
+| [OAuth uygulamaları](/docs/tr/mcp-and-oauth/#own-app) | Başkalarının kullanacağı uygulamalar | OAuth 2.1 + PKCE |
 
 ## Nereden başlamalı
 
-| İstediğin | Oku |
+| Amacınız | Okuyun |
 | --- | --- |
 | Beş dakikada ilk isteği göndermek | [Hızlı başlangıç](/docs/tr/quickstart/) |
 | API'nin nasıl düşündüğünü örneklerle anlamak | [API rehberi](/docs/tr/api-reference/) |
@@ -25,19 +25,19 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 | Kendi sistemini eşit tutmak | [Kendi aracını bağla](/docs/tr/connect-your-own-tool/) |
 | Bir şey değişince haber almak | [Webhook'lar](/docs/tr/webhooks/) |
 | Bir kelimenin ne demek olduğuna bakmak | [Geliştiriciler için sözlük](/docs/tr/glossary/) |
-| Bir yapay zekâ asistanının ya da kendi uygulamanın bir kişi adına çalışması | [Yapay zekâ bağlayıcısı ve OAuth](/docs/tr/mcp-and-oauth/) |
+| Bir yapay zekâ asistanının ya da kendi uygulamanızın bir kişi adına çalışması | [Yapay zekâ bağlayıcısı ve OAuth](/docs/tr/mcp-and-oauth/) |
 
 Başvuru sayfaları her sürümde ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır.
 
 ## Adresler
 
-Her şirketin kendi adresi vardır. Aşağıdaki örneklerde `sirketin` yerine kendi şirket adresini yaz.
+Her şirketin kendi adresi vardır. Aşağıdaki örneklerde `sirketiniz` yerine kendi şirket adresinizi yazın.
 
 ```text
-API        https://sirketin.curahold.com/api
-MCP        https://sirketin.curahold.com/mcp
-OAuth      https://sirketin.curahold.com/.well-known/oauth-authorization-server
-Belgeler   https://sirketin.curahold.com/docs/
+API        https://sirketiniz.curahold.com/api
+MCP        https://sirketiniz.curahold.com/mcp
+OAuth      https://sirketiniz.curahold.com/.well-known/oauth-authorization-server
+Belgeler   https://sirketiniz.curahold.com/docs/
 ```
 
 ## Neler açık, neler kapalı
@@ -56,17 +56,17 @@ Hatalar her zaman aynı biçimde gelir:
 
 | Durum | Anlamı |
 | --- | --- |
-| 400 | Gönderdiğin veri geçersiz (`validation`, `bad_webhook_url`) |
+| 400 | Gönderdiğiniz veri geçersiz (`validation`, `bad_webhook_url`) |
 | 401 | Anahtar yok, yanlış, süresi dolmuş ya da iptal edilmiş |
 | 403 | Bu kişinin ya da anahtarın buna yetkisi yok (`forbidden`, `read_only_token`, `read_only_seat`, `field_locked`) |
 | 404 | Yok ya da bu kişi göremiyor |
-| 409 | Görev sen okuduktan sonra değişmiş; güncel sürümle yeniden dene |
+| 409 | Görev siz okuduktan sonra değişmiş; güncel sürümle yeniden deneyin |
 
-`message` alanı isteğin diline göre gelir: `x-curahold-locale: tr` ya da `en` başlığını gönder.
+`message` alanı isteğin diline göre gelir: `x-curahold-locale: tr` ya da `en` başlığını gönderin.
 
 ## Sınırlar
 
 - Liste uçları en fazla 500 kayıt döndürür; `limit` ve `offset` ile sayfala.
 - Bir şirkette en fazla 20 webhook olabilir.
 - Arama her türde en fazla 6 sonuç döndürür.
-- Sunucuyu yormayan, olay odaklı kullanım beklenir: değişiklikleri sorgulayıp durmak yerine webhook kullan.
+- Sunucuyu yormayan, olay odaklı kullanım beklenir: değişiklikleri sorgulayıp durmak yerine webhook kullanın.

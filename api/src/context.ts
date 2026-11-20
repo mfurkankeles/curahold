@@ -205,6 +205,8 @@ export type AppEnv = {
     supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
     tokenKind?: 'key' | 'oauth' | 'analytics';
+    /** A crawler's user agent let through for its bearer, which must still prove itself (lib/botGuard.ts crawlerBearer). */
+    crawlerBearer?: 'ai' | 'scraper';
     /** An analytics key's own limits (datasets, departments); see routes/analytics.ts. */
     analyticsScope?: { datasets: string[] | null; departments: string[] | null };
     /** The key of a change that must happen once (lib/repeats.ts); claimed by the request's first transaction. */

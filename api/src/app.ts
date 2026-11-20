@@ -80,7 +80,7 @@ import { portalRoutes } from './routes/portal';
 import { assistPublicRoutes, assistRoutes } from './routes/assist';
 import { signInSupport } from './lib/support';
 import { BUDGETS, INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
-import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
+import { crawlerBearer, edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
 import { raiseOpsAlert, readiness, sharedOps } from './lib/ops';
 import { liveRoutes } from './live/routes';
 import { asksForTicket } from './live/protocol';
@@ -144,12 +144,15 @@ export function createApp(deps: Deps) {
     const early = edgeAnswer(c.req.raw, cfg);
     if (early) return early;
     const ip = clientIp(c, cfg.clientIp);
-    const refused = robotRefusal(cfg.robotGuard, { path: c.req.path, ua: c.req.header('user-agent'), bearer: /^Bearer\s/i.test(c.req.header('authorization') ?? '') });
+    const robot = { path: c.req.path, ua: c.req.header('user-agent'), bearer: /^Bearer\s/i.test(c.req.header('authorization') ?? '') };
+    const refused = robotRefusal(cfg.robotGuard, robot);
     if (refused) {
       notice('refused', ip, refused);
       const loc = normalizeLocale(c.req.header('x-curahold-locale'), 'en');
       return c.json({ error: 'robot_refused', message: translate(loc, 'errors.robot_refused') }, 403);
     }
+    const proveBearer = crawlerBearer(cfg.robotGuard, robot);
+    if (proveBearer) c.set('crawlerBearer', proveBearer);
     await next();
     if (c.res.status === 429) notice('limited', ip, c.req.path);
   });
@@ -193,7 +196,14 @@ export function createApp(deps: Deps) {
       if (wait) return limited(c, wait);
     }
     await next();
-    if (ip && c.res.status === 404 && p.startsWith('/api/')) {
+    // Counted as probing: unknown addresses (404), and "sign in first" (401) to a caller that brought no credential at
+    // all. Without a session every API address answers 401 before routing, so a scanner without one never saw a 404
+    // and was never counted. A signed-out browser asks once or twice; the budget is 60. Webhook receivers are left
+    // out of the 401 count: a vendor's sending address is shared by many companies, and one misconfigured hook must
+    // not hold it for all of them.
+    const machine = /^\/api\/(inbound|hooks)\/|^\/api\/billing\/webhook$/.test(p);
+    const bare = !machine && !getCookie(c, SESSION_COOKIE) && !c.req.header('authorization') && !c.req.header('x-curahold-staff-key');
+    if (ip && p.startsWith('/api/') && (c.res.status === 404 || (c.res.status === 401 && bare))) {
       const wait = limiter.take(`probe:${ip}`, BUDGETS.probe, scale);
       if (wait) watch.hold(ip, wait);
     }
@@ -348,6 +358,22 @@ export function createApp(deps: Deps) {
     await next();
   };
   app.use('/api/*', companyFromHost);
+  // A crawler's user agent let through for its bearer (lib/botGuard.ts): now that the company is known, the bearer must
+  // be one of its live keys or app tokens. Without this, any "Bearer x" got a crawler the public answers (sign-in page
+  // data, entry links) that the robot rules refuse it. Only these requests pay for the lookup; a token without a
+  // Curahold prefix is refused before any query.
+  app.use('/api/*', async (c, next) => {
+    const kind = c.get('crawlerBearer');
+    if (kind) {
+      const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1] ?? '';
+      const live = bearer ? await resolveToken(deps.db, c.get('org').id, bearer, { analytics: isFeed(c.req.path) }) : null;
+      if (!live) {
+        notice('refused', clientIp(c, cfg.clientIp), kind);
+        return c.json({ error: 'robot_refused', message: translate(c.get('locale'), 'errors.robot_refused') }, 403);
+      }
+    }
+    await next();
+  });
   // Apps and AI assistants (OAuth, MCP) reach the company at its own address.
   app.use('/mcp', companyFromHost);
   app.use('/oauth/*', companyFromHost);

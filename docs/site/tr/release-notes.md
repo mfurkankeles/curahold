@@ -10,33 +10,33 @@ summary: Neler yeni, neler değişti.
 
 ### Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri; raporlar ile paneller ayrı
 
-- **Üç CRM daha: Bitrix24, Freshsales ve Zendesk Sell.** CRM'in içinde senin oluşturduğun bir anahtarla bağlanırlar (giriş sayfası yok, onay beklemek yok) ve diğerleri gibi iki yönlü eşitlenirler: şirketler, kişiler ve anlaşmalar. Bkz. [Bağlantılar ve CRM](/docs/tr/connections/).
+- **Üç CRM daha: Bitrix24, Freshsales ve Zendesk Sell.** CRM'in içinde sizin oluşturduğunuz bir anahtarla bağlanırlar (giriş sayfası yok, onay beklemek yok) ve diğerleri gibi iki yönlü eşitlenirler: şirketler, kişiler ve anlaşmalar. Bkz. [Bağlantılar ve CRM](/docs/tr/connections/).
 - **Gün, hafta, ay ve yıl takvimi; ekip takvimi:** takvim artık toplantıları, aramaları, yenilemeleri ve iş değerlendirmelerini de gösterir; ekip arkadaşlarının takvimini görme yetkisi olan rol (yöneticiler ve ekip liderleri) tek bir kişinin ya da bütün bir ekibin takvimini açar.
 - **Paneller dolu gelir:** yedi hazır panel, Paneller'i ilk açtığında kendi verinle çizilmiş olarak oradadır; üstteki adlar birinden ötekine geçirir, hepsi silinebilir (ve çöp kutusundan geri alınabilir).
-- **Her yerde geri dönüş:** başka bir ekrandan açtığın ekran, başlığının üstünde nereden geldiğini gösterir; tek tıkla oraya dönersin. Yenilemeler, iş değerlendirmeleri ve ürünlerin kendi başlığı ve menüde kendi satırı var.
+- **Her yerde geri dönüş:** başka bir ekrandan açtığınız ekran, başlığının üstünde nereden geldiğini gösterir; tek tıkla oraya dönersiniz. Yenilemeler, iş değerlendirmeleri ve ürünlerin kendi başlığı ve menüde kendi satırı var.
 - **CuraAI köşede:** belgelerden cevap veren yardımcı artık her ekranın sağ altında durur ve konuşmayı saklar.
-- **Çöp kutusu:** sildiğin şey (müşteri, kayıt, görev, zaman çizelgesi girişi, sayfa, kayıtlı rapor, otomasyon) 30 gün durur ve onunla birlikte gidenlerle beraber eskisi gibi geri alınabilir. Silmenin hemen ardından bildirimde Geri al çıkar; sonrası için menün → Çöp kutusu. Ayrıntı: *Çöp kutusu*.
-- **Playbook’lar:** ekibinin işi yapma şeklini tarihli adımlar olarak yaz; adımlar uygulandığı tarihten itibaren ya da müşterinin yenileme tarihinden veya fırsatın kapanış tarihinden geriye doğru sayılır. Ayarlar → Playbook’lar’da dört hazır örnekten (yenileme, onboarding, iş değerlendirmesi, fırsatı kapatma) başla.
-- **Kendiliğinden başlayan yenilemeler:** ne kadar önceden (örneğin 180 gün) ve hangi playbook’la başlayacağını seç; her sabah yenileme işi müşterinin sorumlusu için açılır, istersen bir yenileme fırsatıyla birlikte. Tarihi geçmiş adımlar bugüne yığılan görevler yerine tek bir "geride kalanlar" görevinde toplanır.
-- **Para birimleri:** bir müşteri ya da fırsat kendi para biriminde olabilir; toplamlar, hedefler ve raporlar Ayarlar → Para birimleri’nde tuttuğun kurlarla şirketin para biriminde gösterilir.
-- **Kendi başına açılan fırsat:** her sayfanın üstünde alanları, görevleri (tek görev ya da bütün bir playbook ekle) ve kendi yorum akışıyla açılır: @anma, küçük kart olarak görünen linkler, dosyalar ve yapıştırılan ekran görüntüleri.
+- **Çöp kutusu:** sildiğiniz şey (müşteri, kayıt, görev, zaman çizelgesi girişi, sayfa, kayıtlı rapor, otomasyon) 30 gün durur ve onunla birlikte gidenlerle beraber eskisi gibi geri alınabilir. Silmenin hemen ardından bildirimde Geri al çıkar; sonrası için menünüz → Çöp kutusu. Ayrıntı: *Çöp kutusu*.
+- **Playbook’lar:** ekibinizin işi yapma şeklini tarihli adımlar olarak yazın; adımlar uygulandığı tarihten itibaren ya da müşterinin yenileme tarihinden veya fırsatın kapanış tarihinden geriye doğru sayılır. Ayarlar → Playbook’lar’da dört hazır örnekten (yenileme, onboarding, iş değerlendirmesi, fırsatı kapatma) başlayın.
+- **Kendiliğinden başlayan yenilemeler:** ne kadar önceden (örneğin 180 gün) ve hangi playbook’la başlayacağını seçin; her sabah yenileme işi müşterinin sorumlusu için açılır, isterseniz bir yenileme fırsatıyla birlikte. Tarihi geçmiş adımlar bugüne yığılan görevler yerine tek bir "geride kalanlar" görevinde toplanır.
+- **Para birimleri:** bir müşteri ya da fırsat kendi para biriminde olabilir; toplamlar, hedefler ve raporlar Ayarlar → Para birimleri’nde tuttuğunuz kurlarla şirketinizin para biriminde gösterilir.
+- **Kendi başına açılan fırsat:** her sayfanın üstünde alanları, görevleri (tek görev ya da bütün bir playbook ekleyin) ve kendi yorum akışıyla açılır: @anma, küçük kart olarak görünen linkler, dosyalar ve yapıştırılan ekran görüntüleri.
 - **Yenilemeler görünümü:** her yenilemenin yanında yenileme fırsatı (tıklayınca açılır) ve sözleşmesi.
-- **Hedefler sana göre:** hedef yok, tüm fırsatlar için tek hedef ya da fırsat türüne göre hedef; her tür açılıp kapatılabilir. İş değerlendirmesi yapmayan şirketler bu bölümü kapatabilir.
-- **Raporlar ve paneller ayrı:** rapor verinin kendisidir: liste, ara toplamlı gruplu satırlar ya da tablo (matris); istersen üstünde grafik. Panel birkaç raporun grafiğini yan yana koyar ve hepsini tek bir kişi ya da ekip için gösterebilir. Hedefe göre gösterge grafiği.
+- **Hedefler size göre:** hedef yok, tüm fırsatlar için tek hedef ya da fırsat türüne göre hedef; her tür açılıp kapatılabilir. İş değerlendirmesi yapmayan şirketler bu bölümü kapatabilir.
+- **Raporlar ve paneller ayrı:** rapor verinin kendisidir: liste, ara toplamlı gruplu satırlar ya da tablo (matris); isterseniz üstünde grafik. Panel birkaç raporun grafiğini yan yana koyar ve hepsini tek bir kişi ya da ekip için gösterebilir. Hedefe göre gösterge grafiği.
 - **Favoriler:** bir müşteriyi, kaydı, panoyu, raporu ya da paneli yıldızla; menünün en üstünde durur.
 - **Planlar ve ödeme:** ücretsiz deneme (artık varsayılan üç ay; istek onaylanınca başlar), ardından Team ya da Business; ödeme Paddle üzerinden. Kullanıcı sayısı katılan kişileri kendiliğinden izler. Plan yokken her şey okunur ve dışa aktarılır, yalnızca değişiklik yapılamaz. Kendi sunucuna kurduğunda abonelik yok.
-- **Kendi sunucun:** Curahold bir şirketin kendi duvarları içinde de çalışır: tek şirket, kendi Postgres’i, ekler kendi diskinde, e-postalar kendi posta sunucusundan; Docker ile birkaç dakikada kurulur. Ayrıntılar *Curahold’u kendi sunucunda çalıştırmak* sayfasında.
+- **Kendi sunucunuz:** Curahold bir şirketin kendi duvarları içinde de çalışır: tek şirket, kendi Postgres’i, ekler kendi diskinde, e-postalar kendi posta sunucusundan; Docker ile birkaç dakikada kurulur. Ayrıntılar *Curahold’u kendi sunucunda çalıştırmak* sayfasında.
 - **Daha derli toplu Raporlar sayfası:** listedeki çubuklar aynı yerden başlayıp aynı yerde bitiyor, rakamlar alt alta duruyor; kartlar ikişerli ve aynı boyda, yanlarında boşluk kalmıyor.
-- **Toplantılar:** müşteri sayfasında o müşteriyle yapılan bütün toplantılar, iş değerlendirmeleri ve aramalar; kimlerin katıldığı, notlar ve sonraki adımlarla. Kaydederken yazdığın her sonraki adım müşteriye bağlı bir görev olur. İş değerlendirmelerindeki "Yapıldı" artık toplantı formunu açıyor.
+- **Toplantılar:** müşteri sayfasında o müşteriyle yapılan bütün toplantılar, iş değerlendirmeleri ve aramalar; kimlerin katıldığı, notlar ve sonraki adımlarla. Kaydederken yazdığınız her sonraki adım müşteriye bağlı bir görev olur. İş değerlendirmelerindeki "Yapıldı" artık toplantı formunu açıyor.
 - **Yeni görev ayrıntıları soruyor:** bir sütunun altındaki "Görev ekle" ve "Yeni görev" aynı pencereyi açar: açıklama, müşteri, bağlı olduğu kayıt, atananlar, son tarih, öncelik, tekrar, pano, sütun ve panonun kendi alanları. Başlığa "cuma @Ayşe #Acme !yüksek" yazmak alanları yine kendiliğinden doldurur.
-- **Hazır kayıt türleri:** sözleşmeler, riskler, ürün talepleri ve teklifler tek tıkla.
-- **Küçük düzeltmeler:** Değerlendirmeler’deki Tamam düğmesi artık kenardan taşmıyor; ürünler görünümündeki "+" görev açmadan önce soruyor ve görevi açmayı öneriyor; kişilerde onları kimin eklediği görünüyor ve her listenin sütunlarını sen seçiyorsun; fırsatlar hafta, ay, çeyrek ya da istediğin tarihlere göre daraltılabiliyor.
+- **Hazır kayıt türleri:** sözleşmeler, riskler, ürün talepleri ve teklifler tek tıkla eklenir.
+- **Küçük düzeltmeler:** Değerlendirmeler’deki Tamam düğmesi artık kenardan taşmıyor; ürünler görünümündeki "+" görev açmadan önce soruyor ve görevi açmayı öneriyor; kişilerde onları kimin eklediği görünüyor ve her listenin sütunlarını siz seçiyorsunuz; fırsatlar hafta, ay, çeyrek ya da istediğiniz tarihlere göre daraltılabiliyor.
 
 
-### Kendi raporun, hazır paneller ve yeni görünüm
+### Kendi raporunuz, hazır paneller ve yeni görünüm
 
-- **Rapor oluşturucu:** neye bakacağını seç, daralt, grupla, özetle, grafiğini seç; kaydet, paylaş, CSV olarak al. 26 hazır rapor başlangıç için duruyor.
-- **Paneller:** yedi hazır panel (satış hunisi, yenileme ve risk, müşteri sağlığı, ekip performansı…) tek tıkla eklenir; raporlarını kart olarak koyarsın.
+- **Rapor oluşturucu:** neye bakacağınızı seçin, daraltın, gruplayın, özetleyin, grafiğini seçin; kaydedin, paylaşın, CSV olarak alın. 26 hazır rapor başlangıç için duruyor.
+- **Paneller:** yedi hazır panel (satış hunisi, yenileme ve risk, müşteri sağlığı, ekip performansı…) tek tıkla eklenir; raporlarınızı kart olarak koyarsınız.
 - **Yeni renkler ve hareket:** çivit ve mor-mavi; sayfalar, sayılar ve grafikler artık hareketle geliyor (cihazında “hareketi azalt” açıksa durur).
 - Tutarlar para birimi simgesiyle gösteriliyor.
 
@@ -46,9 +46,9 @@ summary: Neler yeni, neler değişti.
 - **Arşiv:** tamamlanan görevler 90 gün sonra (pano ayarından değişir) panonun arşivine taşınır; raporlarda sayılır, tek tıkla geri gelir.
 - **Hız:** büyük şirketlerde sayfalar belirgin biçimde hızlandı. 300 kişi, 6.000 müşteri ve 120.000 görevle ölçüldü: pano, görevlerim, müşteriler, arama ve gelen kutusu için sunucu saniyenin onda biri civarında ya da daha kısa sürede yanıt veriyor.
 
-### Uygulama olarak kur, çevrimdışı oku, canlı yenileme
+### Uygulama olarak kurun, çevrimdışı okuyun, canlı yenileme
 
-- **Kur:** Curahold telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adına tıkla → Curahold’u kur; iPhone: Paylaş → Ana Ekrana Ekle).
+- **Kur:** Curahold telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adınıza tıklayın → **Curahold’u kur**; iPhone: **Paylaş → Ana Ekrana Ekle**).
 - **Çevrimdışı okuma:** bağlantı yokken uygulama açılır ve son gördüklerini gösterir; çıkış yapınca cihazdaki kopya silinir.
 - **Canlı yenileme:** başkasının eklediği kart, taşıdığı görev, yazdığı yorum ve yeni bildirimler yarım dakika içinde kendiliğinden görünür.
 - Bağlantı koptuğunda hata mesajları artık ne olduğunu söylüyor.
@@ -62,7 +62,7 @@ summary: Neler yeni, neler değişti.
 
 ### CRM, raporlar ve görevlerin fazlası
 
-- **Satış hunisi:** fırsatlar aşama aşama sütunlarda; sürükle-bırak, Kazanıldı/Kaybedildi, ağırlıklı tahmin. Fırsat türleri: yeni iş, genişleme, yenileme.
+- **Satış hunisi:** fırsatlar aşama aşama sütunlarda; sürükleyip bırakın, Kazanıldı/Kaybedildi, ağırlıklı tahmin. Fırsat türleri: yeni iş, genişleme, yenileme.
 - **Raporlar:** açık/geciken/biten işler, zamanında bitirme, hafta hafta akış, kişi ve pano bazında yük, sağlık dağılımı, yenilemeler, aşama bazında fırsatlar.
 - **Ekip ve 1:1:** kişi başına yük ve tek kişilik hazırlık görünümü.
 - **Zaman çizelgesi (Gantt):** başlangıç ve son tarihe göre çubuklar; pano, kişi ya da müşteri bazında.
@@ -74,7 +74,7 @@ summary: Neler yeni, neler değişti.
 
 ### Kolay kullanım
 
-- **Hızlı ekleme:** görevi konuşur gibi yaz; “cuma”, “haftaya”, “15 kasım”, @kişi, #müşteri, !öncelik ve “her pazartesi” okunur. Birden çok satır, birden çok görev olur. N tuşu, + Yeni ya da telefonda alttaki +.
+- **Hızlı ekleme:** görevi konuşur gibi yazın; “cuma”, “haftaya”, “15 kasım”, @kişi, #müşteri, !öncelik ve “her pazartesi” okunur. Birden çok satır, birden çok görev olur. N tuşu, + Yeni ya da telefonda alttaki +.
 - **Tek tıkla bitir:** listelerde ve kartlarda yuvarlak işaret; geri alınabilir. Görev penceresinde **Tamamla**.
 - **Yeni yerleşim:** simgeli menü, tek **+ Yeni** düğmesi, Görevlerim’in yanında geciken ve bugünkü görev sayısı; telefonda alt çubuk.
 - **Koyu tema** ve **klavye kısayolları** (? tuşu hepsini gösterir).
@@ -120,8 +120,8 @@ summary: Neler yeni, neler değişti.
 
 ### Geliştirici platformu ve AI bağlayıcısı
 
-- **Claude ve ChatGPT bağlayıcısı (MCP):** asistanınla müşterilerini sorgula, özet ve sunum hazırlat, görev açtır. Asistan senin adına ve senin yetkilerinle çalışır.
-- **Kişisel API anahtarları:** okuma ya da yazma yetkili, süreli ya da süresiz; Ayarların sayfasından.
+- **Claude ve ChatGPT bağlayıcısı (MCP):** asistanınızla müşterilerinizi sorgulayın, özet ve sunum hazırlatın, görev açtırın. Asistan sizin adınıza ve sizin yetkilerinizle çalışır.
+- **Kişisel API anahtarları:** okuma ya da yazma yetkili, süreli ya da süresiz; Ayarlarınız sayfasından.
 - **Webhook'lar:** görev, müşteri, kayıt ve yorum değişikliklerinde imzalı mesaj; yeniden deneme ve test gönderimi.
 - **Belgeler:** bu site, Türkçe ve İngilizce.
 
@@ -138,4 +138,4 @@ summary: Neler yeni, neler değişti.
 - Role göre müşteri erişimi: tümü, ekibinin ya da yalnızca kendi müşterileri.
 - Alan bazında görme ve değiştirme yetkisi.
 - Role göre ana sayfalar ve on kart türü.
-- "Onun gözünden bak": bir kişinin ekranını salt okunur olarak gör.
+- "Onun gözünden bak": bir kişinin ekranını salt okunur olarak görün.

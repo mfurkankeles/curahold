@@ -29,7 +29,7 @@ import { SearchPalette, useSearchKey } from './Search';
 import { WhatsNew } from './ShellDialogs';
 import { BillingBar } from './Billing';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
-import { Avatar, Dialog, Mark } from './ui';
+import { Avatar, CloseButton, Dialog, Mark } from './ui';
 import { useRecordTypes } from '../lib/recordTypes';
 import { typeLabel } from '../../../shared/src/records';
 import { formatDateTime } from '../lib/format';
@@ -399,9 +399,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             </div>
             {!narrow && <Bell />}
             {narrow && (
-              <button className="mbar__btn sidebar__close" aria-label={t('common.close')} onClick={() => setNavOpen(false)}>
-                <Icon name="close" size={18} />
-              </button>
+              <CloseButton onClick={() => setNavOpen(false)} />
             )}
           </div>
           <div className="sidebar__actions">

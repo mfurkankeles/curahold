@@ -6,7 +6,7 @@ summary: Müşteriler, alanları, zaman çizelgesi, toplantılar ve sağlık sko
 ---
 # Başvuru: müşteriler
 
-Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `fields` içinde, yöneticinin tanımladığı alan anahtarlarıyla durur. Bir kişi yalnızca rolünün görmesine izin verdiği müşterileri alır.
+Müşteri (adreslerde "account"), baktığınız şirkettir. Kendi alanları `fields` içinde, yöneticinin tanımladığı alan anahtarlarıyla durur. Bir kişi yalnızca rolünün görmesine izin verdiği müşterileri alır.
 
 > Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır. Biçimler şurada: [Nesneler](/docs/tr/ref-objects/).
 
@@ -19,21 +19,21 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `GET /accounts/:id` | Tek bir müşteri; kişinin görebildiği bütün alanlarıyla. |
 | `PATCH /accounts/:id` | Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. |
 | `DELETE /accounts/:id` | Müşteriyi kayıtları, zaman çizelgesi ve portal kişileriyle birlikte çöp kutusuna taşır; 30 gün boyunca geri alınabilir. |
-| `POST /accounts/bulk` | Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivle ya da geri al. |
-| `POST /accounts/import` | Bir dosyanın satırlarından müşteri alır (CSV ya da Excel senin tarafında okunur); sütundan alana eşlemeyle. |
+| `POST /accounts/bulk` | Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivleme ya da geri alma. |
+| `POST /accounts/import` | Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafında okunur); sütundan alana eşlemeyle. |
 | `GET /imports` | Son müşteri içe aktarmaları; en yenisi başta. |
 | `POST /imports/:id/undo` | Bir içe aktarmayı 30 gün içinde geri alır: eklediklerini kaldırır, değiştirdiklerini eski haline getirir. |
 | `PUT /account-fields` | Müşteri alanlarının listesini değiştirir (yönetici işi): anahtarlar, her dildeki etiketler, türler, seçenekler, kimin görüp düzenleyebileceği. |
 | `GET /accounts/whitespace` | Hangi müşteride hangi ürün var, hangisinde yok: bir türün kayıtları müşteri başına ve bir alanın seçeneği başına sayılır. |
 | `GET /accounts/:id/timeline` | Bir müşteriyle olan her şey, en yenisi başta: notlar, aramalar, toplantılar, e-postalar, biten görevler, değişiklikler. |
 | `POST /accounts/:id/activities` | Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder. |
-| `GET /accounts/:id/flow` | Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsan), ona verilen sözler ve devir kartları. |
+| `GET /accounts/:id/flow` | Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsanız), ona verilen sözler ve devir kartları. |
 | `PUT /accounts/:id/team` | Müşterinin bir departmandaki sahibini belirler (`userId: null` ile kaldırır). |
 | `POST /accounts/:id/promises` | Müşteriye verilen bir sözü kaydeder (`body`; isteğe bağlı `recordId`, `activityId`, `dueDate`). |
 | `PATCH /promises/:id` | Bir sözü değiştirir ya da tutuldu olarak işaretler (`kept: true`). |
 | `DELETE /promises/:id` | Bir sözü siler. |
-| `GET /handovers` | Görebildiğin devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi. |
-| `GET /handovers/:id` | Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsan) ve devralabilecek kişiler. |
+| `GET /handovers` | Görebildiğiniz devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi. |
+| `GET /handovers/:id` | Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsanız) ve devralabilecek kişiler. |
 | `POST /handovers` | Bir fırsatın devir kartını elle hazırlar (`sourceKind`: `record` ya da `task`, `sourceId`). |
 | `PATCH /handovers/:id` | Açık bir kartın özetini ya da önerilen planını değiştirir veya kartı kaldırır (`status: dismissed`). |
 | `POST /handovers/:id/confirm` | Devri onaylar: `ownerId` devralan departmanda müşterinin sahibi olur, plan (`planId` ya da önerilen) uygulanır ve sahibe haber verilir. |
@@ -41,7 +41,7 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `POST /request-links` | Bir müşteri talebini bir işe bağlar (`storyId`, `accountId`, `source`: account, ticket, meeting, portal ya da task; isteğe bağlı `sourceId` ve `note`). |
 | `DELETE /request-links/:id` | Bir bağı kaldırır. |
 | `PATCH /request-links/:id` | Bağla birlikte saklanan "yayında" mesaj taslağını düzenler. |
-| `POST /request-links/:id/told` | Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin gönderdin). |
+| `POST /request-links/:id/told` | Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendiniz gönderdiniz). |
 | `POST /request-links/:id/close-portal` | Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. |
 | `GET /flow/settings` | Şirketin akış ayarları: kazanılan fırsatın devir kartı alıp almadığı, önerdiği plan ve "müşteriye haber ver" görevlerinin gittiği pano. |
 | `PUT /flow/settings` | Bu ayarları değiştirir (`handover`, `handoverPlanId`, `loopBoardId`). |
@@ -98,7 +98,7 @@ Tek bir müşteri; kişinin görebildiği bütün alanlarıyla.
 
 ### `PATCH /accounts/:id`
 
-Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. Yalnızca gönderdiğin alanlar değişir.
+Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. Yalnızca gönderdiğiniz alanlar değişir.
 
 **Gerekenler:** yazabilen bir koltuk · bazı değişiklikler için: yetki `accounts.manage`
 
@@ -121,7 +121,7 @@ Müşteriyi kayıtları, zaman çizelgesi ve portal kişileriyle birlikte çöp 
 
 ### `POST /accounts/bulk`
 
-Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivle ya da geri al. Cevapta bir geri alma kimliği gelir.
+Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivleme ya da geri alma. Cevapta bir geri alma kimliği gelir.
 
 **Gerekenler:** yetki `accounts.manage`
 
@@ -134,7 +134,7 @@ Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivle ya da g
 
 ### `POST /accounts/import`
 
-Bir dosyanın satırlarından müşteri alır (CSV ya da Excel senin tarafında okunur); sütundan alana eşlemeyle. Var olan müşteriler ada ya da kaynaktaki kimliğine göre eşlenir.
+Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafında okunur); sütundan alana eşlemeyle. Var olan müşteriler ada ya da kaynaktaki kimliğine göre eşlenir.
 
 **Gerekenler:** yetki `accounts.manage` · yetki `accounts.view_all`
 
@@ -197,7 +197,7 @@ Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder.
 
 ### `GET /accounts/:id/flow`
 
-Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsan), ona verilen sözler ve devir kartları.
+Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsanız), ona verilen sözler ve devir kartları.
 
 ### `PUT /accounts/:id/team`
 
@@ -243,13 +243,13 @@ Bir sözü siler. Cevap sözü taşır; geri yazılabilir.
 
 ### `GET /handovers`
 
-Görebildiğin devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi.
+Görebildiğiniz devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi.
 
 **Sorgu:** `status`
 
 ### `GET /handovers/:id`
 
-Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsan) ve devralabilecek kişiler.
+Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsanız) ve devralabilecek kişiler.
 
 ### `POST /handovers`
 
@@ -324,7 +324,7 @@ Bağla birlikte saklanan "yayında" mesaj taslağını düzenler.
 
 ### `POST /request-links/:id/told`
 
-Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin gönderdin).
+Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendiniz gönderdiniz).
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -356,7 +356,7 @@ Asistandan bir taslak (model yoksa ya da sınır aşıldıysa şablondan): `hand
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `PATCH /activities/:id`
 

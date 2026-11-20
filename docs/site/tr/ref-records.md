@@ -2,7 +2,7 @@
 title: Başvuru: kayıtlar
 section: reference
 order: 21
-summary: Kişiler, fırsatlar, destek kayıtları ve kendi tanımladığın türler.
+summary: Kişiler, fırsatlar, destek kayıtları ve kendi tanımladığınız türler.
 ---
 # Başvuru: kayıtlar
 
@@ -22,13 +22,13 @@ Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek ka
 | `GET /records/:id` | Tek bir kayıt. |
 | `POST /records` | Bir müşterinin altına, bir türden kayıt ekler. |
 | `POST /records/bulk` | Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived` ve/veya `fields` (kişinin düzenleyebildiği değerler). |
-| `PATCH /records/:id` | Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir. |
+| `PATCH /records/:id` | Bir kaydı değiştirir; yalnızca gönderdiğiniz alanlar değişir. |
 | `DELETE /records/:id` | Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /records/:id/comments` | Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider. |
 | `DELETE /record-comments/:id` | Bir kayıttaki kendi yorumunu siler. |
 | `POST /records/:id/files` | Bir kayda dosya ekler (multipart yükleme, istek başına bir dosya). |
 | `POST /records/:id/plans` | Bir anlaşmaya ya da herhangi bir kayda plan uygular: görevleri kayda ve müşterisine bağlanır. |
-| `PUT /tickets/:source/:externalId` | Kendi sisteminin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. |
+| `PUT /tickets/:source/:externalId` | Kendi sisteminizin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. |
 | `POST /inbound/tickets/:token` | Yukarıdakinin anahtar gönderemeyen sistemler için hali: gizli değer adresin içindedir (Ayarlar → Geliştiriciler). |
 
 ## Ayrıntılar
@@ -113,7 +113,7 @@ Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived`
 
 ### `PATCH /records/:id`
 
-Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir.
+Bir kaydı değiştirir; yalnızca gönderdiğiniz alanlar değişir.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -168,7 +168,7 @@ Bir anlaşmaya ya da herhangi bir kayda plan uygular: görevleri kayda ve müşt
 
 ### `PUT /tickets/:source/:externalId`
 
-Kendi sisteminin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. Yeniden gönderince yalnızca gönderdiğin değişir.
+Kendi sisteminizin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. Yeniden gönderince yalnızca gönderdiğiniz değişir.
 
 **Gerekenler:** yazabilen bir koltuk
 

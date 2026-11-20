@@ -2,7 +2,7 @@
 title: Odoo (muhasebe)
 section: help
 order: 8.23
-summary: Odoo'i yalnızca okunur bağla: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
+summary: Odoo'i yalnızca okunur bağlayın: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
 ---
 # Odoo (muhasebe)
 
@@ -14,11 +14,11 @@ Müşteriler (programda varsa vergi numarası, e-posta ve web adresiyle), vade t
 
 ## Bağlama
 
-**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bul ve **Odoo bağla**'yı seç. Sonra:
+**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bulun ve **Odoo bağla**'yı seçin. Sonra:
 
-1. Odoo'da profilini aç → Tercihler → Hesap Güvenliği ve bir API anahtarı oluştur.
-2. Odoo adresini ve kullanıcı adını not al. Odoo.sh'ta ya da kendi sunucunda veritabanı adını da.
-3. Aşağıya gir. Odoo Online'da API erişimi Custom planını gerektirir (Odoo'nun kuralı).
+1. Odoo'da profilinizi açın, Tercihler → Hesap Güvenliği'ne gidin ve bir API anahtarı oluşturun.
+2. Odoo adresini ve kullanıcı adını not alın. Odoo.sh'ta ya da kendi sunucunuzda veritabanı adını da not alın.
+3. Aşağıya girin. Odoo Online'da API erişimi Custom planını gerektirir (Odoo'nun kuralı).
 
 ## Sınırlar ve zamanlama
 
@@ -26,8 +26,8 @@ Odoo sabit bir sınır yayımlamaz; Curahold küçük bir sunucuyu yormamak içi
 
 ## Bir sorun olursa
 
-Odoo bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seç. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
+Odoo bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seçin. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
 
-## Ayrıca bak
+## Ayrıca bakın
 
 - [Muhasebe programları](/docs/tr/accounting/)

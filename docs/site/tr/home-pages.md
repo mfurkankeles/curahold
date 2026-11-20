@@ -12,8 +12,8 @@ Ana sayfa, kişinin işini açar açmaz görmesi için vardır. Her sayfa kartla
 
 | Kart | Ne gösterir |
 | --- | --- |
-| Açık görevlerim | Sana atanmış, bitmemiş görevler; gecikenler önce |
-| Yaklaşan yenilemeler | Seçtiğin gün içinde yenilenecek müşteriler ve toplam tutar |
+| Açık görevlerim | Size atanmış, bitmemiş görevler; gecikenler önce |
+| Yaklaşan yenilemeler | Seçtiğiniz gün içinde yenilenecek müşteriler ve toplam tutar |
 | İlgi bekleyenler | Sağlığı riskli ya da izlenmeli olan müşteriler |
 | Sessiz kalanlar | Belirli bir süredir hiçbir hareket olmayan müşteriler |
 | Paydaş riskleri | Engelleyici ya da şüpheci kişiler ve güçlü destekçisi olmayan müşteriler |
@@ -29,4 +29,4 @@ Kartların çoğu "benim", "ekibimin" ya da "herkesin" kapsamıyla çalışır. 
 
 Yöneticiler **Sayfayı düzenle** ile kart ekler, sıralar, boyutunu seçer ve sayfanın hangi rollerin ana sayfası olduğunu belirler. Sayfa yalnızca bazı rollere de gösterilebilir.
 
-> **İpucu:** Bir rolün ne gördüğünü merak ediyorsan Ayarlar → Roller ve yetkiler'de **… gözünden bak** ile o kişinin ekranını salt okunur olarak açabilirsin.
+> **İpucu:** Bir rolün ne gördüğünü merak ediyorsanız Ayarlar → Roller ve yetkiler'de **… gözünden bak** ile o kişinin ekranını salt okunur olarak açabilirsiniz.

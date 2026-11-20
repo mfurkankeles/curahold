@@ -13,6 +13,7 @@ import type { MemoryView, MessageRow, TeamOrg, TeamSeat, ThreadRow } from '../..
 import { DateField } from '../components/DateField';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon } from '../components/icons';
+import { CloseButton } from '../components/ui';
 import { formatDate, formatMoney, formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
@@ -450,9 +451,7 @@ export function SeatPanel({
             </span>
           </p>
         </div>
-        <button ref={close} type="button" className="btn btn--icon btn--quiet" onClick={onClose} aria-label={w('seat.close')}>
-          <Icon name="close" size={18} />
-        </button>
+        <CloseButton ref={close} onClick={onClose} label={w('seat.close')} />
       </header>
       <div className="tm-panel__actions">
         <button

@@ -10,17 +10,17 @@ API anahtarı, bir kişinin adına çalışan bir paroladır. Herkes kendi anaht
 
 ## Oluşturma
 
-1. Curahold'da **Ayarların** sayfasını aç.
-2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıkla.
-3. Bir ad ver, gerekiyorsa **Değişiklik yapabilsin** kutusunu işaretle ve geçerlilik süresini seç (30, 90, 365 gün ya da süresiz).
-4. Anahtar `chk_` ile başlar ve **yalnızca bir kez** gösterilir. Bir parola yöneticisine kaydet.
+1. Curahold'da **Ayarlarınız** sayfasını açın.
+2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıklayın.
+3. Bir ad verin, gerekiyorsa **Değişiklik yapabilsin** kutusunu işaretleyin ve geçerlilik süresini seçin (30, 90, 365 gün ya da süresiz).
+4. Anahtar `chk_` ile başlar ve **yalnızca bir kez** gösterilir. Bir parola yöneticisine kaydedin.
 
 ## Kullanma
 
-Her istekte `Authorization` başlığıyla gönder:
+Her istekte `Authorization` başlığıyla gönderin:
 
 ```bash
-curl https://sirketin.curahold.com/api/me \
+curl https://sirketiniz.curahold.com/api/me \
   -H "Authorization: Bearer chk_..."
 ```
 
@@ -35,9 +35,9 @@ Bir anahtar asla şu işleri yapamaz: yeni anahtar oluşturmak, bir uygulamaya O
 
 ## İptal ve gözetim
 
-- Anahtarlarını Ayarların sayfasından görür, istediğini **İptal et** ile hemen kapatırsın.
+- Anahtarlarınızı Ayarlarınız sayfasından görür, istediğinizi **İptal et** ile hemen kapatabilirsiniz.
 - Kişileri yöneten yöneticiler Ayarlar → Geliştirici'de şirketteki tüm anahtarları ve bağlı uygulamaları görür ve iptal edebilir.
 - Her anahtarın son kullanıldığı zaman görünür. Oluşturma ve iptal aktivite kaydına yazılır.
 - Bir kişi şirketten ayrılıp devre dışı bırakıldığında anahtarları da çalışmaz.
 
-> **Güvenlik:** Anahtarı koda gömme, ortam değişkeninde tut. Sızdığından şüphelenirsen iptal et ve yenisini oluştur. Curahold anahtarın kendisini saklamaz, yalnızca özetini tutar.
+> **Güvenlik:** Anahtarı koda gömmeyin, ortam değişkeninde tutun. Sızdığından şüphelenirseniz iptal edin ve yenisini oluşturun. Curahold anahtarın kendisini saklamaz, yalnızca özetini tutar.

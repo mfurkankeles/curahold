@@ -8,26 +8,26 @@ summary: Sıfırdan ilk görevine ve ilk webhook'una, yaklaşık beş dakikada.
 
 Beş adım, yaklaşık beş dakika. Bir Curahold şirketi ve değişiklik yapabilen bir koltuk gerekir.
 
-## 1. Anahtar oluştur
+## 1. Anahtar oluşturun
 
-1. **Ayarların** sayfasını aç.
-2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıkla.
-3. **Değişiklik yapabilsin** kutusunu işaretle ve anahtarı kopyala. `chk_` ile başlar ve yalnızca bir kez gösterilir.
+1. **Ayarlarınız** sayfasını açın.
+2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıklayın.
+3. **Değişiklik yapabilsin** kutusunu işaretleyin ve anahtarı kopyalayın. `chk_` ile başlar ve yalnızca bir kez gösterilir.
 
 ```bash
-export CURAHOLD=https://sirketin.curahold.com/api
+export CURAHOLD=https://sirketiniz.curahold.com/api
 export CURAHOLD_KEY=chk_...
 ```
 
-## 2. Kim olduğunu sor
+## 2. Kim olduğunuzu sorun
 
 ```bash
 curl -s $CURAHOLD/me -H "Authorization: Bearer $CURAHOLD_KEY"
 ```
 
-Cevap, anahtarın kimin adına çalıştığını ve şirketin nasıl kurulduğunu söyler: saat dilimi, para birimi, "müşteri" için kullandığı kelime ve müşteri alanları. Bir anahtarın yaptığı her şey **bu kişi olarak** yapılır: onun gördüğünü görür, onun değiştirebildiğini değiştirir.
+Cevap, anahtarın kimin adına çalıştığını ve şirketinizin nasıl kurulduğunu söyler: saat dilimi, para birimi, "müşteri" için kullandığı kelime ve müşteri alanları. Bir anahtarın yaptığı her şey **bu kişi olarak** yapılır: onun gördüğünü görür, onun değiştirebildiğini değiştirir.
 
-## 3. Müşterileri oku
+## 3. Müşterileri okuyun
 
 ```bash
 curl -s "$CURAHOLD/accounts?q=liman&limit=5" -H "Authorization: Bearer $CURAHOLD_KEY"
@@ -35,15 +35,15 @@ curl -s "$CURAHOLD/accounts?q=liman&limit=5" -H "Authorization: Bearer $CURAHOLD
 
 Her müşteri kendi alanlarını `fields` içinde taşır; anahtarlar `/me` cevabındaki `org.accountFields` listesinde durur.
 
-## 4. Görev ekle
+## 4. Görev ekleyin
 
-Görev bir panoda, panonun sütunlarından birinde durur. Önce bir pano seç:
+Görev bir panoda, panonun sütunlarından birinde durur. Önce bir pano seçin:
 
 ```bash
 curl -s $CURAHOLD/boards -H "Authorization: Bearer $CURAHOLD_KEY"
 ```
 
-Sonra görevi ekle. `Idempotency-Key` başlığı yeniden denemeyi güvenli kılar: aynı anahtar yeniden gönderilirse ilk cevap geri gelir, hiçbir şey iki kez yapılmaz.
+Sonra görevi ekleyin. `Idempotency-Key` başlığı yeniden denemeyi güvenli kılar: aynı anahtar yeniden gönderilirse ilk cevap geri gelir, hiçbir şey iki kez yapılmaz.
 
 ```bash
 curl -s -X POST $CURAHOLD/tasks \
@@ -55,12 +55,12 @@ curl -s -X POST $CURAHOLD/tasks \
 
 ## 5. Değişikliklerden haberdar ol
 
-Tekrar tekrar sormak yerine Curahold sana haber versin. **Ayarlar → Geliştirici** sayfasında **Yeni webhook**'a tıkla, herkese açık bir `https` adresi ver ve istediğin olayları seç (`task.updated`, `account.updated` …). Her mesaj imzalıdır; güvenmeden önce [imzayı doğrula](/docs/tr/webhooks/).
+Tekrar tekrar sormak yerine Curahold size haber versin. **Ayarlar → Geliştirici** sayfasında **Yeni webhook**'a tıklayın, herkese açık bir `https` adresi verin ve istediğiniz olayları seçin (`task.updated`, `account.updated` …). Her mesaj imzalıdır; güvenmeden önce [imzayı doğrulayın](/docs/tr/webhooks/).
 
 ## Aynısı JavaScript ile
 
 ```js
-const api = 'https://sirketin.curahold.com/api';
+const api = 'https://sirketiniz.curahold.com/api';
 const headers = { Authorization: `Bearer ${process.env.CURAHOLD_KEY}`, 'Content-Type': 'application/json' };
 
 const { boards } = await (await fetch(`${api}/boards`, { headers })).json();
@@ -78,7 +78,7 @@ const { task } = await res.json();
 ```python
 import os, uuid, requests
 
-api = "https://sirketin.curahold.com/api"
+api = "https://sirketiniz.curahold.com/api"
 headers = {"Authorization": f"Bearer {os.environ['CURAHOLD_KEY']}"}
 
 boards = requests.get(f"{api}/boards", headers=headers).json()["boards"]
@@ -95,5 +95,5 @@ task = res.json()["task"]
 
 - [API rehberi](/docs/tr/api-reference/): API'nin arkasındaki fikirler, örneklerle.
 - [Başvuru](/docs/tr/ref-customers/): her adres, alan alan.
-- [Kendi aracını bağla](/docs/tr/connect-your-own-tool/): bağlantı listesinde olmayan bir sistemi Curahold ile eşit tut.
+- [Kendi aracınızı bağlayın](/docs/tr/connect-your-own-tool/): bağlantı listesinde olmayan bir sistemi Curahold ile eşit tutun.
 - [Webhook'lar](/docs/tr/webhooks/) ve [hatalar](/docs/tr/ref-errors/).

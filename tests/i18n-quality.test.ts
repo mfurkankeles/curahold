@@ -89,6 +89,32 @@ describe('English singular after a count of one', () => {
   });
 });
 
+describe('Hebrew singular after a count of one', () => {
+  // "1 ימים", "1 משימות הועברו": for exactly one Hebrew says the noun, then "one" in its gender, and the verb agrees.
+  const he = (key: MessageKey, vars: Record<string, number>) => translate('he', key, vars);
+  it('says "יום אחד", "משימה אחת הועברה", and keeps the count otherwise', () => {
+    expect(he('time.daysAgo', { n: 1 })).toBe('לפני יום אחד');
+    expect(he('time.daysAgo', { n: 4 })).toBe('לפני 4 ימים');
+    expect(he('board.bulk.moved', { n: 1 })).toBe('משימה אחת הועברה.');
+    expect(he('board.bulk.moved', { n: 2 })).toBe('2 משימות הועברו.');
+    expect(he('import.problems', { n: 1 })).toBe('שורה אחת דורשת בדיקה');
+    expect(he('conn.linkedPeople', { n: 1 })).toBe('אדם מקושר אחד');
+    expect(he('setup.minutesLeft', { n: 1 })).toBe('נותרה כדקה אחת');
+    // A one-letter prefix joins the word ("בשורה"); before a numeral it keeps its hyphen ("ב-3").
+    expect(he('sh.import.badDates.problem', { n: 1 })).toMatch(/^בשורה אחת /);
+    expect(he('sh.import.badDates.problem', { n: 3 })).toMatch(/^ב-3 שורות /);
+    expect(he('auto.when.account_every.text', { n: 1 })).toMatch(/^כל יום /);
+  });
+  it('no Hebrew string shows "1" before a plural noun it knows', () => {
+    const d = dictionaries.he as Record<string, string>;
+    const bad = Object.keys(d)
+      .filter((k) => !k.endsWith('.one'))
+      .flatMap((k) => [...d[k].matchAll(/\{(\w+)\}/g)].map((m) => [k, translate('he', k as MessageKey, { [m[1]]: 1 })] as const))
+      .filter(([, s]) => /(^|[^\d])1 (ימים|משימות|שורות|אנשים|קבצים|שבועות|פעמים|לקוחות|דקות|שעות)(?![\p{L}])/u.test(s));
+    expect(bad.map(([k, s]) => `${k}: ${s}`).join('\n')).toBe('');
+  });
+});
+
 describe('dictionaries: completeness and shape', () => {
   it.each(others.map((l) => [l] as const))('%s has every key, and none English does not have', (l) => {
     const own = dict(l);
@@ -236,13 +262,27 @@ describe('Turkish register', () => {
     // Verbs in the second person singular: -abilirsin, -iyorsun, -acaksın, -malısın, -mışsın, the aorist.
     new RegExp(`${L}{2,}([ıiuü]yor|abilir|ebilir|amaz|emez|acak|ecek|malı|meli|mış|miş|muş|müş|[ıiuü]r|[ae]r|maz|mez)s[ıiuü]n(?!${L})`, 'i'),
     // If-clauses (-iyorsan, -irsen) and questions (misin), "hazırsın".
-    new RegExp(`${L}{2,}(yor|[ıiuüae]r|ma|me)(san|sen)(?!${L})|(?<!${L})(mısın|misin|musun|müsün|hazırsın|değilsin)(?!${L})`, 'i'),
-    // A sentence that ends in a bare imperative ("… tekrar dene."): sentences say "deneyin".
-    new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at)[.!?](?=\\s|$)`, 'i'),
+    new RegExp(`${L}{2,}(yor|[ıiuüae]r|ma|me|maz|mez|y)(san|sen)(?!${L})|(?<!${L})(mısın|misin|musun|müsün|hazırsın|değilsin)(?!${L})`, 'i'),
+    // "your" on a participle: "yaptığın", "istediğin", "göreceğin" (sentences say "yaptığınız").
+    // Two nouns whose genitive looks the same are let through.
+    new RegExp(`(?<!${L})(?!(betiğin|koltuğun)(?!${L}))${L}{2,}(dığ|diğ|duğ|düğ|tığ|tiğ|tuğ|tüğ|eceğ|acağ)[ıiuü]n(?!${L})`, 'i'),
+    // A sentence or clause that ends in a bare imperative ("… tekrar dene.", "… giriş yap;"): sentences say "deneyin".
+    new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at|yap|güncelle|iptal et|başlat|gör|koy|yolla|düzelt|belirt|daralt|grupla|eşleştir|yerleştir|kaydır|vurgula|ilişkilendir|abone ol|yenile|seçip|oluştur)[.!?;](?=\\s|$)`, 'i'),
   ];
   it('no Turkish string says "sen"', () => {
     const tr = dict('tr');
     const bad = Object.keys(tr).filter((k) => SEN.some((re) => re.test(tr[k])));
     expect(bad.map((k) => `${k}: ${tr[k].slice(0, 80)}`).join('\n')).toBe('');
+  });
+  // The help centre and the sales site are first-contact surfaces too: a reader who meets "sen" in the
+  // docs after "siz" in the app sees two products (owner, 20 Nov 2026). Line by line, so a failure names it.
+  it('no Turkish help page or site text says "sen"', () => {
+    const found: string[] = [];
+    for (const [file, text] of docsText('tr'))
+      text.split('\n').forEach((line, i) => {
+        if (SEN.some((re) => re.test(line))) found.push(`${file}:${i + 1}: ${line.trim().slice(0, 90)}`);
+      });
+    for (const [k, v] of siteText('tr')) if (SEN.some((re) => re.test(v))) found.push(`${k}: ${v.slice(0, 90)}`);
+    expect(found.join('\n')).toBe('');
   });
 });

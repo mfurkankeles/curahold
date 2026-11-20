@@ -53,8 +53,8 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `POST /dev/analytics/keys` | Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): `name`, `datasets`, `departments`, `expiresInDays`. |
 | `POST /dev/analytics/keys/:id/rotate` | Analiz anahtarlarından birine yeni bir gizli değer verir; eskisi hemen durur. |
 | `DELETE /dev/analytics/keys/:id` | Bir analiz anahtarını iptal eder. |
-| `GET /dev/analytics/datasets` | Bir analiz anahtarına verebileceğin veri kümeleri; sütunlarıyla. |
-| `GET /dev/analytics/pulls` | Analiz akışından son okumalar: seninkiler ya da kişileri yönetenler için herkesinki. |
+| `GET /dev/analytics/datasets` | Bir analiz anahtarına verebileceğiniz veri kümeleri; sütunlarıyla. |
+| `GET /dev/analytics/pulls` | Analiz akışından son okumalar: sizinkiler ya da kişileri yönetenler için herkesinki. |
 
 ## Ayrıntılar
 
@@ -160,7 +160,7 @@ GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı), GitLab'ın (`gitlab`, 
 
 ### `POST /inbound/hooks/:id`
 
-Gelen webhook alıcısı. `X-Curahold-Signature: t=<unix saniye>,v1=<"t.gövde"nin hex HMAC-SHA256'sı>` ile imzala (t 5 dakika içinde) ve `X-Curahold-Event-Id` gönder; bir araç için yapılmış webhook'ta aracın kendi imza başlığı ya da ortak anahtarı. `status` ok, skipped, failed ya da duplicate ile 200 döner; hatalı imza, eski zaman ya da yanlış anahtarda 401; bilinmeyen ya da duraklatılmış webhook'ta 404. Her olay kimliği bir kez kullanılır. İnsanlar için değil.
+Gelen webhook alıcısı. `X-Curahold-Signature: t=<unix saniye>,v1=<"t.gövde"nin hex HMAC-SHA256'sı>` ile imzalayın (t 5 dakika içinde) ve `X-Curahold-Event-Id` gönderin; bir araç için yapılmış webhook'ta aracın kendi imza başlığı ya da ortak anahtarı. `status` ok, skipped, failed ya da duplicate ile 200 döner; hatalı imza, eski zaman ya da yanlış anahtarda 401; bilinmeyen ya da duraklatılmış webhook'ta 404. Her olay kimliği bir kez kullanılır. İnsanlar için değil.
 
 ### `GET /inbound/whatsapp/:source`
 
@@ -309,8 +309,8 @@ Bir analiz anahtarını iptal eder.
 
 ### `GET /dev/analytics/datasets`
 
-Bir analiz anahtarına verebileceğin veri kümeleri; sütunlarıyla.
+Bir analiz anahtarına verebileceğiniz veri kümeleri; sütunlarıyla.
 
 ### `GET /dev/analytics/pulls`
 
-Analiz akışından son okumalar: seninkiler ya da kişileri yönetenler için herkesinki.
+Analiz akışından son okumalar: sizinkiler ya da kişileri yönetenler için herkesinki.

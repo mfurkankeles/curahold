@@ -221,3 +221,8 @@
 .sso__test { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .sso__test .btn[aria-disabled] { opacity: .55; pointer-events: none; }
 .sso__ok { background: var(--done-wash); border-color: var(--done); }
+
+/* A connection's trouble: the plain sentence, then the service's own words, smaller and quieter (ConnectionTrouble.tsx). */
+.conn-trouble { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.conn-trouble__plain { overflow-wrap: anywhere; }
+.conn-trouble__vendor { color: var(--ink-3); font-size: var(--fs-xs); overflow-wrap: anywhere; }

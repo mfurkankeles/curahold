@@ -275,9 +275,16 @@ describe('Odoo CRM (two-way)', () => {
     later(5);
     world.arm('odoocrm', 'ratelimit');
     const limited = await runSync(id);
-    expect(['partial', 'error']).toContain(limited.status);
+    expect(limited.status).toBe('partial');
+    // Not a fault: the connections list marks the run as waiting out the limit, so screens show a calm
+    // "paused, resumes automatically" instead of "needs a look".
+    const waiting = (await ada.get('/api/connections')).json.connections.find((c: any) => c.id === id);
+    expect(waiting.sync.lastRun.rateLimited).toBe(true);
+    expect(waiting.status).not.toBe('error');
     later(5);
     expect((await runSync(id)).status).toBe('ok');
+    const resumed = (await ada.get('/api/connections')).json.connections.find((c: any) => c.id === id);
+    expect(resumed.sync.lastRun.rateLimited).toBeUndefined();
 
     world.arm('odoocrm', 'badfield');
     const pine = (await ada.get('/api/accounts?q=Pinecrest')).json.accounts[0];

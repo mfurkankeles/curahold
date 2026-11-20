@@ -24,22 +24,22 @@ Muhasebe programını bağladığında her müşterinin sayfası borcunu göster
 
 Bağlantıları yönetme iznin olmalı (yöneticilerde vardır).
 
-1. **Ayarlar → CRM ve tablolar**'ı aç ve **Muhasebe programları**'na kadar kaydır. Programının kutusundaki **… bağla** düğmesine ya da **Başka bir program (dosya)** kutusundaki **Dosya yükle**'ye tıkla ve yukarıdaki tabloda o programın sayfasını izle.
+1. **Ayarlar → CRM ve tablolar**'ı açın ve **Muhasebe programları**'na kadar kaydırın. Programınızın kutusundaki **… bağla** düğmesine ya da **Başka bir program (dosya)** kutusundaki **Dosya yükle**'ye tıklayın ve yukarıdaki tabloda o programın sayfasını izleyin.
    ![Muhasebe programı kutuları işaretli](img/fin-tiles.webp)
 
 ## Müşteri eşleştirme
 
-Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: önce vergi numarasıyla, sonra web adresi ya da e-posta alan adıyla, sonra adıyla (Ltd. Şti., A.Ş. ya da 株式会社 gibi şirket türleri dikkate alınmaz). Tam olarak bir müşteri uyarsa eşleşme yapılır; hiç uymazsa ya da birkaçı uyarsa bağlantının **Eşleştirme** sekmesinde bekler. Orada müşteriyi seçebilir ya da dışarıda bırakabilirsin. Elle yaptığın eşleştirmeler korunur.
+Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: önce vergi numarasıyla, sonra web adresi ya da e-posta alan adıyla, sonra adıyla (Ltd. Şti., A.Ş. ya da 株式会社 gibi şirket türleri dikkate alınmaz). Tam olarak bir müşteri uyarsa eşleşme yapılır; hiç uymazsa ya da birkaçı uyarsa bağlantının **Eşleştirme** sekmesinde bekler. Orada müşteriyi seçebilir ya da dışarıda bırakabilirsiniz. Elle yaptığınız eşleştirmeler korunur.
 
 ## Rakamları kim görür
 
-Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsin). Müşteriyi gören diğer herkes yalnızca sağlık skorunun içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
+Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsiniz). Müşteriyi gören diğer herkes yalnızca sağlık skorunun içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
 
 **Finans** departmanındaki kişiler de rolleri ne olursa olsun tutarları görür; Ayarlar → Departmanlar'da **Müşteri sayfasında Finans bölümünü kim görür** altında seçilen departmanlar da öyle. Finans kapatılırsa bu da kalkar.
 
 ## Sağlık skorunda geciken ödemeler
 
-İlk okumayı başlatırken **Geciken ödemeleri sağlık skoruna kat** kutusunu işaretleyebilirsin. **Zamanında ödeme** sinyali hiçbir şey gecikmemişse tam puan, ödenmemiş en eski fatura 60 gün geciktiğinde sıfır puan verir; iki sayı da Ayarlar → Sağlık skoru'ndan değişir. Programla eşleşmeyen müşteriler hesaba katılmaz.
+İlk okumayı başlatırken **Geciken ödemeleri sağlık skoruna kat** kutusunu işaretleyebilirsiniz. **Zamanında ödeme** sinyali hiçbir şey gecikmemişse tam puan, ödenmemiş en eski fatura 60 gün geciktiğinde sıfır puan verir; iki sayı da Ayarlar → Sağlık skoru'ndan değişir. Programla eşleşmeyen müşteriler hesaba katılmaz.
 
 ## Bağlantı sağlığı
 

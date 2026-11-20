@@ -355,6 +355,19 @@ accounts are invented.
 `npm run start:local` serves the built app and API together on :8787 (run `npm run build` first; open
 http://demo.localhost:8787).
 
+To sign a new company up locally the way a customer does (trial request, then approval):
+
+1. Open **http://app.localhost:5173** and fill in the trial request. In development the six-digit e-mail code is
+   shown on the screen.
+2. Open Curahold's own support desk at **http://desk.localhost:5173/requests** and sign in as
+   `desk@curahold.localhost` (the e-mailed code is shown on the screen too). The first time, the desk sets up its second
+   step: add the secret it shows to any authenticator app and type the app's code, as in production.
+3. Approve the request. The new company's administrator gets a sign-in link, printed in the terminal in development, and
+   opens the company at `http://<its-address>.localhost:5173`.
+
+`SIGNUP_MODE=instant npm run dev` brings back the earlier instant sign-up (no approval) at
+http://app.localhost:5173/signup.
+
 New to the code? Read [docs/HANDOVER.md](docs/HANDOVER.md) (the first week, the map, the risks), then
 [docs/DEVELOPER.md](docs/DEVELOPER.md).
 

@@ -58,14 +58,34 @@ const EXEMPT = [/^\/mcp$/, /^\/oauth\//, /^\/\.well-known\//, /^\/robots\.txt$/,
  * portal sign-in): the doors the robot guard watches (ADR 0015).
  */
 export const isPublicDoor = (path: string) => PUBLIC_DOORS.some((r) => r.test(path));
+/** API addresses answered before any company is known: none of them takes a Curahold key, so a bearer there proves nothing. */
+const BEFORE_COMPANY = /^\/api\/(signup|trial|consent-event|desk|sso)(\/|$)|^\/api\/assist\/public$/;
+/** Where a bearer can be a real key or app token of a company: the company's own API. */
+const takesBearer = (path: string) => path.startsWith('/api/') && !BEFORE_COMPANY.test(path);
 
-/** Why this request is refused by the robot rules, or null. */
+/**
+ * Why this request is refused by the robot rules, or null.
+ * A crawler's user agent with a bearer may be a person's API key or an assistant acting for them, so it is not refused
+ * by name here, but only on the API, where a bearer means something: elsewhere (pages, files, the doors answered before a company is known) it would be a free pass.
+ * On the API the bearer must then prove itself (crawlerBearer below and app.ts): a made-up one is refused too.
+ */
 export function robotRefusal(mode: RobotGuard | undefined, req: { path: string; ua: string | null | undefined; bearer: boolean }): 'ai' | 'scraper' | 'tool' | null {
   if (mode === 'off' || EXEMPT.some((r) => r.test(req.path))) return null;
   const kind = agentKind(req.ua);
-  if ((kind === 'ai' || kind === 'scraper') && !req.bearer) return kind;
+  if ((kind === 'ai' || kind === 'scraper') && !(req.bearer && takesBearer(req.path))) return kind;
   if ((mode ?? 'crawlers') === 'strict' && (kind === 'tool' || kind === 'empty') && isPublicDoor(req.path)) return 'tool';
   return null;
+}
+
+/**
+ * A request that robotRefusal let through only because it carries a bearer: a crawler's user agent on the API. Its
+ * bearer has to be a live Curahold credential of the company (checked in app.ts once the company is known), or the
+ * request is refused like the crawler it says it is. Null when nothing needs proving.
+ */
+export function crawlerBearer(mode: RobotGuard | undefined, req: { path: string; ua: string | null | undefined; bearer: boolean }): 'ai' | 'scraper' | null {
+  if (mode === 'off' || !req.bearer || !takesBearer(req.path) || EXEMPT.some((r) => r.test(req.path))) return null;
+  const kind = agentKind(req.ua);
+  return kind === 'ai' || kind === 'scraper' ? kind : null;
 }
 
 // ---------------------------------------------------------------- unusual traffic

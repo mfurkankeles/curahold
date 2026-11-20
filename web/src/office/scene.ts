@@ -920,9 +920,11 @@ export class OfficeScene {
   private refit: ((cut: boolean) => void) | null = null;
   fitAll(cut = false) {
     this.refit = (c) => this.fitAll(c);
-    // A phone shows the middle of the floor (the room chips reach the rest); a desktop the whole of it.
+    // A phone shows the middle of the floor (the room chips reach the rest); a desktop the whole of it. A portrait
+    // phone fits the wide floor by its width, so fitting all of it (the earlier 1 / 0.9) left empty bands above and
+    // below; 0.8 lets the sides run off and the floor fill the stage.
     const f = this.o.phone
-      ? this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 1 / 0.9)
+      ? this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 0.8)
       : this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 1.04);
     this.goTo(f.x, f.z, f.viewH, cut);
   }

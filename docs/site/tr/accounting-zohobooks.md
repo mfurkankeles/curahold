@@ -2,7 +2,7 @@
 title: Zoho Books (muhasebe)
 section: help
 order: 8.21
-summary: Zoho Books'i yalnızca okunur bağla: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
+summary: Zoho Books'i yalnızca okunur bağlayın: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
 ---
 # Zoho Books (muhasebe)
 
@@ -14,11 +14,11 @@ Müşteriler (programda varsa vergi numarası, e-posta ve web adresiyle), vade t
 
 ## Bağlama
 
-**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bul ve **Zoho Books bağla**'yı seç. Sonra:
+**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bulun ve **Zoho Books bağla**'yı seçin. Sonra:
 
-1. Zoho Books kuruluşunu görebilen Zoho hesabıyla giriş yap.
-2. Curahold'un kişileri, faturaları ve ödemeleri okumasına izin ver. Yalnızca okuma izni ister.
-3. Buraya dönünce ilk okumayı başlat ve eşleşemeyen müşterilere bak.
+1. Zoho Books kuruluşunu görebilen Zoho hesabıyla giriş yapın.
+2. Curahold'un kişileri, faturaları ve ödemeleri okumasına izin verin. Yalnızca okuma izni ister.
+3. Buraya dönünce ilk okumayı başlatın ve eşleşemeyen müşterilere bakın.
 
 ## Sınırlar ve zamanlama
 
@@ -26,8 +26,8 @@ Zoho, kuruluş başına dakikada 100 isteğe ve Zoho Books planına göre günl�
 
 ## Bir sorun olursa
 
-Zoho Books bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seç. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
+Zoho Books bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seçin. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
 
-## Ayrıca bak
+## Ayrıca bakın
 
 - [Muhasebe programları](/docs/tr/accounting/)

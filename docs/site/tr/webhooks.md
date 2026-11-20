@@ -6,15 +6,15 @@ summary: Olaylar, mesaj biçimi, imza doğrulama ve yeniden deneme.
 ---
 # Webhook'lar
 
-Webhook ile Curahold'da bir şey değişince senin adresine saniyeler içinde bir mesaj gelir. Değişiklikleri sorgulayıp durmana gerek kalmaz.
+Webhook ile Curahold'da bir şey değişince adresinize saniyeler içinde bir mesaj gelir. Değişiklikleri sorgulayıp durmanıza gerek kalmaz.
 
 ## Ekleme
 
 Ayarlar → Geliştirici → **Yeni webhook**. Bağlantıları yönetme izni gerekir.
 
 - Adres herkese açık bir `https` adresi olmalı. Yerel ve özel ağ adresleri kabul edilmez.
-- Hangi olaylarda gönderileceğini seç.
-- Eklerken bir **gizli anahtar** (`whsec_…`) gösterilir. Bir kez gösterilir; sakla.
+- Hangi olaylarda gönderileceğini seçin.
+- Eklerken bir **gizli anahtar** (`whsec_…`) gösterilir. Bir kez gösterilir; saklayın.
 
 **Test gönder** düğmesi adresine bir `ping` olayı yollar ve dönen yanıtı gösterir.
 
@@ -46,7 +46,7 @@ Curahold-Signature: t=1794394831,v1=5f2b…
   "event": "task.updated",
   "occurredAt": "2026-11-11T10:20:31.000Z",
   "company": "sirketin",
-  "url": "https://sirketin.curahold.com",
+  "url": "https://sirketiniz.curahold.com",
   "data": { "id": "…", "title": "Yenileme teklifini gönder", "status": "done", "done": true, "dueDate": "2027-01-15" }
 }
 ```
@@ -55,7 +55,7 @@ Aynı mesaj birden fazla gelebilir; tekrarları `id` ile ayıkla.
 
 ## İmzayı doğrulama
 
-`Curahold-Signature` başlığındaki `v1`, gizli anahtarla `t + "." + gövde` metninin HMAC-SHA256 özetidir. Gövdeyi ayrıştırmadan, geldiği gibi kullan. Beş dakikadan eski `t` değerlerini reddet.
+`Curahold-Signature` başlığındaki `v1`, gizli anahtarla `t + "." + gövde` metninin HMAC-SHA256 özetidir. Gövdeyi ayrıştırmadan, geldiği gibi kullanın. Beş dakikadan eski `t` değerlerini reddedin.
 
 ```js
 // Node.js
@@ -84,7 +84,7 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 
 ## Yanıt ve yeniden deneme
 
-- 10 saniye içinde `2xx` ile yanıt ver. İşi sonra yap.
+- 10 saniye içinde `2xx` ile yanıt verin. İşi sonra yapın.
 - Yanıt gelmezse ya da `2xx` dışı gelirse Curahold 1, 5, 30, 120 ve 360 dakika sonra yeniden dener; toplam 6 deneme.
-- Üst üste 50 kez ulaşamayan webhook duraklatılır. Ayarlar → Geliştirici'den **Sürdür** ile açarsın.
-- Yönlendirmeler izlenmez; son adresi doğrudan yaz.
+- Üst üste 50 kez ulaşamayan webhook duraklatılır. Ayarlar → Geliştirici'den **Sürdür** ile açarsınız.
+- Yönlendirmeler izlenmez; son adresi doğrudan yazın.

@@ -9,6 +9,7 @@ import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import puppeteer, { type Page } from 'puppeteer-core';
+import { LOCALES } from '../../shared/src/i18n';
 import { TOURS } from '../../shared/src/tours';
 import { SCREENS } from './browser';
 
@@ -69,7 +70,8 @@ const t0 = Date.now();
     focused: document.activeElement?.getAttribute('data-l') ?? '',
   }));
   if (!ask.open) fail('hub: a first visit is not asked for a language');
-  if (ask.names.length !== 9 || ask.names[0] !== 'en') fail(`hub: the language chooser lists ${ask.names.join(',')}`);
+  // Every language the product ships, English first (the count follows LOCALES; it was written as 9 before hi and ms).
+  if (ask.names.length !== LOCALES.length || ask.names[0] !== 'en') fail(`hub: the language chooser lists ${ask.names.join(',')}`);
   if (ask.focused !== 'en') fail(`hub: the chooser's focus is on “${ask.focused}”, not English`);
   await page.screenshot({ path: join(SCREENS, 'hub-en-chooser.png') });
   await page.keyboard.press('Escape');

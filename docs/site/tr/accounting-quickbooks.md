@@ -2,7 +2,7 @@
 title: QuickBooks Online (muhasebe)
 section: help
 order: 8.26
-summary: QuickBooks Online'i yalnızca okunur bağla: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
+summary: QuickBooks Online'i yalnızca okunur bağlayın: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
 ---
 # QuickBooks Online (muhasebe)
 
@@ -14,11 +14,11 @@ Müşteriler (programda varsa vergi numarası, e-posta ve web adresiyle), vade t
 
 ## Bağlama
 
-**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bul ve **QuickBooks Online bağla**'yı seç. Sonra:
+**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bulun ve **QuickBooks Online bağla**'yı seçin. Sonra:
 
-1. Intuit'e giriş yap ve bağlanacak QuickBooks şirketini seç.
-2. Muhasebe verilerine erişime izin ver; Curahold yalnızca müşterileri, faturaları ve ödemeleri okur.
-3. Buraya dönünce ilk okumayı başlat ve eşleşemeyen müşterilere bak.
+1. Intuit'e giriş yapın ve bağlanacak QuickBooks şirketini seçin.
+2. Muhasebe verilerine erişime izin verin; Curahold yalnızca müşterileri, faturaları ve ödemeleri okur.
+3. Buraya dönünce ilk okumayı başlatın ve eşleşemeyen müşterilere bakın.
 
 ## Sınırlar ve zamanlama
 
@@ -26,8 +26,8 @@ Intuit şirket başına dakikada 500 isteğe izin verir ve ücretsiz katmanın �
 
 ## Bir sorun olursa
 
-QuickBooks Online bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seç. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
+QuickBooks Online bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seçin. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
 
-## Ayrıca bak
+## Ayrıca bakın
 
 - [Muhasebe programları](/docs/tr/accounting/)

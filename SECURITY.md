@@ -117,12 +117,14 @@ raise costs. What is in place (free mechanisms only), and what it cannot do:
 - **Text-and-data-mining rights reserved** (EU DSM Directive Art. 4(3)): `/.well-known/tdmrep.json`, the
   `tdm-reservation: 1` header and meta, and the terms (section 9) and AUP.
 - **Robots refused by name** (`api/src/lib/botGuard.ts`): known AI crawlers and analysis robots get 403 on the app,
-  API and portal — never on `/mcp`, `/oauth`, `/.well-known` or a request with its own API key. In production
+  API and portal — never on `/mcp`, `/oauth`, `/.well-known` or a request with its own API key. The key must be a live
+  key or app token of that company: a crawler with a made-up bearer, or with one outside the company's own API, is
+  refused like any other crawler. In production
   (`ROBOT_GUARD=strict`) scripted HTTP tools and an empty user agent are also refused at the public doors (trial,
   sign-up, public Ask, portal sign-in).
 - **Limits** (`api/src/lib/ratelimit.ts`): per address, person and company as before, plus the public Ask door per
   address (`assistDoor`), uploads per person and company, and unknown addresses per address (`probe`: a scanner
-  mapping the API waits). The assistant's money caps are unchanged (`api/src/assistant/cost.ts`).
+  mapping the API waits; "sign in first" answers to a caller with no credential count too, webhook receivers do not). The assistant's money caps are unchanged (`api/src/assistant/cost.ts`).
 - **Public forms** (`api/src/lib/humanCheck.ts`): honeypot, fill time, and Cloudflare Turnstile when its keys are set
   (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`; `TURNSTILE=off`). A robot caught by the honeypot or the clock gets the
   usual answer and nothing is sent; a refused Turnstile token is told plainly. If Cloudflare is unreachable the form is

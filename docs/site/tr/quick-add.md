@@ -2,17 +2,17 @@
 title: Hızlı ekleme ve kısayollar
 section: help
 order: 3.5
-summary: Görevi konuşur gibi yaz; tarih, kişi, müşteri, öncelik ve tekrar kendiliğinden dolsun. Klavye kısayolları ve telefon.
+summary: Görevi konuşur gibi yazın; tarih, kişi, müşteri, öncelik ve tekrar kendiliğinden dolsun. Klavye kısayolları ve telefon.
 ---
 # Hızlı ekleme ve kısayollar
 
-**N** tuşuna bas (ya da soldaki **+ Yeni → Görev**, bir sütunun altındaki **Görev ekle**, telefonda alttaki **+**): **Yeni görev** penceresi açılır. Başlığın altında görevin ayrıntıları sorulur: açıklama, müşteri, bağlı olduğu kayıt (fırsat, sözleşme…), atananlar, son tarih, öncelik, tekrar, pano ve sütun, ayrıca panonun kendi alanları. Sütundan açtıysan sütun, müşteri sayfasından açtıysan müşteri hazır gelir.
+**N** tuşuna basın (ya da soldaki **+ Yeni → Görev**, bir sütunun altındaki **Görev ekle**, telefonda alttaki **+**): **Yeni görev** penceresi açılır. Başlığın altında görevin ayrıntıları sorulur: açıklama, müşteri, bağlı olduğu kayıt (fırsat, sözleşme…), atananlar, son tarih, öncelik, tekrar, pano ve sütun, ayrıca panonun kendi alanları. Sütundan açtıysanız sütun, müşteri sayfasından açtıysanız müşteri hazır gelir.
 
-Alanları tek tek doldurmak zorunda değilsin; başlığı aklına geldiği gibi yazman yeter:
+Alanları tek tek doldurmak zorunda değilsiniz; başlığı aklınıza geldiği gibi yazmanız yeterli:
 
 > Acme ile yenileme görüşmesi cuma @Ayşe #Acme !yüksek
 
-Bu satırla alanlar kendiliğinden dolar: atanan Ayşe, müşteri Acme, son tarih cuma, öncelik yüksek. Başlıktan dolan alanların yanında **başlıktan** yazar. Bir alanı elle değiştirirsen başlıktaki karşılığı çıkar, alan senin seçtiğin değerle kalır. **Enter** ekler; başka bir alandayken **Ctrl Enter** (Mac’te ⌘ Enter).
+Bu satırla alanlar kendiliğinden dolar: atanan Ayşe, müşteri Acme, son tarih cuma, öncelik yüksek. Başlıktan dolan alanların yanında **başlıktan** yazar. Bir alanı elle değiştirirseniz başlıktaki karşılığı çıkar, alan sizin seçtiğiniz değerle kalır. **Enter** ekler; başka bir alandayken **Ctrl Enter** (Mac’te ⌘ Enter).
 
 ## Ne yazılır?
 
@@ -26,20 +26,20 @@ Bu satırla alanlar kendiliğinden dolar: atanan Ayşe, müşteri Acme, son tari
 
 İngilizce de olur: *tomorrow, friday, next week, nov 15, in 3 days, every monday, !high, @me*.
 
-- **@** ya da **#** yazınca bir liste açılır; oklarla seçip **Enter** ya da **Tab** ile ekle.
-- Bir etiketin **×** düğmesi: kişi, müşteri ve öncelik satırdan çıkar. Tarih ve tekrar olarak okunan kelimeler ise başlıkta kalır (tırnak içine alınır). Bir kelimenin tarih sanılmasını istemiyorsan kendin de tırnağa alabilirsin: *"pazar" payı raporu*.
+- **@** ya da **#** yazınca bir liste açılır; oklarla seçip **Enter** ya da **Tab** ile ekleyin.
+- Bir etiketin **×** düğmesi: kişi, müşteri ve öncelik satırdan çıkar. Tarih ve tekrar olarak okunan kelimeler ise başlıkta kalır (tırnak içine alınır). Bir kelimenin tarih sanılmasını istemiyorsanız kendiniz de tırnağa alabilirsiniz: *"pazar" payı raporu*.
 - Kimseyle eşleşmeyen bir @ ya da # sarı çerçeveyle gösterilir ve başlıkta kalır.
 
-## Bulunduğun yere göre
+## Bulunduğunuz yere göre
 
-- **Görevlerim**’de eklenen görev sana verilir.
-- **Bir panoda** eklenen görev o panonun ilk sütununa girer; sütunu ve panoyu pencerenin altından değiştirebilirsin.
+- **Görevlerim**’de eklenen görev size verilir.
+- **Bir panoda** eklenen görev o panonun ilk sütununa girer; sütunu ve panoyu pencerenin altından değiştirebilirsiniz.
 - **Bir müşterinin sayfasında** eklenen görev o müşteriye bağlanır.
 - **Takvimde** bir günün üzerindeki **+**, görevi o güne koyar.
 
 ## Birden çok görev birden
 
-Birkaç satır yapıştır (örneğin bir toplantı notundan): her satır ayrı görev olur ve eklenmeden önce hepsi tek tek gösterilir. **Ctrl Enter** (Mac’te **⌘ Enter**) hepsini ekler. “Eklemeye devam et” işaretliyse pencere açık kalır.
+Birkaç satır yapıştırın (örneğin bir toplantı notundan): her satır ayrı görev olur ve eklenmeden önce hepsi tek tek gösterilir. **Ctrl Enter** (Mac’te **⌘ Enter**) hepsini ekler. “Eklemeye devam et” işaretliyse pencere açık kalır.
 
 ## Tek tıkla bitir
 
@@ -64,8 +64,8 @@ Bir kutuya yazarken hariç her yerde çalışır. **?** tuşu bu listeyi uygulam
 
 ## Telefonda
 
-Altta beş düğme var: Ana sayfa, Görevlerim, ortada **+**, Müşteriler ve Takvim. Panolar, ayarlar ve menün sol üstteki ☰’de.
+Altta beş düğme var: Ana sayfa, Görevlerim, ortada **+**, Müşteriler ve Takvim. Panolar, ayarlar ve menünüz sol üstteki ☰’de.
 
 ## Görünüm
 
-Menünden (sol alttaki adın) **Açık**, **Koyu** ya da **Cihazdaki gibi** seç. Seçim o cihazda saklanır.
+Menünüzden (sol alttaki adınız) **Açık**, **Koyu** ya da **Cihazdaki gibi** seçin. Seçim o cihazda saklanır.

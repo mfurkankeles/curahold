@@ -2,7 +2,7 @@
 title: Muhasebe: başka bir programdan dosya
 section: help
 order: 8.29
-summary: Logo, Mikro, Tally, SAP Business One ya da herhangi bir program: müşterileri, faturaları ve ödemeleri Excel ya da CSV olarak yükle.
+summary: Logo, Mikro, Tally, SAP Business One ya da herhangi bir program: müşterileri, faturaları ve ödemeleri Excel ya da CSV olarak yükleyin.
 ---
 # Muhasebe: başka bir programdan dosya
 
@@ -10,10 +10,10 @@ Açık API'si olmayan programlar — Logo, Mikro, Tally, SAP Business One ve di�
 
 ## Adımlar
 
-1. **Ayarlar → Veri kaynakları → Muhasebe programları**'nda **Dosya yükle**'yi seç.
-2. **Yükleme** sekmesinde müşteriler, faturalar ve ödemeler için **Şablon**'u indir.
-3. Aynılarını programından dışa aktar ve şablonun sütunlarına yerleştir (Excel ya da CSV; fazla sütunlar yok sayılır).
-4. Önce müşterileri, sonra faturaları, sonra ödemeleri yükle.
+1. **Ayarlar → Veri kaynakları → Muhasebe programları**'nda **Dosya yükle**'yi seçin.
+2. **Yükleme** sekmesinde müşteriler, faturalar ve ödemeler için **Şablon**'u indirin.
+3. Aynılarını programınızdan dışa aktarın ve şablonun sütunlarına yerleştirin (Excel ya da CSV; fazla sütunlar yok sayılır).
+4. Önce müşterileri, sonra faturaları, sonra ödemeleri yükleyin.
 
 ## Sütunlar
 
@@ -27,4 +27,4 @@ Tarihler YYYY-AA-GG biçiminde. `status` open, paid, void ya da draft olabilir (
 
 ## Daha güncel rakamlar
 
-İstediğin zaman yeni bir dosya yükle: aynı türden öncekinin yerini alır. Elle yaptığın eşleştirmeler korunur. Dosya başka hiçbir yere gönderilmez.
+İstediğiniz zaman yeni bir dosya yükleyin: aynı türden öncekinin yerini alır. Elle yaptığınız eşleştirmeler korunur. Dosya başka hiçbir yere gönderilmez.

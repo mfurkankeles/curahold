@@ -16,6 +16,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Confirm } from './ui';
+import { ConnectionTrouble } from './ConnectionTrouble';
 
 // Product names are names, not text to translate.
 export const PROVIDER_NAMES: Record<string, string> = {
@@ -201,7 +202,11 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                     {t('conn.linkedPeople', { n: c.linkedPeople })}
                     {c.lastOkAt ? ` · ${t('conn.lastOk', { when: relativeTime(c.lastOkAt, t) })}` : ''}
                   </p>
-                  {c.status === 'error' && c.lastError && <p className="error-text tile__line">{c.lastError}</p>}
+                  {c.status === 'error' && c.lastError && (
+                    <p className="error-text tile__line">
+                      <ConnectionTrouble app={PROVIDER_NAMES[p.id]} message={c.lastError} />
+                    </p>
+                  )}
                   <p className="field__hint tile__line">{t(`conn.howLink.${p.id}` as MessageKey)}</p>
                   {p.id === 'teams' && (
                     <p className="tile__line">
@@ -269,7 +274,11 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                 <td>
                   <strong>{c.label}</strong>
                   <div className="muted">{c.channels[0]?.name}</div>
-                  {c.status === 'error' && c.lastError && <div className="error-text">{c.lastError}</div>}
+                  {c.status === 'error' && c.lastError && (
+                    <div className="error-text">
+                      <ConnectionTrouble app={c.label || PROVIDER_NAMES[c.provider] || c.provider} message={c.lastError} />
+                    </div>
+                  )}
                 </td>
                 <td>
                   <Status c={c} />

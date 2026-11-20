@@ -6,7 +6,7 @@
 // forms' honeypot / fill-time / Turnstile checks with and without a key.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { BUDGETS, isUpload } from '../api/src/lib/ratelimit';
-import { TRAFFIC_RULES, TrafficWatch, robotRefusal } from '../api/src/lib/botGuard';
+import { TRAFFIC_RULES, TrafficWatch, crawlerBearer, robotRefusal } from '../api/src/lib/botGuard';
 import { TURNSTILE_VERIFY, humanCheck } from '../api/src/lib/humanCheck';
 import { createPortalApp } from '../api/src/portal';
 import { BASE, Client, login, setup, type Env } from './helpers';
@@ -34,9 +34,28 @@ describe('robots refused by name', () => {
   it('but never the AI connector, robots.txt, or a request carrying its own key', async () => {
     expect((await ask('/robots.txt', { 'user-agent': GPT })).status).toBe(200);
     expect((await ask('/.well-known/oauth-authorization-server', { 'user-agent': 'Claude-User' })).status).not.toBe(403);
-    expect((await ask('/api/me', { 'user-agent': 'Claude-User', authorization: 'Bearer chk_not_a_real_key' })).status).toBe(401);
+    const ada = await login(env, 'acme', 'ada@demo.example');
+    const { token } = (await ada.post('/api/dev/keys', { name: 'Assistant', canWrite: false })).json;
+    expect((await ask('/api/me', { 'user-agent': 'Claude-User', authorization: `Bearer ${token}` })).status).toBe(200);
     expect(robotRefusal('strict', { path: '/mcp', ua: 'Claude-User', bearer: false })).toBeNull();
     expect(robotRefusal('strict', { path: '/oauth/token', ua: 'ChatGPT-User', bearer: false })).toBeNull();
+  });
+
+  it('a made-up bearer is no pass: a crawler with one is refused, on the API and everywhere else', async () => {
+    // Security W3d (LOW): any "Bearer x" used to get a crawler past the block to the public answers.
+    for (const bearer of ['Bearer x', 'Bearer chk_not_a_real_key', 'Bearer chk_' + 'a'.repeat(40)]) {
+      for (const path of ['/api/auth/methods', '/api/me', '/api/trial/config']) {
+        const r = await ask(path, { 'user-agent': GPT, authorization: bearer });
+        expect(r.status, `${bearer} ${path}`).toBe(403);
+        expect(((await r.json()) as { error: string }).error).toBe('robot_refused');
+      }
+    }
+    // Outside the API a bearer means nothing, so it is not even looked at.
+    expect(robotRefusal('crawlers', { path: '/customers', ua: GPT, bearer: true })).toBe('ai');
+    expect(crawlerBearer('crawlers', { path: '/customers', ua: GPT, bearer: true })).toBeNull();
+    expect(crawlerBearer('crawlers', { path: '/api/me', ua: GPT, bearer: true })).toBe('ai');
+    expect(crawlerBearer('crawlers', { path: '/api/me', ua: BROWSER, bearer: true })).toBeNull();
+    expect(crawlerBearer('off', { path: '/api/me', ua: GPT, bearer: true })).toBeNull();
   });
 
   it('scripted tools are refused at the public doors only, and only in strict mode', async () => {
@@ -97,6 +116,25 @@ describe('limits for the public doors, uploads and scanners', () => {
     expect(codes.at(-1)).toBe(429);
     // Another address is untouched.
     expect((await env.app.request(`https://acme.${BASE}/api/health`, { headers: { 'cf-connecting-ip': freshIp() } })).status).toBe(200);
+  });
+
+  it('a scanner without a session is counted too: every address answers 401, and they add up', async () => {
+    // Security W3d (LOW): without a session nothing reached routing, so no 404 was ever counted.
+    const ip = freshIp();
+    const probe = (n: number) => env.app.request(`https://acme.${BASE}/api/nothing-here-${n}`, { headers: { 'cf-connecting-ip': ip, 'user-agent': BROWSER } });
+    const codes: number[] = [];
+    for (let i = 0; i < BUDGETS.probe.cap + 3; i++) codes.push((await probe(i)).status);
+    expect(codes.slice(0, 20).every((c) => c === 401)).toBe(true);
+    expect(codes.at(-1)).toBe(429);
+    // A webhook receiver's refusals of a bad signature are not counted: a vendor's address is shared by many companies.
+    const ada = await login(env, 'acme', 'ada@demo.example');
+    const made = (await ada.post('/api/inbound-hooks', { name: 'Automations', recipe: 'curahold' })).json.hook;
+    const vendor = freshIp();
+    const hook = () => env.app.request(made.url, { method: 'POST', body: '{"a":1}', headers: { 'cf-connecting-ip': vendor, 'content-type': 'application/json', 'x-curahold-signature': 't=1,v1=00' } });
+    const hookCodes: number[] = [];
+    for (let i = 0; i < BUDGETS.probe.cap + 3; i++) hookCodes.push((await hook()).status);
+    expect(hookCodes[0]).toBeGreaterThanOrEqual(400);
+    expect(hookCodes).not.toContain(429);
   });
 
   it('uploads have a budget of their own', () => {

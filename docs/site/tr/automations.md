@@ -6,19 +6,19 @@ summary: Görev açan, hatırlatma gönderen ve işi kendiliğinden ilerleten ku
 ---
 # Otomasyonlar
 
-Kurallar rutini senin yerine yapar: 90 gün önceden yenileme planı, yeni müşteriye hoş geldin araması, geciken görev için hatırlatma, fırsat kazanılınca devir kartı. Hiçbir planda sayılmaz, tavanlanmaz.
+Kurallar rutini sizin yerine yapar: 90 gün önceden yenileme planı, yeni müşteriye hoş geldin araması, geciken görev için hatırlatma, fırsat kazanılınca devir kartı. Hiçbir planda sayılmaz, tavanlanmaz.
 
 ## Kural oluştur {#new-rule}
 
 Otomasyonları yönetme iznin olmalı (yöneticilerde vardır).
 
-1. **Ayarlar → Otomasyonlar**'ı aç ve **Yeni kural**'a tıkla.
+1. **Ayarlar → Otomasyonlar**'ı açın ve **Yeni kural**'a tıklayın.
    ![Yeni kural düğmesi işaretli](img/auto-new.webp)
-2. Uyan hazır bir kuralı seç ya da **Sıfırdan başla**.
+2. Uyan hazır bir kuralı seçin ya da **Sıfırdan başla**'yı seçin.
    ![Hazır kurallar işaretli](img/auto-presets.webp)
-3. **Ne zaman** altında kuralı neyin başlatacağını ve ayrıntılarını (hangi tarih, kaç gün, hangi pano) seç. Bazı müşterilere ya da görevlere daraltmak için **Koşul ekle**'ye tıkla. **O zaman** altında ne olacağını seç. Aşağıdaki "Bugün … için çalışırdı" satırı şu an neye dokunacağını gösterir; henüz hiçbir şey değişmez.
+3. **Ne zaman** altında kuralı neyin başlatacağını ve ayrıntılarını (hangi tarih, kaç gün, hangi pano) seçin. Bazı müşterilere ya da görevlere daraltmak için **Koşul ekle**'ye tıklayın. **O zaman** altında ne olacağını seçin. Aşağıdaki "Bugün … için çalışırdı" satırı şu an neye dokunacağını gösterir; henüz hiçbir şey değişmez.
    ![Kuralın başlangıcı olan Ne zaman işaretli](img/auto-rule.webp)
-4. Bir **Ad** ver, **Açık** işaretli kalsın ve **Kaydet**'e tıkla.
+4. Bir **Ad** verin, **Açık** işaretli kalsın ve **Kaydet**'e tıklayın.
    ![Kuralın Kaydet düğmesi işaretli](img/auto-save.webp)
 
 ## Kuralı ne başlatır {#when}
@@ -31,6 +31,6 @@ Görev açmak (kontrol listesiyle, müşterinin sahibine ya da herhangi birine),
 
 ## Çalıştırmak ve durdurmak {#running}
 
-Her kural son 30 günde kaç kez çalıştığını gösterir. **Şimdi çalıştır**, zamanlanmış bir kuralı bir sonraki saati beklemeden hemen çalıştırır; yine de her durum için bir kez uygulanır. Ara vermek için kuralı kapat. Silinen kuralın açtığı görevler kalır, kural 30 gün çöp kutusunda durur.
+Her kural son 30 günde kaç kez çalıştığını gösterir. **Şimdi çalıştır**, zamanlanmış bir kuralı bir sonraki saati beklemeden hemen çalıştırır; yine de her durum için bir kez uygulanır. Ara vermek için kuralı kapatın. Silinen kuralın açtığı görevler kalır, kural 30 gün çöp kutusunda durur.
 
 Aynı sayfanın üstündeki devir ayarları [Devir, talepler ve müşteriye dönüş](/docs/tr/handover-and-requests/) sayfasında.

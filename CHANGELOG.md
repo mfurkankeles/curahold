@@ -122,6 +122,26 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Hover washes on toasts, segmented buttons and chips, and the read-only warning colour in the sidebar show again (their
+  design tokens referred to themselves and computed to nothing). The phone menu, the console's company drawer and the
+  Office and AI team panels close with the same 44 × 44 Close as every dialog.
+
+- Hebrew says "יום אחד", "משימה אחת הועברה" after a count of one instead of "1 ימים", "1 משימות הועברו": the noun, "one" in
+  its gender, a neighbouring verb or adjective in agreement, and a prefix letter joined to the word.
+
+- A customer listed twice in an imported file is reported ("same customer as row 2: merged into one") instead of being
+  merged without a word.
+- A new deal, contact or other record can create its customer on the spot: the customer field searches and offers "Add new
+  customer" like the task form.
+- The trial request form, opened in another tab, says the answers are kept and only the e-mail needs confirming again,
+  then returns to the step it was on; before, it silently started over.
+- Tools that are not turned on for an installation say who can turn them on, instead of "not set up on this server".
+
+- A connection that stopped working now says why in your language (sign-in no longer accepted, no permission, could not
+  be reached, or a neutral "reported a problem"), with the service's own message under it, in the reconnect banner and the
+  connection lists; before, the raw service message (often English) stood alone. A sync that only waits out a service's
+  rate limit shows "Paused, resumes automatically" instead of "Needs a look".
+
 - Importing a Turkish task file with a "Liste" column now offers the Boards step.
 - The renewals view no longer adds amounts in other currencies one to one under the company's currency sign: amounts
   with a rate are converted (marked ≈), others are totalled in their own currency.
@@ -130,6 +150,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - _Nothing yet._
 
 ### Security
+
+- A crawler with a made-up `Authorization: Bearer` header is refused like any other crawler; the bearer must be a live key
+  or app token of the company. Scanners without a session now count towards the unknown-address limit (they saw 401,
+  never 404); webhook receivers stay out of that count.
 
 - _Nothing yet._
 
