@@ -490,7 +490,8 @@ function conceptDoc(locale: SiteLocale, which: 'a' | 'c'): string {
     rel,
     head,
     // A way past the header for the keyboard (WCAG 2.4.1); chrome.css shows it only while it has focus.
-    header: `<a class="skip" href="#${which === 'a' ? 'film' : 'orbit'}">${esc(siteCopy(locale).nav.skip)}</a>\n${chromeHeader(locale, path, which)}`,
+    // These pages load whole stylesheets, so the header's <!--late--> marks mean nothing here.
+    header: `<a class="skip" href="#${which === 'a' ? 'film' : 'orbit'}">${esc(siteCopy(locale).nav.skip)}</a>\n${chromeHeader(locale, path, which).replace(/<!--\/?late-->/g, '')}`,
     why: whyHtml(locale, { headingLevel: 2, urls: u, compact: true }),
     footer: footerHtml(locale),
     tail: `${signinDialog(locale)}\n${chromeTail(locale, rel, which)}`,
@@ -1237,6 +1238,9 @@ export function page(locale: SiteLocale): string {
 
   const faq = faqList(c.faq.items);
   const marquee = INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('');
+  // Only the first scene is in the page; the other three wait in #film-rest below the fold
+  // and site.js adds them when the film first moves on: the first paint lays out a quarter
+  // of the film, and their styles leave the inline CSS (Lighthouse mobile, fix wave 3).
   // The mark's own arc, drawn large behind the film: the C that holds.
   const arc = `<svg class="hero__arc" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="arcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c7dff"/><stop offset=".55" stop-color="#5b4de8"/><stop offset="1" stop-color="#3fb596"/></linearGradient></defs><path d="M319.3 79.8A170 170 0 1 0 319.3 340.2" pathLength="100"/></svg>`;
 
@@ -1280,9 +1284,6 @@ ${chromeHeader(locale, '', 'classic')}
           <div class="film__bar"><span class="film__dots"><i></i><i></i><i></i></span><span class="film__addr">${crumbs.map((x, i) => `<span${i === 0 ? ' class="is-on"' : ''} data-crumb="${i}">${esc(x)}</span>`).join('')}</span></div>
           <div class="film__stage">
           ${sceneHealth}
-          ${scenePromise}
-          ${sceneRenew}
-          ${sceneSprint}
           </div>
         </div>
       </div>
@@ -1296,6 +1297,7 @@ ${chromeHeader(locale, '', 'classic')}
     </div>
   </section>
   <!--fold-->
+  <template id="film-rest">${scenePromise}${sceneRenew}${sceneSprint}</template>
 
   ${storyHtml}
 
@@ -1378,7 +1380,8 @@ const emit = (file: string, html: string) => pending.push({ file, html });
 
 /**
  * Cuts each kind of page's styles to the classes it uses, writes them as one hashed file
- * (cached for good), inlines what the first screen needs (everything above <!--fold-->), and
+ * (cached for good), inlines what the first screen needs (everything above <!--fold-->, less
+ * what is marked <!--late-->), and
  * loads the file without blocking the first paint, at low priority (media=print until it
  * arrives) so the fonts are fetched first. Then writes the pages.
  */
@@ -1393,8 +1396,11 @@ function writePages(): string {
     for (const p of mine) {
       for (const c of classesIn(p.html)) used.add(c);
       const fold = p.html.indexOf('<!--fold-->');
-      // A page without a fold mark (the blog: short pages) is all first screen.
-      for (const c of classesIn(fold < 0 ? p.html : p.html.slice(0, fold))) first.add(c);
+      // A page without a fold mark (the blog: short pages) is all first screen. What sits
+      // between <!--late--> marks (the header's closed menu panels) is hidden at first paint,
+      // so its styles can wait for the file too.
+      const top = (fold < 0 ? p.html : p.html.slice(0, fold)).replace(/<!--late-->[\s\S]*?<!--\/late-->/g, '');
+      for (const c of classesIn(top)) first.add(c);
     }
     const sheet = pruneCss(full, used);
     const critical = pruneCss(full, first);
@@ -1405,7 +1411,7 @@ function writePages(): string {
       p.html = p.html.replace(/<!--css:(\w+):([^>]*)-->/, (_m, _k, rel: string) =>
         // Inline, a font's url() is read from the page, not from assets/: point it there.
         `<style>${critical.replace(/url\((?![a-z]+:|\/|#)/g, `url(${rel}assets/`)}</style>\n<link rel="stylesheet" href="${rel}assets/${name}" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="${rel}assets/${name}"></noscript>`,
-      ).replace('<!--fold-->', '');
+      ).replace('<!--fold-->', '').replace(/<!--\/?late-->/g, '');
     }
   }
   for (const p of pending) writeFileSync(p.file, p.html);

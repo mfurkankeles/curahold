@@ -131,7 +131,7 @@ export function headerHtml(o: HeaderOpts): string {
   const plain = (url: string, name: string, line: string) =>
     `<li><a class="hx__link hx__link--plain" href="${esc(url)}"><span class="hx__tx"><b>${esc(name)}</b><small>${esc(line)}</small></span></a></li>`;
   const panel = (id: string, label: string, body: string, layout: string) =>
-    `<li class="hx__item"><button class="hx__top" type="button" aria-expanded="false" aria-controls="hx-${id}">${esc(label)}${CARET}</button><div class="hx__panel hx__panel--${layout}" id="hx-${id}"><div class="hx__pin">${body}</div></div></li>`;
+    `<li class="hx__item"><button class="hx__top" type="button" aria-expanded="false" aria-controls="hx-${id}">${esc(label)}${CARET}</button><div class="hx__panel hx__panel--${layout}" id="hx-${id}"><!--late--><div class="hx__pin">${body}</div><!--/late--></div></li>`;
   const col = (title: string, list: string, cls = '') => `<div class="hx__col${cls}"><p class="hx__h">${esc(title)}</p><ul>${list}</ul></div>`;
   const feat = (title: string, text: string, extra: string) => `<div class="hx__feat"><p class="hx__fh">${esc(title)}</p><p>${esc(text)}</p>${extra}</div>`;
 
