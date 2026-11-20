@@ -88,3 +88,5 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 - With no answer, or anything but `2xx`, Curahold tries again after 1, 5, 30, 120 and 360 minutes: 6 tries in all.
 - A webhook that fails 50 times in a row is paused. Turn it back on with **Resume** in Settings → Developers.
 - Redirects are not followed; give the final address.
+- A retry goes only to the webhooks that have not answered `2xx` yet: one that already has the event does not get it again.
+- An answer of `410 Gone`, which Zapier and Make give for a deleted Zap or scenario, turns the webhook off at once.

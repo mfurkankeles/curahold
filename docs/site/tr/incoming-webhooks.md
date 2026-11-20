@@ -75,6 +75,10 @@ Aracın tetikleyicisini kullanın, sonra yukarıdaki adrese iki başlıkla **Web
 
 Kayıtlar webhook başına 30 gün ve en çok 500 gönderim saklanır. **Yeni gizli anahtar** eskisini hemen durdurur; **Duraklat** sürdürülene kadar `404` döner; **Webhook'u kaldır** onu ve kayıtlarını siler, oluşturdukları kalır. Bir webhook onu kuran kişinin yetkileriyle çalışır: yalnızca onun erişebildiği panolara ve müşterilere ulaşır, o kişi ayrılırsa durur.
 
+## Bir gönderim reddedildiğinde ya da kullanılmadığında {#log}
+
+**Kayıtlar** sekmesi her gönderime ne olduğunu kendi dilinizde söyler: yanlış imza ya da token (gizli anahtarı **Adres** sekmesinden araca yeniden kopyalayın), çok önce gönderilmiş (tekrar gönderilen eski bir gönderim de böyle reddedilir), bu webhook'un kullanmadığı bir değer, eşleşen müşteri yok ya da boş çıkan bir alan (**Eşleme** sekmesini kontrol edin). Aynı gönderimin iki kez gelmesi, örneğin Zapier ya da Make'in yeniden denemesi, bir kez işlenir. Görev webhook'unun panosu **Eşleme** sekmesinde **Pano** alanından değiştirilebilir: adres aynı kalır, gönderen araçta bir şey değişmez.
+
 ## Ayrıca bakın
 
 - [Webhook'lar (giden)](/docs/tr/webhooks/)

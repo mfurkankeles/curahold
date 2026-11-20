@@ -60,3 +60,7 @@ The relay accepts up to **10,000 recipients a day per user** (Google's published
 - you plan **marketing campaigns** — never through the relay.
 
 Switching is a setting: the hosted service already has a driver for a dedicated service (`EMAIL_PROVIDER=resend` with `RESEND_API_KEY`). Add it to the Sub-processors page and give administrators 30 days' notice first.
+
+## 6. When mail does not go out {#failures}
+
+A temporary refusal (`421`, `450`, `451`, or a dropped connection) is tried once more on a new connection. A permanent one is not: `535` (the app password was changed or revoked: make a new one and replace `SMTP_RELAY_PASSWORD`), `550 5.4.5` (the daily limit), `550 5.1.1` (an address that does not exist). People then see "We could not send the email just now. Please try again in a few minutes; if it keeps happening, tell your administrator." in their own language, never the relay's reply; that goes to the app's error log with the SMTP step.
