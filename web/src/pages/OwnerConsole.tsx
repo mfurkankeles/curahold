@@ -92,10 +92,13 @@ function Loading<T>({ data, error, reload, children, cards }: { data: T | null; 
 }
 
 /** A figure tile that opens where it comes from. */
-function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: 'late' | 'soon' | 'done' }) {
+function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: Tone }) {
   const body = (
     <>
-      <span className="ctile__label">{label}</span>
+      <span className="ctile__label">
+        {tone ? <Icon name={TONE_ICON[tone]} size={14} /> : null}
+        {label}
+      </span>
       <span className="ctile__value">{value}</span>
       {sub ? <span className="ctile__sub">{sub}</span> : null}
     </>
@@ -112,6 +115,23 @@ function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value:
 }
 
 const PACE_ICON: Record<Pace, IconName> = { 'on-track': 'checkCircle', close: 'clock', behind: 'alert', 'no-target': 'dot' };
+
+/** A state's tone: good (done), needs a look (soon), needs action (late). */
+type Tone = 'done' | 'soon' | 'late';
+const TONE_ICON: Record<Tone, IconName> = { done: 'checkCircle', soon: 'clock', late: 'alert' };
+
+/**
+ * A state in a few words. A tone always carries its icon next to the words, so the state is never
+ * told by colour alone (WCAG 1.4.1; docs/design/tokens.md "Status").
+ */
+function Pill({ tone, children }: { tone?: Tone; children: ReactNode }) {
+  return (
+    <span className="ocpill" data-tone={tone}>
+      {tone ? <Icon name={TONE_ICON[tone]} size={12} /> : null}
+      {children}
+    </span>
+  );
+}
 
 function usePlanFormat() {
   const { locale } = useOwnerWords();
@@ -444,9 +464,9 @@ export function RevenueSection({ beat, failed, go }: { beat: number; failed: (e:
                             </td>
                             <td>{i.issuedAt ? formatDate(i.issuedAt, locale, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
                             <td>
-                              <span className="ocpill" data-tone={/paid|completed/.test(i.status) ? 'done' : /fail|past/.test(i.status) ? 'late' : undefined}>
+                              <Pill tone={/paid|completed/.test(i.status) ? 'done' : /fail|past/.test(i.status) ? 'late' : undefined}>
                                 {o(/paid|completed/.test(i.status) ? 'inv.paid' : /fail|past/.test(i.status) ? 'inv.failed' : 'inv.other')}
-                              </span>
+                              </Pill>
                             </td>
                             <td className="num">{formatMoney(i.amountCents / 100, i.currency, locale)}</td>
                           </tr>
@@ -539,9 +559,9 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
                         </button>
                       </td>
                       <td>
-                        <span className="ocpill" data-tone={t.state === 'expired' ? 'late' : t.state === 'trial' && t.daysLeft != null && t.daysLeft <= 7 ? 'soon' : undefined}>
+                        <Pill tone={t.state === 'expired' ? 'late' : t.state === 'trial' && t.daysLeft != null && t.daysLeft <= 7 ? 'soon' : undefined}>
                           {o(`trials.${t.state}` as OwnerKey)}
-                        </span>
+                        </Pill>
                       </td>
                       <td>{t.endsAt ? `${formatDate(t.endsAt, locale, { day: 'numeric', month: 'short', year: 'numeric' })}${t.daysLeft != null && t.daysLeft > 0 ? ` · ${o('trials.daysLeft', { n: t.daysLeft })}` : ''}` : '—'}</td>
                       <td className="num" data-over={t.seatCap != null && t.people > t.seatCap ? '' : undefined}>
@@ -619,9 +639,9 @@ export function RequestsSection({ beat, failed, open, go }: { beat: number; fail
                     <button type="button" className="ocreq" aria-current={chosen === r.id ? 'true' : undefined} onClick={() => go({ section: 'requests', q: r.id })}>
                       <span className="ocreq__top">
                         <strong>{r.company}</strong>
-                        <span className="ocpill" data-tone={r.status === 'new' ? 'soon' : r.status === 'approved' ? 'done' : r.status === 'rejected' ? 'late' : undefined}>
+                        <Pill tone={r.status === 'new' ? 'soon' : r.status === 'approved' ? 'done' : r.status === 'rejected' ? 'late' : undefined}>
                           {o(`req.status.${r.status}` as OwnerKey)}
-                        </span>
+                        </Pill>
                       </span>
                       <span className="ocreq__meta">
                         {r.name} · {r.country} · {r.seats ? o('req.seats', { n: r.seats }) : '—'} · {relativeTime(r.createdAt, t)}
@@ -748,9 +768,9 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
             {d.title ? `, ${d.title}` : ''} · {d.email}
           </p>
         </div>
-        <span className="ocpill" data-tone={d.status === 'new' ? 'soon' : d.status === 'approved' ? 'done' : d.status === 'rejected' ? 'late' : undefined}>
+        <Pill tone={d.status === 'new' ? 'soon' : d.status === 'approved' ? 'done' : d.status === 'rejected' ? 'late' : undefined}>
           {o(`req.status.${d.status}` as OwnerKey)}
-        </span>
+        </Pill>
       </header>
       <div className="ocflags">
         {d.duplicates.length ? <span className="flag flag--soon">{o('req.duplicates', { refs: d.duplicates.map((x) => x.ref).join(', ') })}</span> : null}
@@ -1012,9 +1032,9 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
                 <ul className="oclist oclist--decided">
                   {decidedList.map((a) => (
                     <li key={a.id}>
-                      <span className="ocpill" data-tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>
+                      <Pill tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>
                         {o(`ap.status.${a.status}` as OwnerKey)}
-                      </span>
+                      </Pill>
                       <span className="oclist__main">
                         <strong>{a.title}</strong>
                         <span className="oc__muted">
@@ -1060,7 +1080,7 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
     <article className="ccard ocap" data-priority={a.priority} aria-labelledby="oc-ap-h">
       <p className="oc__ref">
         {a.ref} · {formatDate(a.createdAt, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-        {a.priority !== 'normal' ? <span className="ocpill" data-tone={a.priority === 'urgent' ? 'late' : undefined}>{o(`ap.priority.${a.priority}` as OwnerKey)}</span> : null}
+        {a.priority !== 'normal' ? <Pill tone={a.priority === 'urgent' ? 'late' : undefined}>{o(`ap.priority.${a.priority}` as OwnerKey)}</Pill> : null}
       </p>
       <p className="ocap__who">{who}</p>
       {mode === 'edit' ? (
@@ -1100,9 +1120,9 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
         <div>
           <dt>{o('ap.risk')}</dt>
           <dd>
-            <span className="ocpill" data-tone={a.risk === 'high' ? 'late' : a.risk === 'medium' ? 'soon' : 'done'}>
+            <Pill tone={a.risk === 'high' ? 'late' : a.risk === 'medium' ? 'soon' : 'done'}>
               {o(`ap.risk.${a.risk}` as OwnerKey)}
-            </span>
+            </Pill>
             {a.riskNote ? ` ${a.riskNote}` : ''}
           </dd>
         </div>
@@ -1390,9 +1410,9 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                   <article className="ccard ocnext" aria-labelledby="oc-next-h">
                     <p className="oc__ref">
                       {o('check.next')} · {o(`area.${n.area}` as OwnerKey)} · {o(`owner.${n.owner}` as OwnerKey)}
-                      <span className="ocpill" data-tone={n.triggered || n.priority === 'must' ? 'late' : undefined}>
+                      <Pill tone={n.triggered || n.priority === 'must' ? 'late' : undefined}>
                         {n.triggered ? o('check.triggered') : o(`prio.${n.priority}` as OwnerKey)}
-                      </span>
+                      </Pill>
                     </p>
                     <h2 className="ocap__title" id="oc-next-h">{o(`checklist.${n.id}.title` as OwnerKey)}</h2>
                     <p className="ocap__summary">{o(`checklist.${n.id}.why` as OwnerKey)}</p>
@@ -1487,9 +1507,9 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                                   {e.priority === 'later' ? ` · ${e.triggered ? o('check.triggered') : o('check.trigger', { when: triggerText(e, o) })}` : ''}
                                 </span>
                               </span>
-                              <span className="ocpill" data-tone={e.triggered || e.priority === 'must' ? 'late' : e.priority === 'nice' ? undefined : 'soon'}>
+                              <Pill tone={e.triggered || e.priority === 'must' ? 'late' : e.priority === 'nice' ? undefined : 'soon'}>
                                 {o(`prio.${e.priority}` as OwnerKey)}
-                              </span>
+                              </Pill>
                             </li>
                           ))}
                       </ul>

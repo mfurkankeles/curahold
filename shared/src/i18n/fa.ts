@@ -4777,6 +4777,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "اعداد نمودار",
   'rb.chartLabel': "نمودار با {n} مقدار. کلیدهای جهت‌نما آن‌ها را یکی‌یکی می‌خوانند و جدول بعدی همه را فهرست می‌کند.",
   'rb.chartKeys': "ردیف‌های نمودار. کلیدهای جهت‌نما اجزای هر ردیف را می‌خوانند.",
+  'rb.asTable': "نمایش به‌صورت جدول",
+  'rb.asChart': "نمایش به‌صورت نمودار",
   'rb.tryExample': "با یک نمونه شروع کن: {name}",
   'audit.data.exported': "فایلی را خروجی گرفت",
   'rb.more': "کارهای دیگر",

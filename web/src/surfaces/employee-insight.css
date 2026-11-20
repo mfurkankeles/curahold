@@ -4,7 +4,19 @@
    dashboards, and the builder. Charts take their colour from the palette
    (--brand) unless a part has a colour of its own (--oc, from data-color). */
 
-/* In a chart the named colours are fills, not text: brighter than on a chip, the same in light and dark. */
+/* In a chart a part takes the next slot of the validated palette (data-series, Charts.tsx paint()) or the
+   colour a person chose for it (data-color, mapped to the nearest validated hue in styles.css). Both are
+   fills, not text: brighter than on a chip. Identity is never colour alone: every chart has a legend or
+   direct labels and a table view. */
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='1'] { --oc: var(--series-1); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='2'] { --oc: var(--series-2); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='3'] { --oc: var(--series-3); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='4'] { --oc: var(--series-4); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='5'] { --oc: var(--series-5); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='6'] { --oc: var(--series-6); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='7'] { --oc: var(--series-7); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='8'] { --oc: var(--series-8); }
+:is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-series='other'] { --oc: var(--series-other); }
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='sky'] { --oc: var(--chart-sky); }
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='honey'] { --oc: var(--chart-honey); }
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='plum'] { --oc: var(--chart-plum); }
@@ -13,6 +25,10 @@
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='leaf'] { --oc: var(--chart-leaf); }
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='rose'] { --oc: var(--chart-rose); }
 :is(.hbars, .vchart, .linechart, .donut, .chartkey) [data-color='stone'] { --oc: var(--chart-stone); }
+
+/* A chart and its switch to a table (Charts.tsx ChartOrTable): the switch keeps its place at the end. */
+.chartview { display: grid; gap: 8px; min-width: 0; }
+.chartview__switch { justify-self: end; }
 
 /* ------------------------------------------------------------- one figure */
 .kpi { display: grid; gap: 4px; align-content: center; min-height: 72px; }
@@ -52,7 +68,7 @@
 }
 .vchart__plot { display: flex; align-items: flex-end; gap: clamp(4px, 1.2%, 12px); padding: 0 4px; }
 .vbar { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
-.vbar__fill { position: relative; flex: 0 1 min(52px, 64%); min-width: 3px; border-start-start-radius: var(--r-xs); border-start-end-radius: var(--r-xs); border-end-end-radius: 0; border-end-start-radius: 0; background: var(--oc, var(--grad, var(--brand))); }
+.vbar__fill { position: relative; flex: 0 1 min(52px, 64%); min-width: 3px; border-start-start-radius: var(--r-xs); border-start-end-radius: var(--r-xs); border-end-end-radius: 0; border-end-start-radius: 0; background: var(--oc, var(--series-1)); }
 .vbar__fill--stack { display: flex; flex-direction: column-reverse; background: none; gap: 4px; }
 .vbar__fill--stack i { display: block; width: 100%; background: var(--oc, var(--brand)); min-height: 2px; border-radius: var(--r-xs); }
 .vbar__fill--stack i:last-of-type { border-start-start-radius: var(--r-xs); border-start-end-radius: var(--r-xs); border-end-end-radius: var(--r-xs); border-end-start-radius: var(--r-xs); }

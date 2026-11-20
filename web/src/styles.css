@@ -187,15 +187,30 @@
   --shadow-brand: 0 2px 6px rgba(49, 36, 160, .22), 0 14px 34px rgba(49, 36, 160, .30);
   --shadow-brand-hover: 0 3px 8px rgba(49, 36, 160, .24), 0 20px 44px rgba(49, 36, 160, .36);
 
-  /* Chart series. Light: each at least 3:1 on the page and on cards (WCAG 1.4.11); dark keeps the brighter set below. */
-  --chart-sky: #4387f7;
-  --chart-honey: #c27b0a;
-  --chart-plum: #9a6cf3;
-  --chart-sea: #179b8e;
-  --chart-coral: #ed5a3c;
-  --chart-leaf: #469c4d;
-  --chart-rose: #e85392;
-  --chart-stone: #7c8aa3;
+  /* Chart series (docs/design/tokens.md "Chart colours"). Eight hues in a fixed order, starting from the
+     brand violet; every adjacent pair stays apart under protanopia and deuteranopia (OKLab ΔE ≥ 8.3) and
+     for full colour vision (ΔE ≥ 19), and each mark is at least 3:1 on the page and on cards (WCAG 1.4.11).
+     tests/chart-palette.test.ts recomputes all of it from this block. The order is the safety: never
+     reorder or add a ninth (a ninth group folds into --series-other). */
+  --series-1: #5b4de8;
+  --series-2: #dc6b30;
+  --series-3: #109b8b;
+  --series-4: #b98300;
+  --series-5: #d9578f;
+  --series-6: #2f9e44;
+  --series-7: #2a78d6;
+  --series-8: #e34948;
+  /* "Other", and the quiet partner of a compared pair (what came in next to what got done). */
+  --series-other: #8a88a6;
+  /* A colour a person chose for an option, drawn as a chart mark: the nearest validated hue. */
+  --chart-plum: var(--series-1);
+  --chart-coral: var(--series-2);
+  --chart-sea: var(--series-3);
+  --chart-honey: var(--series-4);
+  --chart-rose: var(--series-5);
+  --chart-leaf: var(--series-6);
+  --chart-sky: var(--series-7);
+  --chart-stone: var(--series-other);
   --avatar-0: #2f6f73;
   --avatar-1: #8a5a2b;
   --avatar-2: #5b6aa0;
@@ -212,14 +227,16 @@
    keep their meaning (and their contrast) on a dark surface. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --chart-sky: #4a8cf7;
-  --chart-honey: #f4a62a;
-  --chart-plum: #9a6cf3;
-  --chart-sea: #1bb3a4;
-  --chart-coral: #ef6a4f;
-  --chart-leaf: #55b35d;
-  --chart-rose: #ea639c;
-  --chart-stone: #9aa5b8;
+  /* The same eight hues, stepped for the dark surface (OKLCH L 0.48–0.67, ≥ 3:1), validated as a set. */
+  --series-1: #8c7dff;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #0ca30c;
+  --series-7: #3987e5;
+  --series-8: #e66767;
+  --series-other: #76739a;
   --paper: #0f0e1a;
   --surface: #171626;
   --surface-2: #1c1b2e;

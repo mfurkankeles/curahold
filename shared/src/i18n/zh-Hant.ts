@@ -4777,6 +4777,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "圖表中的數值",
   'rb.chartLabel': "含 {n} 個數值的圖表。用方向鍵逐一讀取，下方表格列出全部數值。",
   'rb.chartKeys': "圖表各列。用方向鍵讀取每列的組成。",
+  'rb.asTable': "以表格顯示",
+  'rb.asChart': "以圖表顯示",
   'rb.tryExample': "從範例開始：{name}",
   'audit.data.exported': "匯出了檔案",
   'rb.more': "更多動作",

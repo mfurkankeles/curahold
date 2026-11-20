@@ -9,6 +9,8 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, ty
 import type { MetricPoint } from '../../../shared/src/metrics';
 import type { Locale } from '../../../shared/src/i18n';
 import { formatDate, formatMonth } from '../lib/format';
+import { useI18n } from '../lib/i18n';
+import { Icon } from '../components/icons';
 
 /** A round top for the axis and the steps up to it: 0, 250, 500 … never more than four steps. */
 export function ticksFor(max: number): number[] {
@@ -73,6 +75,7 @@ export function labelled(names: string[], width: number, x: (k: number) => numbe
 const pct = (v: number, of: number) => (of > 0 ? Math.max(0, Math.min(100, (v / of) * 100)) : 0);
 const prop = (o: Record<string, string | number>) => o as CSSProperties;
 
+/** One series drawn as a line or columns, read by pointer or arrows, with a switch to its values as a table. */
 export function ConsoleChart({
   kind,
   points,
@@ -95,6 +98,8 @@ export function ConsoleChart({
   const [at, setAt] = useState<number | null>(null);
   const focused = useRef(false);
   const [xRef, width] = useWidth<HTMLDivElement>();
+  const [asTable, setAsTable] = useState(false);
+  const { t } = useI18n();
   const n = points.length;
   if (n === 0) return null;
   const ticks = ticksFor(Math.max(0, ...points.map((p) => p.v)));
@@ -126,7 +131,7 @@ export function ConsoleChart({
   const path = points.map((p, k) => `${k ? 'L' : 'M'}${x(k).toFixed(2)},${y(p.v).toFixed(2)}`).join(' ');
 
   return (
-    <figure className="cchart" data-kind={kind}>
+    <figure className="cchart" data-kind={kind} data-table={asTable || undefined}>
       <p className="cchart__read num" role="status">
         <span>{when(reading.t)}</span>
         <strong>{value(reading.v)}</strong>
@@ -184,17 +189,21 @@ export function ConsoleChart({
           ) : null,
         )}
       </div>
-      <table className="sr-only">
-        <caption>{label}</caption>
+      <table className={asTable ? 'table cchart__table' : 'sr-only'}>
+        <caption className={asTable ? 'sr-only' : undefined}>{label}</caption>
         <tbody>
           {points.map((p) => (
             <tr key={p.t}>
               <th scope="row">{when(p.t)}</th>
-              <td>{value(p.v)}</td>
+              <td className="num">{value(p.v)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      <button type="button" className="btn btn--small btn--quiet cchart__switch" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)}>
+        <Icon name={asTable ? 'chart' : 'list'} size={14} />
+        {t(asTable ? 'rb.asChart' : 'rb.asTable')}
+      </button>
     </figure>
   );
 }

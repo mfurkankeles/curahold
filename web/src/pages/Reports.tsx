@@ -52,7 +52,7 @@ function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
       table: null,
       series: [
         { key: 'in', label: t('reports.created'), color: 'stone' },
-        { key: 'out', label: t('reports.done'), color: 'sky' },
+        { key: 'out', label: t('reports.done'), color: 'plum' },
       ],
       groups: weeks.map((w) => ({ key: w.week, label: w.week, value: w.created + w.done, cells: [w.created, w.done] })),
     }),
@@ -278,7 +278,7 @@ export function ReportsPage() {
             {t('reports.hours')}
           </h2>
                   <p className="sheet__hint">{t('reports.hoursHint')}</p>
-                  <BarRows rows={work.hours.slice(0, 10).map((h) => ({ key: h.userId, label: person(h.userId)?.name ?? '—', value: h.minutes, text: hoursText(h.minutes, locale), color: 'sky' }))} />
+                  <BarRows rows={work.hours.slice(0, 10).map((h) => ({ key: h.userId, label: person(h.userId)?.name ?? '—', value: h.minutes, text: hoursText(h.minutes, locale) }))} />
                 </section>
               )}
               {board ? (

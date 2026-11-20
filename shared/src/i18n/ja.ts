@@ -4777,6 +4777,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "グラフの数値",
   'rb.chartLabel': "{n}個の値のグラフ。矢印キーで1つずつ読み上げます。すべての値は続く表にあります。",
   'rb.chartKeys': "グラフの各行。矢印キーで各行の内訳を読み上げます。",
+  'rb.asTable': "表で表示",
+  'rb.asChart': "グラフで表示",
   'rb.tryExample': "例から始める：{name}",
   'audit.data.exported': "ファイルをエクスポートしました",
   'rb.more': "その他の操作",

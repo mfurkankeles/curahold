@@ -1,21 +1,31 @@
 // Draws a report's result: one figure, bars, columns, a line, a ring, or a
 // table. Plain HTML and SVG (no chart library): the shapes are simple, they
 // take the palette's colours, and they grow in when the data lands.
-import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import type { OptionColor } from '../../../shared/src/model';
 import type { Bucket, ChartKind, ReportGroupRow, ReportResult, ReportUnit } from '../../../shared/src/reports';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { CountUp } from './CountUp';
 import { EmptyState } from './Empty';
+import { Icon } from './icons';
 import { intlTag } from '../../../shared/src/i18n';
 import { currencySign, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
-/** Colours for parts that have none of their own, in an order that keeps neighbours apart. */
-const CYCLE: OptionColor[] = ['sky', 'honey', 'plum', 'sea', 'coral', 'leaf', 'rose', 'stone'];
-const colorAt = (i: number, own?: OptionColor | null): OptionColor => own ?? CYCLE[i % CYCLE.length];
+/** How many chart slots the palette has (styles.css --series-1 … --series-8). */
+export const SERIES_SLOTS = 8;
+/**
+ * The colour of a part: its own (a colour a person chose) or the next slot of the validated palette.
+ * Slots are taken in order and never cycled: the order is what keeps neighbours apart for
+ * colour-blind readers (docs/design/tokens.md "Chart colours"); a ninth part and beyond is "Other".
+ */
+export function paint(k: number, own?: OptionColor | null): { 'data-color'?: OptionColor; 'data-series'?: string } {
+  if (own) return { 'data-color': own };
+  return { 'data-series': k < SERIES_SLOTS ? String(k + 1) : 'other' };
+}
 
+/** How a report writes its figures: a value in its unit (money in the company's currency), a time bucket, a plain number. */
 export function useReportFormat() {
   const { t, locale } = useI18n();
   const { me } = useStore();
@@ -158,7 +168,10 @@ function readOf(r: Ok, g: ReportGroupRow | undefined, label: (g: ReportGroupRow)
   return `${label(g)}: ${[...parts, ...(total === null ? [] : [`${total} ${value(g.value)}`])].join(' · ')}`;
 }
 
-/** `apart`: the series are side by side and never added up (what came in, what got done). */
+/**
+ * A report's result drawn as asked: one figure, a gauge, a table of rows, or a chart with its switch to a table.
+ * `apart`: the series are side by side and never added up (what came in, what got done).
+ */
 export function ReportChart({ result, chart, compact, goal, apart }: { result: ReportResult; chart: ChartKind; compact?: boolean; goal?: number; apart?: boolean }) {
   const { t } = useI18n();
   const f = useReportFormat();
@@ -183,10 +196,35 @@ export function ReportChart({ result, chart, compact, goal, apart }: { result: R
   if (r.table) return <RowsTable r={r} compact={compact} />;
   if (!r.groups.length || r.matched === 0) return <EmptyState compact icon="chart" title={t('rb.nothing')} />;
   if (chart === 'table') return <GroupTable r={r} label={label} />;
-  if (chart === 'donut') return <Donut r={r} label={label} compact={compact} />;
-  if (chart === 'bar') return <Bars r={r} label={label} />;
-  if (chart === 'line') return <Line r={r} label={label} compact={compact} />;
-  return <Columns r={r} label={label} compact={compact} stacked={chart === 'stacked'} apart={apart} />;
+  const drawn =
+    chart === 'donut' ? (
+      <Donut r={r} label={label} compact={compact} />
+    ) : chart === 'bar' ? (
+      <Bars r={r} label={label} />
+    ) : chart === 'line' ? (
+      <Line r={r} label={label} compact={compact} />
+    ) : (
+      <Columns r={r} label={label} compact={compact} stacked={chart === 'stacked'} apart={apart} />
+    );
+  return <ChartOrTable table={<GroupTable r={r} label={label} apart={apart} />}>{drawn}</ChartOrTable>;
+}
+
+/**
+ * A drawn chart with a switch to its figures as a table (and back): every value readable as text, by
+ * anyone, without the pointer (docs/design/tokens.md "Chart colours"). The switch keeps its place.
+ */
+export function ChartOrTable({ table, children }: { table: ReactNode; children: ReactNode }) {
+  const { t } = useI18n();
+  const [asTable, setAsTable] = useState(false);
+  return (
+    <div className="chartview" data-table={asTable || undefined}>
+      {asTable ? table : children}
+      <button type="button" className="btn btn--small btn--quiet chartview__switch" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)}>
+        <Icon name={asTable ? 'chart' : 'list'} size={14} />
+        {t(asTable ? 'rb.asChart' : 'rb.asTable')}
+      </button>
+    </div>
+  );
 }
 
 type Drawn = { r: Ok; label: (g: ReportGroupRow) => string; compact?: boolean };
@@ -197,7 +235,7 @@ function Legend({ r }: { r: Ok }) {
     <ul className="chartkey">
       {r.series.map((s, k) => (
         <li key={s.key}>
-          <i data-color={colorAt(k, s.color)} /> {s.label}
+          <i {...paint(k, s.color)} /> {s.label}
         </li>
       ))}
     </ul>
@@ -218,7 +256,7 @@ function Donut({ r, label, compact }: Drawn) {
           <circle cx="60" cy="60" r={R} className="donut__track" />
           {r.groups.map((g, k) => {
             const len = (Math.max(0, g.value) / total) * C;
-            const arc = <circle key={g.key} cx="60" cy="60" r={R} className="donut__arc" data-color={colorAt(k, g.color)} style={{ strokeDasharray: `${Math.max(0, len - 1.5)} ${C}`, strokeDashoffset: -at, ...i(k) }} />;
+            const arc = <circle key={g.key} cx="60" cy="60" r={R} className="donut__arc" {...paint(k, g.color)} style={{ strokeDasharray: `${Math.max(0, len - 1.5)} ${C}`, strokeDashoffset: -at, ...i(k) }} />;
             at += len;
             return arc;
           })}
@@ -230,7 +268,7 @@ function Donut({ r, label, compact }: Drawn) {
       <ul className="donut__key">
         {r.groups.map((g, k) => (
           <li key={g.key}>
-            <i data-color={colorAt(k, g.color)} />
+            <i {...paint(k, g.color)} />
             <span className="donut__label">{label(g)}</span>
             <b className="num">{f.value(g.value, r.unit, true)}</b>
             <span className="donut__pct num">{formatPercent((Math.max(0, g.value) / total) * 100, locale)}</span>
@@ -259,8 +297,8 @@ function Bars({ r, label }: Drawn) {
           <li className="hbar" key={g.key} {...(split ? read.item(k) : {})}>
             <span className="hbar__label">{label(g)}</span>
             <span className="hbar__track" aria-hidden="true">
-              <span className="hbar__fill" data-color={split ? undefined : colored ? colorAt(k, g.color) : undefined} style={{ width: pct(g.value, max) }}>
-                {split && g.cells?.map((c, si) => (c > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
+              <span className="hbar__fill" {...(split || !colored ? {} : paint(k, g.color))} style={{ width: pct(g.value, max) }}>
+                {split && g.cells?.map((c, si) => (c > 0 ? <i key={si} {...paint(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
               </span>
             </span>
             <b className="hbar__value num">{f.value(g.value, r.unit, true)}</b>
@@ -279,7 +317,7 @@ function Line({ r, label, compact }: Drawn) {
   const unit = useUnitName()(r.unit);
   const read = useReadout(r.groups.length);
   const split = r.series.length > 0;
-  const lines = split ? r.series.map((s, si) => ({ key: s.key, label: s.label, color: colorAt(si, s.color), points: r.groups.map((g) => g.cells?.[si] ?? 0) })) : [{ key: 'v', label: '', color: null as OptionColor | null, points: r.groups.map((g) => g.value) }];
+  const lines = split ? r.series.map((s, si) => ({ key: s.key, label: s.label, paint: paint(si, s.color), points: r.groups.map((g) => g.cells?.[si] ?? 0) })) : [{ key: 'v', label: '', paint: {}, points: r.groups.map((g) => g.value) }];
   const ticks = axis(Math.max(0, ...lines.flatMap((l) => l.points)));
   const top = ticks[ticks.length - 1] || 1;
   const n = r.groups.length;
@@ -302,7 +340,7 @@ function Line({ r, label, compact }: Drawn) {
           {lines.map((l) => {
             const d = l.points.map((pv, k) => `${k ? 'L' : 'M'}${x(k).toFixed(2)},${y(pv).toFixed(2)}`).join(' ');
             return (
-              <g key={l.key} data-color={l.color ?? undefined}>
+              <g key={l.key} {...l.paint}>
                 {!split && <path className="linechart__area" d={`${d} L${x(n - 1)},100 L${x(0)},100 Z`} />}
                 <path className="linechart__path" d={d} />
               </g>
@@ -318,7 +356,7 @@ function Line({ r, label, compact }: Drawn) {
         {read.at != null && <i className="linechart__rule" style={{ '--x': `${x(read.at)}%` } as CSSProperties} />}
         {(n <= 40 || read.at != null) &&
           lines.map((l) =>
-            l.points.map((pv, k) => (n <= 40 || k === read.at ? <i key={`${l.key}${k}`} className="linechart__dot" data-color={l.color ?? undefined} data-on={k === read.at || undefined} style={{ left: `${x(k)}%`, top: `${y(pv)}%`, ...i(k) }} /> : null)),
+            l.points.map((pv, k) => (n <= 40 || k === read.at ? <i key={`${l.key}${k}`} className="linechart__dot" {...l.paint} data-on={k === read.at || undefined} style={{ left: `${x(k)}%`, top: `${y(pv)}%`, ...i(k) }} /> : null)),
           )}
       </div>
       <div className="linechart__x" aria-hidden="true">
@@ -363,13 +401,13 @@ function Columns({ r, label, compact, stacked: asked, apart }: Drawn & { stacked
           <div className="vbar" key={g.key} style={i(k)} {...read.item(k)}>
             {stacked ? (
               <span className="vbar__fill vbar__fill--stack" style={{ height: pct(g.value, top) }}>
-                {g.cells?.map((c, si) => (c > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
+                {g.cells?.map((c, si) => (c > 0 ? <i key={si} {...paint(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
                 {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
               </span>
             ) : split ? (
-              g.cells?.map((c, si) => <span key={si} className="vbar__fill" data-color={colorAt(si, r.series[si]?.color)} style={{ height: pct(c, top) }} />)
+              g.cells?.map((c, si) => <span key={si} className="vbar__fill" {...paint(si, r.series[si]?.color)} style={{ height: pct(c, top) }} />)
             ) : (
-              <span className="vbar__fill" data-color={colored ? colorAt(k, g.color) : undefined} style={{ height: pct(g.value, top) }}>
+              <span className="vbar__fill" {...(colored ? paint(k, g.color) : {})} style={{ height: pct(g.value, top) }}>
                 {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
               </span>
             )}
@@ -417,7 +455,8 @@ function Gauge({ value, goal, unit, compact }: { value: number; goal: number; un
   );
 }
 
-export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => string }) {
+/** A report's groups as a table, each row's total drawn as a bar behind it. `apart`: the series are never added up, so no total. */
+export function GroupTable({ r, label, apart }: { r: Ok; label: (g: ReportGroupRow) => string; apart?: boolean }) {
   const { t } = useI18n();
   const f = useReportFormat();
   // The total of each row also draws its size, so the big ones stand out without reading every number.
@@ -433,7 +472,7 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
                 {s.label}
               </th>
             ))}
-            <th className="num">{r.series.length ? t('rb.total') : ''}</th>
+            {apart ? null : <th className="num">{r.series.length ? t('rb.total') : ''}</th>}
           </tr>
         </thead>
         <tbody>
@@ -445,10 +484,12 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
                   {g.cells?.[si] ? f.value(g.cells[si], r.unit) : '—'}
                 </td>
               ))}
-              <td className="num rtable__sum">
-                <span className="rtable__bar" style={{ width: `${(Math.abs(g.value) / most) * 100}%` }} aria-hidden="true" />
-                <b>{f.value(g.value, r.unit)}</b>
-              </td>
+              {apart ? null : (
+                <td className="num rtable__sum">
+                  <span className="rtable__bar" style={{ width: `${(Math.abs(g.value) / most) * 100}%` }} aria-hidden="true" />
+                  <b>{f.value(g.value, r.unit)}</b>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -462,9 +503,11 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
                   {f.value(r.groups.reduce((n, g) => n + (g.cells?.[si] ?? 0), 0), r.unit)}
                 </td>
               ))}
-              <td className="num">
-                <b>{f.value(r.total, r.unit)}</b>
-              </td>
+              {apart ? null : (
+                <td className="num">
+                  <b>{f.value(r.total, r.unit)}</b>
+                </td>
+              )}
             </tr>
           </tfoot>
         )}
@@ -476,6 +519,7 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
 /** How many rows a list or summary draws at first; "Show more" adds twice as many. */
 export const PAGE_ROWS = 100;
 
+/** A report's rows as a list, the first hundred at once and more on request; `compact` (a dashboard panel) shows eight. */
 export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
   const { t, fmtDate } = useI18n();
   const f = useReportFormat();

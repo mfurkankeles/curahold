@@ -4777,6 +4777,8 @@ export const tr: Record<MessageKey, string> = {
   'rb.chartTable': "Grafikteki değerler",
   'rb.chartLabel': "{n} değerli grafik. Ok tuşlarıyla tek tek okunur; hepsi ardından gelen tabloda.",
   'rb.chartKeys': "Grafiğin satırları. Ok tuşları her birinin parçalarını okur.",
+  'rb.asTable': "Tablo olarak göster",
+  'rb.asChart': "Grafik olarak göster",
   'rb.tryExample': "Bir örnekle başla: {name}",
   'audit.data.exported': "dosya dışa aktardı",
   'rb.more': "Diğer işlemler",

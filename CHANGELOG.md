@@ -10,6 +10,13 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ## [Unreleased]
 
+### Changed
+
+- Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
+  and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
+  shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
+  its words, not only a colour.
+
 ### Added
 
 - Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your

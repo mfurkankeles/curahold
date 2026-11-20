@@ -4777,6 +4777,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "הנתונים שבתרשים",
   'rb.chartLabel': "תרשים של {n} ערכים. מקשי החיצים קוראים אותם אחד אחד; הטבלה שאחריו מפרטת את כולם.",
   'rb.chartKeys': "שורות התרשים. מקשי החיצים קוראים את החלקים של כל שורה.",
+  'rb.asTable': "הצגה כטבלה",
+  'rb.asChart': "הצגה כתרשים",
   'rb.tryExample': "נסו דוגמה: {name}",
   'audit.data.exported': "ייצא קובץ",
   'rb.more': "פעולות נוספות",

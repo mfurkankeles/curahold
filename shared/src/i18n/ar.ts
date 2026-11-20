@@ -4777,6 +4777,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "أرقام الرسم البياني",
   'rb.chartLabel': "رسم بياني من {n} قيم. تقرؤها مفاتيح الأسهم واحدة تلو الأخرى، والجدول التالي يسردها كلها.",
   'rb.chartKeys': "صفوف الرسم البياني. تقرأ مفاتيح الأسهم أجزاء كل صف.",
+  'rb.asTable': "عرض كجدول",
+  'rb.asChart': "عرض كرسم بياني",
   'rb.tryExample': "جرّب مثالًا: {name}",
   'audit.data.exported': "صدّر ملفًا",
   'rb.more': "إجراءات أخرى",

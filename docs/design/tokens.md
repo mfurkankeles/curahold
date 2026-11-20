@@ -73,7 +73,48 @@ Semantic, never literal. Each has a light and a dark value; text tokens meet WCA
 - Brand: `--brand` (fills, marks), `--brand-ink` (brand text and links), `--brand-wash` / `--brand-soft` (tinted backgrounds).
 - Time (the identity): `--calm`, `--soon`, `--today`, `--late`, `--done`, with `--soon-wash/-line/-ink`, `--late-wash/-line/-ink`, `--done-wash`, `--info-wash/-ink`.
 - Navigation well: `--well`, `--well-2`, `--well-3`, `--well-deep`, `--well-ink`, `--well-mute`, `--well-hi`, `--nav-on`, `--nav-on-ink`.
-- Everything else (chart series, label colours, the cookie banner, the demo bar) has its own named token in the same block.
+- Everything else (label colours, the cookie banner, the demo bar) has its own named token in the same block.
+
+### Chart colours
+
+Charts take colour by the job it does. **Identity** (which series): `--series-1` … `--series-8`, in this order,
+starting from the brand violet. **"Other"** and the quiet partner of a compared pair (what came in beside what got done):
+`--series-other`. A colour a person chose for an option (`--chart-sky`, `--chart-plum` …) points at the nearest of the
+eight, so a chosen colour is a validated one too.
+
+| Slot | Hue | Light | Dark |
+| --- | --- | --- | --- |
+| 1 | violet (brand) | `#5b4de8` | `#8c7dff` |
+| 2 | orange | `#dc6b30` | `#d95926` |
+| 3 | teal | `#109b8b` | `#199e70` |
+| 4 | honey | `#b98300` | `#c98500` |
+| 5 | pink | `#d9578f` | `#d55181` |
+| 6 | green | `#2f9e44` | `#0ca30c` |
+| 7 | blue | `#2a78d6` | `#3987e5` |
+| 8 | red | `#e34948` | `#e66767` |
+| other | grey-violet | `#8a88a6` | `#76739a` |
+
+Measured (`tests/chart-palette.test.ts` recomputes it from `styles.css` on every run): neighbours are at least ΔE 8.3 apart
+under simulated protanopia and deuteranopia (light; 8.4 dark) and 19.2 for full colour vision (19.3 dark), OKLab ×100,
+Machado 2009 at full severity; every mark and "Other" is at least 3:1 on `--paper` and `--surface` in both themes; the first
+three slots are apart in every pair. The palette it replaced failed: green beside orange-red measured ΔE 2.7 in dark, and its
+grey slot read as no colour at all.
+
+Rules:
+
+- Slots are taken in order and never cycled (`paint()` in `components/Charts.tsx`): the order is what keeps neighbours apart.
+  A ninth series is never a new colour; it is drawn as "Other". Colour follows the thing, not its rank: a filter that hides a
+  series does not repaint the others.
+- One series takes slot 1. Columns and bars that only compare sizes share one colour; do not colour bars by their value.
+- Charts where any two marks can touch (scatter, maps, small multiples) use at most the first three slots.
+- Identity is never colour alone: a legend for two or more series, the value written beside bars, the reading above the plot,
+  and a table view (**Show as table**) on every chart.
+- Status colours (`--done`, `--soon`, `--late` and their washes) are never a series.
+
+### Status
+
+A state (paid, overdue, at risk, failed …) is always an icon and words, never a colour alone (WCAG 1.4.1): `Pill` in the
+console (`checkCircle` good, `clock` needs a look, `alert` needs action), the same icons on a tile that carries a tone.
 
 ## Elevation
 

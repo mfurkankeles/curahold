@@ -46,7 +46,7 @@
 .ocseg button[aria-pressed='true'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
 
 /* Pills and links. */
-.ocpill { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; }
+.ocpill { display: inline-flex; align-items: center; gap: 4px; min-height: 20px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; }
 .ocpill[data-tone='done'] { background: var(--done-wash); color: var(--done-ink, var(--ink)); }
 .ocpill[data-tone='soon'] { background: var(--soon-wash); color: var(--soon-ink); }
 .ocpill[data-tone='late'] { background: var(--late-wash); color: var(--late-ink); }
@@ -239,3 +239,9 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
   .ocseg button, .ocbar__chip, .ocstate, .occheck, .occheckrow, .ocnextlink { min-height: var(--tap); }
   .occheckrow { width: var(--tap); }
 }
+
+/* A tile's state: the icon beside its name says it too, never the colour alone. */
+.octile .ctile__label { display: inline-flex; align-items: center; gap: 4px; }
+.octile[data-tone='late'] .ctile__label svg { color: var(--late-ink); }
+.octile[data-tone='soon'] .ctile__label svg { color: var(--soon-ink); }
+.octile[data-tone='done'] .ctile__label svg { color: var(--done-ink, var(--done)); }

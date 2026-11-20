@@ -4792,6 +4792,8 @@ export const en = {
   'rb.chartTable': "The chart's figures",
   'rb.chartLabel': "Chart of {n} values. The arrow keys read them one by one; the table that follows lists them all.",
   'rb.chartKeys': "Chart rows. The arrow keys read each one's parts.",
+  'rb.asTable': "Show as table",
+  'rb.asChart': "Show as chart",
   'rb.tryExample': "Try one: {name}",
   'audit.data.exported': "exported a file",
   'rb.more': "More actions",
