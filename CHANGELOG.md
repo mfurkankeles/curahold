@@ -166,6 +166,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
+  (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
+  The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
 - On phones the customer page's **Next promise** shows two whole lines, never part of a third.
 - The CuraAI answer list no longer moves the page around it when a new answer arrives (an embedded demo slid up).
 - Team load says "1 customer", not "1 customers"; Arabic and Persian counts read naturally.

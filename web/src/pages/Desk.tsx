@@ -96,7 +96,11 @@ class DeskError extends Error {
 /** Every change carries a header a form on another site could not set. */
 async function desk<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
-  if (!res.ok) throw new DeskError(res.status);
+  if (!res.ok) {
+    // An unread answer keeps its connection open for the life of the page (see release() in lib/api.ts).
+    void res.body?.cancel();
+    throw new DeskError(res.status);
+  }
   return (await res.json()) as T;
 }
 

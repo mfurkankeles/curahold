@@ -448,7 +448,10 @@ function WindowDialog({ w, onClose, onSaved, failed }: { w: FundraisingWindow | 
 /** A create with its Idempotency-Key (the console's own api() sends none). */
 async function fetchWithKey(method: string, path: string, body: unknown, key: string) {
   const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', 'content-type': 'application/json', 'idempotency-key': key }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(String(res.status));
+  if (!res.ok) {
+    void res.body?.cancel(); // an unread answer would keep its connection open
+    throw new Error(String(res.status));
+  }
   return res.json();
 }
 

@@ -208,18 +208,43 @@ async function sendCounted<T>(method: string, path: string, headers: Record<stri
  * (the same device, no preview).
  */
 function early(method: string, path: string, headers: Record<string, string>): Promise<Response> | null {
-  const w = window as { __early?: Record<string, [string, string, Promise<Response>]> };
+  const w = window as EarlyWindow;
   const hit = method === 'GET' ? w.__early?.[path] : undefined;
   if (!hit) return null;
   // Only while the page is opening: an answer left unused is never handed out later as if fresh.
-  if (performance.now() > 15_000) {
-    w.__early = undefined;
+  if (performance.now() > EARLY_MS) {
+    dropEarly();
     return null;
   }
   delete w.__early![path];
   const [device, locale, answer] = hit;
-  return device === headers['x-curahold-device'] && locale === (headers['x-curahold-locale'] ?? '') && !headers['x-curahold-preview-as'] ? answer : null;
+  if (device === headers['x-curahold-device'] && locale === (headers['x-curahold-locale'] ?? '') && !headers['x-curahold-preview-as']) return answer;
+  release(answer);
+  return null;
 }
+
+type EarlyWindow = { __early?: Record<string, [string, string, Promise<Response>]> };
+const EARLY_MS = 15_000;
+
+/**
+ * Lets go of an early answer nobody will read. Workaround: the browser keeps an unread response body's
+ * connection open (one of the few it allows per host, and the page never counts as idle), so a
+ * mismatched, late or never-asked answer is cancelled instead of left to the garbage collector.
+ */
+function release(answer: Promise<Response>) {
+  void answer.then((r) => r.body?.cancel()).catch(() => undefined);
+}
+
+/** Every early answer still waiting is released (for example a first screen this page never shows). */
+function dropEarly() {
+  const w = window as EarlyWindow;
+  for (const [, , answer] of Object.values(w.__early ?? {})) release(answer);
+  w.__early = undefined;
+}
+
+// Answers the app never asks for (a signed-out visitor's home data, a first screen not shown) are released once
+// the page has opened, so they do not hold their connections for the life of the page.
+if (typeof window !== 'undefined') setTimeout(dropEarly, Math.max(0, EARLY_MS - performance.now()));
 
 // Requests on their way: the rest of the language waits until the first screen's are in.
 let inFlight = 0;

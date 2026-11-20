@@ -50,7 +50,10 @@ export default function ReplayPlayer({ reference, replay, onClose }: { reference
       let events: unknown[];
       try {
         const res = await fetch(`/api/desk/requests/${reference}/replays/${replay.id}`, { headers: { 'x-curahold-desk': '1' } });
-        if (!res.ok) throw new Error(String(res.status));
+        if (!res.ok) {
+          void res.body?.cancel(); // an unread answer would keep its connection open
+          throw new Error(String(res.status));
+        }
         const data = (await res.json()) as { chunks: string[] };
         events = withoutHeadIcons(data.chunks.flatMap((b) => JSON.parse(strFromU8(gunzipSync(fromBase64url(b)))) as unknown[]));
       } catch {

@@ -90,6 +90,8 @@ export function startRecording(me: Me) {
         credentials: 'same-origin',
         keepalive: final,
       });
+      // Only the headers matter here; an unread answer (an error's words) would keep its connection open.
+      void res.body?.cancel();
       // The company turned recording off, or this recording is full: stop quietly.
       if (res.headers.get('x-curahold-record') === 'off') {
         stop();
