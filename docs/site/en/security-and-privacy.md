@@ -73,3 +73,18 @@ In **Settings → Company → Requests about personal data**, people with the pr
 ## Stored secrets
 
 Credentials for CRM and chat connections, and webhook signing secrets, are stored encrypted. Of API keys only a digest is kept: the key itself is shown once and can never be seen again.
+
+## Single sign-on (SSO) and SCIM {#sso}
+
+In Settings → **Single sign-on (SSO)**: choose the **Protocol**, give your identity provider the values under **Give your identity provider these details**, fill in **Your identity provider's details**, save, then press **Test sign-in**. A test signs nobody in and does not switch SSO on. **Require SSO for this company** can be turned on only after a test with exactly the saved details has passed, and with a backup administrator who has a passkey or an authenticator app.
+
+When a test does not pass, it says why:
+
+- the client secret was refused (it was renewed at the provider): paste the new one into **Client secret** and save;
+- the signature did not match (the provider renewed its key or certificate): for SAML, paste the new one into **IdP signing certificate**; OpenID Connect picks up a new key by itself;
+- the answer was for another app or out of date: check **Issuer**, **Client ID** and the provider's clock;
+- the provider could not be reached: check **Token endpoint** and **JWKS URL**, then wait a minute.
+
+People signing in see only that their provider did not complete the sign-in, and land back on the sign-in page.
+
+**SCIM provisioning**: **Generate token** shows the token once; give it to the provider with the **SCIM base URL**. A person deactivated there loses every session and API key at once, and a rename arrives too. Generating a new token stops the old one at once.

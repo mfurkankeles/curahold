@@ -75,6 +75,10 @@ Gunakan pencetus alat itu, kemudian **Webhooks by Zapier → POST** (Zapier) ata
 
 Log menyimpan 30 hari dan paling banyak 500 penghantaran bagi setiap webhook. **Rahsia baharu** menghentikan rahsia lama serta-merta; **Jeda** menjawab `404` sehingga disambung semula; **Alih keluar webhook** memadamkannya bersama lognya, dan apa yang telah dihasilkannya kekal. Webhook bertindak dengan hak orang yang menyediakannya: ia hanya mencapai papan dan pelanggan yang boleh dicapai oleh orang itu, dan berhenti jika orang itu pergi.
 
+## Apabila penghantaran ditolak atau tidak digunakan {#log}
+
+Tab **Log penghantaran** menyatakan apa yang berlaku pada setiap penghantaran, dalam bahasa anda: tandatangan atau token salah (salin rahsia dari **Alamat** ke dalam alat sekali lagi), dihantar terlalu lama dahulu (penghantaran lama yang diulang juga ditolak begini), nilai yang tidak digunakan oleh webhook ini, tiada pelanggan yang sepadan, atau medan yang kosong (semak **Pemetaan**). Penghantaran yang sama tiba dua kali, seperti cubaan semula daripada Zapier atau Make, disimpan sekali. Papan webhook tugasan boleh ditukar di **Pemetaan** di bawah **Papan**: alamatnya kekal, jadi tiada apa yang berubah dalam alat penghantar.
+
 ## Lihat juga
 
 - [Sambungan dan CRM](/docs/ms/connections/)

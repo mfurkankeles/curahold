@@ -60,3 +60,7 @@ Aktarıcı **kullanıcı başına günde 10.000 alıcıya** kadar kabul eder (Go
 - **pazarlama kampanyaları** planlanırsa — bunlar asla aktarıcıdan gönderilmez.
 
 Geçiş bir ayardır: barındırılan hizmette ayrı bir gönderim hizmeti için sürücü zaten vardır (`EMAIL_PROVIDER=resend` ve `RESEND_API_KEY`). Önce Alt işleyenler sayfasına ekleyin ve yöneticilere 30 gün önceden bildirin.
+
+## 6. Posta gitmediğinde {#failures}
+
+Geçici bir ret (`421`, `450`, `451` ya da kopan bir bağlantı) yeni bir bağlantıyla bir kez daha denenir. Kalıcı bir ret denenmez: `535` (uygulama parolası değişti ya da iptal edildi: yenisini oluşturup `SMTP_RELAY_PASSWORD` değerini değiştirin), `550 5.4.5` (günlük sınır), `550 5.1.1` (var olmayan bir adres). Kişiler bu durumda kendi dillerinde "E-postayı şu anda gönderemedik. Lütfen birkaç dakika sonra yeniden deneyin; sorun sürerse yöneticinize haber verin." görür, aktarıcının yanıtını asla görmez; o yanıt SMTP adımıyla birlikte uygulamanın hata kaydına gider.

@@ -57,16 +57,20 @@ export interface SamlVerified {
 
 /**
  * Verify a POSTed SAMLResponse. Returns the verified assertion's attributes, or
- * null if the response is not a valid, signed, in-audience assertion. Never
+ * null if the response is not a valid, signed, in-audience assertion (`onFail` says whether the signature or the
+ * rest failed). Never
  * throws for an ordinary bad assertion — only genuinely unexpected faults
  * propagate.
  */
-export async function verifySamlResponse(saml: SAML, samlResponse: string): Promise<SamlVerified | null> {
+export async function verifySamlResponse(saml: SAML, samlResponse: string, onFail: (why: 'bad_signature' | 'bad_token') => void = () => undefined): Promise<SamlVerified | null> {
   let result: { profile: Record<string, unknown> | null; loggedOut: boolean };
   try {
     result = (await saml.validatePostResponseAsync({ SAMLResponse: samlResponse })) as typeof result;
-  } catch {
-    // A bad signature, wrong audience, expired or malformed assertion lands here.
+  } catch (e) {
+    // A bad signature, wrong audience, expired or malformed assertion lands here. The library's message tells a
+    // signature that does not match the stored certificate (renewed at the provider) from everything else, so a
+    // test sign-in can name the certificate; nothing of the message reaches the browser.
+    onFail(/signature/i.test(e instanceof Error ? e.message : '') ? 'bad_signature' : 'bad_token');
     return null;
   }
   const profile = result.profile as (Record<string, unknown> & { getAssertionXml?: () => string; attributes?: Record<string, unknown>; nameID?: string }) | null;

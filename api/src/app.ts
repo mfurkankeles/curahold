@@ -21,6 +21,7 @@ import { inboundRoutes, ticketRoutes } from './routes/tickets';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
 import { HttpError, fail } from './lib/errors';
+import { MailError } from './lib/services';
 import { accountRoutes } from './routes/accounts';
 import { recordRoutes } from './routes/records';
 import { syncRoutes } from './routes/sync';
@@ -282,6 +283,9 @@ export function createApp(deps: Deps) {
         detail: err instanceof Error ? err.stack : undefined,
       }),
     );
+    // Mail that could not go out (the relay refused or was busy, even after its retry): the person is told plainly to
+    // try again later; the relay's reply was recorded above for the operator, who fixes the setting.
+    if (err instanceof MailError) return c.json({ error: 'mail_unavailable', message: translate(locale, 'errors.mail_unavailable') }, 503);
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 

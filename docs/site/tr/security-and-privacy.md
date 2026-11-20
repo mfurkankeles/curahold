@@ -73,3 +73,18 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 ## Saklanan sırlar
 
 CRM ve sohbet bağlantılarının erişim bilgileri ile webhook gizli anahtarları şifrelenmiş olarak saklanır. API anahtarlarının yalnızca özeti tutulur; anahtarın kendisi bir kez gösterilir ve bir daha görülemez.
+
+## Tek oturum açma (SSO) ve SCIM {#sso}
+
+Ayarlar → **Tek oturum açma (SSO)** bölümünde: **Protokol** seçin, **Kimlik sağlayıcınıza şu bilgileri verin** altındaki değerleri kimlik sağlayıcınıza verin, **Kimlik sağlayıcının bilgileri** alanlarını doldurun, kaydedin ve **Girişi dene** düğmesine basın. Test kimseyi oturum açtırmaz ve SSO'yu açmaz. **Bu şirket için SSO'yu zorunlu kıl** ancak kayıtlı bilgilerin tam aynısıyla bir test geçtikten sonra ve geçiş anahtarı ya da doğrulama uygulaması olan bir yedek yönetici seçildiğinde açılır.
+
+Test geçmezse nedenini söyler:
+
+- istemci parolası reddedildi (sağlayıcıda yenilendi): yenisini **İstemci parolası** alanına yapıştırıp kaydedin;
+- imza eşleşmedi (sağlayıcı anahtarını ya da sertifikasını yeniledi): SAML için yenisini **IdP imzalama sertifikası** alanına yapıştırın; OpenID Connect yeni anahtarı kendisi alır;
+- yanıt başka bir uygulama içindi ya da süresi dolmuştu: **Yayımcı (issuer)**, **İstemci kimliği** değerlerini ve sağlayıcının saatini kontrol edin;
+- sağlayıcıya ulaşılamadı: **Token uç noktası** ve **JWKS URL'si** adreslerini kontrol edin, sonra bir dakika bekleyin.
+
+Oturum açan kişiler yalnızca sağlayıcının girişi tamamlamadığını görür ve giriş sayfasına döner.
+
+**SCIM sağlama**: **Token oluştur** token'ı bir kez gösterir; onu **SCIM temel URL'si** ile birlikte sağlayıcıya verin. Orada devre dışı bırakılan kişinin tüm oturumları ve API anahtarları anında kapanır; ad değişikliği de gelir. Yeni token oluşturmak eskisini anında durdurur.
