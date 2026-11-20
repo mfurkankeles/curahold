@@ -6,7 +6,7 @@ summary: The agreement between Curahold and a customer company — the trial, pl
 ---
 # Terms of service (master subscription agreement)
 
-> **Draft — lawyer approval required.** Version 2026-11-21.draft4. Text in [square brackets] is to be filled in. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-21.draft5. Text in [square brackets] is to be filled in. Not legal advice.
 
 These terms are an agreement between **[Company legal name]**, [registered address], [registry / tax number] ("Curahold", "we") and the company or organisation that uses Curahold ("the Customer", "you"). The person who accepts them confirms, by ticking the box, that they are authorised to bind the Customer. Self-serve customers accept these terms with a click; enterprise customers sign an **Order form** that refers to them. The **Data processing agreement**, the **Service level agreement** and the **Acceptable use policy** are part of these terms.
 
@@ -27,7 +27,7 @@ The Customer is responsible for its users, for keeping sign-in details safe and 
 ## 4. Trial
 
 - A trial is requested through the trial form and **opens after our approval**; we may decline a request without giving reasons.
-- The trial is free and lasts **3 months by default** (we may agree a different period in writing), for **up to 25 seats**.
+- The trial is free and lasts **3 months by default** (we may agree a different period in writing), within the **trial limits** (such as seats and storage) shown at sign-up and on the Billing page.
 - Reminders are sent before the trial ends. When it ends, the Customer's data stays available **read-only and exportable**, but cannot be changed, until a plan is chosen or the account is closed (data is then handled under section 13).
 - During a trial the Service is provided as it is; the service credits of the SLA do not apply.
 
