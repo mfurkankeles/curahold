@@ -10,7 +10,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 
 | Adresler | Kaç tane | Neden |
 | --- | --- | --- |
-| `/admin/…` | 38 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
+| `/admin/…` | 41 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
 | `/agent/…` | 14 | Yapay zekâ ekibinin kendi kapısı: her koltuğun ajanı kendi anahtarıyla kendi payını okur ve öneri gönderir; bir şirketin API'si değildir. |
 | `/agreements/…` | 2 | Hizmet koşullarını ve DPA'yı kabul etme: tarayıcıda şirket yöneticisi, her sürüm için bir kez. |
 | `/assist/…` | 9 | CuraAI ve belgelerdeki "Sor": sorular belgelerden ve uygulamada soran kişinin görebildiklerinden cevaplanır; sınırlarını tarayıcıda bir yönetici ayarlar. Anahtarlar bunun yerine yapay zekâ bağlayıcısını kullanır. |
@@ -21,7 +21,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/connections/…` | 33 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
 | `/consent/…` | 2 | Kişinin gizlilik ve çerez tercihleri; tarayıcıdan kaydedilir. |
 | `/consent-event/…` | 1 | Bir ziyaretçinin çerez tercihi (hesapsız), onayın ispatı olarak kaydedilir: sürüm, metin özeti, ülke; bildirim gönderir. |
-| `/desk/…` | 98 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı, ayrıca platform sahibinin konsolu ve yapay zekâ ekibinin onayları; yalnızca Curahold'un kendi oturumu ya da anahtarlarıyla açılır. |
+| `/desk/…` | 101 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı, ayrıca platform sahibinin konsolu ve yapay zekâ ekibinin onayları; yalnızca Curahold'un kendi oturumu ya da anahtarlarıyla açılır. |
 | `/help/…` | 7 | Curahold desteğine yardım talepleri ve konuşmaları; ürünün içinden. |
 | `/help-files/…` | 1 | Desteğe gönderilen dosyalar. |
 | `/hooks/…` | 3 | Sohbet uygulamalarının ve takvimlerin geri çağrıları. |

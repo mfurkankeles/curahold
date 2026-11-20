@@ -10,7 +10,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 
 | Addresses | How many | Why |
 | --- | --- | --- |
-| `/admin/…` | 38 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/admin/…` | 41 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/agent/…` | 14 | The AI team's own door: each seat's agent with its own key reads its slice and proposes; never a company's API. |
 | `/agreements/…` | 2 | Accepting the terms of service and the DPA: a company administrator in the browser, once per version. |
 | `/assist/…` | 9 | CuraAI and the docs' "Ask": questions answered from the docs and, in the app, from what the asking person may see; an administrator sets its limits in the browser. Keys use the AI connector instead. |
@@ -21,7 +21,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/connections/…` | 33 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
 | `/consent-event/…` | 1 | A visitor's cookie choice (no account), recorded as proof of consent: version, text hash, country; sent by the banner. |
-| `/desk/…` | 98 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |
+| `/desk/…` | 101 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |
 | `/hooks/…` | 3 | Chat apps and calendars calling back. |
