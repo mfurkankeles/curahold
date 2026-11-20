@@ -263,13 +263,13 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
         <p className="ocbar__privacy" id="oc-privacy">
           <Icon name="lock" size={14} />
           <span>{o('privacy.line')}</span>
-          <button type="button" className="btn btn--small btn--quiet ocbar__fold" aria-label={o('privacy.hideLabel')} onClick={() => fold(false)}>
+          <button type="button" className="btn btn--small btn--quiet ocbar__fold" aria-expanded="true" aria-controls="oc-privacy" onClick={() => fold(false)}>
             <Icon name="close" size={14} />
             {o('privacy.hide')}
           </button>
         </p>
       ) : (
-        <button type="button" className="ocbar__chip ocbar__privacybtn" aria-label={o('privacy.showLabel')} onClick={() => fold(true)}>
+        <button type="button" className="ocbar__chip ocbar__privacybtn" aria-expanded="false" onClick={() => fold(true)}>
           <Icon name="lock" size={14} />
           {o('privacy.show')}
         </button>
