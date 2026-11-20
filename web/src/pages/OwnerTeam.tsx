@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { cardText, teamWord, type TeamKey } from '../../../shared/src/i18n/ownerTeam';
+import { alertText } from '../../../shared/src/i18n/ownerOffice';
 import type { Meeting, MeetingLine } from '../../../shared/src/office';
 import type { MemoryView, MessageRow, TeamOrg, TeamSeat, ThreadRow } from '../../../shared/src/team/api';
 import { DateField } from '../components/DateField';
@@ -242,7 +243,7 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
             <ul className="tm-alerts">
               {d.alerts.slice(0, 3).map((a) => (
                 <li key={a.id}>
-                  <Icon name="alert" size={14} /> {a.body}
+                  <Icon name="alert" size={14} /> {alertText(locale, a.body, (seat) => d.seats.find((x) => x.seat === seat)?.title ?? seat)}
                 </li>
               ))}
             </ul>

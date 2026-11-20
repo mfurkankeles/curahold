@@ -2093,7 +2093,7 @@ export function SystemSection({ beat, failed, go }: { beat: number; failed: (e: 
                 <Tile label={o('system.browser')} value={n(d.errors.browser24h)} tone={d.errors.browser24h ? 'soon' : 'done'} />
                 <Tile label={o('system.syncs')} value={n(d.sync.ran24h)} sub={o('system.syncFailed', { n: n(d.sync.failed24h) })} tone={d.sync.failed24h ? 'late' : undefined} />
                 <Tile label={o('system.connections')} value={n(d.sync.inError.length)} tone={d.sync.inError.length ? 'late' : 'done'} />
-                <Tile label={o('system.uptime')} value={o('system.uptimeValue')} sub={o('system.uptimeSub')} />
+                <Tile label={o('system.uptime')} value={o('system.uptimeValue')} sub={o('system.uptimeSub')} tone="soon" onOpen={() => go({ section: 'checklist' })} />
               </div>
               <div className="occols occols--2">
                 <section className="ccard" aria-labelledby="oc-err">
