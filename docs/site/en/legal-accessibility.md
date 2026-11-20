@@ -31,7 +31,6 @@ We aim for the **Web Content Accessibility Guidelines (WCAG) 2.2, level AA**. To
 
 - The 3D view itself cannot be explored with the keyboard or a screen reader; use the list beside it or the 2D plan, which hold the same information.
 - In the platform console's request lists and on the Office's name tags, a request's or a seat's state is shown as a coloured dot. Screen readers hear the state; on the screen the Office's legend names each colour, and the state is written out once the request or seat is opened.
-- The legal pages are written in English and Turkish only; in other languages they open in English.
 - Text typed by your colleagues or customers (a task title, a comment, a file) is shown as they wrote it; we cannot add descriptions to pictures they upload.
 - Some pages show content from a connected tool (for example an email body). We show it as the tool sends it and cannot guarantee its accessibility.
 

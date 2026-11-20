@@ -6,7 +6,7 @@ summary: What personal data Curahold handles about the people who use it, reques
 ---
 # Privacy notice
 
-> **Draft — lawyer approval required.** Version 2026-11-19.draft2. Text in [square brackets] is to be filled in. The table below is generated from Curahold's data inventory. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-20.draft3. Text in [square brackets] is to be filled in. The table below is generated from Curahold's data inventory. Not legal advice.
 
 This notice explains how **[Company legal name]**, [address] ("Curahold", "we") handles personal data as a **controller**: about the people who use Curahold, request a trial, accept our terms, write to us or visit our websites. For the data our customers put into Curahold about their own customers, contacts and staff, the customer is the controller and we process it on its behalf under the **Data processing agreement**; ask that company about it. Residents of Türkiye can also read the **KVKK notice**.
 
@@ -69,6 +69,17 @@ EU representative (GDPR art. 27): [to be appointed at the first EU customer]. UK
 ## Your rights and how fast we answer
 
 You can ask to see, correct, delete or receive a copy of your personal data, to restrict or object to its use (including at any time to direct marketing), and to withdraw any consent you gave — withdrawing is as easy as giving. If your account belongs to a company, its administrators can also export or erase your data. Write to [privacy e-mail]. We answer within **30 days** at the latest, and sooner where your law requires it: Egypt 6 working days, Korea 10 days, Taiwan 15 days for access, the EU/UK one month (extendable by two where the law allows). You can also complain to your data-protection authority (in Türkiye, the KVKK Authority).
+
+## Notes for some countries {#regions}
+
+These notes add to the rest of this notice for people in the countries named. They follow the notices the trial form shows in each country.
+
+- **India (Digital Personal Data Protection Act 2023):** we are the Data Fiduciary for the data this notice describes as ours. You can withdraw your consent at any time, as easily as you gave it; withdrawing does not affect processing before it. You can ask for a summary of your data and of whom we shared it with, for its correction, completion or erasure, and nominate a person to use these rights if you die or cannot use them yourself. **Grievances:** first write to our grievance officer at [privacy e-mail]; we answer within 90 days at the latest. If you are not satisfied with the answer, you can complain to the Data Protection Board of India. Curahold is not meant for people under 18. [Lawyer to confirm from when each duty of the Act and its 2025 Rules applies.]
+- **Malaysia (Personal Data Protection Act 2010):** this notice is published in Malay and in English, and the trial form shows its notice in both. Filling in the fields marked required is needed to handle your request. Your data goes to service providers outside Malaysia (the countries are on the Sub-processors page); each is bound by a contract that requires protection equivalent to the Act, and we keep a transfer impact assessment [owner/lawyer: to be completed]. For access, correction, limiting processing, enquiries and complaints, write to our Data Protection Officer at [privacy e-mail]. You can stop the use of your data for direct marketing at any time.
+- **United Arab Emirates, Saudi Arabia, Qatar:** the trial form asks for your consent before handling the request and for its storage abroad; you can withdraw it at any time at [privacy e-mail]. In Saudi Arabia notices are shown in Arabic first. Marketing e-mail is sent only with prior consent, names the sender and has a stop link.
+- **Israel:** you have no legal duty to give us your data, but without it we cannot handle your request. You have the right to inspect the data held about you and to ask for it to be corrected. Marketing e-mail is sent only with your prior explicit consent and is marked as advertising.
+- **Japan, Korea, Taiwan, Hong Kong, Singapore:** the purposes are stated before we collect anything, and the foreign countries and recipients are on the Sub-processors page. In Korea the transfer abroad has its own, separate consent and marketing e-mail is marked "(광고)" and confirmed again every two years. In Singapore you can withdraw consent and ask for access and correction.
+- **Not offered:** the trial is not offered in mainland China or Egypt at launch, and Curahold is not offered in Iran.
 
 ## Changes
 
