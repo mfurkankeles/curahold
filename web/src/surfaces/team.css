@@ -40,7 +40,7 @@
 .tm-sec { display: grid; gap: 4px; }
 .tm-sec h3 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; }
 .tm-sec p, .tm-sec ul, .tm-sec dl { margin: 0; font-size: var(--fs-s); line-height: var(--lh-body); }
-.tm-sec ul { padding-left: 16px; }
+.tm-sec ul { padding-inline-start: 16px; }
 .tm-sec dt { font-weight: 640; }
 .tm-sec dd { margin: 0 0 8px; color: var(--ink-2); }
 .tm-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

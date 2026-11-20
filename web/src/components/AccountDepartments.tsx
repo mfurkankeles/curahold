@@ -12,7 +12,8 @@ export function AccountDepartments({ work }: { work?: AccountDepartmentWork[] })
   if (!work || work.length < 2) return null;
   return (
     <section className="acc-depts" aria-label={t('acc.depts.title')}>
-      <div className="acc-depts__row">
+      {/* On a phone the row scrolls sideways: it takes focus so the arrow keys can scroll it (WCAG 2.1.1). */}
+      <div className="acc-depts__row" tabIndex={0} role="group" aria-label={t('acc.depts.title')}>
         {work.map((w) => (
           <div className="acc-depts__card" key={w.key} data-dept={w.key}>
             <span className="acc-depts__name">

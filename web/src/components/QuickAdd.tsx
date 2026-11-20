@@ -738,7 +738,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
           ))}
         </div>
 
-        {error && <p className="error-text qa__error">{error}</p>}
+        {error && <p className="error-text qa__error" role="alert">{error}</p>}
 
         <div className="qa__foot">
           <p className="qa__hint">{many ? t('quick.hintMany') : t('quick.hint')}</p>

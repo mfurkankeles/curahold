@@ -268,7 +268,7 @@ function PlanDialog({ account, planned, onClose, onSaved }: { account: Account; 
       onClose={onClose}
       footer={
         <>
-          {error && <span className="error-text">{error}</span>}
+          {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
             {t('common.cancel')}
           </button>
@@ -407,7 +407,7 @@ function HoldDialog({ account, planned, onClose, onDone }: { account: Account; p
       onClose={onClose}
       footer={
         <>
-          {error && <span className="error-text">{error}</span>}
+          {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
             {t('common.cancel')}
           </button>
@@ -475,7 +475,7 @@ function PostponeDialog({ planned, onClose, onDone }: { planned: PlannedMeeting;
       onClose={onClose}
       footer={
         <>
-          {error && <span className="error-text">{error}</span>}
+          {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
             {t('common.cancel')}
           </button>
@@ -528,7 +528,7 @@ function CancelDialog({ planned, onClose, onDone }: { planned: PlannedMeeting; o
       onClose={onClose}
       footer={
         <>
-          {error && <span className="error-text">{error}</span>}
+          {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
             {t('plannedCancel.keep')}
           </button>

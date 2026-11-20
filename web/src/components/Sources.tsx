@@ -1203,7 +1203,7 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
           </div>
         );
       })}
-      {problems.length > 0 && <p className="error-text">{t('sync.fields.needName', { list: problems.join(', ') })}</p>}
+      {problems.length > 0 && <p className="error-text" role="alert">{t('sync.fields.needName', { list: problems.join(', ') })}</p>}
       <div className="stepbar">
         {onBack && (
           <button className="btn btn--quiet btn--small" onClick={onBack}>

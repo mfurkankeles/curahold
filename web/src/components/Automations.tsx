@@ -737,7 +737,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
           {EVENT_TRIGGERS.includes(tr.type) && <p className="muted">{t('auto.eventHint')}</p>}
           <p className="muted">{t('auto.onceHint')}</p>
         </div>
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );

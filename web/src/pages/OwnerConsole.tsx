@@ -200,7 +200,7 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
                 {o('privacy.line')}
               </p>
               {d.today.mode === 'demo' ? <p className="ctoday__note">{o('mode.demoNote')}</p> : null}
-              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} aria-label={o('strip.label')}>
+              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
                 <span className="ocstrip__sum">
                   <strong>{o('strip.title')}</strong>
                   {d.strip.rows.length ? (

@@ -52,13 +52,14 @@
     var chips = [].slice.call(q.querySelectorAll('.hub-ichip'));
     q.setAttribute('role', 'radiogroup');
     chips.forEach(function (b, i) {
+      // A radio says it is chosen with aria-checked; aria-pressed belongs to toggle buttons, not radios.
       b.setAttribute('role', 'radio');
+      b.removeAttribute('aria-pressed');
       b.setAttribute('aria-checked', 'false');
       b.tabIndex = i === 0 ? 0 : -1;
       b.addEventListener('click', function () {
         chips.forEach(function (x) {
           var on = x === b;
-          x.setAttribute('aria-pressed', on ? 'true' : 'false');
           x.setAttribute('aria-checked', on ? 'true' : 'false');
           x.tabIndex = on ? 0 : -1;
         });

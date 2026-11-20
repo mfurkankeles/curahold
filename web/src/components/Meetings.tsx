@@ -334,7 +334,7 @@ export function LogDialog({
           </div>
         )}
         {isMeeting && !ready && account.id && <p className="field__hint">{t('meetingForm.needSomething')}</p>}
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );

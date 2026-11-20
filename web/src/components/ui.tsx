@@ -131,8 +131,11 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
   // (that would pull focus away from whatever the person is typing in).
   const close = useRef(onClose);
   close.current = onClose;
+  // Who opened it, read while rendering: by the time the effect runs, a field's autoFocus has already
+  // taken the focus, and closing must give it back to the opener (WCAG 2.4.3).
+  const [opener] = useState(() => (typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)));
   useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
+    const prev = opener;
     // The first thing to type in; otherwise the first button of the dialog's own content.
     const first =
       box.current?.querySelector<HTMLElement>('.dialog__body input:not([type="hidden"]), .dialog__body select, .dialog__body textarea') ??
@@ -152,7 +155,7 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
       document.removeEventListener('keydown', onKey);
       prev?.focus?.();
     };
-  }, []);
+  }, [opener]);
   return (
     <div className="dialog" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`dialog__box${wide ? ' dialog__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>

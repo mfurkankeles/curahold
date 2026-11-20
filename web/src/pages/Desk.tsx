@@ -618,6 +618,9 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
 
   return (
     <div className="console" data-section={where.section} data-owner={owner ? '' : undefined}>
+      <a className="skip-link" href="#console-main">
+        {t('docs.skip')}
+      </a>
       <aside className="console__rail">
         <div className="console__brand">
           <span className="desk__mark" aria-hidden="true">
@@ -751,6 +754,7 @@ function Support({ me, queue, onQueue, open, choose, beat, refreshCounts, failed
               <button className="desk__row" aria-current={open === r.ref || undefined} onClick={() => choose(r.ref)}>
                 <span className="desk__rowtop">
                   <span className="desk__dot" data-status={r.status} aria-hidden="true" />
+                  <span className="sr-only">{t(`desk.status.${r.status}` as MessageKey)}</span>
                   <strong>{r.subject}</strong>
                 </span>
                 <span className="desk__rowmeta">
@@ -1023,6 +1027,7 @@ function Request({ reference, me, onBack, onChanged, onOpen, failed }: { referen
                   <li key={o.ref}>
                     <button className="linklike" onClick={() => onOpen(o.ref)}>
                       <span className="desk__dot" data-status={o.status} aria-hidden="true" />
+                      <span className="sr-only">{t(`desk.status.${o.status}` as MessageKey)}</span>
                       {o.subject}
                     </button>
                   </li>

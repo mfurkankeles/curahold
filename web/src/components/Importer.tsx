@@ -221,7 +221,7 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
             {t('import.choose')}
           </span>
         </label>
-        {readError && <p className="error-text">{readError}</p>}
+        {readError && <p className="error-text" role="alert">{readError}</p>}
         {!compact && (
           <p className="field__hint">
             <a href={sampleCsv} download={t('import.sample.file')}>
@@ -314,8 +314,8 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
           <span>{t('import.runRules')}</span>
         </label>
       </div>
-      {!nameColumn && <p className="error-text">{t('import.needName')}</p>}
-      {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
+      {!nameColumn && <p className="error-text" role="alert">{t('import.needName')}</p>}
+      {duplicate && <p className="error-text" role="alert">{t('import.duplicate')}</p>}
       <div className="inline-actions u-justify-content-flex-start">
         <button className="btn btn--primary" disabled={!nameColumn || duplicate || busy} onClick={run}>
           <Icon name="upload" size={16} />

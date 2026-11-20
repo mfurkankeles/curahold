@@ -786,7 +786,7 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
           </select>
         </label>
         <p className="field__hint">{t('accounts.newHint')}</p>
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );

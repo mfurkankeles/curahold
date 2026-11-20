@@ -174,7 +174,7 @@ export function CurrencySettings() {
       </section>
 
       <div className="toolbar">
-        {bad.length > 0 && <span className="error-text">{t('fx.fixRates', { codes: bad.map((r) => r.code).join(', ') })}</span>}
+        {bad.length > 0 && <span className="error-text" role="alert">{t('fx.fixRates', { codes: bad.map((r) => r.code).join(', ') })}</span>}
         {!dirty && <span className="field__hint">{t('settings.allSaved')}</span>}
       </div>
     </div>
