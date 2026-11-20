@@ -6981,6 +6981,9 @@ export const en = {
   'board.importShort': 'Import',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'Tap + at the bottom of the screen.',
+  'billing.intervalTab.month': 'Monthly',
+  'billing.intervalTab.year': 'Yearly',
+  'conn.trouble.details': 'What {app} said',
 } as const;
 
 export type MessageKey = keyof typeof en;

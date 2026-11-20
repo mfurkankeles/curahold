@@ -6966,4 +6966,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'استيراد',
   'home.load.accountsN.one': '{account_l}: {n}',
   'start.task.bodyPhone': 'اضغط على + أسفل الشاشة.',
+  'billing.intervalTab.month': 'شهريًا',
+  'billing.intervalTab.year': 'سنويًا',
+  'conn.trouble.details': 'ما قاله {app}',
 };

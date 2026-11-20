@@ -6966,4 +6966,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'インポート',
   'home.load.accountsN.one': '{account_l}{n}件',
   'start.task.bodyPhone': '画面下の + をタップします。',
+  'billing.intervalTab.month': '月払い',
+  'billing.intervalTab.year': '年払い',
+  'conn.trouble.details': '{app} からのメッセージ',
 };

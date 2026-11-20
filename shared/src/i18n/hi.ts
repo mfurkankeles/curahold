@@ -6912,4 +6912,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'इंपोर्ट',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'स्क्रीन के नीचे + पर टैप करें।',
+  'billing.intervalTab.month': 'मासिक',
+  'billing.intervalTab.year': 'सालाना',
+  'conn.trouble.details': '{app} ने क्या कहा',
 };

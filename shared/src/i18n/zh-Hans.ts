@@ -6966,4 +6966,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'board.importShort': '导入',
   'home.load.accountsN.one': '{n} 个{account_l}',
   'start.task.bodyPhone': '点按屏幕底部的 +。',
+  'billing.intervalTab.month': '月付',
+  'billing.intervalTab.year': '年付',
+  'conn.trouble.details': '{app} 返回的信息',
 };

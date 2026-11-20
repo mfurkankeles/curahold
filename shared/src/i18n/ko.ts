@@ -6966,4 +6966,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'board.importShort': '가져오기',
   'home.load.accountsN.one': '{n}개 {account_l}',
   'start.task.bodyPhone': '화면 아래쪽의 +를 누르세요.',
+  'billing.intervalTab.month': '월간',
+  'billing.intervalTab.year': '연간',
+  'conn.trouble.details': '{app}에서 온 메시지',
 };

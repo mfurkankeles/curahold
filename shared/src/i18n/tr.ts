@@ -6966,4 +6966,7 @@ export const tr: Record<MessageKey, string> = {
   'board.importShort': 'İçe aktar',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'Ekranın altındaki + düğmesine dokunun.',
+  'billing.intervalTab.month': 'Aylık',
+  'billing.intervalTab.year': 'Yıllık',
+  'conn.trouble.details': '{app} ne dedi',
 };

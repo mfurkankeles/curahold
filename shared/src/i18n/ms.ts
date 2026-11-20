@@ -6912,4 +6912,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'Import',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'Ketik + di bahagian bawah skrin.',
+  'billing.intervalTab.month': 'Bulanan',
+  'billing.intervalTab.year': 'Tahunan',
+  'conn.trouble.details': 'Kata {app}',
 };

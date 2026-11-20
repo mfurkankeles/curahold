@@ -6966,4 +6966,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'ورود داده',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'روی + در پایین صفحه بزنید.',
+  'billing.intervalTab.month': 'ماهانه',
+  'billing.intervalTab.year': 'سالانه',
+  'conn.trouble.details': 'پیام {app}',
 };

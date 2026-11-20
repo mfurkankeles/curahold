@@ -6966,4 +6966,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'board.importShort': 'ייבוא',
   'home.load.accountsN.one': '{n} {account_l}',
   'start.task.bodyPhone': 'הקישו על + בתחתית המסך.',
+  'billing.intervalTab.month': 'חודשי',
+  'billing.intervalTab.year': 'שנתי',
+  'conn.trouble.details': 'מה {app} אמר',
 };
