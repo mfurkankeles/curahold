@@ -67,6 +67,8 @@ export async function crmStart(c: C, provider: string, back: string) {
     again = old.config ?? {};
   }
   if (provider === 'salesforce' && (c.req.query('sandbox') === '1' || (rc && String(again.loginUrl ?? '').includes('test.salesforce.com')))) q.sandbox = '1';
+  // QuickBooks: a sandbox company lives on Intuit's sandbox host; without this a sandbox could never be read.
+  if (provider === 'quickbooks' && (c.req.query('sandbox') === '1' || (rc && again.sandbox === true))) q.sandbox = '1';
   if (provider === 'dynamics') {
     const orgUrlRaw = orgUrlOf(c.req.query('orgUrl') ?? again.orgUrl ?? '');
     if (!orgUrlRaw) return c.redirect(`${home}?error=dynamics_url&provider=dynamics`);

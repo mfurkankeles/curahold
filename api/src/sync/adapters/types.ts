@@ -222,8 +222,9 @@ export async function call(ctx: CrmCtx, url: string, init: RequestInit & { json?
     throw new CrmError(text, 403);
   }
   if (res.status === 401) throw new CrmError(await errorText(res), res.status, undefined, true);
+  // 304: nothing changed since If-Modified-Since (Zoho answers so instead of an empty list).
+  if (res.status === 304 || res.status === 204) return null;
   if (!res.ok) throw new CrmError(await errorText(res), res.status);
-  if (res.status === 204) return null;
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
