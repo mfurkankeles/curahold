@@ -1505,7 +1505,7 @@ function build() {
   }
   writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemaps.join('\n')}\n</sitemapindex>\n`);
   // The crawler policy (shared/src/compliance/crawlers.ts): search engines in, AI crawlers out, the TDM reservation.
-  writeFileSync(join(OUT, 'robots.txt'), robotsTxt('site', { sitemap: `${ORIGIN}/sitemap.xml`, allowAiAnswers: process.env.SITE_AI_CRAWLERS === 'allow', allowScrapers: process.env.SITE_SEO_ROBOTS === 'allow' }));
+  writeFileSync(join(OUT, 'robots.txt'), robotsTxt('site', { sitemap: [`${ORIGIN}/sitemap.xml`, `${DOCS}/sitemap.xml`], allowAiAnswers: process.env.SITE_AI_CRAWLERS === 'allow', allowScrapers: process.env.SITE_SEO_ROBOTS === 'allow' }));
   mkdirSync(join(OUT, '.well-known'), { recursive: true });
   writeFileSync(join(OUT, '.well-known', 'tdmrep.json'), TDMREP_JSON);
   writeFileSync(join(OUT, '_headers'), `/*\n  ${TDM_HEADER.name}: ${TDM_HEADER.value}\n\n/demo/*\n  X-Robots-Tag: ${CLOSED_X_ROBOTS}\n`);
