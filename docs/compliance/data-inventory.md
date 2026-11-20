@@ -73,7 +73,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Personal data:** Company, billing contact, plan, invoices (no card numbers: Paddle holds them)
 - **Legal basis:** Türkiye — KVKK art. 5/2-c and 5/2-ç (tax and commercial codes); EU/UK — Art. 6(1)(b) and (c); Gulf — Contract and legal obligation; elsewhere — Contract and legal obligation
 - **Retention:** 10 years (Turkish Commercial Code art. 82)
-- **Stored with / received by:** Paddle.com Market Ltd, Supabase, Inc.
+- **Stored with / received by:** Paddle.com Market Ltd (separate controller), Supabase, Inc.
 - **VERBİS categories:** Finans, Müşteri işlem
 
 ### support — Answering support requests
@@ -95,6 +95,16 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Retention:** Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training
 - **Stored with / received by:** Anthropic PBC, Supabase, Inc.
 - **VERBİS categories:** Kimlik, Müşteri işlem
+
+### aiDrafts — Drafting a reply, a follow-up or a summary for the person to read and change; nothing is saved or sent until they confirm it (off until an administrator turns AI on); never used to train models
+
+- **Role:** Curahold is the processor (the customer is the controller)
+- **Data subjects:** Users who ask for a draft; customer contacts and colleagues named in the record it is drafted from
+- **Personal data:** The record the draft is made from (task, customer, meeting notes) and the draft text
+- **Legal basis:** Türkiye — On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9; EU/UK — Art. 28 — the customer's basis; Gulf — Processor; elsewhere — Entrustment
+- **Retention:** The assistant keeps no draft: a confirmed draft lives in the record it was saved to, under that record’s retention; at the provider [30 days — confirm], no training
+- **Stored with / received by:** Anthropic PBC, Supabase, Inc.
+- **VERBİS categories:** Kimlik, İletişim, Müşteri işlem
 
 ### humanCheck — Keeping robots out of public forms (Cloudflare Turnstile, no puzzle, no tracking cookie)
 
