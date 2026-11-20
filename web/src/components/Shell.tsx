@@ -547,6 +547,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               <span className="previewbar__eye" aria-hidden="true" />
               <span className="previewbar__text">{t('preview.bar', { name: me.user.name })}</span>
               <button className="btn btn--small previewbar__exit" onClick={() => endPreview()}>
+                <Icon name="logout" size={16} />
                 {t('preview.exit')}
               </button>
             </div>
@@ -564,6 +565,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                   location.href = '/login';
                 }}
               >
+                <Icon name="logout" size={16} />
                 {t('support.bar.leave')}
               </button>
             </div>
@@ -573,6 +575,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             <div className="openbar" role="status">
               <span>{t(me.supportOpen.level === 'edit' ? 'support.open.barEdit' : 'support.open.bar', { until: until(me.supportOpen.until) })}</span>
               <button className="btn btn--small btn--quiet" onClick={() => setHelp('mine')}>
+                <Icon name="edit" size={16} />
                 {t('support.open.manage')}
               </button>
             </div>
@@ -623,7 +626,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
         {news && <WhatsNew onClose={() => setNews(false)} onAction={runNews} />}
         {installHelp && (
-          <Dialog title={t('pwa.install')} onClose={() => setInstallHelp(false)} footer={<button className="btn btn--primary" onClick={() => setInstallHelp(false)}>{t('common.close')}</button>}>
+          <Dialog title={t('pwa.install')} onClose={() => setInstallHelp(false)} footer={<button className="btn btn--primary" onClick={() => setInstallHelp(false)}><Icon name="close" size={16} /> {t('common.close')}</button>}>
             <ol className="installsteps">
               <li>{t('pwa.ios1')}</li>
               <li>{t('pwa.ios2')}</li>
@@ -651,8 +654,28 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
 function ToastItem({ toast: x, dismiss }: { toast: Toast; dismiss: (id: number) => void }) {
   const { t } = useI18n();
   const leave = useLeave<HTMLDivElement>();
+  // Its clock stops while the pointer is on it or the focus is in it, and runs on from where it was.
+  const [held, setHeld] = useState(0);
+  const left = useRef(x.life);
+  useEffect(() => {
+    if (held || left.current === null) return;
+    const started = performance.now();
+    const timer = setTimeout(() => dismiss(x.id), left.current);
+    return () => {
+      clearTimeout(timer);
+      if (left.current !== null) left.current = Math.max(0, left.current - (performance.now() - started));
+    };
+  }, [held, x.id, dismiss]);
+  const hold = (on: boolean) => setHeld((n) => Math.max(0, n + (on ? 1 : -1)));
   return (
-    <div ref={leave} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
+    <div
+      ref={leave}
+      className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}
+      onMouseEnter={() => hold(true)}
+      onMouseLeave={() => hold(false)}
+      onFocus={() => hold(true)}
+      onBlur={() => hold(false)}
+    >
       <Icon name={x.tone === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast__icon" />
       <span className="toast__text">{x.text}</span>
       {x.action && (
