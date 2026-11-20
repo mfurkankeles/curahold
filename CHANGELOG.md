@@ -169,6 +169,124 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
   (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
   The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
+- Owner console, Plan & targets: two new views. **Budget & investors** shows the budget against what was really spent
+  with the runway your cash gives, the plan's two milestones (expanded and switched companies) counted on real data,
+  fundraising windows with their dates, target and status, and your own investor pipeline (stage, next step and its day;
+  a removed investor can be brought back for 30 days). **Load from the plan** fills targets, milestones, budget, windows
+  and tasks from the business plan's `targets.json` (also `scripts/plan/load-targets.ts`); loading again is safe.
+- Owner console: a **Monday summary** e-mail at 09:00 Istanbul time with last week's targets against actuals, trial
+  requests, revenue and invoices, errors and alerts and the AI team's proposals waiting for you — written without any AI
+  model, once a week, in Turkish or English, with a preview and an off switch in the console.
+- Owner console: **alerts on your phone** for help requests that block a customer, system alerts and the Monday summary,
+  by free Web Push (encrypted so only your device reads it), once the server has a VAPID key pair (`VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`).
+- Sales site: a small content hub in all eleven languages (/resources/): four templates (renewal playbook, business review (QBR)
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and nineteen plain definitions (among them customer health
+  score, churn, net revenue retention, ARR, business review, champion, time to value and the sales-to-success hand-over), the
+  same items in every language, each saying only what Curahold does today. Linked from the Resources menu and the footer.
+- Settings → Company: a privacy request log for objections, restrictions and other requests, with the due date the law of
+  the person's country sets, and a reply date. Trial requests can be exported for the person who sent them.
+- Report figures and the done tile on a customer show how they moved against the period before, with an icon and words,
+  not only a colour.
+- Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
+  Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
+  to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
+  company's own Meta app (incoming messages on the contact's timeline, replies and templates).
+- Incoming webhooks: one signed address per company and source, replay protection, field mapping to a task, ticket, customer event or
+  deal note, a test-delivery screen, a 30-day delivery log and ready recipes. Two new setup-health checks: failing webhooks and a silent
+  WhatsApp number.
+- Hindi and Malay: the app, the customer portal, e-mails, the help centre (whole user guide), the website, the demo company
+  and the free assistant rules, in a formal register; job titles and plan names stay in English. Trial consent texts for India
+  (DPDP Act 2023: itemised notice, grievance route to the Data Protection Board) and Malaysia (PDPA: notice in Malay and English
+  together), drafts for the lawyer's review. Rupee and ringgit amounts, Latin digits in Hindi.
+- Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
+  use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
+  by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).
+- Cost model (`scripts/quality/cost.mts`): unit cost per company and per seat for 1–300 customers, fixed costs and break-even,
+  every input with its source in `scripts/quality/cost.inputs.json`.
+- Consent before every AI assistant chat (in the app, the customer portal and the public docs): a short notice of what goes to the
+  AI provider, why, for how long, with the privacy notice, and equal **Accept** / **Decline**. The server refuses a question without a
+  "yes" to the current notice version (`consent_required`); each answer is recorded (who, when, version, language) and in the activity
+  log; withdraw any time under CuraAI or in Your settings; a new notice version asks again (migration 0243).
+- Deleting the whole company (Settings → Company): typed confirmation, 30-day grace period with cancel, then everything goes, files and
+  connection keys included, with a deletion certificate; invoices stay for tax law (migration 0241).
+- Nightly retention purges for the stated periods: trial requests 12 months, consent proof 3 years (a "yes" in force is kept), help
+  requests 24 months, activity log 12 months; configurable with `RETENTION_*` (docs/ENVIRONMENT.md §6e).
+- Download and erase for people at customers (portal people), not only switching them off.
+
+- Engineering foundation for new owners: GitHub Actions CI (`.github/workflows/ci.yml`) with typecheck, lint, the full test suite on
+  PGlite and on Postgres 16, build, Docker image build check, and required guards for row-level-security isolation, the repository leak
+  scan and i18n completeness; a nightly end-to-end workflow; a pull request template.
+- ESLint (flat config) and Prettier configuration, `lint`, `lint:fix`, `format` and `format:check` scripts. Existing `any`, non-null `!` and
+  `react-hooks` findings are warnings, so lint passes today.
+- `.nvmrc` (Node 22) and `engines.node >= 22`, matching the Dockerfile.
+- Documentation: `ARCHITECTURE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/RUNBOOK.md`, `docs/ENVIRONMENT.md` and architecture decision
+  records in `docs/ADR/`.
+- Test scripts `test:isolation`, `test:leak` and `test:i18n` for the three required guards.
+
+### Changed
+
+- Motion: dialogs, side panels, menus, popovers, the search palette, phone sheets and toasts now animate out as well as in
+  (100–150 ms, always shorter than the way in); phone sheets slide up from the bottom (280 ms); one set of motion tokens
+  (`--dur-1…4`, `--ease-in/out/move`, `--dist-1…3`). With "reduce motion" on, opening and closing still fade for 100 ms so the
+  change is not lost.
+- Moving between screens: the page cross-fades in the direction you go (Back from the other side), a customer card
+  grows into its page, and Back returns to the list where you left it, with its search and filters.
+- Loading: a Curahold loader instead of a still logo, a thin progress line at the top while a screen loads, skeletons in
+  the shape of each screen, and save buttons that show a ring and then a tick. The demo opens faster, with real progress.
+- Every action button has an icon and a label; every dialog, panel and sheet has a large Close at the end corner (and
+  Esc); pages under another page show Back in the same place; on a phone the task panel rises from the bottom with Back.
+- Toasts stay 4 seconds (7 with Undo) and pause under the pointer; errors stay until you close them. Ticking a task done
+  shows at once and turns back if the server refuses.
+- Easier to read: stronger contrast on the main button, field borders and the keyboard focus ring; each script (Arabic,
+  Hebrew, Persian, Japanese, Korean, Chinese, Hindi) uses its own system font, size and line height.
+- Turkish: the whole product says "siz".
+
+- Sales site: the Turkish pages speak to visitors as "siz" everywhere (landing page, menus, inner pages, blog, animated versions, consent).
+- Sales site: the headline says what Curahold is and what it does ("Work management for customer teams" above "Every renewal, every
+  promise, every task, on time.") in all eleven languages; every page uses the same two calls to action, "Try it free" and "Live demo",
+  each with an icon; "3 months free, no card needed" sits under them.
+- Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
+  to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.
+- Sales site pricing: the landing page shows a two-line summary ("from $15 per seat a month on a yearly plan") with a link instead of
+  the full plans; /pricing/ shows the prices in the first screen and adds a plan comparison table, pricing questions and a line for
+  larger companies. Its structured data now lists all four offers (Team and Business, monthly and yearly) at the prices the page shows,
+  instead of one $19 offer next to a page showing $15. Prices themselves are unchanged.
+- Sales site: the landing page is about a third shorter (about 7,900 px at 1440 wide, from 12,400): "Why Curahold" shows three reasons
+  and links to /why/, which now ends with an honest "Who it is not for" (a personal to-do list, a help desk, bookkeeping, a
+  critical-path schedule) and the two calls to action. The scroll story's steps are a little shorter.
+- Sales site search: every page has a title and description written for its language's searches (no page is now too
+  short or too long for search results); the animated versions are kept out of search results; the sitemap is an index
+  with one file per language; questions and prices carry structured data that matches the page; share links show a PNG
+  picture; footer column titles are no longer headings. The help centre's production build gets absolute canonical and
+  hreflang addresses (only to languages that really have the page), article structured data and its own sitemap, which
+  the docs host's robots.txt now names. New settings: `SITE_LASTMOD`, `DOCS_ORIGIN` (ADR 0020).
+- Sales site speed and motion: no stylesheet blocks the first paint any more (first-screen styles inline, the rest cut to
+  what each kind of page uses and loaded after); the headline and its buttons show at once instead of sliding in; Arabic,
+  Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
+  no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
+  a Pause button and stays still for anyone who asked their system for less motion.
+- Sales site speed on phones: the lower half of the landing page (the story's steps and window, the short "why" block,
+  the price summary, the footer) is laid out only as it comes near the screen, and Turkish pages preload the headline
+  face's Turkish letters too, so a late font no longer re-lays out every heading after the first paint.
+- Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
+  `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
+- The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched
+  off (migration 0240), the demo stays on.
+- Erasing a person also removes their CuraAI questions, notifications, chat links, sign-in factors, recordings and mentions in AI notes.
+- Consent records can no longer be changed, only anonymised (migration 0241).
+- Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
+  (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
+
+### Fixed
+
+- Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
+  (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
+  The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
+- Sign-up no longer promises a set-up time ("Ready in about 15 minutes" and minutes per step): it was never measured.
+  It now says there are five steps, in every language.
+- Owner console, Plan & targets: investors who passed and closed fundraising windows step back by colour and outline
+  instead of fading, so their words and buttons keep AA contrast.
 - On phones the customer page's **Next promise** shows two whole lines, never part of a third.
 - The CuraAI answer list no longer moves the page around it when a new answer arrives (an embedded demo slid up).
 - Team load says "1 customer", not "1 customers"; Arabic and Persian counts read naturally.
