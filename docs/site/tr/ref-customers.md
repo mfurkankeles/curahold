@@ -20,7 +20,7 @@ Müşteri (adreslerde "account"), baktığınız şirkettir. Kendi alanları `fi
 | `PATCH /accounts/:id` | Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. |
 | `DELETE /accounts/:id` | Müşteriyi kayıtları, zaman çizelgesi ve portal kişileriyle birlikte çöp kutusuna taşır; 30 gün boyunca geri alınabilir. |
 | `POST /accounts/bulk` | Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivleme ya da geri alma. |
-| `POST /accounts/import` | Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafında okunur); sütundan alana eşlemeyle. |
+| `POST /accounts/import` | Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafınızda okunur); sütundan alana eşlemeyle. |
 | `GET /imports` | Son müşteri içe aktarmaları; en yenisi başta. |
 | `POST /imports/:id/undo` | Bir içe aktarmayı 30 gün içinde geri alır: eklediklerini kaldırır, değiştirdiklerini eski haline getirir. |
 | `PUT /account-fields` | Müşteri alanlarının listesini değiştirir (yönetici işi): anahtarlar, her dildeki etiketler, türler, seçenekler, kimin görüp düzenleyebileceği. |
@@ -134,7 +134,7 @@ Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivleme ya da
 
 ### `POST /accounts/import`
 
-Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafında okunur); sütundan alana eşlemeyle. Var olan müşteriler ada ya da kaynaktaki kimliğine göre eşlenir.
+Bir dosyanın satırlarından müşteri alır (CSV ya da Excel sizin tarafınızda okunur); sütundan alana eşlemeyle. Var olan müşteriler ada ya da kaynaktaki kimliğine göre eşlenir.
 
 **Gerekenler:** yetki `accounts.manage` · yetki `accounts.view_all`
 

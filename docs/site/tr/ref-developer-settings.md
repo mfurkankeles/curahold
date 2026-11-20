@@ -14,7 +14,7 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 
 | | |
 | --- | --- |
-| `GET /dev/keys` | Anahtarların ve bağlı uygulamaların; `scope=all` ile herkesinki (kişileri yönetenler için). |
+| `GET /dev/keys` | Anahtarlarınız ve bağlı uygulamalarınız; `scope=all` ile herkesinki (kişileri yönetenler için). |
 | `POST /dev/keys` | Anahtar üretir (yalnızca tarayıcıda). |
 | `DELETE /dev/keys/:id` | Bir anahtarı ya da bağlı uygulamayı iptal eder. |
 | `GET /dev/webhooks` | Şirketin webhook'ları; son gönderimleriyle. |
@@ -49,9 +49,9 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `GET /analytics/v1` | Analiz akışının veri kümeleri; sütunları, JSON ve CSV adresleriyle. |
 | `GET /analytics/v1/` | Aynı veri kümesi listesi. |
 | `GET /analytics/v1/:file` | Bir veri kümesi, `Ad.json` ya da `Ad.csv` olarak: `limit`, `page`, `offset`, `cursor`, `since`, `fields`, `filter`, `orderby`, `count`. |
-| `GET /dev/analytics/keys` | Analiz anahtarların; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için). |
+| `GET /dev/analytics/keys` | Analiz anahtarlarınız; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için). |
 | `POST /dev/analytics/keys` | Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): `name`, `datasets`, `departments`, `expiresInDays`. |
-| `POST /dev/analytics/keys/:id/rotate` | Analiz anahtarlarından birine yeni bir gizli değer verir; eskisi hemen durur. |
+| `POST /dev/analytics/keys/:id/rotate` | Analiz anahtarlarınızdan birine yeni bir gizli değer verir; eskisi hemen durur. |
 | `DELETE /dev/analytics/keys/:id` | Bir analiz anahtarını iptal eder. |
 | `GET /dev/analytics/datasets` | Bir analiz anahtarına verebileceğiniz veri kümeleri; sütunlarıyla. |
 | `GET /dev/analytics/pulls` | Analiz akışından son okumalar: sizinkiler ya da kişileri yönetenler için herkesinki. |
@@ -60,7 +60,7 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 
 ### `GET /dev/keys`
 
-Anahtarların ve bağlı uygulamaların; `scope=all` ile herkesinki (kişileri yönetenler için).
+Anahtarlarınız ve bağlı uygulamalarınız; `scope=all` ile herkesinki (kişileri yönetenler için).
 
 **Sorgu:** `scope`
 
@@ -280,7 +280,7 @@ Bir veri kümesi, `Ad.json` ya da `Ad.csv` olarak: `limit`, `page`, `offset`, `c
 
 ### `GET /dev/analytics/keys`
 
-Analiz anahtarların; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için).
+Analiz anahtarlarınız; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için).
 
 **Sorgu:** `scope`
 
@@ -299,7 +299,7 @@ Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): 
 
 ### `POST /dev/analytics/keys/:id/rotate`
 
-Analiz anahtarlarından birine yeni bir gizli değer verir; eskisi hemen durur. Yenisi bir kez gösterilir.
+Analiz anahtarlarınızdan birine yeni bir gizli değer verir; eskisi hemen durur. Yenisi bir kez gösterilir.
 
 **Gerekenler:** yetki `data.export`
 

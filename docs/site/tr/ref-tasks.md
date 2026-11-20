@@ -65,16 +65,16 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /tasks/:id/links` | İki görevi bağlar: biri diğerini engeller ya da ilişkilidirler. |
 | `DELETE /tasks/:id/links/:other` | İki görev arasındaki bağlantıyı kaldırır. |
 | `POST /tasks/:id/time` | Göreve bir gün için dakika olarak süre girer. |
-| `DELETE /time/:id` | Kendi süre kaydını siler. |
+| `DELETE /time/:id` | Kendi süre kaydınızı siler. |
 | `POST /tasks/:id/checklist` | Göreve adımları alt görev olarak ekler; elle ya da bir kontrol listesi şablonundan. |
-| `PUT /tasks/:id/watch` | Görevi takip eder: değişikliklerinden haberin olur. |
+| `PUT /tasks/:id/watch` | Görevi takip eder: değişikliklerinden haberiniz olur. |
 | `DELETE /tasks/:id/watch` | Görevi takip etmeyi bırakır. |
 | `POST /tasks/:id/mute` | Bir görev için yorum bildirimlerini durdurur ya da yeniden açar. |
 | `PUT /tasks/:id/portal` | Görevi portalda müşterisiyle paylaşır ya da paylaşmayı bırakır. |
 | `GET /checklists` | Kontrol listesi şablonları. |
 | `POST /checklists` | Kontrol listesi şablonu kaydeder. |
 | `DELETE /checklists/:id` | Kontrol listesi şablonunu siler. |
-| `GET /views` | Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`). |
+| `GET /views` | Bir listedeki kayıtlı görünümleriniz ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`). |
 | `GET /views/:id` | Bağlantısıyla açmak için tek bir kayıtlı görünüm: sizin ya da şirketle paylaşılmış olan. |
 | `POST /views` | Görünüm kaydeder: `scope` (varsayılan `board`, `boardId` ile), `name`, `filters` (bir panonun filtresi ya da başka bir listenin düz durumu: filtre, sıra, sütunlar, düzen) ve `shared`. |
 | `PATCH /views/:id` | Kayıtlı görünümü değiştirir. |
@@ -138,7 +138,7 @@ Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere isteyin: `per=N
 
 ### `POST /boards/:id/requests`
 
-Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. Başka departmanın panosuna da gider (`GET /departments/desks`); `fromTaskId` kendi görevine bağlar.
+Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. Başka departmanın panosuna da gider (`GET /departments/desks`); `fromTaskId` kendi görevinize bağlar.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -508,7 +508,7 @@ Göreve bir gün için dakika olarak süre girer.
 
 ### `DELETE /time/:id`
 
-Kendi süre kaydını siler.
+Kendi süre kaydınızı siler.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -525,7 +525,7 @@ Göreve adımları alt görev olarak ekler; elle ya da bir kontrol listesi şabl
 
 ### `PUT /tasks/:id/watch`
 
-Görevi takip eder: değişikliklerinden haberin olur.
+Görevi takip eder: değişikliklerinden haberiniz olur.
 
 ### `DELETE /tasks/:id/watch`
 
@@ -572,7 +572,7 @@ Kontrol listesi şablonunu siler.
 
 ### `GET /views`
 
-Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`).
+Bir listedeki kayıtlı görünümleriniz ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`).
 
 **Sorgu:** `board`, `scope`
 
