@@ -130,6 +130,19 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Single sign-on: a test sign-in now says what is wrong (the client secret was refused, the signature no longer matches
+  the stored certificate, the token was for another app or out of date, or the provider could not be reached) and which
+  field to fix; an identity provider that cannot be reached sends people back to the sign-in page instead of an error page.
+- SCIM: a rename sent by name parts and a deactivation sent as the text "False" (as some identity providers send them)
+  are now applied; before, the person stayed active.
+- Outgoing webhooks: when one of several receivers failed, the retry sent the event again to the ones that already had it
+  (a Zap ran twice); now only the others get it. A receiver answering 410 Gone (a deleted Zap or scenario) is turned off at once.
+- Incoming webhooks: the delivery log says why a delivery was refused or not used in the reader's language, and a task
+  webhook's board can be changed on the Mapping tab without changing its address.
+- Mail that cannot be sent (the relay refused the app password, its daily limit, a recipient) is answered with a plain
+  sentence instead of an error; a busy relay is tried once more.
+- The AI connector takes at most 10 messages in one JSON-RPC batch.
+
 - Hover washes on toasts, segmented buttons and chips, and the read-only warning colour in the sidebar show again (their
   design tokens referred to themselves and computed to nothing). The phone menu, the console's company drawer and the
   Office and AI team panels close with the same 44 × 44 Close as every dialog.

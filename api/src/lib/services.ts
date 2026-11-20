@@ -12,6 +12,22 @@ export interface EmailMessage {
   headers?: Record<string, string>;
 }
 
+/**
+ * Mail that could not be sent: the server refused the sign-in, the sender or the recipient, was busy, or could not be
+ * reached. Every sender throws this, so the app answers the person with one plain sentence (errors.mail_unavailable)
+ * while the reason, which may name the mail server's settings, goes only to the operator's error log.
+ */
+export class MailError extends Error {
+  constructor(
+    message: string,
+    /** Worth one more try soon (a 4xx reply, a rate limit, a connection that dropped). */
+    readonly transient = false,
+  ) {
+    super(message);
+    this.name = 'MailError';
+  }
+}
+
 export interface EmailSender {
   send(msg: EmailMessage): Promise<void>;
   /** false: mail is kept or printed, not delivered (setup health tells the install's owner). */
@@ -44,7 +60,7 @@ export class ResendEmail implements EmailSender {
       headers: { authorization: `Bearer ${this.apiKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}), ...(msg.replyTo ? { reply_to: msg.replyTo } : {}), ...(msg.headers ? { headers: msg.headers } : {}) }),
     });
-    if (!res.ok) throw new Error(`email provider answered ${res.status}`);
+    if (!res.ok) throw new MailError(`email provider answered ${res.status}`, res.status === 429 || res.status >= 500);
   }
 }
 
