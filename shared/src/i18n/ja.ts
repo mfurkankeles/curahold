@@ -6991,5 +6991,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.year': '年払い',
   'conn.trouble.details': '{app} からのメッセージ',
   'console.deniedBody': 'この画面はこのインストールのすべての会社を表示するもので、運用している人のためのものです。ご自身のワークスペースの数字は「レポート」に、設定は「設定」にあります。',
-  'console.secondStep.title': '先にもう1つのサインイン手順が必要です',
+  'console.secondStep.title': '先にもう1つのログイン手順が必要です',
 };
