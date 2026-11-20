@@ -133,6 +133,11 @@ async function envFor(
 
 export const assistRoutes = new Hono<AppEnv>();
 
+/**
+ * Asks the in-app assistant a question. People only (keys use the MCP connector instead). Nothing is processed before
+ * the person accepted the current notice ('consent_required', KVKK/GDPR). Tools are read-only and run as the asker, and
+ * the company's and installation's cost caps stop the call before the model is reached (ADR 0010).
+ */
 assistRoutes.post('/assist', async (c) => {
   // API keys and apps have the AI connector (MCP); this door is for people in the app.
   if (c.get('tokenKind')) fail('forbidden');
@@ -219,11 +224,16 @@ async function settingsView(c: C, s: CompanyAssistSettings) {
   };
 }
 
+/** The company's assistant settings (on/off, tools, retention) with the installation's limits. Needs org.manage. */
 assistRoutes.get('/assist/settings', async (c) => {
   requirePerm(c, 'org.manage');
   return c.json(await settingsView(c, settingsOf(assistantSettingsOf(c.get('org')), assistantConfig(c.get('deps')))));
 });
 
+/**
+ * Changes the assistant settings. Needs org.manage; refused while previewing as someone else; audited. A shorter
+ * retention deletes what is now too old at once (privacy).
+ */
 assistRoutes.put('/assist/settings', async (c) => {
   requirePerm(c, 'org.manage');
   if (c.get('previewBy')) fail('preview_read_only');
@@ -255,6 +265,10 @@ assistPublicRoutes.post('/api/assist/public/consent', async (c: Context<AppEnv>)
   return c.json({ consent });
 });
 
+/**
+ * The public site's assistant for visitors. Needs the `x-curahold-ask` header (a form on another site cannot set it) and
+ * the visitor's consent under their browser's consent id. Per-address and overall budgets limit model use (ADR 0010, 0015).
+ */
 assistPublicRoutes.post('/api/assist/public', async (c: Context<AppEnv>) => {
   const deps = c.get('deps');
   const cfg = assistantConfig(deps);
@@ -326,12 +340,6 @@ export async function portalAssist(
 
 // ------------------------------------------------------------------ the support desk
 
-/**
- * A first answer to a new help request, from the docs only, kept as an
- * internal note: a support person reads it, and sends it (or not). Nothing
- * reaches the customer by itself. Off when the company turned it off, or when
- * there is no model (a docs search as a note would only be noise).
- */
 /** The portal person's answer to the consent notice (GET), or their new answer (POST {granted}). */
 export async function portalAssistConsent(
   c: Context<PortalEnv>,
@@ -343,6 +351,12 @@ export async function portalAssistConsent(
   return c.json({ consent: await portalDb((q) => setPortalConsent(q, input.granted, c.get('locale'))) });
 }
 
+/**
+ * A first answer to a new help request, from the docs only, kept as an
+ * internal note: a support person reads it, and sends it (or not). Nothing
+ * reaches the customer by itself. Off when the company turned it off, or when
+ * there is no model (a docs search as a note would only be noise).
+ */
 export async function deskFirstReply(deps: Deps, org: OrgRow, req: { id: string; subject: string; description: string }, locale: Locale): Promise<AssistReply | null> {
   const cfg = assistantConfig(deps);
   const settings = settingsOf(assistantSettingsOf(org), cfg);

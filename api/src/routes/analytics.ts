@@ -14,6 +14,7 @@
 // Every pull is written down (analytics_pulls: key, person, dataset, rows,
 // query, tool), with one activity-log line per key, dataset and hour; the
 // company has a daily row budget and each key a request budget (lib/ratelimit.ts).
+import type { ApiTokensRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ANALYTICS_DEPARTMENTS, type AnalyticsDatasetInfo, type AnalyticsKeyInfo, type AnalyticsPullInfo } from '../../../shared/src/analytics';
@@ -50,6 +51,9 @@ export const analyticsRoutes = new Hono<AppEnv>();
 
 const ODATA = '/api/analytics/odata';
 const V1 = '/api/analytics/v1';
+/**
+ * Whether a path is one of the analytics feeds (OData or /v1), which take an analytics key instead of a session.
+ */
 export const isFeed = (path: string) => path === ODATA || path.startsWith(`${ODATA}/`) || path === V1 || path.startsWith(`${V1}/`);
 
 /** The key a BI tool sent: the password of Basic sign-in, or the address's `key` (Power BI's Web API option). */
@@ -267,7 +271,9 @@ const serviceDocument = (c: C) =>
   });
 // With or without the last slash: people paste it either way.
 analyticsRoutes.get('/analytics/odata', serviceDocument);
+/** The OData service document for BI tools (Power BI, Excel): the datasets this analytics key may read. */
 analyticsRoutes.get('/analytics/odata/', serviceDocument);
+/** One OData entity set (or `$metadata`), paged, within the key's own datasets and departments. */
 analyticsRoutes.get('/analytics/odata/:set', (c) =>
   answer(c, 'odata', async () => {
     const name = c.req.param('set');
@@ -318,8 +324,13 @@ const datasetList = (c: C) =>
       { 'cache-control': 'no-store' },
     );
   });
+/** The plain JSON feed's list of datasets this key may read. */
 analyticsRoutes.get('/analytics/v1', datasetList);
+/** Same as GET /analytics/v1 (BI tools differ on the trailing slash). */
 analyticsRoutes.get('/analytics/v1/', datasetList);
+/**
+ * One dataset as `<name>.json` (paged, with a delta cursor) or `<name>.csv`; 404 for an unknown name. Never cached.
+ */
 analyticsRoutes.get('/analytics/v1/:file', (c) => {
   const m = /^([A-Za-z][A-Za-z0-9]{0,79})\.(json|csv)$/.exec(c.req.param('file'));
   const face = (m?.[2] ?? 'json') as 'json' | 'csv';
@@ -410,6 +421,11 @@ const keyInput = z.object({
   expiresInDays: z.number().int().min(1).max(730).default(365),
 });
 
+/**
+ * Creates an analytics key limited to chosen datasets and departments. Needs data.export and a recent sign-in, and
+ * cannot be done with a key (a key may not mint keys). Only datasets the person can read now; audited. The key is
+ * shown once and stored only as a hash.
+ */
 analyticsRoutes.post('/dev/analytics/keys', async (c) => {
   notWithAKey(c);
   requirePerm(c, 'data.export');
@@ -425,7 +441,7 @@ analyticsRoutes.post('/dev/analytics/keys', async (c) => {
       const unknown = input.datasets.filter((d) => !names.has(d));
       if (unknown.length) fail('validation', { fields: 'datasets' }, { fields: ['datasets'], unknown });
     }
-    const [r] = await q.query(
+    const [r] = await q.query<ApiTokensRow>(
       `insert into api_tokens (org_id, user_id, kind, name, token_hash, can_write, prefix, expires_at, datasets, departments)
        values ($1, $2, 'analytics', $3, $4, false, $5, now() + make_interval(days => $6::int), $7, $8) returning *`,
       [org.id, auth.userId, input.name, s.hash, s.shown, input.expiresInDays, input.datasets ? [...new Set(input.datasets)] : null, input.departments ? [...new Set(input.departments)] : null],
@@ -454,7 +470,7 @@ analyticsRoutes.post('/dev/analytics/keys/:id/rotate', async (c) => {
   const org = c.get('org');
   const s = await newSecret(ANALYTICS_PREFIX);
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<ApiTokensRow>(
       `update api_tokens set token_hash = $3, prefix = $4, rotated_at = now(), last_used_at = null
         where id = $1 and user_id = $2 and kind = 'analytics' and revoked_at is null and expires_at > now() returning *`,
       [id, auth.userId, s.hash, s.shown],
@@ -473,7 +489,7 @@ analyticsRoutes.delete('/dev/analytics/keys/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const r = await q.query(`update api_tokens set revoked_at = now() where id = $1 and kind = 'analytics' and revoked_at is null returning id, name, user_id`, [id]);
+    const r = await q.query<Pick<ApiTokensRow, 'id' | 'name' | 'user_id'>>(`update api_tokens set revoked_at = now() where id = $1 and kind = 'analytics' and revoked_at is null returning id, name, user_id`, [id]);
     if (!r.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'analytics_key.revoked', entity: 'api_key', entityId: id, meta: { name: r[0].name, owner: r[0].user_id } });
   });

@@ -17,6 +17,7 @@ import { useStore } from '../lib/store';
 import { helpLanguageOf } from '../../../shared/src/i18n';
 import '../surfaces/setup.css';
 
+/** Setup health: every check with its status and what to do (ADR 0013). */
 export function SetupHealthPage() {
   const { t, locale } = useI18n();
   const data = useSetupHealth();

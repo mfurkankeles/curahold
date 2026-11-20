@@ -3,6 +3,7 @@
 // more boards — tasks, sub-tasks, comments, the board's own fields and
 // "waits for" links — and an undo for 30 days. Nobody is notified and no
 // rules run: this is moving house, not new work.
+import type { BoardsRow, TasksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { IMPORT_FIELDS, planImport, type PlanBoard, type Target } from '../../../shared/src/importPlan';
@@ -45,6 +46,10 @@ const planSchema = z.object({
   createdBoards: z.array(uuid).max(50).optional(),
 });
 
+/**
+ * Imports tasks from a spreadsheet (up to 16 MB) with a column mapping that names exactly one title column.
+ * A dry run may name boards that do not exist yet; the real import only goes onto existing ones. Writers only.
+ */
 importRoutes.post('/task-imports', async (c) => {
   requireWriter(c);
   if (Number(c.req.header('content-length') ?? 0) > 16 * 1024 * 1024) fail('import_too_large', { max: MAX_ROWS });
@@ -222,11 +227,11 @@ importRoutes.post('/task-imports/:id/undo', async (c) => {
     const [bd] = await q.query<{ name: string }>('select name from boards where id = $1', [b.board_id]);
     const trashId = await toTrash(q, 'task', roots.map((r) => r.id), roots[0]?.title ?? '', { boardId: b.board_id, board: bd?.name, via: 'import' });
     // Sub-tasks go with their parent (the foreign key cascades).
-    const removed = await q.query(`delete from tasks where id = any($1::uuid[]) returning id`, [roots.map((r) => r.id)]);
+    const removed = await q.query<Pick<TasksRow, 'id'>>(`delete from tasks where id = any($1::uuid[]) returning id`, [roots.map((r) => r.id)]);
     if (removed.length !== roots.length) fail('forbidden');
     const made = (b.summary?.createdBoards ?? []) as string[];
     const putAway = made.length
-      ? await q.query(
+      ? await q.query<Pick<BoardsRow, 'id'>>(
           `update boards set archived_at = now() where id = any($1::uuid[]) and created_by = $2 and archived_at is null
               and not exists (select 1 from tasks t where t.board_id = boards.id and t.archived_at is null) returning id`,
           [made, auth.userId],

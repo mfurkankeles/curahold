@@ -1,3 +1,5 @@
+// Database rows to the API's shapes (shared/src/model.ts) for tasks, boards, comments, files and sprints. One place so
+// every route answers the same JSON; dates become ISO strings and DATE columns stay calendar days.
 import type { Board, Comment, FileMeta, Sprint, Task } from '../../../shared/src/model';
 import type { Row } from '../db';
 
@@ -11,6 +13,7 @@ const day = (v: unknown) => {
   return String(v).slice(0, 10);
 };
 
+/** A tasks row as the API's Task. */
 export const toTask = (r: Row): Task => ({
   id: r.id,
   boardId: r.board_id,
@@ -47,6 +50,7 @@ export const toTask = (r: Row): Task => ({
   ...(r.record_name !== undefined ? { recordName: r.record_name ?? null, recordType: r.record_type ?? null } : {}),
 });
 
+/** A boards row as the API's Board, with whether the reader may manage it. */
 export const toBoard = (r: Row, canManage: boolean): Board => ({
   departmentId: r.department_id,
   id: r.id,
@@ -65,6 +69,7 @@ export const toBoard = (r: Row, canManage: boolean): Board => ({
   pmEnabled: r.pm_enabled ?? null,
 });
 
+/** A comments row as the API's Comment. */
 export const toComment = (r: Row): Comment => ({
   id: r.id,
   taskId: r.task_id,
@@ -76,6 +81,7 @@ export const toComment = (r: Row): Comment => ({
   ...(r.portal_author_id ? { portalAuthorName: r.portal_author_name ?? null } : {}),
 });
 
+/** A files row as the API's FileMeta. */
 export const toFile = (r: Row): FileMeta => ({
   id: r.id,
   taskId: r.task_id ?? null,
@@ -90,6 +96,7 @@ export const toFile = (r: Row): FileMeta => ({
 
 export { iso, day };
 
+/** A sprints row as the API's Sprint. */
 export const toSprint = (r: Row): Sprint => ({
   id: r.id,
   boardId: r.board_id,

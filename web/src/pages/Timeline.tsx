@@ -26,6 +26,7 @@ const mondayOf = (iso: string) => {
   return addDays(iso, -((d.getUTCDay() + 6) % 7));
 };
 
+/** Every customer's recent activity in one timeline, filtered. */
 export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { boards, me, person } = useStore();

@@ -25,6 +25,7 @@ const PARTS = ['subtasks', 'records', 'entries', 'comments', 'files', 'portalPeo
 const ENTRY_KINDS = ['note', 'call', 'meeting', 'email', 'review'];
 const DAY = 86_400_000;
 
+/** The trash: what was deleted in the last 30 days, restorable, or emptied by those who may. */
 export function TrashPage() {
   const { t, locale } = useI18n();
   const { me, person, toast } = useStore();

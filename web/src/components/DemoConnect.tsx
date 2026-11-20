@@ -10,6 +10,7 @@ import { Dialog } from './ui';
 
 export const IN_DEMO = !!import.meta.env.APP_DEMO;
 
+/** In the demo: a pretend "connect" for an app, explaining what the real connection would do. */
 export function DemoConnect({ app }: { app: string }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);

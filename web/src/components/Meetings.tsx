@@ -31,6 +31,7 @@ import type { RecordType } from '../../../shared/src/records';
 // The customer's people exist only where the company keeps a contact record type: a screen never asks
 // for what is not there. One question per page view, shared by every section and dialog that needs it.
 let contactsAsk: { at: number; answer: Promise<boolean> } | null = null;
+/** Whether the company keeps contacts (a contact record type exists); asked once per page view and shared. */
 export function useHasContacts() {
   const [has, setHas] = useState<boolean | null>(null);
   useEffect(() => {

@@ -15,6 +15,7 @@ import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { Confirm } from './ui';
 
+/** Settings: the customer portal (on or off, sign-in methods, branding, what customers see). */
 export function PortalSettingsTab() {
   const { t, locale } = useI18n();
   const { toast, boards, reloadBoards } = useStore();

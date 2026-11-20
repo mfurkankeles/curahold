@@ -1,6 +1,7 @@
 // Connected services, managed by an administrator: list, connect (OAuth or
 // a webhook URL), test, rename, pause, remove. Credentials are sealed before
 // they reach the database and never come back out through the API.
+import type { ChatIdentitiesRow, ConnectionsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { zipSync, strToU8 } from 'fflate';
 import { z } from 'zod';
@@ -56,6 +57,7 @@ const toConnection = (r: any, linked: number): Connection => ({
 
 const COLUMNS = 'id, org_id, kind, provider, label, external_id, config, state, status, last_error, last_ok_at, created_by, created_at, updated_at';
 
+/** The tools the company can connect (messaging and CRMs available on this install) and the connections it has. */
 connectionRoutes.get('/connections', async (c) => {
   const rows = await run(c, (q) =>
     q.query(
@@ -69,6 +71,10 @@ connectionRoutes.get('/connections', async (c) => {
   return c.json({ providers: [...messagingProviders(cfg), ...crmProviders(cfg)], connections: rows.map((r) => toConnection(r, r.linked ?? 0)) });
 });
 
+/**
+ * Connects a messaging tool by webhook address (or, for Telegram, a bot token and chat). The address is checked for
+ * safety before it is saved (no private networks). Needs connections.manage.
+ */
 connectionRoutes.post('/connections/webhook', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(
@@ -115,6 +121,7 @@ connectionRoutes.post('/connections/webhook', async (c) => {
   return c.json({ id, ...(chat ? { chat: chat.title } : {}) }, 201);
 });
 
+/** Renames a connection or changes its settings. Needs connections.manage; audited. */
 connectionRoutes.patch('/connections/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -122,7 +129,7 @@ connectionRoutes.patch('/connections/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<ConnectionsRow, 'id'>>(
       `update connections set label = coalesce($2, label),
               status = case when $3::boolean is null then status when $3 then 'disabled' else 'active' end,
               updated_at = now()
@@ -135,13 +142,16 @@ connectionRoutes.patch('/connections/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Removes a connection; boards stop posting to it and people fall back to their next channel. Needs connections.manage; audited.
+ */
 connectionRoutes.delete('/connections/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const rows = await q.query('delete from connections where id = $1 returning id, provider', [id]);
+    const rows = await q.query<Pick<ConnectionsRow, 'id' | 'provider'>>('delete from connections where id = $1 returning id, provider', [id]);
     if (!rows.length) fail('not_found');
     // Boards stop posting to it; people fall back to their next channel.
     await q.query(
@@ -172,7 +182,7 @@ connectionRoutes.post('/connections/:id/test', async (c) => {
     if (!adapter.twoWay || input.channel) {
       await adapter.send(deps, conn!, { kind: 'channel', channel: input.channel ?? null }, msg);
     } else {
-      const [ident] = await run(c, (q) => q.query('select external_id, data from chat_identities where connection_id = $1 and user_id = $2', [id, auth.userId]));
+      const [ident] = await run(c, (q) => q.query<Pick<ChatIdentitiesRow, 'external_id' | 'data'>>('select external_id, data from chat_identities where connection_id = $1 and user_id = $2', [id, auth.userId]));
       let target = ident ? { externalId: ident.external_id as string, data: ident.data ?? {} } : null;
       if (!target && adapter.lookupUser) {
         const found = await adapter.lookupUser(deps, conn!, auth.email);
@@ -195,6 +205,9 @@ connectionRoutes.post('/connections/:id/test', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * The channels a messaging connection can post to, read live; empty for a tool without channels; 'connection_failed' on error.
+ */
 connectionRoutes.get('/connections/:id/channels', async (c) => {
   const id = param(c, 'id');
   const deps = c.get('deps');
@@ -210,6 +223,7 @@ connectionRoutes.get('/connections/:id/channels', async (c) => {
   }
 });
 
+/** People and groups in the connected tool's directory, for inviting them. Needs users.manage. */
 connectionRoutes.get('/connections/:id/directory', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -239,6 +253,7 @@ interface ConnectState {
 
 const connectCallback = (cfg: Deps['config']) => `${centralUrl(cfg)}/api/connect/callback`;
 
+/** Starts connecting a tool by OAuth: a signed state and a redirect to the provider. Needs connections.manage. */
 connectionRoutes.get('/connect/:provider/start', async (c) => {
   requirePerm(c, 'connections.manage');
   const deps = c.get('deps');
@@ -329,7 +344,7 @@ export async function connectCallback_(c: C) {
 
   const sealed = await seal(made.secret, secretsKey(cfg));
   const result = await deps.db.system(async (q) => {
-    const [other] = await q.query('select org_id from connections where provider = $1 and external_id = $2', [state.p, made!.externalId]);
+    const [other] = await q.query<Pick<ConnectionsRow, 'org_id'>>('select org_id from connections where provider = $1 and external_id = $2', [state.p, made!.externalId]);
     if (other && other.org_id !== org.id) return 'taken' as const;
     if (other) {
       await q.query(
@@ -355,12 +370,12 @@ export async function connectCallback_(c: C) {
   // Slack lets us match everyone by email right away; Teams and Google Chat
   // link each person when they open the app.
   if (state.p === 'slack') {
-    const conn = await deps.db.system((q) => q.query('select id from connections where provider = $1 and external_id = $2', ['slack', made!.externalId]));
+    const conn = await deps.db.system((q) => q.query<Pick<ConnectionsRow, 'id'>>('select id from connections where provider = $1 and external_id = $2', ['slack', made!.externalId]));
     const loaded = conn[0] ? await loadConnection(deps, org.id, conn[0].id) : null;
     if (loaded) {
       try {
         const dir = await ADAPTERS.slack.directory!(deps, loaded);
-        const users = await deps.db.system((q) => q.query(`select id, email from users where org_id = $1 and status in ('active', 'invited')`, [org.id]));
+        const users = await deps.db.system((q) => q.query<Pick<UsersRow, 'id' | 'email'>>(`select id, email from users where org_id = $1 and status in ('active', 'invited')`, [org.id]));
         const byEmail = new Map(users.map((u) => [u.email, u.id]));
         for (const p of dir.people) {
           const uid = byEmail.get(p.email);

@@ -19,6 +19,10 @@ export function isSalesforceToken(raw: string): boolean {
   }
 }
 
+/**
+ * Wraps fetch so calls go through the self-hosted relay when one is set (for tools only reachable from the customer's
+ * network); plain fetch otherwise.
+ */
 export function viaRelay(fetcher: typeof fetch, relay: Relay | undefined): typeof fetch {
   if (!relay) return fetcher;
   return ((input: RequestInfo | URL, init?: RequestInit) => {

@@ -10,7 +10,11 @@ const PUBLIC_DOMAINS = new Set([
   'hotmail.it', 'yahoo.de', 'windowslive.com', 'yandex.com.tr', 'mynet.com', 'hotmail.com.tr', 'outlook.com.tr',
 ]);
 
+/** The lowercase domain of an email address. */
 export const emailDomain = (email: string) => email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+/**
+ * Whether a domain is a free mail provider: such a domain can never be claimed by a company (anyone can have an address there).
+ */
 export const isPublicDomain = (domain: string) => PUBLIC_DOMAINS.has(domain.toLowerCase());
 
 // Subdomains that belong to Curahold itself.
@@ -22,12 +26,18 @@ export const RESERVED_SLUGS = new Set([
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 
+/**
+ * Why a company address (slug) cannot be used: 'format' or 'reserved' (Curahold's own subdomains), or null when fine.
+ */
 export function slugProblem(slug: string): 'format' | 'reserved' | null {
   if (!SLUG_RE.test(slug) || slug.includes('--')) return 'format';
   if (RESERVED_SLUGS.has(slug)) return 'reserved';
   return null;
 }
 
+/**
+ * A company address suggestion from a name: lowercase ASCII, accents and Turkish letters mapped, dashes between words.
+ */
 export function slugify(text: string): string {
   const map: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', İ: 'i', ö: 'o', ş: 's', ü: 'u', ä: 'a', ß: 'ss', é: 'e', è: 'e', á: 'a', ñ: 'n' };
   return text

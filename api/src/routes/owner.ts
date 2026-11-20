@@ -4,6 +4,7 @@
 // staff did, Plan & targets and the go-live checklist. Only the platform owner
 // in his own console session reaches these (ownerOnly); decisions are written
 // to the desk's log.
+import type { PlanTasksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CHECKLIST } from '../../../shared/src/checklist';
@@ -38,12 +39,24 @@ const id = (c: { req: { param: (k: string) => string } }) => {
   return v as string;
 };
 
+/**
+ * The owner console's top bar: pending approvals, new trial requests, and the AI team's token use this week against
+ * its budget. Owner only (ownerOnly middleware); db.system() in lib/ownerConsole.ts because it reads across companies.
+ */
 ownerRoutes.get('/bar', async (c) => c.json(await ownerBar(c.get('deps'))));
+/**
+ * The business at a glance: paid and failed invoices, renewals due, plan targets, the checklist and the owner's own day.
+ */
 ownerRoutes.get('/overview', async (c) => c.json(await ownerOverview(c.get('deps'), await by(c))));
+/** Revenue and the latest invoices across every company, from the billing records. */
 ownerRoutes.get('/revenue', async (c) => c.json(await ownerRevenue(c.get('deps'), await by(c))));
+/** Companies on a trial or free, with days left and activity. */
 ownerRoutes.get('/trials', async (c) => c.json({ trials: await ownerTrials(c.get('deps')) }));
+/** System health for the owner: recent errors, sync runs, broken connections and the AI team's audit activity. */
 ownerRoutes.get('/system', async (c) => c.json(await ownerSystem(c.get('deps'))));
+/** Support at a glance: open help requests (blocking first) and who on the desk holds them. */
 ownerRoutes.get('/support', async (c) => c.json(await ownerSupport(c.get('deps'))));
+/** Everything support staff did, newest first, paged with an ISO `before`; 400 for a bad date. */
 ownerRoutes.get('/activity', async (c) => {
   const before = c.req.query('before');
   if (before && Number.isNaN(Date.parse(before))) fail('validation');
@@ -53,21 +66,25 @@ ownerRoutes.get('/activity', async (c) => {
 // ------------------------------------------------------------ trial requests
 
 const statusQ = z.enum([...TRIAL_REQUEST_STATUSES, 'open', 'all']);
+/** Trial requests by `status` (default "open"), with the console's trial settings. */
 ownerRoutes.get('/requests', async (c) => {
   const s = statusQ.safeParse(c.req.query('status') ?? 'open');
   if (!s.success) return fail('validation');
   return c.json({ requests: await listTrialRequests(c.get('deps'), s.data), settings: await consoleSettings(c.get('deps')) });
 });
+/** One trial request with its history; 404 when unknown. */
 ownerRoutes.get('/requests/:id', async (c) => {
   const d = await trialRequestDetail(c.get('deps'), id(c));
   if (!d) fail('not_found');
   return c.json(d);
 });
+/** Marks a trial request as contacted, with an optional note. */
 ownerRoutes.post('/requests/:id/contacted', async (c) => {
   const input = await body(c, z.object({ note: z.string().trim().max(4000).nullable().default(null) }));
   await markContacted(c.get('deps'), id(c), await by(c), input.note);
   return c.json({ ok: true });
 });
+/** Approves a trial request: creates the company with the chosen departments, seat cap and end date (ADR 0017). */
 ownerRoutes.post('/requests/:id/approve', async (c) => {
   const input = await body(
     c,
@@ -81,10 +98,12 @@ ownerRoutes.post('/requests/:id/approve', async (c) => {
   );
   return c.json(await approveTrialRequest(c.get('deps'), id(c), await by(c), { ...input, departments: [...new Set(input.departments)] }));
 });
+/** Rejects a trial request with an optional reason. */
 ownerRoutes.post('/requests/:id/reject', async (c) => {
   const input = await body(c, z.object({ reason: z.string().trim().max(2000).nullable().default(null) }));
   return c.json(await rejectTrialRequest(c.get('deps'), id(c), await by(c), input.reason));
 });
+/** Changes the console's trial defaults (seat cap, months). Each change is logged with who made it. */
 ownerRoutes.put('/settings', async (c) => {
   const input = await body(c, z.object({ 'trial.seatCap': z.number().int().min(1).max(100000).optional(), 'trial.months': z.number().int().min(1).max(12).optional() }));
   const who = await by(c);
@@ -95,6 +114,7 @@ ownerRoutes.put('/settings', async (c) => {
 // ------------------------------------------------------------ plan & targets
 
 ownerRoutes.get('/plan', async (c) => c.json(await ownerPlan(c.get('deps'))));
+/** Sets monthly targets for the owner's plan metrics (`YYYY-MM` periods); null clears one. */
 ownerRoutes.put('/plan/targets', async (c) => {
   const input = await body(
     c,
@@ -120,15 +140,17 @@ ownerRoutes.put('/plan/targets', async (c) => {
   });
   return c.json(await ownerPlan(c.get('deps')));
 });
+/** Adds a task to the owner's plan (201). */
 ownerRoutes.post('/plan/tasks', async (c) => {
   const input = await body(c, z.object({ title: z.string().trim().min(1).max(300), dueOn: isoDate }));
   const [row] = await c.get('deps').db.system((q) => q.query<{ id: string }>(`insert into plan_tasks (title, due_on) values ($1, $2) returning id`, [input.title, input.dueOn]));
   return c.json({ id: row.id }, 201);
 });
+/** Edits a plan task: done/undone, due date, title; 404 when unknown. */
 ownerRoutes.patch('/plan/tasks/:id', async (c) => {
   const input = await body(c, z.object({ done: z.boolean().optional(), dueOn: isoDate.optional(), title: z.string().trim().min(1).max(300).optional() }));
   const [row] = await c.get('deps').db.system((q) =>
-    q.query(
+    q.query<Pick<PlanTasksRow, 'id'>>(
       `update plan_tasks set done_at = case when $2::boolean is null then done_at when $2 then coalesce(done_at, now()) else null end,
               due_on = coalesce($3::date, due_on), title = coalesce($4, title) where id = $1 returning id`,
       [id(c), input.done ?? null, input.dueOn ?? null, input.title ?? null],
@@ -137,6 +159,7 @@ ownerRoutes.patch('/plan/tasks/:id', async (c) => {
   if (!row) fail('not_found');
   return c.json({ ok: true });
 });
+/** Removes a plan task. */
 ownerRoutes.delete('/plan/tasks/:id', async (c) => {
   await c.get('deps').db.system((q) => q.query('delete from plan_tasks where id = $1', [id(c)]));
   return c.json({ ok: true });
@@ -145,7 +168,9 @@ ownerRoutes.delete('/plan/tasks/:id', async (c) => {
 // ------------------------------------------------------------ checklist
 
 const ITEMS = new Set(CHECKLIST.map((i) => i.id));
+/** The go-live checklist with each item's status, note and evidence. */
 ownerRoutes.get('/checklist', async (c) => c.json(await ownerChecklist(c.get('deps'))));
+/** Marks a go-live checklist item todo, done or skipped, with note and evidence; 404 for an unknown item. */
 ownerRoutes.put('/checklist/:item', async (c) => {
   const item = c.req.param('item');
   if (!ITEMS.has(item)) fail('not_found');

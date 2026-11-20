@@ -42,6 +42,7 @@ let source: SetupSource = tableSource;
 export function setSetupSource(s: SetupSource | null) {
   source = s ?? tableSource;
 }
+/** The company's setup progress, read through the shared source. */
 export const setupState = (q: Q, orgId: string) => source.read(q, orgId);
 
 /**

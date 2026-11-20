@@ -13,6 +13,7 @@ export interface Money {
   rates: Record<string, number>;
 }
 
+/** The company's currency with its exchange rates, for converting amounts into it. */
 export const moneyOf = (base: string, fx?: FxRates | null): Money => ({ base, rates: fx?.rates ?? {} });
 
 /** The currencies a company can pick for an amount: its own and those with a rate. */

@@ -30,8 +30,10 @@ export function useMedia(query: string): boolean {
     () => false,
   );
 }
+/** Whether the screen is phone-sized. */
 export const usePhone = () => useMedia(PHONE);
 
+/** Filters as an inline bar on desktop and a bottom sheet on phones, with the count and Clear. */
 export function FilterSheet({ search, count, onClear, children, title, after }: { search?: ReactNode; count: number; onClear?: () => void; children: ReactNode; title?: string; after?: ReactNode }) {
   const phone = usePhone();
   const [open, setOpen] = useState(false);

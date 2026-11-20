@@ -7,8 +7,10 @@ import type { Department, DepartmentKey } from '../../../shared/src/model';
 import { useI18n } from './i18n';
 import { useStore } from './store';
 
+/** A department's name in the reader's language. */
 export const deptName = (t: (k: MessageKey) => string, key: DepartmentKey) => t(`dept.${key}` as MessageKey);
 
+/** The company's departments and which ones the person may manage, from the session. */
 export function useDepartments() {
   const { me, can } = useStore();
   const { t } = useI18n();

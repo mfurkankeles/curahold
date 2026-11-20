@@ -11,6 +11,7 @@
 //   There is no way to decide anything from here: an agent's key is not a
 //   console session, so the owner's door refuses it too. Every call is in the
 //   audit trail; a paused seat can only read; three refusals in an hour pause it.
+import type { AgentMemoryRow, AgentTasksRow, MeetingsRow, SeatsRow } from '../db/rows.gen';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { LOG_KINDS, PRIORITIES3, RISKS, SEAT_FILLED_BY, SEAT_STATES, SEAT_TIERS, TASK_STATUSES } from '../../../shared/src/office';
@@ -97,7 +98,14 @@ officeRoutes.use('*', async (c, next) => {
 });
 const owner = async (c: C) => (await ownerOnly(c)).email;
 
+/**
+ * Owner door: every AI seat with its state, usage and budget, plus the active pauses.
+ * db.system() throughout this file: the AI team's tables belong to the platform, not to a company (ADR 0011).
+ */
 officeRoutes.get('/seats', async (c) => c.json({ seats: await listSeats(c.get('deps'), nowOf(c.get('deps'))), pauses: await listPauses(c.get('deps')) }));
+/**
+ * Owner door: creates or edits a seat's card (title, tier, budget, what it may propose). 400 'validation' on bad input.
+ */
 officeRoutes.put('/seats/:seat', async (c) => {
   const seat = seatId.parse(c.req.param('seat'));
   const input = await body(
@@ -129,13 +137,17 @@ officeRoutes.post('/seats/:seat/key', async (c) => {
   const key = `ag_${seat}_${randomToken(24)}`;
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
-    const [r] = await q.query('update seats set key_hash = $2, updated_at = now() where seat = $1 returning seat', [seat, await sha256Hex(key)]);
+    const [r] = await q.query<Pick<SeatsRow, 'seat'>>('update seats set key_hash = $2, updated_at = now() where seat = $1 returning seat', [seat, await sha256Hex(key)]);
     if (r) await auditLine(q, { seat, actor: 'owner', what: 'seat.key', target: seat, detail: { by: who } });
     return !!r;
   });
   if (!ok) fail('not_found');
   return c.json({ key });
 });
+/**
+ * Owner door: hands a seat to an agent or to a named person ("filledBy"); a human seat needs `humanEmail`.
+ * A seat filled by a human loses its agent key at once (agentAuth refuses human seats).
+ */
 officeRoutes.post('/seats/:seat/handover', async (c) => {
   const seat = seatId.parse(c.req.param('seat'));
   const input = await body(c, z.object({ filledBy: z.enum(SEAT_FILLED_BY), humanEmail: z.string().trim().toLowerCase().email().max(320).nullable().default(null) }));
@@ -144,6 +156,7 @@ officeRoutes.post('/seats/:seat/handover', async (c) => {
   return c.json(await c.get('deps').db.system((q) => handOver(q, seat, input, who)));
 });
 
+/** Owner door: the approval queue, filtered by `status` (default "open"). Only this door decides approvals. */
 officeRoutes.get('/approvals', async (c) => {
   const s = z.enum(['pending', 'approved', 'rejected', 'meeting', 'done', 'failed', 'open', 'all']).safeParse(c.req.query('status') ?? 'open');
   if (!s.success) return fail('validation');
@@ -166,6 +179,7 @@ officeRoutes.post('/approvals/:id/decide', async (c) => {
   return c.json({ approval: a });
 });
 
+/** Owner door: the company log, optionally one seat's or one thread's, paged with `before`. */
 officeRoutes.get('/log', async (c) => {
   const seat = c.req.query('seat');
   const thread = c.req.query('thread');
@@ -174,31 +188,37 @@ officeRoutes.get('/log', async (c) => {
   if (thread && !uuid.safeParse(thread).success) fail('validation');
   return c.json({ log: await readLog(c.get('deps'), { seat, thread, before }) });
 });
+/** Owner door: the owner writes a note in the company log (201). */
 officeRoutes.post('/log', async (c) => {
   const input = await body(c, z.object({ body: text(8000), thread: uuid.nullable().optional(), ref: opt(200) }));
   return c.json({ entry: await c.get('deps').db.system((q) => writeLog(q, OWNER_SEAT, { kind: 'note', ...input })) }, 201);
 });
+/** Owner door: the audit trail of every agent call and gate decision, optionally for one seat. */
 officeRoutes.get('/audit', async (c) => {
   const seat = c.req.query('seat');
   return c.json({ audit: await readAudit(c.get('deps'), { seat: seat || undefined, before: Number(c.req.query('before')) || undefined }) });
 });
+/** Owner door: the agents' work queue (open first, then done), optionally for one seat. */
 officeRoutes.get('/tasks', async (c) => {
   const seat = c.req.query('seat');
   const rows = await c.get('deps').db.system((q) =>
-    q.query(`select * from agent_tasks where ($1::text is null or seat = $1) and status <> 'cancelled' order by (status = 'done'), created_at desc limit 300`, [seat || null]),
+    q.query<AgentTasksRow>(`select * from agent_tasks where ($1::text is null or seat = $1) and status <> 'cancelled' order by (status = 'done'), created_at desc limit 300`, [seat || null]),
   );
   return c.json({ tasks: rows.map((r) => ({ id: r.id, seat: r.seat, title: r.title, detail: r.detail, status: r.status, priority: r.priority, fromSeat: r.from_seat, dueAt: r.due_at, result: r.result, createdAt: r.created_at, doneAt: r.done_at })) });
 });
 
+/** Owner door: meetings, filtered by whether the owner attends (`with=me|without`) and by seat. */
 officeRoutes.get('/meetings', async (c) => {
   const w = c.req.query('with');
   return c.json({ meetings: await listMeetings(c.get('deps'), { withOwner: w === 'me' ? true : w === 'without' ? false : undefined, seat: c.req.query('seat') || undefined }) });
 });
+/** Owner door: one meeting with its lines and minutes; 404 when unknown. */
 officeRoutes.get('/meetings/:id', async (c) => {
   const d = await meetingDetail(c.get('deps'), idOf(c));
   if (!d) fail('not_found');
   return c.json(d);
 });
+/** Owner door: the owner calls a meeting with the given seats; audited as "meeting.call" (201). */
 officeRoutes.post('/meetings', async (c) => {
   const input = await body(c, meetingInput);
   const who = await owner(c);
@@ -215,7 +235,11 @@ officeRoutes.post('/meetings/:id/lines', async (c) => {
   return c.json({ line: await c.get('deps').db.system((q) => addMeetingLine(q, idOf(c), OWNER_SEAT, input.body)) }, 201);
 });
 
+/** Owner door: the pauses in force (all, a team, or one seat). */
 officeRoutes.get('/pauses', async (c) => c.json({ pauses: await listPauses(c.get('deps')) }));
+/**
+ * Owner door: the pause switch. `scope` "all" takes no target; "team"/"seat" need one. A paused seat can only read (201).
+ */
 officeRoutes.post('/pauses', async (c) => {
   const input = await body(c, z.object({ scope: z.enum(['all', 'team', 'seat']), target: seatId.nullable().default(null), reason: opt(500) }));
   if ((input.scope === 'all') !== (input.target === null)) fail('validation');
@@ -223,6 +247,7 @@ officeRoutes.post('/pauses', async (c) => {
   const id = await c.get('deps').db.system((q) => pause(q, input.scope, input.target, who, input.reason ?? null));
   return c.json({ id, pauses: await listPauses(c.get('deps')) }, 201);
 });
+/** Owner door: lifts a pause. Pauses set by the monitor are lifted here too, by the owner only (ADR 0011). */
 officeRoutes.delete('/pauses/:id', async (c) => {
   const who = await owner(c);
   await c.get('deps').db.system((q) => resume(q, idOf(c), who));
@@ -273,24 +298,32 @@ const agentAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
 agentRoutes.use('*', agentAuth);
 const me = (c: C) => SEAT_OF.get(c.req.raw) ?? fail('unauthenticated');
 
+/**
+ * Agent door: the calling seat's own card, open tasks and memory (the key decides which seat; never a parameter).
+ */
 agentRoutes.get('/me', async (c) => {
   const deps = c.get('deps');
   const s = me(c);
   const [seat] = await listSeats(deps, nowOf(deps), s.seat);
   const [tasks, memory] = await deps.db.system(async (q) => [
-    await q.query(`select id, title, detail, status, priority, from_seat, due_at, created_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at limit 100`, [s.seat]),
-    await q.query('select key, value, updated_at from agent_memory where seat = $1 order by key', [s.seat]),
+    await q.query<Pick<AgentTasksRow, 'id' | 'title' | 'detail' | 'status' | 'priority' | 'from_seat' | 'due_at' | 'created_at'>>(`select id, title, detail, status, priority, from_seat, due_at, created_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at limit 100`, [s.seat]),
+    await q.query<Pick<AgentMemoryRow, 'key' | 'value' | 'updated_at'>>('select key, value, updated_at from agent_memory where seat = $1 order by key', [s.seat]),
   ]);
   return c.json({ seat, tasks, memory });
 });
+/** Agent door: the calling seat's slice of the company log (what it wrote, was sent, or was in). */
 agentRoutes.get('/log', async (c) => {
   const before = Number(c.req.query('before')) || undefined;
   return c.json({ log: await readLog(c.get('deps'), { slice: me(c).seat, before, limit: 100 }) });
 });
+/**
+ * Agent door: an agent writes in the log. The "decision" kind is excluded: agents never record decisions (ADR 0011).
+ */
 agentRoutes.post('/log', async (c) => {
   const input = await body(c, z.object({ kind: z.enum(LOG_KINDS).exclude(['decision']), body: text(8000), thread: uuid.nullable().optional(), ref: opt(200) }));
   return c.json({ entry: await c.get('deps').db.system((q) => writeLog(q, me(c).seat, input)) }, 201);
 });
+/** Agent door: saves one memory entry for the calling seat (key: lowercase, digits, `._-`, up to 81 chars). */
 agentRoutes.put('/memory/:key', async (c) => {
   const key = z.string().regex(/^[a-z0-9][a-z0-9._-]{0,80}$/).parse(c.req.param('key'));
   const input = await body(c, z.object({ value: z.string().max(16000) }));
@@ -299,6 +332,7 @@ agentRoutes.put('/memory/:key', async (c) => {
   );
   return c.json({ ok: true });
 });
+/** Agent door: removes one of the calling seat's memory entries. */
 agentRoutes.delete('/memory/:key', async (c) => {
   await c.get('deps').db.system((q) => q.query('delete from agent_memory where seat = $1 and key = $2', [me(c).seat, c.req.param('key')]));
   return c.json({ ok: true });
@@ -311,6 +345,7 @@ agentRoutes.post('/approvals', async (c) => {
   await c.get('deps').live?.platform?.().catch(() => undefined);
   return c.json(r, 201);
 });
+/** Agent door: the calling seat's own proposals and how the owner decided them (read-only). */
 agentRoutes.get('/approvals', async (c) => c.json({ approvals: await listApprovals(c.get('deps'), 'all', me(c).seat) }));
 
 /** Work for another seat (or itself): short and structured — what, context, when. */
@@ -327,7 +362,7 @@ agentRoutes.post('/tasks', async (c) => {
 agentRoutes.patch('/tasks/:id', async (c) => {
   const input = await body(c, z.object({ status: z.enum(TASK_STATUSES), result: opt(8000) }));
   const [r] = await c.get('deps').db.system((q) =>
-    q.query(
+    q.query<Pick<AgentTasksRow, 'id'>>(
       `update agent_tasks set status = $3, result = coalesce($4, result), done_at = case when $3 in ('done', 'cancelled') then now() else null end
         where id = $1 and seat = $2 returning id`,
       [idOf(c), me(c).seat, input.status, input.result ?? null],
@@ -343,29 +378,38 @@ agentRoutes.post('/meetings', async (c) => {
   const input = await body(c, meetingInput.extend({ withOwner: z.boolean().default(false) }));
   return c.json({ meeting: await c.get('deps').db.system((q) => createMeeting(q, me(c).seat, input)) }, 201);
 });
+/** Agent door: adds a line to a meeting the seat called or attends (any meeting for the note-taker); else 403. */
 agentRoutes.post('/meetings/:id/lines', async (c) => {
   const input = await body(c, z.object({ body: text(8000) }));
   const id = idOf(c);
   const line = await c.get('deps').db.system(async (q) => {
-    const [m] = await q.query('select attendees, called_by from meetings where id = $1', [id]);
+    const [m] = await q.query<Pick<MeetingsRow, 'attendees' | 'called_by'>>('select attendees, called_by from meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (me(c).tier !== 'note-taker' && m.called_by !== me(c).seat && !(m.attendees as string[]).includes(me(c).seat)) fail('forbidden');
     return addMeetingLine(q, id, me(c).seat, input.body);
   });
   return c.json({ line }, 201);
 });
+/**
+ * Agent door: one meeting, only for its caller, its attendees or the note-taker; 403 otherwise, 404 when unknown.
+ */
 agentRoutes.get('/meetings/:id', async (c) => {
   const d = await meetingDetail(c.get('deps'), idOf(c));
   if (!d) return fail('not_found');
   if (me(c).tier !== 'note-taker' && d.meeting.calledBy !== me(c).seat && !d.meeting.attendees.includes(me(c).seat)) fail('forbidden');
   return c.json(d);
 });
+/** Agent door: the note-taker seat writes a meeting's minutes; any other tier gets 403. */
 agentRoutes.put('/meetings/:id/minutes', async (c) => {
   if (me(c).tier !== 'note-taker') fail('forbidden');
   const input = await body(c, minutes);
   return c.json(await c.get('deps').db.system((q) => writeMinutes(q, idOf(c), me(c).seat, input as Parameters<typeof writeMinutes>[3], c.get('deps'))));
 });
 
+/**
+ * Agent door: an agent reports tokens and cost it used outside this server, so the weekly budget and the monthly cap
+ * count them too (ADR 0010). The amounts are bounded so a faulty report cannot overflow the counters.
+ */
 agentRoutes.post('/usage', async (c) => {
   const input = await body(c, z.object({ tokens: z.number().int().min(0).max(1e10), costUsd: z.number().min(0).max(1e6).default(0), summary: opt(2000) }));
   const deps = c.get('deps');

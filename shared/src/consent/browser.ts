@@ -19,6 +19,7 @@ import {
 type W = Window & Record<string, any>;
 const win = (): W | null => (typeof window === 'undefined' ? null : (window as unknown as W));
 
+/** The visitor's stored consent; an expired or old-version record is removed and treated as no choice yet. */
 export function readStored(): ConsentState {
   const w = win();
   if (!w) return defaultConsent();
@@ -33,6 +34,7 @@ export function readStored(): ConsentState {
   }
 }
 
+/** Saves the visitor's consent, plus a copy of the analytics answer the A/B edge can read (strictly necessary). */
 export function store(state: ConsentState, cfg?: Pick<ConsentConfig, 'ab'>): void {
   const w = win();
   if (!w) return;

@@ -99,6 +99,7 @@ export type HealthWhyData = { health: HealthResult | null; history: { day: strin
 
 /** The live score and its reasons for one customer; asked again when `again` changes. */
 const whyCache = new Map<string, HealthWhyData>();
+/** Why a customer has its health score (each signal's points), cached per customer. */
 export function useHealthWhy(accountId: string, on: boolean, again = 0) {
   const [data, setData] = useState<HealthWhyData | null>(() => whyCache.get(accountId) ?? null);
   useEffect(() => {
@@ -242,6 +243,7 @@ function timeLabel(iso: string, locale: string) {
 }
 const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
+/** A customer's timeline: notes, meetings, calls, tasks, synced activity, with adding and filters. */
 export function AccountTimeline({ accountId, hasContacts }: { accountId: string; hasContacts: boolean }) {
   const { t, locale } = useI18n();
   const { me, people, canWrite, can } = useStore();
@@ -760,6 +762,7 @@ function EditActivity({ activity, onClose, onSaved }: { activity: Activity; onCl
 
 const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement', 'payment'];
 
+/** Settings: customer health scoring (signals, weights, bands). */
 export function HealthSettings() {
   const { t, locale } = useI18n();
   const { me, reloadMe } = useStore();

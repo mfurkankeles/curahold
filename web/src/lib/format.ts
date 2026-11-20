@@ -11,6 +11,7 @@ import { intlTag, type Locale } from '../../../shared/src/i18n/core';
 // 'YYYY-MM-DDTHH:mm' in their own clock (what <input type="datetime-local"> gave).
 
 const pad = (n: number) => String(n).padStart(2, '0');
+/** A YYYY-MM-DD text from year, month and day. */
 export const isoDay = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`;
 /** A day's parts; null when the text is not a real day. */
 export function dayParts(iso: string | null | undefined): { y: number; m: number; d: number } | null {
@@ -25,6 +26,7 @@ function realDay(y: number, m: number, d: number) {
 }
 /** Noon UTC on that day: formatting it in any time zone keeps the same calendar day. */
 export const dayDate = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+/** An ISO day moved by `days` (calendar arithmetic, no time zone). */
 export function shiftDay(iso: string, days: number): string {
   const d = dayDate(iso);
   d.setUTCDate(d.getUTCDate() + days);

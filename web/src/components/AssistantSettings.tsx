@@ -16,6 +16,10 @@ interface View {
   retentionChoices: number[];
 }
 
+/**
+ * Settings: the company's assistant, off until an administrator turns it on (with a notice of what goes to the AI
+ * provider), its monthly dollar limit and how long questions are kept.
+ */
 export function AssistantSettings() {
   const { t, locale } = useI18n();
   const { toast } = useStore();

@@ -9,6 +9,9 @@ export const searchRoutes = new Hono<AppEnv>();
 
 const PER_KIND = 6;
 
+/**
+ * Searches customers, tasks, records, boards and people the reader can see (2 to 80 characters), in one statement.
+ */
 searchRoutes.get('/search', async (c) => {
   const raw = (c.req.query('q') ?? '').trim().slice(0, 80);
   if (raw.length < 2) return c.json({ accounts: [], tasks: [], records: [], boards: [], people: [] });

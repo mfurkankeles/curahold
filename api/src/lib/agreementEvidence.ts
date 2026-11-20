@@ -97,6 +97,10 @@ function material(r: Omit<Row, 'row_hash' | 'prev_hash'>): string {
   ]);
 }
 
+/**
+ * The hash chaining one evidence row to the previous one: sha256(previous hash + the row's fields). Changing or removing
+ * any stored row breaks every hash after it, so tampering shows (ADR 0014).
+ */
 export const rowHash = (prev: string, r: Omit<Row, 'row_hash' | 'prev_hash'>) => sha256Hex(prev + material(r));
 
 /** Writes one acceptance at the end of the chain (inside the caller's transaction). */

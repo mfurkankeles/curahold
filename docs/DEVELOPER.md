@@ -201,6 +201,14 @@ grant select, insert on widgets to curahold_app;
 Foreign keys pair `org_id` with the id so a row can never point into
 another company. Run `npm test`: migrations run on every test setup.
 
+Then regenerate the row types: `npx tsx scripts/db/row-types.ts` writes
+`api/src/db/rows.gen.ts` (one interface per table, read from the migrated schema;
+`--check` says when it is stale). Pass them to queries so a misspelt column is a
+type error: `q.query<WidgetsRow>('select * from widgets where id = $1', [id])`, or
+`q.query<Pick<WidgetsRow, 'id' | 'name'>>(…)` for some columns. A join or computed
+column gets its own small type. Nullable columns are `| null`; JSON columns are
+`Json` and are narrowed where they are read.
+
 ### an API endpoint
 
 In the matching `api/src/routes/*.ts`:
@@ -212,7 +220,7 @@ widgetRoutes.post('/widgets', async (c) => {
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(200) }));
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [w] = await q.query('insert into widgets (org_id, name, created_by) values (app_org(), $1, $2) returning *', [input.name, auth.userId]);
+    const [w] = await q.query<WidgetsRow>('insert into widgets (org_id, name, created_by) values (app_org(), $1, $2) returning *', [input.name, auth.userId]);
     await audit(q, { orgId: c.get('org').id, actorId: auth.userId, action: 'widget.created', entity: 'widget', entityId: w.id });
     return w;
   });
@@ -243,11 +251,11 @@ Add it to the `groups` list and the switch at the bottom of
 
 ### a word on screen
 
-Put `"key": ["English", "Türkçe"]` pairs in a JSON file and run
-`npx tsx scripts/add-strings.ts strings.json` (it adds new keys and changes
-existing ones in the English and Turkish dictionaries only), then add the
-same keys to the other dictionaries in `shared/src/i18n/` by hand — the
-i18n test fails until every language has them. Check terms against
+Put the words for every language in a JSON file,
+`{ "widgets.title": { "en": "Widgets", "tr": "Parçacıklar", "ar": "…", … } }`, and run
+`npm run strings -- strings.json` (`--check` to preview). It writes every dictionary
+in `shared/src/i18n/` that `LOCALES` names, changes keys already there in place, and
+refuses the whole file if any key lacks a language, so no dictionary falls behind. Check terms against
 `shared/src/i18n/glossary.ts`. Variables are written
 `{name}`; `{account}` / `{accounts_l}` are the company's own word for its
 customers.
@@ -431,7 +439,7 @@ saves a screenshot. Run them after any change to a screen.
 | Customers (accounts) | `routes/accounts.ts` | `pages/Accounts.tsx`, `components/AccountViews.tsx` | `model.ts`, `fields.ts` | `accounts.test.ts` |
 | Records (contacts, opportunities, presets) | `routes/records.ts`, `lib/records.ts` | `components/Records.tsx`, `Pipeline.tsx` | `records.ts` | `deals.test.ts`, `sync.test.ts` |
 | A record on its own, its thread and files | `routes/records.ts` (`/records/:id?full=1`, comments, files) | `components/RecordPanel.tsx`, `Thread.tsx` | `records.ts` | `deals.test.ts` |
-| Playbooks | `routes/work.ts` (`/plans`), `lib/playbooks.ts` | `components/Plans.tsx` | `model.ts` (PlanTemplate), `playbooks.ts` | `deals.test.ts`, `tasks-plus.test.ts` |
+| Playbooks | `routes/work.ts` (`/plans`), `lib/playbooks.ts` | `components/Plans.tsx` | `model.ts` (PlanTemplate), `playbooks.ts` | `deals.test.ts`, `task-fields-links-views.test.ts` |
 | Setup health, "Test your setup", go-live gate | `lib/setupHealth.ts`, `routes/setupHealth.ts`, `lib/scheduler.ts` (daily) | `pages/SetupHealth.tsx`, `pages/SetupTest.tsx`, `components/SetupWarnings.tsx` | `setupHealth.ts` | `setup-health.test.ts` |
 | Renewals that start by themselves | `lib/playbooks.ts` (`startRenewals`), `lib/scheduler.ts` | `components/Rhythm.tsx` (Renewals section) | `rhythm.ts` | `deals.test.ts` |
 | Renewals view (deal and agreement per customer) | `routes/records.ts` (`/renewals/links`) | `components/AccountViews.tsx` (RenewalsView) | `records.ts` (RenewalLinks) | `deals.test.ts` |

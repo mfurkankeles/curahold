@@ -16,6 +16,7 @@ function byDepth(nodes: ChainNode[]): [number, ChainNode[]][] {
   return [...m.entries()].sort((a, b) => a[0] - b[0]);
 }
 
+/** In a task: the chain of tasks it waits on and that wait on it. */
 export function ChainSection({ task }: { task: TaskDetail }) {
   const { t } = useI18n();
   const links = task.links ?? [];

@@ -15,6 +15,7 @@ export const GRAPH_SCOPE = 'openid email profile offline_access User.ReadBasic.A
 
 let tokenCache: { value: string; exp: number } | null = null;
 
+/** A Bot Framework access token for the Teams bot, cached until shortly before it expires. */
 export async function botToken(deps: Deps): Promise<string> {
   const t = deps.config.connectors.teams;
   if (!t) throw new FatalChatError('teams not configured');
@@ -36,6 +37,7 @@ export async function botToken(deps: Deps): Promise<string> {
   return tokenCache.value;
 }
 
+/** A notification as a Teams Adaptive Card, with action buttons when allowed. */
 export function adaptiveCard(msg: ChatMessage, withActions = true) {
   return {
     contentType: 'application/vnd.microsoft.card.adaptive',
@@ -66,6 +68,10 @@ function safeServiceUrl(raw: unknown): string {
   return u.origin + u.pathname.replace(/\/+$/, '');
 }
 
+/**
+ * Calls the Bot Framework at a conversation's service address. The address is checked (safeServiceUrl) so an incoming
+ * activity cannot point our token at another host.
+ */
 export async function botCall(deps: Deps, serviceUrl: string, path: string, method: string, body?: unknown) {
   const res = await fetchOf(deps)(`${safeServiceUrl(serviceUrl)}${path}`, {
     method,
@@ -77,6 +83,7 @@ export async function botCall(deps: Deps, serviceUrl: string, path: string, meth
   return readJson(res);
 }
 
+/** One member of a Teams conversation (name, email), to link them to a person. */
 export async function teamsMember(deps: Deps, serviceUrl: string, conversationId: string, memberId: string) {
   const m = await botCall(deps, serviceUrl, `/v3/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(memberId)}`, 'GET');
   const email = String(m.email ?? m.userPrincipalName ?? '').toLowerCase();

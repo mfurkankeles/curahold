@@ -8,6 +8,7 @@ import { Dialog } from './ui';
 import { Icon } from './icons';
 
 const mac = () => /Mac|iPhone|iPad/.test(navigator.platform);
+/** The modifier key's symbol on this device (⌘ on Apple, Ctrl elsewhere). */
 export const modKey = () => (mac() ? '⌘' : 'Ctrl');
 
 const GO: Record<string, string> = { h: '/home', m: '/my', c: '/calendar', a: '/accounts', s: '/settings', p: '/profile' };
@@ -48,6 +49,7 @@ export function useShortcuts(actions: ShellActions, canWrite: boolean) {
   }, [actions, canWrite]);
 }
 
+/** The keyboard shortcuts list. */
 export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
   const { t, words } = useI18n();
   const mod = modKey();

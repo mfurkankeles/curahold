@@ -5,6 +5,7 @@
 //   3. on a full run, archive what disappeared there,
 //   4. record what happened (sync_runs) for the history screen.
 // Works with owner access, so every statement filters by company explicitly.
+import type { AccountsRow, BoardsRow, ConnectionsRow, OrgsRow, RecordTypesRow, RecordsRow, SprintsRow, SyncChangesRow, SyncLinksRow, SyncRunsRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
 import { calculated, ISSUE_TYPES, SPRINT_STATES, type AccountField, type Column, type FieldOption } from '../../../shared/src/model';
@@ -60,8 +61,12 @@ export interface LoadedCrm {
   secret: CrmSecret;
 }
 
+/**
+ * One sync connection of a company with its credentials unsealed; null when unknown. db.system() with both id and
+ * org_id, because the sync job runs without a signed-in person.
+ */
 export async function loadCrm(deps: Deps, orgId: string, id: string): Promise<LoadedCrm | null> {
-  const [r] = await deps.db.system((q) => q.query(`select * from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, orgId]));
+  const [r] = await deps.db.system((q) => q.query<ConnectionsRow>(`select * from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, orgId]));
   if (!r || !isCrm(r.provider)) return null;
   const config = r.config ?? {};
   return {
@@ -77,6 +82,7 @@ export async function loadCrm(deps: Deps, orgId: string, id: string): Promise<Lo
   };
 }
 
+/** A stored sync setup with defaults for anything missing (older connections saved fewer keys). */
 export function normalizeSync(raw: any): SyncConfig {
   return { objects: Array.isArray(raw?.objects) ? raw.objects : [], owners: raw?.owners ?? {}, conflict: raw?.conflict ?? 'latest', file: raw?.file, startedAt: raw?.startedAt };
 }
@@ -100,7 +106,7 @@ export function crmCtx(deps: Deps, conn: LoadedCrm): CrmCtx {
       return deps.db.system(async (q) => {
         // One renewal at a time per connection, whichever server process asks. Services that hand out a new
         // refresh token on every use refuse the old one: a second renewal with it would look like a break-in.
-        const [row] = await q.query('select secret from connections where id = $1 and org_id = $2 for update', [conn.id, conn.orgId]);
+        const [row] = await q.query<Pick<ConnectionsRow, 'secret'>>('select secret from connections where id = $1 and org_id = $2 for update', [conn.id, conn.orgId]);
         const stored = row ? await unseal<CrmSecret>(row.secret ?? null, key) : null;
         if (stored?.accessToken && stored.accessToken !== conn.secret.accessToken && !stale(stored)) {
           // Another process renewed it while this one waited: use that.
@@ -499,9 +505,9 @@ function noteError(r: RunCtx, object: string, message: string, remoteId?: string
 async function loadDefs(deps: Deps, orgId: string): Promise<{ defs: Defs; localUsers: Row[] }> {
   return deps.db.system(async (q) => {
     const [org] = await q.query('select locale, account_fields from orgs where id = $1', [orgId]);
-    const types = await q.query('select * from record_types where org_id = $1', [orgId]);
-    const boards = await q.query('select id, columns from boards where org_id = $1', [orgId]);
-    const localUsers = await q.query(`select id, email, name from users where org_id = $1 and status in ('active', 'invited')`, [orgId]);
+    const types = await q.query<RecordTypesRow>('select * from record_types where org_id = $1', [orgId]);
+    const boards = await q.query<Pick<BoardsRow, 'id' | 'columns'>>('select id, columns from boards where org_id = $1', [orgId]);
+    const localUsers = await q.query<Pick<UsersRow, 'id' | 'email' | 'name'>>(`select id, email, name from users where org_id = $1 and status in ('active', 'invited')`, [orgId]);
     return {
       defs: {
         locale: org.locale,
@@ -710,7 +716,7 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
     // Only one sprint runs on a board at a time here; a second one running over there waits as "future".
     let state = (patch.state as string | undefined) ?? cur?.state ?? 'future';
     if (state === 'active') {
-      const [other] = await q.query(`select id from sprints where org_id = $1 and board_id = $2 and state = 'active' and archived_at is null and ($3::uuid is null or id <> $3) limit 1`, [orgId, board.id, cur?.id ?? null]);
+      const [other] = await q.query<Pick<SprintsRow, 'id'>>(`select id from sprints where org_id = $1 and board_id = $2 and state = 'active' and archived_at is null and ($3::uuid is null or id <> $3) limit 1`, [orgId, board.id, cur?.id ?? null]);
       if (other) state = 'future';
     }
     const name = typeof patch.name === 'string' ? patch.name.slice(0, 80) : null;
@@ -724,7 +730,7 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
       return cur.id;
     }
     const [{ p }] = await q.query(`select coalesce(max(position), 0) + 1024 as p from sprints where org_id = $1 and board_id = $2`, [orgId, board.id]);
-    const [sp] = await q.query(
+    const [sp] = await q.query<Pick<SprintsRow, 'id'>>(
       `insert into sprints (org_id, board_id, name, goal, state, starts_on, ends_on, position) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
       [orgId, board.id, name || '—', patch.goal ?? '', state, patch.starts_on ?? null, patch.ends_on ?? null, Number(p)],
     );
@@ -773,7 +779,7 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
     }
     const st = status ?? cols[0].key;
     const [{ p }] = await q.query(`select coalesce(max(position), 0) + 1024 as p from tasks where org_id = $1 and board_id = $2 and status = $3`, [orgId, board.id, st]);
-    const [t] = await q.query(
+    const [t] = await q.query<Pick<TasksRow, 'id'>>(
       `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, priority, position, issue_type, story_points, epic_id, sprint_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9, $10, $11, $12, $13) returning id`,
       [
@@ -814,12 +820,12 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
   }
   const name = (patch.name as string) || '—';
   if (map.target === 'account') {
-    const [a] = await q.query(`insert into accounts (org_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5) returning id`, [orgId, name, patch.owner ?? null, JSON.stringify(fields), r.conn.provider]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>(`insert into accounts (org_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5) returning id`, [orgId, name, patch.owner ?? null, JSON.stringify(fields), r.conn.provider]);
     return a.id;
   }
   const type = r.defs.types.get(map.typeKey ?? '');
   if (!type) throw new CrmError('The record type for this object no longer exists');
-  const [x] = await q.query(`insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`, [
+  const [x] = await q.query<Pick<RecordsRow, 'id'>>(`insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`, [
     orgId,
     type.id,
     patch.account ?? null,
@@ -835,7 +841,7 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
 /** Applies one page of remote rows. Returns the local ids touched (for rollups). */
 /** "Reports to" from the other side: same kind, same account, and no loops; otherwise left as it is. */
 async function parentOk(q: Q, orgId: string, id: string | null, parentId: string, accountId: string | null): Promise<boolean> {
-  const [p] = await q.query('select account_id from records where id = $1 and org_id = $2', [parentId, orgId]);
+  const [p] = await q.query<Pick<RecordsRow, 'account_id'>>('select account_id from records where id = $1 and org_id = $2', [parentId, orgId]);
   if (!p || (p.account_id ?? null) !== (accountId ?? null)) return false;
   if (!id) return true;
   const [loop] = await q.query(
@@ -885,7 +891,7 @@ async function applyPage(
     const links = await q.query(`select * from sync_links where org_id = $1 and connection_id = $2 and object = $3 and remote_id = any($4::text[])`, [orgId, r.conn.id, map.remote, rows.map((x) => x.id)]);
     const byRemote = new Map(links.map((l) => [l.remote_id, l]));
     const cur = await existingFor(q, r, map, links.filter((l) => l.entity_id).map((l) => l.entity_id));
-    const pending = await q.query(`select entity_id, fields, changed_at from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = any($4::uuid[])`, [
+    const pending = await q.query<Pick<SyncChangesRow, 'entity_id' | 'fields' | 'changed_at'>>(`select entity_id, fields, changed_at from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = any($4::uuid[])`, [
       orgId,
       r.conn.id,
       map.target,
@@ -1046,9 +1052,9 @@ async function archiveMissing(r: RunCtx, map: ObjectMap, remoteIds: string[] | n
     let gone: Row[];
     if (remoteIds) {
       if (!remoteIds.length) return;
-      gone = await q.query(`select * from sync_links where org_id = $1 and connection_id = $2 and object = $3 and remote_id = any($4::text[]) and not ignored`, [orgId, r.conn.id, map.remote, remoteIds]);
+      gone = await q.query<SyncLinksRow>(`select * from sync_links where org_id = $1 and connection_id = $2 and object = $3 and remote_id = any($4::text[]) and not ignored`, [orgId, r.conn.id, map.remote, remoteIds]);
     } else {
-      const all = await q.query(`select * from sync_links where org_id = $1 and connection_id = $2 and object = $3 and not ignored`, [orgId, r.conn.id, map.remote]);
+      const all = await q.query<SyncLinksRow>(`select * from sync_links where org_id = $1 and connection_id = $2 and object = $3 and not ignored`, [orgId, r.conn.id, map.remote]);
       gone = all.filter((l) => !seen!.has(l.remote_id));
       if (gone.length && (seen!.size === 0 || (gone.length > 20 && gone.length > all.length / 2))) {
         noteError(r, map.remote, `${gone.length} items seem to be missing on the other side; nothing was archived to be safe`);
@@ -1058,8 +1064,8 @@ async function archiveMissing(r: RunCtx, map: ObjectMap, remoteIds: string[] | n
     for (const l of gone) {
       // Deleted (or moved out of reach) there, but changed here since the last sync: the task stays, unlinked, with a note.
       if (l.entity_id && map.target === 'task') {
-        const [ch] = await q.query('select id from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = $4', [orgId, r.conn.id, 'task', l.entity_id]);
-        const [task] = ch ? await q.query('select * from tasks where id = $1 and org_id = $2 and archived_at is null', [l.entity_id, orgId]) : [];
+        const [ch] = await q.query<Pick<SyncChangesRow, 'id'>>('select id from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = $4', [orgId, r.conn.id, 'task', l.entity_id]);
+        const [task] = ch ? await q.query<TasksRow>('select * from tasks where id = $1 and org_id = $2 and archived_at is null', [l.entity_id, orgId]) : [];
         if (task) {
           await q.query('delete from sync_changes where id = $1 and org_id = $2', [ch.id, orgId]);
           await q.query('update sync_links set ignored = true, synced_at = now() where connection_id = $1 and object = $2 and remote_id = $3', [r.conn.id, map.remote, l.remote_id]);
@@ -1090,7 +1096,7 @@ async function settleParents(r: RunCtx, parents: { links: Map<string, string>; p
     for (const p of parents.pending.splice(0)) {
       const local = parents.links.get(p.remote);
       if (!local) continue;
-      const [me] = await q.query('select account_id from records where id = $1 and org_id = $2', [p.id, r.conn.orgId]);
+      const [me] = await q.query<Pick<RecordsRow, 'account_id'>>('select account_id from records where id = $1 and org_id = $2', [p.id, r.conn.orgId]);
       if (me && (await parentOk(q, r.conn.orgId, p.id, local, me.account_id))) {
         await q.query('update records set parent_id = $3 where id = $1 and org_id = $2', [p.id, r.conn.orgId, local]);
       }
@@ -1161,7 +1167,7 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
   await saveDefs(r);
   if (touchedAccounts.size) {
     await r.deps.db.system(async (q) => {
-      const [org] = await q.query('select account_fields from orgs where id = $1', [r.conn.orgId]);
+      const [org] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [r.conn.orgId]);
       await recomputeRollups(q, r.conn.orgId, org.account_fields ?? [], [...touchedAccounts]);
     });
   }
@@ -1202,7 +1208,7 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
     const target = ch.entity as TargetKind;
     try {
       const [item] = await r.deps.db.system((q) => q.query(`select * from ${TABLE[target]} where id = $1 and org_id = $2`, [ch.entity_id, orgId]));
-      const [link] = await r.deps.db.system((q) => q.query(`select * from sync_links where connection_id = $1 and entity = $2 and entity_id = $3`, [r.conn.id, target, ch.entity_id]));
+      const [link] = await r.deps.db.system((q) => q.query<SyncLinksRow>(`select * from sync_links where connection_id = $1 and entity = $2 and entity_id = $3`, [r.conn.id, target, ch.entity_id]));
       const typeKey = target === 'record' && item ? [...r.defs.types.values()].find((t) => t.id === item.type_id)?.key : undefined;
       const map = link
         ? r.conn.sync.objects.find((o) => o.enabled && o.remote === link.object)
@@ -1224,7 +1230,7 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
       const fields = [...meta.values()];
       if (target === 'record' && item.parent_id && map.fields.some((f) => f.local === 'parent')) {
         const [pl] = await r.deps.db.system((q) =>
-          q.query(`select remote_id from sync_links where connection_id = $1 and object = $2 and entity = 'record' and entity_id = $3 and not ignored`, [r.conn.id, map.remote, item.parent_id]),
+          q.query<Pick<SyncLinksRow, 'remote_id'>>(`select remote_id from sync_links where connection_id = $1 and object = $2 and entity = 'record' and entity_id = $3 and not ignored`, [r.conn.id, map.remote, item.parent_id]),
         );
         if (pl) item.__parent_remote = pl.remote_id;
       }
@@ -1322,9 +1328,9 @@ async function claim(deps: Deps, conn: LoadedCrm, opts: RunOptions, mode: SyncRu
       conn.id,
       new Date(nowOf(deps).getTime() - STALE_RUN_MS),
     ]);
-    const [busy] = await q.query(`select id from sync_runs where connection_id = $1 and status = 'running'`, [conn.id]);
+    const [busy] = await q.query<Pick<SyncRunsRow, 'id'>>(`select id from sync_runs where connection_id = $1 and status = 'running'`, [conn.id]);
     if (busy) return null;
-    const [run] = await q.query(`insert into sync_runs (org_id, connection_id, mode, trigger, started_by, started_at) values ($1, $2, $3, $4, $5, $6) returning id`, [
+    const [run] = await q.query<Pick<SyncRunsRow, 'id'>>(`insert into sync_runs (org_id, connection_id, mode, trigger, started_by, started_at) values ($1, $2, $3, $4, $5, $6) returning id`, [
       conn.orgId,
       conn.id,
       mode,
@@ -1347,6 +1353,10 @@ function errorCode(e: unknown): SyncErrorCode | undefined {
   return undefined;
 }
 
+/**
+ * Runs one sync of a connection: pull, push and conflicts per mapped object, or mail attachment for mailboxes. Records
+ * the run and its problems. Owner access throughout, with every statement filtered on this org_id.
+ */
 export async function syncConnection(deps: Deps, orgId: string, connectionId: string, opts: RunOptions): Promise<SyncRun | null> {
   const conn = await loadCrm(deps, orgId, connectionId);
   if (!conn || conn.status === 'disabled' || !conn.sync.startedAt) return null;
@@ -1435,10 +1445,11 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
       );
     }
   });
-  const [row] = await deps.db.system((q) => q.query('select * from sync_runs where id = $1 and org_id = $2', [runId, orgId]));
+  const [row] = await deps.db.system((q) => q.query<SyncRunsRow>('select * from sync_runs where id = $1 and org_id = $2', [runId, orgId]));
   return toRun(row);
 }
 
+/** A sync_runs row as the API's SyncRun. */
 export const toRun = (r: Row): SyncRun => ({
   id: r.id,
   mode: r.mode,

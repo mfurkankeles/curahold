@@ -45,6 +45,7 @@ function useLoad<T>(url: string, refreshKey: number) {
   return { data, failed, retry: () => setAttempt((n) => n + 1) };
 }
 
+/** A team's work by week. */
 export function WeeksView({ team, refreshKey }: { team: string; refreshKey: number }) {
   const { t, locale, fmtDate } = useI18n();
   const { people, person } = useStore();
@@ -153,6 +154,7 @@ export function WeeksView({ team, refreshKey }: { team: string; refreshKey: numb
 
 type SortKey = 'attention' | 'name' | 'open' | 'overdue' | 'requests' | 'tickets';
 
+/** A team's customers and their state. */
 export function PortfolioView({ team, refreshKey }: { team: string; refreshKey: number }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { person } = useStore();

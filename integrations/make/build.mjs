@@ -37,6 +37,9 @@ function parameter(f) {
   return p;
 }
 
+/**
+ * Builds the Make (formerly Integromat) app definition from the shared trigger and action lists, so it never drifts from the API.
+ */
 export function build() {
   const app = {
     name: 'curahold',

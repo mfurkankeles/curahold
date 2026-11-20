@@ -10,6 +10,10 @@ const seen = new Set<string>();
 let sent = 0;
 const MAX = 20;
 
+/**
+ * Reports uncaught browser errors to the server, best-effort: each message once, a ceiling per page, resource-load
+ * errors left out, failed reports swallowed. Returns the stop function.
+ */
 export function startErrorLog(): () => void {
   if (started || typeof window === 'undefined') return () => undefined;
   started = true;

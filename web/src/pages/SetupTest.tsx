@@ -23,6 +23,7 @@ const DEMO = !!import.meta.env.APP_DEMO;
 const GROUPS: TestGroup[] = ['company', 'inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance'];
 type Seen = TestRun['seen'];
 
+/** The go-live test: steps to pass, issues for failures, and both sides' approval. */
 export function SetupTestPage() {
   const { t, locale } = useI18n();
   const { can } = useStore();

@@ -604,5 +604,7 @@ const advisorSeat = (a: (typeof ADVISORS)[number]): SeatDef => ({
 /** The whole chart: active seats first (hierarchy order), then dormant seats, then the board. */
 export const ORG_CHART: SeatDef[] = [...ACTIVE, ...DORMANT.map(dormantSeat), ...ADVISORS.map(advisorSeat)];
 
+/** The seats active by default. */
 export const ACTIVE_SEATS = ACTIVE.map((s) => s.seat);
+/** A seat's built-in definition by id. */
 export const seatDef = (seat: string): SeatDef | undefined => ORG_CHART.find((s) => s.seat === seat);

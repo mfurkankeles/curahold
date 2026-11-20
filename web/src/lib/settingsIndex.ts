@@ -65,6 +65,7 @@ export const topicLabel = (t: T, words: Words, key: SettingsTab) => (key === 'fi
 export const topicAbout = (t: T, key: SettingsTab) => t(`settings.about.${key}` as MessageKey);
 /** Every word the topic is found by: its name, its line and the words people search for. */
 export const topicWords = (t: T, words: Words, key: SettingsTab) => `${topicLabel(t, words, key)} ${topicAbout(t, key)} ${t(`settings.find.${key}` as MessageKey)}`;
+/** A settings group's label, using the company's word for customers where it applies. */
 export const groupLabel = (t: T, words: Words, g: SettingsGroup) => (g === 'customers' ? words.other : g === 'connect' ? t('settings.group.connect') : t(`settings.group.${g}` as MessageKey));
 
 /** Case- and accent-blind text for matching ("Şirket" finds "sirket"). */

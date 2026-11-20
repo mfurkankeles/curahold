@@ -167,6 +167,7 @@ export const NEWS: News[] = [
 ];
 
 const SEEN = 'app_news_seen';
+/** Whether there is product news the person has not opened yet (kept in this browser). */
 export function newsUnseen(): boolean {
   try {
     return localStorage.getItem(SEEN) !== NEWS[0].id;
@@ -174,6 +175,7 @@ export function newsUnseen(): boolean {
     return false;
   }
 }
+/** Marks the current news as seen in this browser. */
 export function markNewsSeen() {
   try {
     localStorage.setItem(SEEN, NEWS[0].id);

@@ -4,6 +4,7 @@
 //   3. GET  /signup/slug      — is this address free?
 //   4. POST /signup/complete  — company, address, language, template → the new
 //      company exists; the browser goes to <slug>.curahold.com already signed in.
+import type { SignupsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
@@ -41,6 +42,9 @@ signupRoutes.use('*', async (c, next) => {
   await next();
 });
 
+/**
+ * Instant sign-up, step 1 (only when SIGNUP_MODE allows it): emails a link. A robot gets the usual answer and no mail.
+ */
 signupRoutes.post('/start', async (c) => {
   const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
@@ -75,12 +79,13 @@ signupRoutes.post('/start', async (c) => {
   return c.json({ ok: true, ...(deps.config.devExposeTokens ? { devToken: token } : {}) });
 });
 
+/** Instant sign-up, step 2: checks the emailed link and returns a short-lived ticket. */
 signupRoutes.post('/verify', async (c) => {
   const input = await body(c, z.object({ token: z.string().min(20).max(200) }));
   const deps = c.get('deps');
   const now = nowOf(deps);
   const found = await deps.db.system(async (q) => {
-    const [s] = await q.query(
+    const [s] = await q.query<Pick<SignupsRow, 'id' | 'email'>>(
       `update signups set verified_at = coalesce(verified_at, now())
         where token_hash = $1 and expires_at > now() and org_id is null returning id, email`,
       [await sha256Hex(input.token)],
@@ -110,6 +115,7 @@ signupRoutes.post('/verify', async (c) => {
   });
 });
 
+/** Whether a company address (slug) is valid and free. */
 signupRoutes.get('/slug', async (c) => {
   const slug = (c.req.query('slug') ?? '').toLowerCase();
   const problem = slugProblem(slug);
@@ -130,6 +136,7 @@ const tz = z
     }
   });
 
+/** Instant sign-up, step 3: creates the company and its first administrator from a valid ticket. */
 signupRoutes.post('/complete', async (c) => {
   const input = await body(
     c,
@@ -152,7 +159,7 @@ signupRoutes.post('/complete', async (c) => {
   if (problem) fail('validation', { fields: 'slug' }, { fields: ['slug'], reason: problem });
 
   const ok = await deps.db.system(async (q) => {
-    const [s] = await q.query('select id from signups where id = $1 and email = $2 and org_id is null and verified_at is not null', [ticket!.s, ticket!.e]);
+    const [s] = await q.query<Pick<SignupsRow, 'id'>>('select id from signups where id = $1 and email = $2 and org_id is null and verified_at is not null', [ticket!.s, ticket!.e]);
     if (!s) return 'invalid_token' as const;
     const [made] = await q.query<{ n: number }>(
       `select count(*)::int as n from signups where email = $1 and org_id is not null and created_at > now() - interval '1 day'`,

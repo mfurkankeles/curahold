@@ -41,6 +41,11 @@ function cleanPage(raw: string | undefined): string | null {
   }
 }
 
+/**
+ * Takes in a batch of the person's session recording (inputs masked, for Curahold support). Dropped with 204 and a
+ * stop header when the company turned recording off or support/preview is looking. Written through db.system() scoped
+ * in code to this person: companies never read their own recordings.
+ */
 replayRoutes.post('/replay', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');

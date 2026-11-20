@@ -12,6 +12,7 @@ import { ConsoleChart, periodOf } from './ConsoleChart';
 
 const KIND_ICON: Record<ConsoleAttention['kind'], IconName> = { request: 'lifebuoy', payment: 'alert', trial: 'hourglass' };
 
+/** The owner console's Today: the business numbers and what needs doing. */
 export function TodayView({ data, onRequest, onCompany }: { data: ConsoleToday; onRequest: (ref: string) => void; onCompany: (orgId: string) => void }) {
   const { t, locale } = useI18n();
   const n = (v: number) => formatNumber(v, locale);

@@ -1,10 +1,10 @@
-// Wave-6C: the mailbox reply composer's call shape and the all-departments
+// The mailbox reply composer's call shape and the all-departments
 // board/workflow templates.
 //
 // Part 1 — the composer builds the exact body POST /connections/:id/mail/reply
 // expects, seeded from a synced mail activity; the timeline now exposes the
 // activity's external id so the reply threads onto the original; and the reply
-// is sent and logged as an outgoing activity (mirrors tests/wave5c.test.ts).
+// is sent and logged as an outgoing activity (mirrors tests/mailbox-segment-inbound.test.ts).
 // Part 2 — every template (existing and new) is well-formed, and a new template
 // applies: createOrg builds its boards, including the Product delivery board
 // that carries the PM stages.

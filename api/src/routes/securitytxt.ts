@@ -7,6 +7,7 @@ import { centralUrl, type AppEnv } from '../context';
 
 export const SECURITY_CONTACT_PLACEHOLDER = 'mailto:security-contact-not-set@example.invalid';
 
+/** /.well-known/security.txt (RFC 9116): the security contact and policy, with an expiry about six months ahead. */
 export function securityTxt(c: Context<AppEnv>) {
   const cfg = c.get('deps').config;
   const contact = cfg.securityContact?.trim() || SECURITY_CONTACT_PLACEHOLDER;

@@ -581,7 +581,9 @@ export type Cursor = ({ k: string[] } | { o: number }) & { s?: string };
 const b64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64 = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (ch) => ch.charCodeAt(0)));
 
+/** A page cursor for the analytics feeds, as opaque base64 text. */
 export const encodeCursor = (c: Cursor) => b64(JSON.stringify(c));
+/** Reads a page cursor; throws QueryError (start again from page one) for one not made by encodeCursor. */
 export function decodeCursor(s: string): Cursor {
   try {
     const v = JSON.parse(unb64(s));
@@ -593,7 +595,12 @@ export function decodeCursor(s: string): Cursor {
   }
   throw new QueryError('the page token is not valid; start again from the first page');
 }
+/**
+ * A delta token for "what changed since this read". It starts DELTA_OVERLAP_MS earlier than the read, so a row
+ * written during the read is sent again rather than missed (BI tools de-duplicate by id).
+ */
 export const encodeDelta = (at: Date) => b64(JSON.stringify({ t: new Date(at.getTime() - DELTA_OVERLAP_MS).toISOString() }));
+/** Reads a delta token back to its ISO time; throws QueryError (read the dataset in full) for a bad token. */
 export function decodeDelta(s: string): string {
   try {
     const v = JSON.parse(unb64(s));

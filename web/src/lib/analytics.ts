@@ -16,6 +16,10 @@ import { loadConsent, onConsent } from './consent';
 export { categoriesInUse, hasMeasurement, plannedLoads, type PlannedLoads } from '../../../shared/src/consent/core';
 export type AnalyticsIds = VendorIds;
 
+/**
+ * The analytics vendor ids from the build environment. Each is written out in full so the build can inline it;
+ * reading them through a variable would leave every id empty in production.
+ */
 export function envIds(): VendorIds {
   // Written out in full so the build can replace each one with its literal value;
   // reading them through a variable would leave every id empty in a production build.
@@ -28,6 +32,7 @@ export function envConfig(): ConsentConfig {
   return { ids: envIds(), marketingPixels: import.meta.env.VITE_MARKETING_PIXELS === '1' };
 }
 
+/** Loads or removes analytics scripts to match the visitor's consent; nothing optional loads before a "yes". */
 export const applyConsent = (state: ConsentState, cfg: ConsentConfig = envConfig()): void => apply(state, cfg);
 
 /** Read the stored consent, apply once, then follow every later change. */

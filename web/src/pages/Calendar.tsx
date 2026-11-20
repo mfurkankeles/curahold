@@ -64,6 +64,9 @@ function remember(key: string, value: string) {
   }
 }
 
+/**
+ * The calendar: due tasks, meetings, renewals and reviews by day, for oneself or (with permission) a teammate or team.
+ */
 export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   const { t, locale, fmtDate } = useI18n();
   const { boards, canWrite, me, person, teams } = useStore();

@@ -5,6 +5,7 @@
 // timeline note, once per message id; one from an unknown number is counted on the connection, not stored.
 //
 // Mounted before sign-in (like the other inbound routers), so it is exempt from the cross-site write check.
+import type { ActivitiesRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { secretsKey, type AppEnv } from '../context';
 import { unseal } from '../lib/crypto';
@@ -28,6 +29,7 @@ async function connectionOf(c: any, source: string) {
   return { id: conn.id, config: conn.config ?? {}, verifyToken: secret?.verifyToken ?? '', appSecret: secret?.appSecret ?? '' };
 }
 
+/** WhatsApp's webhook check: answers the challenge only when the verify token matches (constant-time compare). */
 whatsappInboundRoutes.get('/inbound/whatsapp/:source', async (c) => {
   const conn = await connectionOf(c, c.req.param('source') ?? '');
   if (!conn) return c.json({ error: 'not_found' }, 404);
@@ -50,6 +52,10 @@ async function accountForNumber(q: Q, orgId: string, digits: string): Promise<st
   return hit?.account_id ?? null;
 }
 
+/**
+ * Receives WhatsApp messages for one company's connection; size-capped, and the Meta signature (x-hub-signature-256)
+ * is checked before the body is used (401).
+ */
 whatsappInboundRoutes.post('/inbound/whatsapp/:source', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
@@ -75,7 +81,7 @@ whatsappInboundRoutes.post('/inbound/whatsapp/:source', async (c) => {
         unmatched++;
         continue;
       }
-      const rows = await q.query(
+      const rows = await q.query<Pick<ActivitiesRow, 'id'>>(
         `insert into activities (org_id, account_id, author_id, kind, body, happened_at, source, external_id)
          values ($1, $2, null, 'note', $3, coalesce($4::timestamptz, now()), 'whatsapp', $5)
          on conflict (org_id, source, external_id) where external_id is not null do nothing returning id`,

@@ -181,6 +181,7 @@ const HISTORY = [
   'İlk ay değerlendirmesi',
 ];
 
+/** Seeds the full demo company through the API (so it obeys every rule), in the chosen language. */
 export async function seedShowcase(send: Call, db?: Db, locale?: Locale) {
   // Written in Turkish; any other language gets every text in its own words on its way in
   // (scripts/seed-words). Without a language, the company's own is used, so the showcase never

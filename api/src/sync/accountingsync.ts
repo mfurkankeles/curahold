@@ -9,6 +9,7 @@
 // against its daily allowance; a rate-limit answer, the daily allowance or the
 // run's time budget stop the run with its place saved, and the next run carries
 // on from there. Runs with owner access, naming the company on every statement.
+import type { OrgsRow } from '../db/rows.gen';
 import { FIN_KINDS, matcher, type FinCustomer, type FinInvoice, type FinKind, type FinPayment, type FinRow, type MatchTarget } from '../../../shared/src/accounting';
 import type { AccountField } from '../../../shared/src/model';
 import { emptyStats, type SyncStats } from '../../../shared/src/sync';
@@ -38,7 +39,7 @@ const WEB_FIELD = /(web|site|domain|url|email|mail)/i;
 
 /** The customers to match against, with their tax numbers and web addresses taken from the fields that hold them. */
 export async function matchTargets(q: Q, orgId: string): Promise<MatchTarget[]> {
-  const [org] = await q.query('select account_fields from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [orgId]);
   const defs = (org?.account_fields ?? []) as AccountField[];
   const taxKeys = defs.filter((f) => TAX_FIELD.test(f.key) && (f.type === 'text' || f.type === 'number')).map((f) => f.key);
   const webKeys = defs.filter((f) => f.type === 'url' || f.type === 'email' || (f.type === 'text' && WEB_FIELD.test(f.key))).map((f) => f.key);

@@ -3,6 +3,7 @@
 // customers whose health score fell (and the main reason), customers gone
 // quiet, and the week's work. It goes to the chat app the company already
 // uses, email only as the fallback, and is skipped when there is nothing to say.
+import type { OrgsRow, UsersRow } from '../db/rows.gen';
 import { fxRate } from './fx';
 import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
@@ -43,8 +44,9 @@ async function portfolioOf(q: Q, orgId: string, userId: string): Promise<string[
   return team.map((r) => r.id);
 }
 
+/** A person's weekly summary, showing only fields they may see (the same rule as every screen and the API). */
 export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date, locale: string) {
-  const [org] = await q.query('select account_fields, currency, timezone from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'account_fields' | 'currency' | 'timezone'>>('select account_fields, currency, timezone from orgs where id = $1', [orgId]);
   const defs = (org.account_fields ?? []) as AccountField[];
   const ids = await portfolioOf(q, orgId, userId);
   if (!ids.length) return null;
@@ -128,14 +130,14 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
 
 /** Hourly: whoever's Monday morning hour it is gets their summary (once per week). */
 export async function sendWeekly(deps: Deps, now: Date): Promise<number> {
-  const orgs = await deps.db.system((q) => q.query('select id, timezone, locale from orgs'));
+  const orgs = await deps.db.system((q) => q.query<Pick<OrgsRow, 'id' | 'timezone' | 'locale'>>('select id, timezone, locale from orgs'));
   let queued = 0;
   for (const org of orgs) {
     const tz = org.timezone || 'UTC';
     const today = localDate(now, tz);
     if (new Date(`${today}T12:00:00Z`).getUTCDay() !== 1) continue;
     const hour = localHour(now, tz);
-    const users = await deps.db.system((q) => q.query(`select id, prefs, locale from users where org_id = $1 and status = 'active'`, [org.id]));
+    const users = await deps.db.system((q) => q.query<Pick<UsersRow, 'id' | 'prefs' | 'locale'>>(`select id, prefs, locale from users where org_id = $1 and status = 'active'`, [org.id]));
     for (const u of users) {
       const prefs = prefsOf(u.prefs);
       if (prefs.events.weekly === false || prefs.digestHour !== hour || prefs.channel === 'none') continue;

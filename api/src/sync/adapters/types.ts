@@ -182,6 +182,9 @@ export interface OAuthClient {
   clientSecret: string;
 }
 
+/**
+ * A failed call to a sync source, with a kind the engine acts on (auth, rate limit, not found, invalid) and the detail.
+ */
 export class CrmError extends Error {
   constructor(
     message: string,
@@ -340,4 +343,5 @@ export function oneShotCtx(fetcher: typeof fetch, now: Date, token: string, conf
   return { fetch: fetcher, now: () => now, config, token: async () => token, refresh: async () => token };
 }
 
+/** An ISO time without milliseconds, for APIs that refuse them. */
 export const isoSeconds = (iso: string) => iso.replace(/\.\d{3}Z$/, 'Z');

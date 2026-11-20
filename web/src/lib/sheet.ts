@@ -25,6 +25,7 @@ function toSheet(matrix: string[][]): Sheet {
   return { headers, rows };
 }
 
+/** A CSV text as a sheet (header row and rows): any delimiter, quoted fields. Read in the browser only. */
 export function parseCsv(text: string): Sheet {
   return toSheet(csvMatrix(text));
 }
@@ -82,6 +83,7 @@ function serialToIso(serial: number): string {
 
 const text = (el: Element | null | undefined) => (el ? Array.from(el.getElementsByTagName('t')).map((t) => t.textContent ?? '').join('') : '');
 
+/** An .xlsx workbook's first sheet as a sheet (header row and rows), dates as YYYY-MM-DD. Unzipped with fflate. */
 export function parseXlsx(buf: ArrayBuffer): Sheet {
   return toSheet(xlsxMatrix(buf));
 }
@@ -136,6 +138,7 @@ export function xlsxMatrix(buf: ArrayBuffer): string[][] {
   return matrix;
 }
 
+/** A file picked by the person as a sheet: .xlsx or CSV. */
 export async function readSheet(file: File): Promise<Sheet> {
   if (/\.xlsx$/i.test(file.name)) return parseXlsx(await file.arrayBuffer());
   return parseCsv(await file.text());

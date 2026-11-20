@@ -23,6 +23,10 @@ export interface SeatPolicy {
   reviews: Set<ActionKind>;
 }
 
+/**
+ * A seat's effective policy: the built-in definition with the stored card on top, plus its state, budget and lead.
+ * The gate and the runtime read this, never the agent's own claims about what it may do. Null for an unknown seat.
+ */
 export async function seatPolicy(q: Q, seat: string): Promise<SeatPolicy | null> {
   const [r] = await q.query(
     `select s.seat, s.title, s.team, s.tier, s.state, s.reports_to, s.filled_by, s.weekly_budget, s.activated_at, s.card, a.name, a.effort

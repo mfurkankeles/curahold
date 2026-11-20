@@ -1,3 +1,5 @@
+// Due dates on the client: "today" in the company's time zone (the same day the server uses), the due state that
+// colours cards, the calendar and My tasks, and relative times ("5 min ago").
 import { addDays, localDate } from '../../../shared/src/days';
 // Due-date state drives the colour rail on cards, the calendar and My tasks.
 export type DueState = 'none' | 'late' | 'today' | 'soon' | 'later' | 'done';
@@ -12,6 +14,7 @@ export function setCompanyZone(tz: string | null | undefined) {
   companyZone = tz || null;
 }
 
+/** Today in the company's time zone (the device's until the session is known). */
 export function todayIso(now = new Date()): string {
   if (companyZone) return localDate(now, companyZone);
   const y = now.getFullYear();
@@ -22,6 +25,7 @@ export function todayIso(now = new Date()): string {
 
 export { addDays };
 
+/** Where a due date stands: none, late, today, soon, later or done. */
 export function dueState(due: string | null, done: boolean, today = todayIso()): DueState {
   if (done) return 'done';
   if (!due) return 'none';
@@ -31,6 +35,7 @@ export function dueState(due: string | null, done: boolean, today = todayIso()):
   return 'later';
 }
 
+/** How long ago a time was, in words ("just now", "5 min ago"). */
 export function relativeTime(iso: string, t: (k: any, v?: any) => string, now = Date.now()): string {
   const diff = Math.max(0, now - new Date(iso).getTime());
   const min = Math.floor(diff / 60000);

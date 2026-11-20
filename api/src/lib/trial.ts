@@ -2,6 +2,7 @@
 // leaves (consent records), the seat cap and the terms a trial company works
 // under, and the e-mails as its end comes near. The request itself is stored and
 // decided in the owner console (lib/trialRequests.ts).
+import type { TrialRemindersRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { orgUrl } from '../context';
 import type { Q } from '../db';
@@ -51,6 +52,10 @@ export async function consentEvidence(blocks: TrialConsentBlock[], granted: stri
   );
 }
 
+/**
+ * Records the consents given with a trial request as evidence: each consent's text and version, the language, the
+ * country the connection came from, and where it was given (form, mail link, console). ADR 0014.
+ */
 export async function recordConsents(
   q: Q,
   rows: ConsentEvidence[],
@@ -209,7 +214,7 @@ export async function sendTrialReminders(deps: Deps, now: Date): Promise<number>
     const kind = reminderFor(ends, now);
     if (!kind) continue;
     const claimed = await deps.db.system((q) =>
-      q.query(`insert into trial_reminders (org_id, kind, trial_ends_at) values ($1, $2, $3) on conflict do nothing returning org_id`, [
+      q.query<Pick<TrialRemindersRow, 'org_id'>>(`insert into trial_reminders (org_id, kind, trial_ends_at) values ($1, $2, $3) on conflict do nothing returning org_id`, [
         o.id,
         kind,
         ends.toISOString(),

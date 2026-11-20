@@ -69,10 +69,12 @@ function sync() {
 
 /** Asked before every move inside the app; false keeps the person where they are (settings with unsaved changes). */
 let beforeLeave: ((to: string) => boolean) | null = null;
+/** Installs a check that can stop navigation (unsaved changes); null removes it. */
 export function setBeforeLeave(fn: ((to: string) => boolean) | null) {
   beforeLeave = fn;
 }
 
+/** Goes to an in-app path (history push, or replace); `fresh` reloads the page's data. */
 export function navigate(to: string, replace = false, fresh = false) {
   if (to === here()) return;
   if (beforeLeave && !beforeLeave(to)) return;
@@ -223,11 +225,13 @@ export function panelBack(): (WayBack & { was: string }) | null {
 // What a place is called, for the things only its own screen knows (a customer's
 // name, a report's title). A screen says so once it has loaded.
 const names = new Map<string, string>();
+/** Gives a path key a readable name for the breadcrumbs (a board's or customer's name). */
 export function nameIt(key: string, name: string | null | undefined) {
   if (!name || names.get(key) === name) return;
   names.set(key, name);
   announce();
 }
+/** The readable name given to a path key, or null. */
 export const nameOf = (key: string) => names.get(key) ?? null;
 
 /** Where the app is (path, query, hash); re-renders on every move. */
@@ -243,6 +247,7 @@ export function useLocation() {
   return loc;
 }
 
+/** Sets or removes one query parameter without a navigation. */
 export function setQuery(key: string, value: string | null) {
   const p = new URLSearchParams(location.search);
   if (value === null) p.delete(key);
@@ -251,6 +256,7 @@ export function setQuery(key: string, value: string | null) {
   navigate(location.pathname + (qs ? `?${qs}` : ''));
 }
 
+/** Matches a path to a pattern with `:params`; the params, or null. */
 export function match(pattern: string, path: string): Record<string, string> | null {
   const a = pattern.split('/').filter(Boolean);
   const b = path.split('/').filter(Boolean);

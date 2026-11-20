@@ -15,6 +15,7 @@ export function onFullNavigation(fn: (to: string) => void) {
   fullNavigation = fn;
 }
 
+/** The demo's current in-app address (path, query and hash), as `location` would give it. */
 export function current() {
   return path + search + hash;
 }

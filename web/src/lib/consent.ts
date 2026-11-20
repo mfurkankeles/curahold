@@ -23,14 +23,18 @@ export {
 /** A window event carrying the new state, so the loaders react to a change at once. */
 export const CONSENT_EVENT = 'curahold:consent';
 
+/** The visitor's stored consent. */
 export const loadConsent = (): ConsentState => readStored();
+/** Stores the visitor's consent. */
 export const saveConsent = (state: ConsentState): void => store(state);
 
+/** Tells the page the consent changed (scripts that wait for it load or stop). */
 export function emitConsent(state: ConsentState): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent<ConsentState>(CONSENT_EVENT, { detail: state }));
 }
 
+/** Subscribes to consent changes; returns the unsubscribe function. */
 export function onConsent(cb: (state: ConsentState) => void): () => void {
   if (typeof window === 'undefined') return () => undefined;
   const handler = (e: Event) => cb((e as CustomEvent<ConsentState>).detail);
@@ -40,10 +44,12 @@ export function onConsent(cb: (state: ConsentState) => void): () => void {
 
 /** Asks the consent component to open its choices panel (from the profile page's privacy line). */
 export const CONSENT_OPEN_EVENT = 'curahold:consent-open';
+/** Opens the consent choices dialog (from the footer link), so a choice can always be changed. */
 export function openConsentChoices(): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event(CONSENT_OPEN_EVENT));
 }
+/** Subscribes to requests to open the consent choices. */
 export function onConsentOpen(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => undefined;
   window.addEventListener(CONSENT_OPEN_EVENT, cb);

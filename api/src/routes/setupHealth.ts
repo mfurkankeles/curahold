@@ -14,6 +14,7 @@
 // Everything reads as the person asking (row security), and nothing here
 // fixes anything: the fix is always a link the person clicks. A test step
 // does what its button says (a test ticket, a sync run) and nothing more.
+import type { AutomationsRow, ImportBatchesRow, RecordTypesRow, RecordsRow, SetupProgressRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ACCOUNTING_ALL, ACCOUNTING_FILE } from '../../../shared/src/accounting';
@@ -75,6 +76,10 @@ setupHealthRoutes.post('/setup-health/check', async (c) => {
   return c.json(await healthOf(c, true));
 });
 
+/**
+ * Confirms (or un-confirms) a manual setup check by hand. Only for people who may see the check and can write; audited.
+ * ADR 0013: setup health is read-only except for these confirmations.
+ */
 setupHealthRoutes.post('/setup-health/:id/confirm', async (c) => {
   const id = idParam(c);
   const def = checkDef(id);
@@ -110,7 +115,7 @@ type Conn = { id: string; provider: string; label: string; status: string; start
 async function contextOf(c: C, q: Q) {
   const org = c.get('org');
   const auth = c.get('auth');
-  const [imp] = await q.query(
+  const [imp] = await q.query<Pick<ImportBatchesRow, 'file_name' | 'summary' | 'created_at'>>(
     `select file_name, summary, created_at from import_batches where org_id = $1 and kind = 'accounts' and undone_at is null order by created_at desc limit 1`,
     [org.id],
   );
@@ -308,6 +313,7 @@ async function save(c: C, q: Q, id: string, status: TestStatus, how: TestRun['ho
   if (!open) await q.query(`delete from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
 }
 
+/** The company's go-live test: every step with its status, tries and the approvals from both sides. */
 setupHealthRoutes.get('/setup-test', async (c) => c.json(await run(c, (q) => testFor(c, q))));
 
 const stepOf = (c: C) => {
@@ -317,6 +323,7 @@ const stepOf = (c: C) => {
   return step!;
 };
 
+/** Marks a test step passed, failed or skipped. A required step cannot be skipped: the gate would mean nothing. */
 setupHealthRoutes.post('/setup-test/:id/mark', async (c) => {
   const step = stepOf(c);
   const input = await body(c, z.object({ status: z.enum(['todo', 'pass', 'fail', 'skipped']), note: z.string().trim().max(500).optional() }));
@@ -329,6 +336,7 @@ setupHealthRoutes.post('/setup-test/:id/mark', async (c) => {
   return c.json(out);
 });
 
+/** Saves what a step asked for (an address, an id) before it is checked. */
 setupHealthRoutes.post('/setup-test/:id/input', async (c) => {
   const step = stepOf(c);
   if (!step.input) fail('not_found');
@@ -347,6 +355,7 @@ setupHealthRoutes.post('/setup-test/:id/input', async (c) => {
   return c.json(out);
 });
 
+/** Opens an onboarding issue for a failed step; 400 unless the step failed. Audited. */
 setupHealthRoutes.post('/setup-test/:id/issue', async (c) => {
   const step = stepOf(c);
   const input = await body(c, z.object({ title: z.string().trim().min(1).max(200).optional() }));
@@ -365,6 +374,9 @@ setupHealthRoutes.post('/setup-test/:id/issue', async (c) => {
   return c.json(out);
 });
 
+/**
+ * The customer's or the vendor's side approves the test (or withdraws). Refused while a required step is left. Audited.
+ */
 setupHealthRoutes.post('/setup-test/approve', async (c) => {
   const input = await body(c, z.object({ side: z.enum(['customer', 'vendor']), approve: z.boolean() }));
   if (!mayApprove(c, input.side)) fail('forbidden');
@@ -387,7 +399,7 @@ setupHealthRoutes.post('/setup-test/approve', async (c) => {
       [org.id, input.side, auth.userId],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'setup.approved', entity: 'org', entityId: org.id, meta: { side: input.side } });
-    const both = await q.query(`select item from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
+    const both = await q.query<Pick<SetupProgressRow, 'item'>>(`select item from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
     if (both.length === 2) {
       await q.query(`insert into setup_progress (org_id, kind, item, status, by_user) values ($1, 'done', 'all', 'ok', $2) on conflict (org_id, kind, item) do nothing`, [org.id, auth.userId]);
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'setup.tested', entity: 'org', entityId: org.id });
@@ -397,6 +409,10 @@ setupHealthRoutes.post('/setup-test/approve', async (c) => {
   return c.json(out);
 });
 
+/**
+ * Starts the test again: the list, the approvals and "complete" reset; earlier tries stay as the record.
+ * Administrators or org.manage, writers only; audited.
+ */
 setupHealthRoutes.post('/setup-test/reset', async (c) => {
   if (!askerOf(c).admin && !c.get('auth').perms.includes('org.manage')) fail('forbidden');
   if (!writer(c)) fail('forbidden');
@@ -432,7 +448,7 @@ async function testTicket(c: C): Promise<Outcome> {
   if (!customer) return { status: 'fail', reason: 'no_customer' };
   // The kind is made the first time a ticket arrives (routes/tickets.ts does the same).
   await deps.db.system(async (q) => {
-    const [have] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
+    const [have] = await q.query<Pick<RecordTypesRow, 'id'>>(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
     if (!have) await createRecordType(q, org.id, null, { kind: 'ticket' });
   });
   const input = ticketInput.parse({
@@ -442,7 +458,7 @@ async function testTicket(c: C): Promise<Outcome> {
     account: { id: customer.id },
   });
   const made = await run(c, (q) => upsertTicket(q, org.id, auth.userId, 'setup-check', `t${nowOf(deps).getTime().toString(36)}`, input, todayOf(c)));
-  const [arrived] = await run(c, (q) => q.query(`select id from records where org_id = $1 and id = $2 and account_id is not null`, [org.id, made.id]));
+  const [arrived] = await run(c, (q) => q.query<Pick<RecordsRow, 'id'>>(`select id from records where org_id = $1 and id = $2 and account_id is not null`, [org.id, made.id]));
   return arrived ? { status: 'pass', seen: { record: made.id, customer: customer.name } } : { status: 'fail', reason: 'ticket_hidden', seen: { customer: customer.name } };
 }
 
@@ -472,7 +488,7 @@ async function testAutomation(c: C): Promise<Outcome> {
     const broken = await runSqlChecks(q, org.id, ['auto.deletedField', 'auto.deletedBoard']);
     const bad = broken['auto.deletedField']?.n ? broken['auto.deletedField'] : broken['auto.deletedBoard']?.n ? broken['auto.deletedBoard'] : null;
     if (bad) return { status: 'fail', reason: 'broken_rule', seen: { name: bad.ref } };
-    const rules = await q.query(`select id, name, trigger from automations where org_id = $1 and enabled order by created_at limit 20`, [org.id]);
+    const rules = await q.query<Pick<AutomationsRow, 'id' | 'name' | 'trigger'>>(`select id, name, trigger from automations where org_id = $1 and enabled order by created_at limit 20`, [org.id]);
     if (!rules.length) return { status: 'fail', reason: 'no_rules' };
     const today = localDate(nowOf(c.get('deps')), org.timezone);
     for (const r of rules) {
@@ -485,6 +501,7 @@ async function testAutomation(c: C): Promise<Outcome> {
   });
 }
 
+/** Runs an automatic step's check now; 400 for a manual step. */
 setupHealthRoutes.post('/setup-test/:id/run', async (c) => {
   const step = stepOf(c);
   if (!step.auto) fail('validation', { fields: 'id' }, { fields: ['id'] });

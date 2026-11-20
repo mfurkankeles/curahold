@@ -45,6 +45,9 @@ export function privateHost(host: string): boolean {
   return false;
 }
 
+/**
+ * Why a webhook address cannot be used for this flavour (wrong host for the tool, not https, private address), or null.
+ */
 export function checkWebhookUrl(flavor: WebhookFlavor, raw: string): string | null {
   let u: URL;
   try {
@@ -71,6 +74,7 @@ const md = (msg: ChatMessage, link: (url: string, label: string) => string, bold
   return lines.join('\n');
 };
 
+/** A notification in the JSON shape each webhook flavour expects (Slack-like, Lark post, Telegram, generic). */
 export function webhookPayload(flavor: WebhookFlavor, msg: ChatMessage, at: Date): unknown {
   const slackish = md(msg, (u, l) => `<${u}|${l}>`, (s) => `*${s}*`);
   const markdown = md(msg, (u, l) => `[${l}](${u})`, (s) => `**${s}**`);

@@ -19,6 +19,7 @@ const LABEL: Record<string, MessageKey> = {
   account: 'sync.conflict.account',
 };
 
+/** A sync conflict as a sentence in the reader's language (which app, which field, which value won). */
 export function syncConflictText(d: Record<string, any>, t: T, fmtDate: (day: string) => string, num: (n: number) => string): string {
   const app = String(d.app ?? '');
   if (d.case === 'deleted_there') return t('sync.conflict.deletedThere', { app });

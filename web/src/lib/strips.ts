@@ -15,6 +15,10 @@ function reveal(tab: Element | null) {
   else if (b.right > s.right - FADE) strip.scrollBy({ left: b.right - s.right + FADE });
 }
 
+/**
+ * Keeps the chosen tab of every sideways-scrolling tab strip fully in view on phones; one observer for all strips,
+ * started by the shell. Returns the stop function.
+ */
 export function startStrips(): () => void {
   const seen = new WeakSet<Element>();
   const fresh = (root: Element) => {

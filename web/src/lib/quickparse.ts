@@ -28,6 +28,7 @@ export interface Parsed {
 /** No capitals, no marks, one kind of i: "Çağrı İş" → "cagri is" (shared/src/text.ts). */
 export const fold = foldText;
 
+/** A local date as YYYY-MM-DD. */
 export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const addMonths = (d: Date, n: number) => {
@@ -188,6 +189,10 @@ function pick(words: string[], list: Pickable[], most: number): { take: number; 
   return null;
 }
 
+/**
+ * Reads a quick-add line into a task: @ picks people, # customers, ! priority, and the due date and repetition come
+ * from everyday words in Turkish or English ("yarın", "cumaya kadar", "next week", "every monday").
+ */
 export function parseQuick(line: string, people: Pickable[], accounts: Pickable[], me: Pickable, today = new Date()): Parsed {
   const day0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const words = line.trim().split(/\s+/).filter(Boolean);

@@ -18,6 +18,11 @@ const json = (x: unknown) => (typeof x === 'string' ? x : JSON.stringify(x));
 // transaction, in the statement that already sets who is asking — no extra round trip.
 const NO_JIT = ", set_config('jit', 'off', true)";
 
+/**
+ * The Db over a real Postgres (production and self-host). tenant() and portal() set the session variables row
+ * security reads and switch to the restricted role; system() is the only path without row security (ADR 0004).
+ * Prepared statements are off because pooled connections (Hyperdrive) cannot rely on them.
+ */
 export function postgresDb(url: string, opts: { max?: number; idleTimeout?: number } = {}): Db {
   const sql = postgres(url, {
     prepare: false,

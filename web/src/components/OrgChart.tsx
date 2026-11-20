@@ -16,6 +16,7 @@ import { Dialog, initials, RowMenu } from './ui';
 import { useUndo } from '../lib/undo';
 import { Icon } from './icons';
 
+/** The stance keys a contact can have (champion, supporter, neutral, skeptic, blocker). */
 export const STANCE_KEYS = STANCES.map((s) => s.key);
 // A brand name and its mark, not text to translate.
 const LINKEDIN = 'LinkedIn';
@@ -57,6 +58,7 @@ interface Drag {
   target: string | 'root' | null;
 }
 
+/** A customer's org chart from its contact records, with stances and reporting lines. */
 export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: RecordType; records: AppRecord[]; onChanged: () => void; onOpen: (r: AppRecord) => void; onAdd: (parentId: string | null) => void }) {
   const { t, locale } = useI18n();
   const { canWrite, toast } = useStore();

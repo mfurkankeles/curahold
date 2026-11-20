@@ -42,6 +42,9 @@ export const TOAST_ACTION_MS = 7000;
 /** At most this many toasts on screen; the oldest gives way. */
 const TOAST_MAX = 3;
 
+/**
+ * The app's session store: the signed-in person and company (from /api/me), the error and notice bar, and can().
+ */
 export function StoreProvider({ initialMe, children }: { initialMe: Me; children: ReactNode }) {
   const [me, setMe] = useState(initialMe);
   const [people, setPeople] = useState<Person[]>([]);
@@ -105,6 +108,7 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** The session store: me, can(perm), refresh and the message bar. */
 export function useStore(): Store {
   const v = useContext(Ctx);
   if (!v) throw new Error('StoreProvider missing');

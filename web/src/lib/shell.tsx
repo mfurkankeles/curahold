@@ -31,10 +31,12 @@ export interface ShellActions {
 
 const noop = () => undefined;
 export const ShellCtx = createContext<ShellActions>({ quickAdd: noop, search: noop, shortcuts: noop, help: noop, newBoard: noop, logTouch: noop });
+/** The app shell's context (quick add, panels). */
 export const useShell = () => useContext(ShellCtx);
 
 /** Tasks were made or changed somewhere else on the screen: lists reload. */
 export const TASKS_CHANGED = 'app:tasks-changed';
+/** Tells open task lists to reload (after a change made elsewhere on the page). */
 export const tasksChanged = () => window.dispatchEvent(new Event(TASKS_CHANGED));
 
 /** True while the person is typing somewhere (a single key is then just a letter). */
@@ -64,7 +66,9 @@ export function useNarrow(query = '(max-width: 860px)') {
 // What the screen in front of the person suggests for a new task: My tasks → for me,
 // a board → on that board, a customer → for that customer. N and "+ New" start from it.
 let pageDefaults: QuickDefaults = {};
+/** The defaults the current page gives quick add (its board, customer). */
 export const currentPageDefaults = () => pageDefaults;
+/** Sets what quick add defaults to while this page is open. */
 export function usePageDefaults(d: QuickDefaults | null) {
   const key = d ? JSON.stringify(d) : '';
   useEffect(() => {

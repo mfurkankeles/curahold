@@ -52,6 +52,7 @@ export interface LlmProvider {
   complete(req: LlmRequest): Promise<LlmResponse>;
 }
 
+/** A failed model call, with the provider's status and whether trying again may help. */
 export class ProviderError extends Error {
   constructor(
     message: string,

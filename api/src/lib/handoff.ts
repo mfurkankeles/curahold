@@ -10,6 +10,7 @@
 // The functions here that run after a change has committed use owner access
 // (the change was the person's; what follows is the company's), so every
 // query filters on org_id itself.
+import type { AccountsRow, BoardsRow, CommentsRow, DepartmentsRow, HandoversRow, OrgsRow, PlanTemplatesRow, RecordCommentsRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { translate, type Locale } from '../../../shared/src/i18n';
 import type { AccountField, Column } from '../../../shared/src/model';
 import type { Deps } from '../context';
@@ -30,6 +31,7 @@ export interface FlowSettings {
   loopBoardId: string | null;
 }
 
+/** The company's handover settings (sales to delivery), with defaults for anything not set. */
 export function flowSettings(settings: unknown): FlowSettings {
   const f = ((settings as Record<string, any> | null)?.flow ?? {}) as Record<string, unknown>;
   return {
@@ -43,7 +45,7 @@ const PLAN_NAME = '(onboard|kick.?off|welcome|başlangıç|baslangic|kurulum|kar
 
 /** The department that takes a won customer over: Onboarding when switched on, else Customer Success. */
 export async function takeoverDepartment(q: Q, orgId: string): Promise<Row | null> {
-  const [d] = await q.query(
+  const [d] = await q.query<Pick<DepartmentsRow, 'id' | 'key'>>(
     `select id, key from departments where org_id = $1 and enabled and key in ('onboarding', 'success')
       order by (key = 'onboarding') desc limit 1`,
     [orgId],
@@ -55,8 +57,8 @@ export async function takeoverDepartment(q: Q, orgId: string): Promise<Row | nul
 async function threadSummary(q: Q, orgId: string, kind: 'record' | 'task', id: string, locale: Locale): Promise<string> {
   const rows =
     kind === 'record'
-      ? await q.query(`select body, created_at from record_comments where org_id = $1 and record_id = $2 and length(body) > 0 order by created_at desc limit 5`, [orgId, id])
-      : await q.query(`select body, created_at from comments where org_id = $1 and task_id = $2 order by created_at desc limit 5`, [orgId, id]);
+      ? await q.query<Pick<RecordCommentsRow, 'body' | 'created_at'>>(`select body, created_at from record_comments where org_id = $1 and record_id = $2 and length(body) > 0 order by created_at desc limit 5`, [orgId, id])
+      : await q.query<Pick<CommentsRow, 'body' | 'created_at'>>(`select body, created_at from comments where org_id = $1 and task_id = $2 order by created_at desc limit 5`, [orgId, id]);
   if (!rows.length) return '';
   const clean = (s: string) => s.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').replace(/\s+/g, ' ').trim().slice(0, 240);
   const lines = rows.reverse().map((r) => `• ${clean(r.body)}`);
@@ -69,7 +71,7 @@ async function threadSummary(q: Q, orgId: string, kind: 'record' | 'task', id: s
  * or null when there is nothing to hand over (no customer on the deal).
  */
 export async function createHandover(q: Q, orgId: string, actorId: string | null, src: { kind: 'record' | 'task'; id: string }, stage = 'won'): Promise<string | null> {
-  const [org] = await q.query('select locale, settings from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'locale' | 'settings'>>('select locale, settings from orgs where id = $1', [orgId]);
   const locale = (org?.locale ?? 'en') as Locale;
   const [deal] =
     src.kind === 'record'
@@ -79,10 +81,10 @@ export async function createHandover(q: Q, orgId: string, actorId: string | null
   const dept = await takeoverDepartment(q, orgId);
   const settings = flowSettings(org?.settings);
   const [plan] = settings.handoverPlanId
-    ? await q.query('select id from plan_templates where id = $1 and org_id = $2', [settings.handoverPlanId, orgId])
-    : await q.query(`select id from plan_templates where org_id = $1 and name ~* $2 order by created_at limit 1`, [orgId, PLAN_NAME]);
+    ? await q.query<Pick<PlanTemplatesRow, 'id'>>('select id from plan_templates where id = $1 and org_id = $2', [settings.handoverPlanId, orgId])
+    : await q.query<Pick<PlanTemplatesRow, 'id'>>(`select id from plan_templates where org_id = $1 and name ~* $2 order by created_at limit 1`, [orgId, PLAN_NAME]);
   const summary = await threadSummary(q, orgId, src.kind, src.id, locale);
-  const [row] = await q.query(
+  const [row] = await q.query<Pick<HandoversRow, 'id'>>(
     `insert into handovers (org_id, account_id, source_kind, source_id, source_name, stage, to_department, summary, plan_id, seller_id, created_by)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      on conflict (org_id, source_kind, source_id) do nothing returning id`,
@@ -91,12 +93,12 @@ export async function createHandover(q: Q, orgId: string, actorId: string | null
   if (!row) return null;
   await audit(q, { orgId, actorId, action: 'handover.created', entity: 'account', entityId: deal.account_id, meta: { source: src.kind, id: src.id } });
   // The customer's onboarding plan opens as a draft with the card (it starts when the card is confirmed).
-  await openPlanForHandover(q, orgId, row.id, localDate(new Date(), (await q.query('select timezone from orgs where id = $1', [orgId]))[0]?.timezone));
+  await openPlanForHandover(q, orgId, row.id, localDate(new Date(), (await q.query<Pick<OrgsRow, 'timezone'>>('select timezone from orgs where id = $1', [orgId]))[0]?.timezone));
   // The takeover department's leads hear about it at once (it is work waiting for them).
   const leads = dept
     ? await q.query<{ user_id: string }>(`select user_id from department_members where department_id = $1 and role = 'lead'`, [dept.id])
     : [];
-  const [acc] = await q.query('select name, owner_id from accounts where id = $1 and org_id = $2', [deal.account_id, orgId]);
+  const [acc] = await q.query<Pick<AccountsRow, 'name' | 'owner_id'>>('select name, owner_id from accounts where id = $1 and org_id = $2', [deal.account_id, orgId]);
   const told = new Set<string>(leads.map((l) => l.user_id));
   if (!told.size && acc?.owner_id) told.add(acc.owner_id);
   await enqueue(
@@ -119,7 +121,7 @@ export async function isWonColumn(q: Q, orgId: string, boardId: string, column: 
 /** Where a customer's "tell them it shipped" task goes. */
 async function loopBoard(q: Q, orgId: string, settings: FlowSettings, accountId: string): Promise<Row | null> {
   if (settings.loopBoardId) {
-    const [b] = await q.query('select * from boards where id = $1 and org_id = $2 and archived_at is null', [settings.loopBoardId, orgId]);
+    const [b] = await q.query<BoardsRow>('select * from boards where id = $1 and org_id = $2 and archived_at is null', [settings.loopBoardId, orgId]);
     if (b) return b;
   }
   const [b] = await q.query(
@@ -154,8 +156,8 @@ export async function loopBack(q: Q, orgId: string, storyId: string, now: Date):
     [orgId, storyId],
   );
   if (!links.length) return 0;
-  const [org] = await q.query('select locale, timezone, settings from orgs where id = $1', [orgId]);
-  const [story] = await q.query('select title from tasks where id = $1 and org_id = $2', [storyId, orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'locale' | 'timezone' | 'settings'>>('select locale, timezone, settings from orgs where id = $1', [orgId]);
+  const [story] = await q.query<Pick<TasksRow, 'title'>>('select title from tasks where id = $1 and org_id = $2', [storyId, orgId]);
   const locale = (org?.locale ?? 'en') as Locale;
   const settings = flowSettings(org?.settings);
   const today = localDate(now, org?.timezone || 'UTC');
@@ -165,7 +167,7 @@ export async function loopBack(q: Q, orgId: string, storyId: string, now: Date):
   for (const [accountId, group] of byAccount) {
     const first = group[0];
     const ownerId: string | null = first.cs_owner ?? first.owner_id ?? null;
-    const [owner] = ownerId ? await q.query(`select id, name, seat, status from users where id = $1 and org_id = $2`, [ownerId, orgId]) : [];
+    const [owner] = ownerId ? await q.query<Pick<UsersRow, 'id' | 'name' | 'seat' | 'status'>>(`select id, name, seat, status from users where id = $1 and org_id = $2`, [ownerId, orgId]) : [];
     const draft = shippedDraft(locale, { account: first.account_name, story: story?.title ?? '', owner: owner?.name ?? '' });
     let taskId: string | null = null;
     const board = await loopBoard(q, orgId, settings, accountId);
@@ -174,7 +176,7 @@ export async function loopBack(q: Q, orgId: string, storyId: string, now: Date):
       const status = columns.find((c) => !c.done)?.key ?? columns[0].key;
       const assignees = owner && owner.seat === 'full' && ['active', 'invited'].includes(owner.status) ? [owner.id] : [];
       const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
-      const [t] = await q.query(
+      const [t] = await q.query<TasksRow>(
         `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, position)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *`,
         [orgId, board.id, translate(locale, 'flow.loop.task', { account: first.account_name, story: story?.title ?? '' }).slice(0, 300), draft, status, assignees, accountId, addDays(today, 2), Number(p)],
@@ -214,7 +216,7 @@ export async function flowAfterMove(deps: Deps, orgId: string, task: Row, board:
   let shipped = 0;
   await deps.db.system(async (q) => {
     if (done) shipped = await loopBack(q, orgId, task.id, now);
-    const [org] = await q.query('select settings from orgs where id = $1', [orgId]);
+    const [org] = await q.query<Pick<OrgsRow, 'settings'>>('select settings from orgs where id = $1', [orgId]);
     if (flowSettings(org?.settings).handover && task.account_id && (await isWonColumn(q, orgId, board.id, column))) {
       await createHandover(q, orgId, task.updated_by ?? null, { kind: 'task', id: task.id });
     }
@@ -226,7 +228,7 @@ export async function flowAfterMove(deps: Deps, orgId: string, task: Row, board:
 export async function flowAfterRecord(deps: Deps, orgId: string, actorId: string | null, recordId: string, before: Record<string, unknown> | null, after: Record<string, unknown>) {
   if (after.status !== 'won' || before?.status === 'won') return;
   const made = await deps.db.system(async (q) => {
-    const [org] = await q.query('select settings from orgs where id = $1', [orgId]);
+    const [org] = await q.query<Pick<OrgsRow, 'settings'>>('select settings from orgs where id = $1', [orgId]);
     if (!flowSettings(org?.settings).handover) return null;
     const [r] = await q.query(`select r.id from records r join record_types t on t.id = r.type_id where r.id = $1 and r.org_id = $2 and t.kind = 'opportunity'`, [recordId, orgId]);
     return r ? createHandover(q, orgId, actorId, { kind: 'record', id: recordId }) : null;

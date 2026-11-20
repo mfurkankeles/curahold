@@ -2,6 +2,7 @@
 // They arrive at the central address; each request is verified (Slack
 // signature, Microsoft / Google signed token) and mapped to a company by the
 // workspace it came from, then to a person by their chat identity.
+import type { ConnectionsRow, OrgsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { translate, normalizeLocale, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { connectionByExternal, upsertIdentity } from '../connectors/messaging';
@@ -50,6 +51,9 @@ async function slackPerson(deps: Deps, conn: LoadedConnection, slackUserId: stri
   return u;
 }
 
+/**
+ * Slack's events and interactions. Checks Slack's request signature first (401 otherwise); answers the URL check.
+ */
 hookRoutes.post('/slack', async (c) => {
   const deps = c.get('deps');
   if (!deps.config.connectors.slack) return c.text('not configured', 404);
@@ -74,7 +78,7 @@ hookRoutes.post('/slack', async (c) => {
   const conn = teamId ? await connectionByExternal(deps, 'slack', teamId) : null;
   if (!conn) return c.json({ response_type: 'ephemeral', text: say('en', 'chat.notConnected') });
   const person = slackUser ? await slackPerson(deps, conn, slackUser) : null;
-  const [org] = await deps.db.system((q) => q.query('select locale from orgs where id = $1', [conn.orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'locale'>>('select locale from orgs where id = $1', [conn.orgId]));
   const locale = normalizeLocale(person?.locale ?? org?.locale);
   if (!person) return c.json({ response_type: 'ephemeral', text: say(locale, 'chat.notLinked') });
 
@@ -130,6 +134,7 @@ async function teamsReply(deps: Deps, activity: any, text: string) {
   }).catch(() => undefined);
 }
 
+/** Microsoft Teams bot messages. Checks the bot token's signature and claims first (401 otherwise). */
 hookRoutes.post('/teams', async (c) => {
   const deps = c.get('deps');
   const t = deps.config.connectors.teams;
@@ -151,7 +156,7 @@ hookRoutes.post('/teams', async (c) => {
     }
     return c.json({});
   }
-  const [org] = await deps.db.system((q) => q.query('select locale from orgs where id = $1', [conn.orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'locale'>>('select locale from orgs where id = $1', [conn.orgId]));
   const isPersonal = activity.conversation?.conversationType === 'personal';
 
   // Who is this? Remembered after the first time; Teams tells us the email.
@@ -185,7 +190,7 @@ hookRoutes.post('/teams', async (c) => {
     } else if (activity.conversation?.id) {
       const name = activity.channelData?.channel?.name ?? activity.channelData?.team?.name ?? activity.conversation?.name ?? 'Teams';
       await deps.db.system(async (q) => {
-        const [row] = await q.query('select config from connections where id = $1', [conn.id]);
+        const [row] = await q.query<Pick<ConnectionsRow, 'config'>>('select config from connections where id = $1', [conn.id]);
         const channels = ((row?.config?.channels ?? []) as any[]).filter((x) => x.id !== activity.conversation.id);
         channels.push({ id: activity.conversation.id, name: String(name), serviceUrl: activity.serviceUrl });
         await q.query(`update connections set config = jsonb_set(config, '{channels}', $2::jsonb), updated_at = now() where id = $1`, [
@@ -247,7 +252,7 @@ hookRoutes.post('/gchat', async (c) => {
   const email = String(ev.user?.email ?? '').toLowerCase();
   const conn = email ? await connectionByExternal(deps, 'gchat', emailDomain(email)) : null;
   if (!conn) return c.json({ text: say('en', 'chat.notConnected') });
-  const [org] = await deps.db.system((q) => q.query('select locale from orgs where id = $1', [conn.orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'locale'>>('select locale from orgs where id = $1', [conn.orgId]));
   const space = ev.space ?? {};
   const isDm = space.type === 'DM' || space.spaceType === 'DIRECT_MESSAGE' || space.singleUserBotDm === true;
   const chatUser = String(ev.user?.name ?? '');
@@ -264,7 +269,7 @@ hookRoutes.post('/gchat', async (c) => {
   if (ev.type === 'ADDED_TO_SPACE') {
     if (!isDm && /^spaces\//.test(String(space.name ?? ''))) {
       await deps.db.system(async (q) => {
-        const [row] = await q.query('select config from connections where id = $1', [conn.id]);
+        const [row] = await q.query<Pick<ConnectionsRow, 'config'>>('select config from connections where id = $1', [conn.id]);
         const channels = ((row?.config?.channels ?? []) as any[]).filter((x) => x.id !== space.name);
         channels.push({ id: space.name, name: String(space.displayName ?? space.name) });
         await q.query(`update connections set config = jsonb_set(config, '{channels}', $2::jsonb), updated_at = now() where id = $1`, [
@@ -278,7 +283,7 @@ hookRoutes.post('/gchat', async (c) => {
   }
   if (ev.type === 'REMOVED_FROM_SPACE') {
     await deps.db.system(async (q) => {
-      const [row] = await q.query('select config from connections where id = $1', [conn.id]);
+      const [row] = await q.query<Pick<ConnectionsRow, 'config'>>('select config from connections where id = $1', [conn.id]);
       const channels = ((row?.config?.channels ?? []) as any[]).filter((x) => x.id !== space.name);
       await q.query(`update connections set config = jsonb_set(config, '{channels}', $2::jsonb) where id = $1`, [conn.id, JSON.stringify(channels)]);
     });

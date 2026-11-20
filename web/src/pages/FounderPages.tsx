@@ -14,6 +14,10 @@ import type { PlatformAccess } from '../../../shared/src/platform';
 import { PAGE_AREAS } from '../platform/pages-manifest';
 import '../surfaces/console.css';
 
+/**
+ * The founder's "see all pages" dashboard: every screen of the product by area, each a live link (from
+ * web/src/platform/pages-manifest.ts).
+ */
 export function FounderPagesPage() {
   const { t } = useI18n();
   const [access, setAccess] = useState<PlatformAccess | null>(null);

@@ -28,6 +28,7 @@ import '../surfaces/flow.css';
 const CAP = { enter: 'Enter' };
 
 export const FLOW_CHANGED = 'app:flow-changed';
+/** Tells open customer-flow views to reload. */
 export const flowChanged = () => window.dispatchEvent(new Event(FLOW_CHANGED));
 
 /** A department's name, for the four keys the app knows and the two the flow adds. */
@@ -37,6 +38,7 @@ export function useDeptName() {
     ['sales', 'success', 'product', 'finance'].includes(key) ? t(`dept.${key}` as MessageKey) : key === 'onboarding' || key === 'inside_sales' ? t(`flow.dept.${key}` as MessageKey) : key;
 }
 
+/** A customer's flow between departments (who owns it where, hand-offs), with a reload. */
 export function useAccountFlow(accountId: string) {
   const [flow, setFlow] = useState<AccountFlow | null>(null);
   const load = useCallback(() => get<AccountFlow>(`/accounts/${accountId}/flow`).then(setFlow, () => setFlow({ team: [], work: [], promises: [], handovers: [] })), [accountId]);
@@ -431,6 +433,7 @@ function WorkRow({ w, accountName, onChanged }: { w: LinkedWork; accountName: st
   );
 }
 
+/** On a customer page: what the customer is waiting for from each department. */
 export function WaitingFor({ account, flow, reload }: { account: Account; flow: AccountFlow | null; reload: () => void }) {
   const { t } = useI18n();
   const f = useFormat();

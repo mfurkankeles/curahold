@@ -16,6 +16,7 @@ import { Icon } from './icons';
 /** The sender's number out of a WhatsApp note ("WhatsApp · Name +905…"). */
 export const whatsappNumber = (body: string) => /^WhatsApp · .*?\+(\d{7,20})\s*$/m.exec(body.split('\n')[0] ?? '')?.[1] ?? null;
 
+/** On a customer's timeline: replies to a WhatsApp message through the company's connection. */
 export function WhatsAppReply({ connectionId, accountId, activity, onSent }: { connectionId: string; accountId: string; activity: Activity; onSent: () => void }) {
   const { t } = useI18n();
   const { toast } = useStore();
@@ -103,6 +104,7 @@ const tomorrow = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T10:00`;
 };
 
+/** On a customer page: plans a meeting in the connected calendar with the customer's contacts as guests. */
 export function CalendarPlan({ connectionId, app, accountId, guests }: { connectionId: string; app: string; accountId: string; guests: string[] }) {
   const { t } = useI18n();
   const { toast } = useStore();

@@ -101,11 +101,15 @@ const between = (v: number, good: number, bad: number) => {
   return clamp(((v - bad) / (good - bad)) * 100);
 };
 
+/** The health band ('good', 'watch' or 'risk') for a score with the company's thresholds; null without a score. */
 export function bandOf(score: number | null, cfg: HealthConfig): HealthBand | null {
   if (score === null) return null;
   return score >= cfg.bands.good ? 'good' : score >= cfg.bands.watch ? 'watch' : 'risk';
 }
 
+/**
+ * A customer's health score from the company's signals (activity, tickets, fields, renewal), with each part's points.
+ */
 export function computeHealth(cfg: HealthConfig, defs: AccountField[], input: HealthInput, now: Date): HealthResult {
   const parts: HealthPart[] = cfg.signals.map((s) => {
     const part = (points: number | null, detail: HealthPart['detail'] = {}): HealthPart => ({ id: s.id, key: s.key, weight: s.weight, points, share: 0, earned: 0, detail });

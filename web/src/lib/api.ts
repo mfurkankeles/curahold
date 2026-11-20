@@ -5,6 +5,7 @@ import { normalizeLocale, translate } from '../../../shared/src/i18n';
 import { getDeviceId } from './device';
 import { noteFailedRequest } from './diagnostics';
 
+/** A failed API call: the HTTP status and the server's error body (`code` is the error code). */
 export class ApiFailure extends Error {
   constructor(
     public status: number,
@@ -22,6 +23,7 @@ let currentLocale = '';
 // "See it as them": while an administrator previews someone, every request
 // carries that person's id and the server answers as them, read only.
 const PREVIEW = 'app-preview-as';
+/** The person an administrator is previewing as ("see it as them"), or null. Kept per tab in sessionStorage. */
 export function previewAs(): string | null {
   try {
     return sessionStorage.getItem(PREVIEW);
@@ -29,6 +31,7 @@ export function previewAs(): string | null {
     return null;
   }
 }
+/** Starts previewing the app as another person (read only; the server enforces it) and reloads at Home. */
 export function startPreview(userId: string, _name?: string) {
   try {
     sessionStorage.setItem(PREVIEW, userId);
@@ -37,6 +40,7 @@ export function startPreview(userId: string, _name?: string) {
   }
   location.href = '/home';
 }
+/** Ends a preview and goes back to `to` (the roles screen by default). */
 export function endPreview(to = '/settings/roles') {
   try {
     sessionStorage.removeItem(PREVIEW);
@@ -45,6 +49,7 @@ export function endPreview(to = '/settings/roles') {
   }
   location.href = to;
 }
+/** Sets the language sent with every request, so texts the server writes come back in it. */
 export function setApiLocale(l: string) {
   currentLocale = l;
 }
@@ -53,6 +58,7 @@ export const apiLocale = () => currentLocale;
 
 type Listener = (code: string) => void;
 const authListeners = new Set<Listener>();
+/** Subscribes to "signed out" (session ended or evicted); returns the unsubscribe function. */
 export function onAuthLost(fn: Listener) {
   authListeners.add(fn);
   return () => {
@@ -66,6 +72,7 @@ const waitingListeners = new Set<() => void>();
 const tellWaiting = () => waitingListeners.forEach((f) => f());
 /** How many changes are waiting for the connection (for OfflineBar). */
 export const changesWaiting = () => waiting.size;
+/** Subscribes to changes in the number of changes waiting for the connection (for OfflineBar). */
 export function onChangesWaiting(f: () => void) {
   waitingListeners.add(f);
   return () => void waitingListeners.delete(f);
@@ -98,6 +105,7 @@ async function afterReconnect(key: string, go: () => Promise<Response>): Promise
  * works without its screen knowing about it.
  */
 let reauth: (() => Promise<boolean>) | null = null;
+/** Installs the "confirm it's you" dialog used when a sensitive change is answered 403 reauth_required. */
 export function onReauth(fn: (() => Promise<boolean>) | null) {
   reauth = fn;
 }
@@ -109,6 +117,11 @@ const newKey = (): string =>
 /** Changes on their way, by what they are: a second identical one (a double click) joins the first. */
 const onTheWay = new Map<string, Promise<unknown>>();
 
+/**
+ * Calls the API. Every change gets its own Idempotency-Key (so a retry is done once), an identical change already on
+ * its way (a double click) joins the first, changes made offline wait for the connection, and a reauth answer asks
+ * the person to confirm and sends once more. Sends the device id the request-forgery check needs.
+ */
 export function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   const change = method !== 'GET' && method !== 'HEAD';
   const same = change && !(body instanceof FormData) ? `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}` : null;
@@ -235,8 +248,13 @@ function safeJson(text: string) {
   }
 }
 
+/** GET through api(). */
 export const get = <T = any>(p: string) => api<T>('GET', p);
+/** POST through api() (an empty object when no body). */
 export const post = <T = any>(p: string, b?: unknown) => api<T>('POST', p, b ?? {});
+/** PATCH through api(). */
 export const patch = <T = any>(p: string, b: unknown) => api<T>('PATCH', p, b);
+/** DELETE through api(). */
 export const del = <T = any>(p: string) => api<T>('DELETE', p);
+/** PUT through api(). */
 export const put = <T = any>(p: string, b: unknown) => api<T>('PUT', p, b);

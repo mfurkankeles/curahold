@@ -8,6 +8,10 @@ import { useI18n } from './i18n';
 import { useStore } from './store';
 import { UNDO_MS, useUndo } from './undo';
 
+/**
+ * Delete with Undo for things the server cannot bring back: gone from the screen at once, sent only after the
+ * 10-second Undo window; closing the page in that time deletes nothing (the safe side).
+ */
 export function useDeleteLater() {
   const offer = useUndo();
   const { toast } = useStore();

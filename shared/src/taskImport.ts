@@ -133,6 +133,7 @@ export function matchPerson(raw: string, people: { id: string; name: string; ema
   return byFirst.length === 1 ? byFirst[0].id : null;
 }
 
+/** A task priority from an imported value (the same wording rules as tickets). */
 export const priorityFor = (raw: unknown): 'low' | 'normal' | 'high' | 'urgent' => ticketPriorityOf(raw);
 
 export interface TaskImportResult {

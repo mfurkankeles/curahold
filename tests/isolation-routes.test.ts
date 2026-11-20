@@ -151,9 +151,9 @@ const NOT_BY_ID: Record<string, string> = {
   'POST /inbound/hooks/:id': 'opened with that hook’s own signature, not a session; a wrong one is refused (tests/connectors-b19.test.ts)',
   'GET /inbound/whatsapp/:source': 'Meta’s address check, answered only with that company’s own verify token (tests/connectors-b19.test.ts)',
   'POST /inbound/whatsapp/:source': 'opened with that company’s own Meta app signature, not a session (tests/connectors-b19.test.ts)',
-  'POST /inbound/segment/:source': 'a Segment source id, opened with that company’s own signed secret (tests/wave5c.test.ts)',
+  'POST /inbound/segment/:source': 'a Segment source id, opened with that company’s own signed secret (tests/mailbox-segment-inbound.test.ts)',
   'GET /platform/customers/:orgId': 'the operator-only owner console; any non-owner, including another company, gets 403 (tests/platform.test.ts)',
-  // Wave-6A enterprise SSO + SCIM. These are NOT session-addressed id routes:
+  // Enterprise SSO + SCIM. These are NOT session-addressed id routes:
   //   * SCIM is authenticated by a per-company bearer token (not a session); a
   //     session cannot reach it, and a token only ever maps to its own company.
   //   * SSO login picks the company by URL slug + a signed state, before anyone

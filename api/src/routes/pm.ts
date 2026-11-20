@@ -2,6 +2,7 @@
 // sprints, the backlog, issue types, story points and epics. Every query runs
 // on the request's own organisation connection, so row-level security decides
 // what is visible — another company's sprint is simply "not found".
+import type { BoardsRow, SprintsRow, TasksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ISSUE_TYPES, SPRINT_STATES, type BurndownPoint, type Column, type IssueType, type SprintBurndown, type SprintSummary } from '../../../shared/src/model';
@@ -20,13 +21,13 @@ import { addChainCounts, chainOf } from '../lib/chain';
 export const pmRoutes = new Hono<AppEnv>();
 
 async function loadSprint(q: Q, id: string): Promise<Row> {
-  const [s] = await q.query('select * from sprints where id = $1 and archived_at is null', [id]);
+  const [s] = await q.query<SprintsRow>('select * from sprints where id = $1 and archived_at is null', [id]);
   if (!s) fail('not_found');
   return s;
 }
 
 async function loadTask(q: Q, id: string): Promise<Row> {
-  const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
+  const [t] = await q.query<TasksRow>('select * from tasks where id = $1 and archived_at is null', [id]);
   if (!t) fail('not_found');
   return t;
 }
@@ -51,7 +52,7 @@ function requirePm(board: Row) {
 
 /** Gate a sprint- or task-scoped endpoint by its board's PM switch, without loading the whole board. */
 async function requireBoardPm(q: Q, boardId: string) {
-  const [b] = await q.query('select pm_enabled from boards where id = $1', [boardId]);
+  const [b] = await q.query<Pick<BoardsRow, 'pm_enabled'>>('select pm_enabled from boards where id = $1', [boardId]);
   if (b && b.pm_enabled === false) fail('not_found');
 }
 
@@ -111,7 +112,7 @@ pmRoutes.put('/boards/:id/pm', async (c) => {
   const state = await run(c, async (q) => {
     const b = await loadBoard(q, id);
     if (!canManageBoard(auth, b)) fail('forbidden');
-    const [u] = await q.query('update boards set pm_enabled = $2 where id = $1 returning *', [id, input.enabled]);
+    const [u] = await q.query<BoardsRow>('update boards set pm_enabled = $2 where id = $1 returning *', [id, input.enabled]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'board.updated', entity: 'board', entityId: id, meta: { pmEnabled: input.enabled } });
     return { pmEnabled: u.pm_enabled ?? null, enabled: pmEnabledFor(u) };
   });
@@ -125,6 +126,9 @@ const sprintFields = {
   endsOn: isoDate.nullable(),
 };
 
+/**
+ * Creates a sprint on a product board. Writers only; the board must have product features on (requirePm); audited (201).
+ */
 pmRoutes.post('/boards/:id/sprints', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -135,7 +139,7 @@ pmRoutes.post('/boards/:id/sprints', async (c) => {
   const sprint = await run(c, async (q) => {
     requirePm(await loadBoard(q, id));
     const [m] = await q.query('select coalesce(max(position), 0) + 1024 as p from sprints where board_id = $1', [id]);
-    const [s] = await q.query(
+    const [s] = await q.query<SprintsRow>(
       `insert into sprints (org_id, board_id, name, goal, starts_on, ends_on, position, created_by)
        values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
       [org.id, id, input.name, input.goal ?? '', input.startsOn ?? null, input.endsOn ?? null, Number(m.p), auth.userId],
@@ -146,6 +150,7 @@ pmRoutes.post('/boards/:id/sprints', async (c) => {
   return c.json({ sprint: toSprint(sprint) }, 201);
 });
 
+/** One sprint; its board must be a product board the reader can open. */
 pmRoutes.get('/sprints/:id', async (c) => {
   const id = param(c, 'id');
   const s = await run(c, async (q) => {
@@ -156,6 +161,7 @@ pmRoutes.get('/sprints/:id', async (c) => {
   return c.json({ sprint: toSprint(s) });
 });
 
+/** Edits, starts or closes a sprint. Writers only; audited. */
 pmRoutes.patch('/sprints/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -167,7 +173,7 @@ pmRoutes.patch('/sprints/:id', async (c) => {
     await requireBoardPm(q, cur.board_id);
     const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
     checkDates(input.startsOn !== undefined ? input.startsOn : day(cur.starts_on), input.endsOn !== undefined ? input.endsOn : day(cur.ends_on));
-    const [s] = await q.query(
+    const [s] = await q.query<SprintsRow>(
       `update sprints set name = coalesce($2, name), goal = coalesce($3, goal),
               starts_on = case when $4 then $5::date else starts_on end,
               ends_on = case when $6 then $7::date else ends_on end, updated_at = now()
@@ -193,7 +199,7 @@ pmRoutes.put('/sprints/:id/state', async (c) => {
     const board = await loadBoard(q, cur.board_id);
     requirePm(board);
     if (input.state === 'active' && cur.state !== 'active') {
-      const [other] = await q.query(
+      const [other] = await q.query<Pick<SprintsRow, 'id'>>(
         `select id from sprints where board_id = $1 and state = 'active' and archived_at is null and id <> $2`,
         [cur.board_id, id],
       );
@@ -245,7 +251,7 @@ pmRoutes.put('/sprints/:id/state', async (c) => {
     }
     let s: Row;
     try {
-      [s] = await q.query('update sprints set state = $2, updated_at = now() where id = $1 returning *', [id, input.state]);
+      [s] = await q.query<SprintsRow>('update sprints set state = $2, updated_at = now() where id = $1 returning *', [id, input.state]);
     } catch (e) {
       // The partial unique index is the backstop when two requests race.
       if (/sprints_one_active_idx|unique/i.test(String((e as Error).message))) fail('conflict', {}, { reason: 'sprint_active' });
@@ -282,7 +288,7 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
   const rows = await run(c, async (q) => {
     const board = await loadBoard(q, id);
     requirePm(board);
-    return q.query(
+    return q.query<TasksRow>(
       `select t.* from tasks t
         where t.board_id = $1 and t.sprint_id is null and t.parent_id is null and t.archived_at is null
           and (not $2 or not (t.status = any($3::text[])))
@@ -293,6 +299,7 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/** A product board's epics, each with how many stories it has, their points and how many points are done. */
 pmRoutes.get('/boards/:id/epics', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
@@ -313,18 +320,22 @@ pmRoutes.get('/boards/:id/epics', async (c) => {
   return c.json({ epics: rows.map((r) => ({ ...toTask(r), childCount: Number(r.child_count), childPoints: Number(r.child_points), childDonePoints: Number(r.child_done_points) })) });
 });
 
+/** The tasks in a sprint. */
 pmRoutes.get('/sprints/:id/items', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
     const s = await loadSprint(q, id);
     await requireBoardPm(q, s.board_id);
-    const rows = await q.query('select * from tasks where sprint_id = $1 and archived_at is null order by position, created_at', [id]);
+    const rows = await q.query<TasksRow>('select * from tasks where sprint_id = $1 and archived_at is null order by position, created_at', [id]);
     await addChainCounts(q, rows);
     return rows;
   });
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/**
+ * Adds tasks to a sprint; they must be on the sprint's board and the sprint must not be closed. Writers only; audited.
+ */
 pmRoutes.put('/sprints/:id/items', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -336,10 +347,10 @@ pmRoutes.put('/sprints/:id/items', async (c) => {
     const sprint = await loadSprint(q, id);
     await requireBoardPm(q, sprint.board_id);
     if (sprint.state === 'closed') fail('validation', { fields: 'sprint' }, { fields: ['sprint'] });
-    const found = await q.query('select id, board_id from tasks where id = any($1::uuid[]) and archived_at is null', [ids]);
+    const found = await q.query<Pick<TasksRow, 'id' | 'board_id'>>('select id, board_id from tasks where id = any($1::uuid[]) and archived_at is null', [ids]);
     if (found.length !== ids.length) fail('not_found');
     if (found.some((t) => t.board_id !== sprint.board_id)) fail('validation', { fields: 'taskIds' }, { fields: ['taskIds'] });
-    const out = await q.query(
+    const out = await q.query<TasksRow>(
       `update tasks set sprint_id = $2, version = version + 1, updated_at = now(), updated_by = $3
         where id = any($1::uuid[]) and sprint_id is distinct from $2::uuid returning *`,
       [ids, id, auth.userId],
@@ -350,6 +361,7 @@ pmRoutes.put('/sprints/:id/items', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/** Takes a task out of a sprint. Writers only; audited. */
 pmRoutes.delete('/sprints/:id/items/:taskId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -359,7 +371,7 @@ pmRoutes.delete('/sprints/:id/items/:taskId', async (c) => {
   const task = await run(c, async (q) => {
     const s = await loadSprint(q, id);
     await requireBoardPm(q, s.board_id);
-    const [t] = await q.query(
+    const [t] = await q.query<TasksRow>(
       `update tasks set sprint_id = null, version = version + 1, updated_at = now(), updated_by = $3
         where id = $1 and sprint_id = $2 and archived_at is null returning *`,
       [taskId, id, auth.userId],
@@ -559,10 +571,10 @@ pmRoutes.patch('/tasks/:id/pm', async (c) => {
     }
     if (epicId && (input.epicId !== undefined || input.issueType !== undefined)) {
       if (epicId === id) fail('validation', { fields: 'epicId' }, { fields: ['epicId'] });
-      const [e] = await q.query('select id, board_id, issue_type from tasks where id = $1 and archived_at is null', [epicId]);
+      const [e] = await q.query<Pick<TasksRow, 'id' | 'board_id' | 'issue_type'>>('select id, board_id, issue_type from tasks where id = $1 and archived_at is null', [epicId]);
       if (!e || e.board_id !== t.board_id || e.issue_type !== 'epic') fail('validation', { fields: 'epicId' }, { fields: ['epicId'] });
     }
-    const [u] = await q.query(
+    const [u] = await q.query<TasksRow>(
       `update tasks set issue_type = $3, story_points = case when $4 then $5::numeric else story_points end, epic_id = $6,
               version = version + 1, updated_at = now(), updated_by = $7
         where id = $1 and version = $2 returning *`,

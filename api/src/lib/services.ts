@@ -54,6 +54,7 @@ export interface Storage {
   delete(key: string): Promise<void>;
 }
 
+/** File storage in memory, for tests and the demo. */
 export class MemoryStorage implements Storage {
   private items = new Map<string, { data: ArrayBuffer; mime: string }>();
   async put(key: string, data: ArrayBuffer, mime: string) {
@@ -77,6 +78,7 @@ export interface R2Like {
   delete(key: string): Promise<void>;
 }
 
+/** File storage on Cloudflare R2 (production). */
 export class R2Storage implements Storage {
   constructor(private bucket: R2Like) {}
   async put(key: string, data: ArrayBuffer, mime: string) {

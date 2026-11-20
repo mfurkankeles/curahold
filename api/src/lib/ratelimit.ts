@@ -144,9 +144,12 @@ const SIGNIN = [
 const INVITE = [/^\/api\/admin\/users$/, /^\/api\/setup\/people$/, /^\/api\/portal\/users(\/[^/]+\/resend)?$/, /^\/api\/admin\/join-requests\/[^/]+\/approve$/];
 const EXPORTS = [/^\/api\/admin\/users\/[^/]+\/export$/, /^\/api\/admin\/audit$/, /^\/api\/me\/export$/];
 
+/** Whether a request is a sign-in attempt (the tightest limit, against guessing). */
 export const isSignIn = (method: string, path: string) =>
   (method === 'POST' || /\/(start|authorize|callback)$/.test(path)) && SIGNIN.some((r) => r.test(path));
+/** Whether a request sends invitations (limited, because each one sends a mail). */
 export const isInvite = (method: string, path: string) => method === 'POST' && INVITE.some((r) => r.test(path));
+/** Whether a request is the search endpoint (limited separately: it is the most expensive read). */
 export const isSearch = (method: string, path: string) => method === 'GET' && path === '/api/search';
 /** An export reads the whole of something: a named export, or a list read past its first pages. */
 export const isExport = (method: string, path: string, url: URL) =>
@@ -154,6 +157,7 @@ export const isExport = (method: string, path: string, url: URL) =>
 /** A file sent to Curahold: a multipart POST, or a POST to a files address. */
 export const isUpload = (method: string, path: string, contentType: string | undefined) =>
   method === 'POST' && (/\/files$/.test(path) || (contentType ?? '').startsWith('multipart/form-data'));
+/** Whether a request changes something (any method but GET, HEAD and OPTIONS). */
 export const isWrite = (method: string) => method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
 
 // ---------------------------------------------------------------- who is asking

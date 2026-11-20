@@ -291,6 +291,10 @@ function spDetails(cfg: Config, slug: string) {
   };
 }
 
+/**
+ * The company's SSO settings and the last test sign-in. Needs org.manage. Never returns secrets, only whether signing
+ * material is on file.
+ */
 ssoAdminRoutes.get('/sso/settings', async (c) => {
   requirePerm(c, 'org.manage');
   const cfg = c.get('deps').config;
@@ -325,6 +329,10 @@ ssoAdminRoutes.get('/sso/settings', async (c) => {
   });
 });
 
+/**
+ * Saves the company's SSO settings. Needs org.manage and a recent sign-in. On the shared service the token and key
+ * addresses must be public https (no private networks), because the server fetches them.
+ */
 ssoAdminRoutes.put('/sso/settings', async (c) => {
   requirePerm(c, 'org.manage');
   await requireFresh(c);

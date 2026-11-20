@@ -114,6 +114,7 @@ export function FollowButton({ task, reload }: { task: TaskDetail; reload: Reloa
 
 const LINK_KINDS = ['blocked_by', 'blocks', 'relates'] as const;
 
+/** In a task: links to other tasks (blocks, blocked by, relates). */
 export function LinksSection({ task, editable, reload }: { task: TaskDetail; editable: boolean; reload: Reload }) {
   const { t } = useI18n();
   const fail = useFail();
@@ -248,6 +249,7 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
 
 const QUICK_MINUTES = [15, 30, 60, 120];
 
+/** In a task: time entries, adding and removing them. */
 export function TimeSection({ task, editable, reload }: { task: TaskDetail; editable: boolean; reload: Reload }) {
   const { t, locale, fmtDate } = useI18n();
   const { person, me, can } = useStore();

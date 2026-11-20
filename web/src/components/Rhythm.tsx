@@ -29,6 +29,7 @@ import { formatMonth, formatNumber } from '../lib/format';
 /** "1 deal", "4 deals" (Turkish says "1 fırsat", "4 fırsat"). */
 export const dealsN = (t: I18n['t'], n: number) => (n === 1 ? t('pipeline.deal1') : t('pipeline.deals', { n }));
 
+/** The company's working rhythm (review cadence, nudges), with defaults. */
 export const useRhythm = (): Rhythm => useStore().me.org.rhythm ?? DEFAULT_RHYTHM;
 
 /** Deals as the target sums need them: an open deal counts by how far along its stage is. */

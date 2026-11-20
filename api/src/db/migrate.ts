@@ -6,6 +6,10 @@ export interface Migration {
   sql: string;
 }
 
+/**
+ * Applies every migration not yet in schema_migrations, in file-name order, each in its own system transaction,
+ * and returns the names it applied. Applied files are never edited (CLAUDE.md); a change is a new numbered file.
+ */
 export async function migrate(db: Db, migrations: Migration[]): Promise<string[]> {
   const applied: string[] = [];
   await db.system(async (q) => {

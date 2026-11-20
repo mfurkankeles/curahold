@@ -1,8 +1,10 @@
 // A task's history: one line per change, written in the same transaction
 // as the change, so "who moved this, and when?" always has an answer.
+import type { AccountsRow } from '../db/rows.gen';
 import type { Q, Row } from '../db';
 import { day } from './mappers';
 
+/** Adds a line to a task's history (who did what), in the caller's transaction. */
 export async function addEvent(q: Q, orgId: string, taskId: string, actorId: string | null, kind: string, data: Record<string, unknown> = {}) {
   await q.query('insert into task_events (org_id, task_id, actor_id, kind, data) values ($1, $2, $3, $4, $5)', [orgId, taskId, actorId, kind, JSON.stringify(data)]);
 }
@@ -24,7 +26,7 @@ export async function recordChanges(q: Q, orgId: string, actorId: string | null,
   if (before.priority !== after.priority) await addEvent(q, orgId, id, actorId, 'priority', { from: before.priority, to: after.priority });
   if ((before.account_id ?? null) !== (after.account_id ?? null)) {
     const name = async (accountId: string | null, known: unknown) =>
-      known !== undefined ? (known as string | null) : accountId ? ((await q.query('select name from accounts where id = $1', [accountId]))[0]?.name ?? null) : null;
+      known !== undefined ? (known as string | null) : accountId ? ((await q.query<Pick<AccountsRow, 'name'>>('select name from accounts where id = $1', [accountId]))[0]?.name ?? null) : null;
     await addEvent(q, orgId, id, actorId, 'account', { from: await name(before.account_id ?? null, before.account_name), to: await name(after.account_id ?? null, after.account_name) });
   }
   if ((before.description ?? '') !== (after.description ?? '')) await addEvent(q, orgId, id, actorId, 'description');

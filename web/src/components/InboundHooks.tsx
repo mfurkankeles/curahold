@@ -20,6 +20,7 @@ const FIELDS: Record<HookTarget, (keyof HookMapping)[]> = {
   deal_note: ['body', 'dealId', 'dealName'],
 };
 
+/** Settings: incoming webhooks from recipes, with their address, secret and deliveries. */
 export function InboundHooks() {
   const { t, locale } = useI18n();
   const { toast } = useStore();

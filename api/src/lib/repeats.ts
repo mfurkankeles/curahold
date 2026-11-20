@@ -15,6 +15,7 @@
 //   4. The same key on a different request is refused (repeat_mismatch): a key means one change.
 //
 // Keys are per person and per company, and are cleared after two days (lib/scheduler.ts).
+import type { IdempotencyKeysRow } from '../db/rows.gen';
 import type { Context } from 'hono';
 import type { Q } from '../db';
 import { sha256Hex } from './crypto';
@@ -61,7 +62,7 @@ export async function repeatKeyOf(c: Context): Promise<RepeatKey | null> {
 /** Inside the request's first transaction: this key is ours, or it was used before. */
 export async function claimRepeat(q: Q, r: RepeatKey): Promise<void> {
   // If another copy of this request is still at work, this waits here until it has finished.
-  const mine = await q.query(
+  const mine = await q.query<Pick<IdempotencyKeysRow, 'key'>>(
     `insert into idempotency_keys (org_id, user_id, key, method, path, body_hash)
      values (app_org(), app_user(), $1, $2, $3, $4) on conflict do nothing returning key`,
     [r.key, r.method, r.path, r.hash],

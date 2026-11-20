@@ -32,7 +32,12 @@ export type ExternalKind = (typeof EXTERNAL_KINDS)[number];
 export type ActionKind = InternalKind | ExternalKind;
 export const ACTION_KINDS: readonly ActionKind[] = [...INTERNAL_KINDS, ...EXTERNAL_KINDS];
 
+/**
+ * Whether an action kind reaches outside or cannot be undone lightly (deploy, merge, mail, posts, spend, contracts,
+ * deleting data, security rules): those need a review and the owner's approval (ADR 0011).
+ */
 export const isExternal = (kind: string): kind is ExternalKind => (EXTERNAL_KINDS as readonly string[]).includes(kind);
+/** Whether an action kind exists at all; unknown kinds are refused by the gate. */
 export const isKnownKind = (kind: string): kind is ActionKind => (ACTION_KINDS as readonly string[]).includes(kind);
 
 /**

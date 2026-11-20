@@ -5,6 +5,9 @@ import type { AccountDepartmentWork } from '../../../shared/src/model';
 import { useDepartments } from '../lib/departments';
 import { useI18n } from '../lib/i18n';
 
+/**
+ * On a customer page: each department's open work for this customer, as counts (department walls apply, ADR 0009).
+ */
 export function AccountDepartments({ work }: { work?: AccountDepartmentWork[] }) {
   const { t, fmtDate } = useI18n();
   const depts = useDepartments();

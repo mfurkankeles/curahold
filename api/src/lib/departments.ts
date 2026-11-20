@@ -1,6 +1,7 @@
 // Departments (db/migrations/0120_departments.sql): the four places work lives in.
 // The walls themselves are in the database (app_visible_boards); this is what the
 // server reads and checks on top, in the same transaction as the rest of a request.
+import type { DepartmentsRow } from '../db/rows.gen';
 import { DEPARTMENT_KEYS, type Department, type DepartmentKey, type DepartmentRole } from '../../../shared/src/model';
 import type { AuthCtx } from '../context';
 import type { Q, Row } from '../db';
@@ -9,6 +10,7 @@ import { fail } from './errors';
 /** Administrators see switched-off departments too (to switch them on, or to see what is kept). */
 export const seesAllDepartments = (auth: Pick<AuthCtx, 'perms'>) => auth.perms.includes('org.manage');
 
+/** A departments row as the API's Department. */
 export function toDepartment(r: Row): Department {
   return {
     id: r.id,
@@ -35,8 +37,9 @@ export async function listDepartments(q: Q, auth: Pick<AuthCtx, 'userId' | 'perm
   return rows.map(toDepartment);
 }
 
+/** A department the caller can see, or 'not_found'. */
 export async function loadDepartment(q: Q, id: string): Promise<Row> {
-  const [d] = await q.query('select * from departments where id = $1', [id]);
+  const [d] = await q.query<DepartmentsRow>('select * from departments where id = $1', [id]);
   if (!d) fail('not_found');
   return d;
 }
@@ -54,7 +57,7 @@ export async function mayOpenBoards(q: Q, auth: Pick<AuthCtx, 'userId' | 'perms'
  */
 export async function departmentForNewBoard(q: Q, auth: Pick<AuthCtx, 'userId' | 'perms'>, asked: string | null | undefined): Promise<string> {
   if (asked) {
-    const [d] = await q.query('select id, enabled from departments where id = $1', [asked]);
+    const [d] = await q.query<Pick<DepartmentsRow, 'id' | 'enabled'>>('select id, enabled from departments where id = $1', [asked]);
     if (!d) fail('validation', { fields: 'departmentId' }, { fields: ['departmentId'] });
     if (!d.enabled) fail('department_off');
     if (!(await mayOpenBoards(q, auth, asked))) fail('board_lead_only');

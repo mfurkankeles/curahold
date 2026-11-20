@@ -88,6 +88,10 @@ import { touchesConsole } from './live/platform';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
+/**
+ * The company slug in a request's host (`acme.curahold.com` gives "acme"); null for the bare domain, a reserved
+ * subdomain, a deeper subdomain or any other domain.
+ */
 export function slugFromHost(host: string, baseDomain: string): string | null {
   const h = host.split(':')[0].toLowerCase();
   const base = baseDomain.toLowerCase();
@@ -106,6 +110,11 @@ function requestLocale(header: string | undefined, fallback: Locale): Locale {
   return normalizeLocale(header, fallback);
 }
 
+/**
+ * Builds the whole API as one Hono app: security headers, the operations watch, the robot guard, then company
+ * resolution, authentication and the per-request guards, then every route group. Order matters: guards run before
+ * routes, and public doors are mounted before sign-in. Same app on Workers and Node (ADR 0003). Split plan: docs/HANDOVER.md.
+ */
 export function createApp(deps: Deps) {
   const app = new Hono<AppEnv>();
   const cfg = deps.config;

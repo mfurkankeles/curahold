@@ -65,6 +65,9 @@ const EXAMPLES: Partial<Record<Locale, string[]>> & { en: string[] } = {
   tr: ['Yenileme görüşmesi cuma @ben #', 'QBR sunumu hazırla 15 kasım !yüksek', 'Haftalık rapor her pazartesi', 'Fatura kontrolü ay sonu'],
 };
 
+/**
+ * Quick add: one line becomes a task (see lib/quickparse.ts). Split plan for this long component: docs/HANDOVER.md.
+ */
 export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClose: () => void }) {
   const leaveWrap = useLeave<HTMLDivElement>();
   const { t, locale, fmtDate, words } = useI18n();

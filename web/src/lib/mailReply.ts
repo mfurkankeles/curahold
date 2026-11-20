@@ -4,9 +4,11 @@ import type { Activity } from '../../../shared/src/timeline';
 
 /** Mailbox providers that attach mail and can send a reply. Mirrors the mailbox adapters' providers. */
 export const MAILBOX_PROVIDERS = ['gmail', 'outlook'] as const;
+/** Whether a connection is a mailbox (Gmail, Outlook), which can send replies from the customer page. */
 export const isMailboxProvider = (p: string): boolean => (MAILBOX_PROVIDERS as readonly string[]).includes(p);
 
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+/** A quick check that a text looks like an email address (the server checks properly). */
 export const looksLikeEmail = (v: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 /**

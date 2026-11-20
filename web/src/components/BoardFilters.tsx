@@ -15,6 +15,7 @@ import { useLeave } from '../lib/leave';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
+/** Whether a task matches a board view's filters (text, assignees, priority, due, fields). */
 export function matchFilters(x: Task, f: ViewFilters, me: string, done: boolean): boolean {
   const q = (f.q ?? '').trim().toLocaleLowerCase();
   if (q && !x.title.toLocaleLowerCase().includes(q) && !(x.accountName ?? '').toLocaleLowerCase().includes(q)) return false;
@@ -31,6 +32,7 @@ export function matchFilters(x: Task, f: ViewFilters, me: string, done: boolean)
   return true;
 }
 
+/** How many filters are set, for the filter button's badge. */
 export const filterCount = (f: ViewFilters) => (f.assignees?.length ? 1 : 0) + (f.priority?.length ? 1 : 0) + (f.due?.length ? 1 : 0) + Object.values(f.fields ?? {}).filter((v) => v.length).length;
 
 function toggle<T>(list: T[] | undefined, v: T): T[] {
@@ -38,6 +40,7 @@ function toggle<T>(list: T[] | undefined, v: T): T[] {
   return cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v];
 }
 
+/** A board's filter bar (a sheet on phones), with the view switch. */
 export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Board; filters: ViewFilters; onChange: (f: ViewFilters) => void; viewSwitch?: ReactNode }) {
   const leavePop = useLeave<HTMLDivElement>();
   const { t, locale } = useI18n();

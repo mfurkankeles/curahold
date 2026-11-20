@@ -25,6 +25,7 @@ export class Failure extends Error {
 }
 
 let apiLocale: Locale = 'en';
+/** The portal's API client: JSON in and out, with the portal and language headers; throws the server's error. */
 export async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { 'x-curahold-portal': '1', 'x-curahold-locale': apiLocale };
   if (body !== undefined) headers['content-type'] = 'application/json';
@@ -78,6 +79,7 @@ function usePath() {
   }, []);
   return path;
 }
+/** Props for an in-portal link that navigates without a page load. */
 export const link = (to: string) => ({
   href: to,
   onClick: (e: React.MouseEvent) => {
@@ -126,6 +128,10 @@ type Boot =
   | { kind: 'reset'; org: PortalOrg; token: string }
   | { kind: 'in'; org: PortalOrg; me: PortalMe };
 
+/**
+ * The customer portal app: sign-in, the customer's requests, onboarding plan, files and account, in the company's
+ * colour drawn into both themes with readable text. Split plan for this 1,700-line file: docs/HANDOVER.md.
+ */
 export function PortalApp() {
   // The company's colour, drawn into both themes with readable text on it (shared/src/portal.ts).
   const [color, setColor] = useState<string | null>(null);
@@ -160,6 +166,7 @@ const PATHS = {
   globe: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20',
   down: 'm6 9 6 6 6-6',
 } as const;
+/** One of the portal's inline SVG icons, mirrored for right-to-left languages when `flip`. */
 export function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
   return (
     <svg className={flip ? 'p-ico p-ico--flip' : 'p-ico'} viewBox="0 0 24 24" aria-hidden="true">

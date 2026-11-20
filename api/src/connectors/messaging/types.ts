@@ -56,6 +56,7 @@ export interface MessagingAdapter {
 /** An error the service gave that will not go away by retrying (revoked token, removed app). */
 export class FatalChatError extends Error {}
 
+/** A notification as plain text (title, lines, link), for tools without rich messages. */
 export function plainText(msg: ChatMessage): string {
   const lines = [msg.title];
   if (msg.body) lines.push(msg.body);
@@ -65,6 +66,7 @@ export function plainText(msg: ChatMessage): string {
   return lines.join('\n');
 }
 
+/** A response body as JSON, or `{ raw: text }` when it is not JSON (so callers can report what came back). */
 export async function readJson(res: Response): Promise<any> {
   const text = await res.text();
   try {

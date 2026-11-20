@@ -11,6 +11,7 @@ let deferred: InstallEvent | null = null;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((fn) => fn());
 
+/** Whether the app runs installed (home screen or desktop app) rather than in a browser tab. */
 export const isStandalone = () => matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 /** iPhone and iPad have no install prompt; the person adds it from the share sheet. */
 export const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -42,6 +43,7 @@ export async function forgetOffline() {
   }
 }
 
+/** The install offer: whether the browser can install the app now, and the call that asks. */
 export function useInstall() {
   const [, bump] = useState(0);
   useEffect(() => {
@@ -68,6 +70,7 @@ export function useInstall() {
   };
 }
 
+/** Whether the browser is online, updated as it changes. */
 export function useOnline() {
   const [online, setOnline] = useState(() => navigator.onLine !== false);
   useEffect(() => {

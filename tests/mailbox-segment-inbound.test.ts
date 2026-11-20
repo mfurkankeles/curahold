@@ -1,4 +1,4 @@
-// Wave-5C end to end: a Gmail mailbox whose mail lands on the matching customer
+// End to end: a Gmail mailbox whose mail lands on the matching customer
 // as activities and whose reply is logged, and Segment events pushed to the
 // signed inbound address becoming activities. Both match the customer by email,
 // keep companies apart, and never attach the same message twice. Mirrors the

@@ -4,6 +4,10 @@
 import { connect } from 'node:net';
 import type { FileScanner, ScanVerdict } from './uploadScan';
 
+/**
+ * A file scanner that streams uploads to a ClamAV daemon (self-host). Only an explicit OK is 'clean'; anything
+ * unexpected is an 'error' verdict, never a pass.
+ */
 export function clamavScanner(opts: { host: string; port?: number; timeoutMs?: number }): FileScanner {
   return {
     name: 'clamav',

@@ -1,3 +1,7 @@
+// Boards: listing the boards a person may open, creating, editing (columns, fields, department, team) and archiving
+// them. Who may open a board is decided in SQL (department walls, app_visible_boards, ADR 0009); who may manage one
+// is canManageBoard. Screens: the sidebar, BoardPage and board settings. Tests: tests/boards*.test.ts, tests/departments*.
+import type { ConnectionsRow, DepartmentsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Column } from '../../../shared/src/model';
@@ -30,6 +34,10 @@ const BOARD_SELECT = `
          exists (select 1 from department_members dm where dm.department_id = b.department_id and dm.user_id = app_user() and dm.role = 'lead') as dept_lead
     from boards b left join teams t on t.id = b.team_id`;
 
+/**
+ * Whether a person may change a board's settings: a full seat and either boards.manage_all, lead of the board's
+ * department, its creator, or lead of its team. Opening it is a separate rule (row security).
+ */
 export function canManageBoard(auth: AuthCtx, b: Row): boolean {
   return (
     auth.seat === 'full' &&
@@ -37,6 +45,7 @@ export function canManageBoard(auth: AuthCtx, b: Row): boolean {
   );
 }
 
+/** A board that is not archived and that row security lets the caller see; fails 'not_found' otherwise. */
 export async function loadBoard(q: Q, id: string): Promise<Row> {
   const [b] = await q.query(`${BOARD_SELECT} where b.id = $1 and b.archived_at is null`, [id]);
   if (!b) fail('not_found');
@@ -45,7 +54,7 @@ export async function loadBoard(q: Q, id: string): Promise<Row> {
 
 async function checkPeople(q: Q, ids: string[]) {
   if (!ids.length) return;
-  const rows = await q.query(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [ids]);
+  const rows = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [ids]);
   if (rows.length !== new Set(ids).size) fail('validation', { fields: 'memberIds' }, { fields: ['memberIds'] });
 }
 
@@ -67,6 +76,7 @@ async function checkVisibility(c: C, q: Q, visibility: string, teamId: string | 
   }
 }
 
+/** The boards the person may open, each with whether they may manage it. */
 boardRoutes.get('/boards', async (c) => {
   const auth = c.get('auth');
   const rows = await run(c, (q) => q.query(`${BOARD_SELECT} where b.archived_at is null order by b.created_at`));
@@ -104,10 +114,14 @@ const createSchema = z.object({
 async function checkNotify(q: Q, list: { connectionId: string }[] | undefined) {
   if (!list?.length) return;
   const ids = [...new Set(list.map((n) => n.connectionId))];
-  const rows = await q.query(`select id from connections where id = any($1::uuid[]) and kind = 'messaging'`, [ids]);
+  const rows = await q.query<Pick<ConnectionsRow, 'id'>>(`select id from connections where id = any($1::uuid[]) and kind = 'messaging'`, [ids]);
   if (rows.length !== ids.length) fail('validation', { fields: 'notify' }, { fields: ['notify'] });
 }
 
+/**
+ * Creates a board in the person's department with the default columns. Writers only; audited (201).
+ * The id is made in code because the SELECT policy cannot see a row inserted by the same statement.
+ */
 boardRoutes.post('/boards', async (c) => {
   requireWriter(c);
   const input = await body(c, createSchema);
@@ -141,6 +155,10 @@ boardRoutes.post('/boards', async (c) => {
 
 const updateSchema = createSchema.partial();
 
+/**
+ * Edits a board's name, columns, fields, team or department. Only those who may manage it; moving it to another
+ * department also needs boards.manage_all (enforced in the database too) and a department that is on.
+ */
 boardRoutes.patch('/boards/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -154,7 +172,7 @@ boardRoutes.patch('/boards/:id', async (c) => {
     let departmentId: string = b.department_id;
     if (input.departmentId && input.departmentId !== b.department_id) {
       if (!auth.perms.includes('boards.manage_all')) fail('forbidden');
-      const [d] = await q.query('select id, enabled from departments where id = $1', [input.departmentId]);
+      const [d] = await q.query<Pick<DepartmentsRow, 'id' | 'enabled'>>('select id, enabled from departments where id = $1', [input.departmentId]);
       if (!d) fail('validation', { fields: 'departmentId' }, { fields: ['departmentId'] });
       if (!d.enabled) fail('department_off');
       departmentId = input.departmentId;
@@ -203,6 +221,7 @@ boardRoutes.patch('/boards/:id', async (c) => {
   return c.json({ board: toBoard(board, canManageBoard(auth, board)) });
 });
 
+/** Archives a board (its tasks stay, out of sight). Only those who may manage it; audited. */
 boardRoutes.delete('/boards/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

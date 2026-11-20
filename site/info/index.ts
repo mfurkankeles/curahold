@@ -15,4 +15,5 @@ import { ms } from './ms';
 
 export const INFO: Record<SiteLocale, InfoCopy> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko, hi, ms };
 
+/** The info pages' copy (nav, footer, solution and resource pages) in one site language. */
 export const infoCopy = (locale: SiteLocale): InfoCopy => INFO[locale];

@@ -39,6 +39,7 @@ export function workingDaysLeft(s: BurndownSeries, today: string): number {
   return s.days.filter((d, i) => i <= s.endIndex && d.day > today && !d.weekend).length;
 }
 
+/** A sprint's burndown: points left per day against the ideal line. */
 export function BurndownChart({ data }: { data: SprintBurndown }) {
   const { t } = useI18n();
   const f = useFormat();

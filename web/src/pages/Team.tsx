@@ -23,6 +23,7 @@ interface PersonReport {
   minutes30: number;
 }
 
+/** The team overview: people, their load and their work by week or by customer. */
 export function TeamPage({ refreshKey }: { refreshKey: number }) {
   const { t, locale } = useI18n();
   const { people, teams, person } = useStore();

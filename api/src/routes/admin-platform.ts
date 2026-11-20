@@ -13,6 +13,7 @@
 // with to_regclass, so this never crashes when 0037 has not landed yet):
 //   - the normalized schema (0037): subscriptions, invoices, orgs.tax_number…
 //   - the legacy snapshot: orgs.billing (jsonb) and orgs.trial_ends_at.
+import type { InvoicesRow, SubscriptionsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { nowOf, type AppEnv, type Deps } from '../context';
 import type { Q } from '../db';
@@ -254,7 +255,7 @@ export async function platformCustomerDetail(deps: Deps, orgId: string): Promise
 
     const sub = billing
       ? (
-          await q.query(
+          await q.query<Pick<SubscriptionsRow, 'provider' | 'provider_customer_id' | 'provider_subscription_id' | 'plan' | 'status' | 'trial_ends_at' | 'current_period_end' | 'cancel_at_period_end'>>(
             `select provider, provider_customer_id, provider_subscription_id, plan, status, trial_ends_at, current_period_end, cancel_at_period_end
                from subscriptions where org_id = $1`,
             [orgId],
@@ -263,7 +264,7 @@ export async function platformCustomerDetail(deps: Deps, orgId: string): Promise
       : undefined;
 
     const invoiceRows = billing
-      ? await q.query(
+      ? await q.query<Pick<InvoicesRow, 'provider_invoice_id' | 'amount_cents' | 'currency' | 'status' | 'issued_at'>>(
           `select provider_invoice_id, amount_cents, currency, status, issued_at
              from invoices where org_id = $1 order by issued_at desc nulls last limit 20`,
           [orgId],

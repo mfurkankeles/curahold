@@ -19,6 +19,7 @@ export const pmOn = (board: Pick<Board, 'columns' | 'pmEnabled'> | undefined): b
 
 const TONE: Record<IssueType, string> = { epic: 'amber', story: 'green', task: 'slate', bug: 'red', subtask: 'slate', spike: 'amber' };
 
+/** A product task's issue type badge (story, bug, epic...). */
 export function IssueBadge({ type }: { type: IssueType }) {
   const { t } = useI18n();
   return (
@@ -28,6 +29,7 @@ export function IssueBadge({ type }: { type: IssueType }) {
   );
 }
 
+/** A task's story points chip. */
 export function PointsChip({ points }: { points: number | null | undefined }) {
   const { t } = useI18n();
   if (points == null) return null;

@@ -76,6 +76,10 @@ function hyperdriveSource(env: LiveEnv): Source {
   };
 }
 
+/**
+ * The Durable Object holding one company's live room on Cloudflare (ADR 0007). Uses hibernatable sockets; ping/pong
+ * is answered by the runtime, so an idle socket never wakes (and bills) the object.
+ */
 export class LiveRoomDO {
   private room: LiveRoom | null = null;
   private readonly conns = new WeakMap<CfSocket, Conn>();

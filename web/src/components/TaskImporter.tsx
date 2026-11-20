@@ -88,6 +88,7 @@ async function readFile(file: File): Promise<ShapedSheet> {
   return shapeMatrix(await readMatrix(file));
 }
 
+/** Imports tasks from a spreadsheet onto boards, with a dry run first (shared/src/importPlan.ts). */
 export function TaskImporter({ board, onClose, onDone, file: firstFile }: { board?: Board | null; onClose: () => void; onDone?: () => void; file?: File | null }) {
   const { t, locale, words, fmtDate } = useI18n();
   const { people, boards, toast, reloadBoards, can } = useStore();

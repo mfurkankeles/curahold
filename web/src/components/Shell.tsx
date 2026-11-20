@@ -79,6 +79,9 @@ function useMyCounts() {
   return n;
 }
 
+/**
+ * The app frame: sidebar, top bar, search, quick add, notifications, help and the screen. Split plan: docs/HANDOVER.md.
+ */
 export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale, words } = useI18n();
   const { me, boards, boardsLoaded, canWrite, person, toasts, can, dismiss } = useStore();

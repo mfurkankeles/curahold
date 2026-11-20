@@ -12,6 +12,7 @@ import { Icon } from './icons';
 import { useLeave } from '../lib/leave';
 import { CloseButton } from './ui';
 
+/** The notifications bell: unread count and the latest notifications in a popover. */
 export function Bell() {
   const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();

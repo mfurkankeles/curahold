@@ -104,8 +104,9 @@ The code must be readable by someone who joins without a guide (a new CTO, a co-
 
 The check: `npm run lint:comments` (`scripts/quality/comments.mts`) lists files without a header and exported functions, components and routes
 without a doc comment (`--all` for every finding, `--json` for tools, a path to narrow it). Baseline on 19 Nov 2026: 559 files checked,
-36 without a header, 966 of 2,123 exported symbols and routes without a doc comment (54% documented). New and changed code must not add to
-it; once the backlog is paid, CI runs it with `--max=<count>` and the number only goes down.
+36 without a header, 966 of 2,123 exported symbols and routes without a doc comment (54% documented). On 20 Nov 2026 the backlog was
+paid: 0 of 2,264 undocumented; the 17 files still without a header are dictionaries and site copy. New and changed code must keep it at
+zero; CI should run it with `--max=17` (the headers) until those files get theirs, then `--max=0`.
 
 ## Branches, commits, PRs
 

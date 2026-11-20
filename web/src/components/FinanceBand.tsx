@@ -34,6 +34,7 @@ type Finance =
 
 const cache = new Map<string, Finance | null>();
 
+/** On a customer page: the accounting figures (open balance, overdue, last payment). Needs finance.view. */
 export function FinanceBand({ accountId, today }: { accountId: string; today: string }) {
   const { t, locale } = useI18n();
   const { can, me } = useStore();

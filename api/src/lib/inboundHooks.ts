@@ -10,6 +10,7 @@
 //
 // The hook acts with the rights of the person who set it up (like an API key): its writes go through row-level
 // security as that person, so it can only reach boards and customers they can, and it stops if they leave.
+import type { AccountsRow, BoardsRow, InboundDeliveriesRow, OrgsRow, RecordCommentsRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { HOOK_TARGETS, render, type HookAuth, type HookMapping, type HookTarget } from '../../../shared/src/inboundHooks';
 import { ticketPriorityOf } from '../../../shared/src/records';
 import type { AccountField, Column } from '../../../shared/src/model';
@@ -105,7 +106,7 @@ const when = (v: string) => {
 async function customerOf(q: Q, orgId: string, m: HookMapping, payload: unknown): Promise<string | null> {
   const id = render(m.customer?.id, payload);
   if (/^[0-9a-f-]{36}$/i.test(id)) {
-    const [hit] = await q.query('select id from accounts where id = $1 and archived_at is null', [id]);
+    const [hit] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and archived_at is null', [id]);
     if (hit) return hit.id;
   }
   const email = render(m.customer?.email, payload).toLowerCase();
@@ -119,7 +120,7 @@ async function customerOf(q: Q, orgId: string, m: HookMapping, payload: unknown)
   }
   const domains = [render(m.customer?.domain, payload), email.includes('@') ? email.split('@')[1] : ''].map(hostOf).filter((d) => d && d.includes('.') && !PUBLIC_MAIL.test(d));
   if (domains.length) {
-    const [org] = await q.query('select account_fields from orgs where id = $1', [orgId]);
+    const [org] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [orgId]);
     const urlKeys = ((org?.account_fields ?? []) as AccountField[]).filter((f) => f.type === 'url').map((f) => f.key);
     if (urlKeys.length) {
       const [hit] = await q.query(
@@ -132,12 +133,15 @@ async function customerOf(q: Q, orgId: string, m: HookMapping, payload: unknown)
   }
   const name = render(m.customer?.name, payload);
   if (name) {
-    const [hit] = await q.query('select id from accounts where archived_at is null and name_fold = fold_text($1) order by created_at limit 1', [name]);
+    const [hit] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where archived_at is null and name_fold = fold_text($1) order by created_at limit 1', [name]);
     if (hit) return hit.id;
   }
   return null;
 }
 
+/**
+ * The Curahold id an incoming webhook already linked to an outside id, so a repeated delivery updates instead of duplicating.
+ */
 export async function linkOf(q: Q, hookId: string, externalId: string): Promise<string | null> {
   if (!externalId) return null;
   const [l] = await q.query<{ target_id: string }>('select target_id from inbound_links where hook_id = $1 and external_id = $2', [hookId, externalId]);
@@ -174,7 +178,7 @@ export async function applyHook(
   const account = await customerOf(q, orgId, m, payload);
 
   if (hook.target === 'task') {
-    const [board] = await q.query('select * from boards where id = $1 and archived_at is null', [m.boardId ?? '00000000-0000-0000-0000-000000000000']);
+    const [board] = await q.query<BoardsRow>('select * from boards where id = $1 and archived_at is null', [m.boardId ?? '00000000-0000-0000-0000-000000000000']);
     if (!board) return { status: 'failed', error: 'board: choose a board the hook can reach' };
     const cols = board.columns as Column[];
     const title = render(m.title, payload).replace(/\s+/g, ' ').slice(0, 300);
@@ -182,11 +186,11 @@ export async function applyHook(
     const status = (finished ? cols.find((c) => c.done) : cols[0])?.key ?? cols[0].key;
     const due = day(render(m.due, payload));
     const assigneeEmail = render(m.assigneeEmail, payload).toLowerCase();
-    const [assignee] = assigneeEmail ? await q.query(`select id from users where email = $1 and status = 'active'`, [assigneeEmail]) : [];
+    const [assignee] = assigneeEmail ? await q.query<Pick<UsersRow, 'id'>>(`select id from users where email = $1 and status = 'active'`, [assigneeEmail]) : [];
     if (existing) {
-      const [before] = await q.query('select * from tasks where id = $1', [existing]);
+      const [before] = await q.query<TasksRow>('select * from tasks where id = $1', [existing]);
       if (before) {
-        const [after] = await q.query(
+        const [after] = await q.query<TasksRow>(
           `update tasks set title = coalesce(nullif($2, ''), title), description = case when $3 = '' then description else $3 end, due_date = coalesce($4::date, due_date),
                   status = case when $5::boolean then $6 else status end, updated_by = $7, updated_at = now(), version = version + 1 where id = $1 returning *`,
           [existing, title, render(m.description, payload).slice(0, 20000), due, finished || !!render(m.status, payload), status, actorId],
@@ -199,7 +203,7 @@ export async function applyHook(
     }
     if (!title) return { status: 'failed', error: 'title: the template gave nothing' };
     const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
-    const [t] = await q.query(
+    const [t] = await q.query<TasksRow>(
       `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, position, created_by, updated_by)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10) returning *`,
       [orgId, board.id, title, render(m.description, payload).slice(0, 20000), status, assignee ? [assignee.id] : [], account, due, Number(p), actorId],
@@ -253,7 +257,7 @@ export async function applyHook(
   const body = render(m.body, payload).slice(0, 10000);
   if (!body) return { status: 'failed', error: 'body: the template gave nothing' };
   if (existing) {
-    const [still] = await q.query('select id from record_comments where id = $1', [existing]);
+    const [still] = await q.query<Pick<RecordCommentsRow, 'id'>>('select id from record_comments where id = $1', [existing]);
     if (still) {
       later.push((s) => s.query('update record_comments set body = $3, edited_at = now() where id = $1 and org_id = $2', [existing, orgId, body]));
       return { status: 'ok', result: { kind: 'deal_note', id: existing, how: 'updated' } };
@@ -270,7 +274,7 @@ export async function applyHook(
     );
   if (!deal && account) [deal] = await q.query(`select r.id from records r join record_types rt on rt.id = r.type_id where rt.kind = 'opportunity' and r.archived_at is null and r.account_id = $1 order by r.updated_at desc limit 1`, [account]);
   if (!deal) return { status: 'failed', error: 'deal: no deal matches this delivery' };
-  const [c] = await q.query('insert into record_comments (org_id, record_id, author_id, body) values ($1, $2, $3, $4) returning id', [orgId, deal.id, actorId, body]);
+  const [c] = await q.query<Pick<RecordCommentsRow, 'id'>>('insert into record_comments (org_id, record_id, author_id, body) values ($1, $2, $3, $4) returning id', [orgId, deal.id, actorId, body]);
   await remember(c.id);
   return { status: 'ok', result: { kind: 'deal_note', id: c.id, how: 'created' } };
 }
@@ -303,7 +307,7 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
   const orgId = hook.org_id;
   const log = (status: string, eventId: string | null, error: string | null, result: unknown, payload: string | null) =>
     deps.db.system(async (q) => {
-      const [row] = await q.query(
+      const [row] = await q.query<Pick<InboundDeliveriesRow, 'id'>>(
         `insert into inbound_deliveries (org_id, hook_id, event_id, status, test, error, result, payload) values ($1, $2, $3, $4, $5, $6, $7, $8)
          on conflict (hook_id, event_id) where event_id is not null and status in ('ok', 'skipped') do nothing returning id`,
         [orgId, hook.id, eventId, status, !!opts.test, error ? error.slice(0, 500) : null, result ? JSON.stringify(result) : null, payload ? payload.slice(0, 20000) : null],

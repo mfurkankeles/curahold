@@ -4,6 +4,7 @@
 // progress report. Everything runs under the person's own rights: row
 // security decides which plans they see and change; the product's own
 // signals move a plan on with owner access (they are the company's facts).
+import type { AccountsRow, FilesRow, OnboardingFieldsRow, OnboardingIssuesRow, OnboardingPlansRow, OnboardingStepsRow, OnboardingTemplatesRow } from '../db/rows.gen';
 import { quarantine } from '../lib/uploadScan';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -79,7 +80,7 @@ const touch = (q: Q, planId: string) => q.query('update onboarding_plans set upd
 onboardingPlanRoutes.get('/onboarding/self', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
-  let id = await run(c, async (q) => (await q.query(`select id from onboarding_plans where kind = 'self'`))[0]?.id as string | undefined);
+  let id = await run(c, async (q) => (await q.query<Pick<OnboardingPlansRow, 'id'>>(`select id from onboarding_plans where kind = 'self'`))[0]?.id as string | undefined);
   if (!id) {
     if (!auth.perms.includes('org.manage') || !writer(c)) return c.json({ plan: null });
     id = await run(c, (q) => ensureSelfPlan(q, org.id, auth.userId, todayOf(c)));
@@ -90,7 +91,7 @@ onboardingPlanRoutes.get('/onboarding/self', async (c) => {
 /** Just the headline (the side bar's chip): how far, and the next step. */
 onboardingPlanRoutes.get('/onboarding/self/summary', async (c) => {
   const out = await run(c, async (q) => {
-    const [p] = await q.query(`select id, status from onboarding_plans where kind = 'self'`);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id' | 'status'>>(`select id, status from onboarding_plans where kind = 'self'`);
     if (!p) return null;
     const list = await q.query(`select id, key, title_key, title, phase, position, status, depends_on, due_on, side, updated_at, required from onboarding_steps where plan_id = $1`, [p.id]);
     const steps = list.map((x) => ({ id: x.id, key: x.key, phase: x.phase, position: x.position, status: x.status, dependsOn: x.depends_on ?? [], dueOn: day(x.due_on), side: x.side, updatedAt: iso(x.updated_at)!, required: x.required }));
@@ -113,8 +114,10 @@ const settingsInput = z.object({
   rules: z.array(z.object({ field: z.string().trim().min(1).max(60), value: z.string().trim().min(1).max(120), templateId: z.string().min(1).max(60) })).max(MAX_TEMPLATE_RULES).optional(),
 });
 
+/** The company's onboarding settings (defaults merged over what is stored). */
 onboardingPlanRoutes.get('/onboarding/settings', async (c) => c.json({ settings: onboardingSettings(c.get('org').settings) }));
 
+/** Changes the company's onboarding settings. Needs a writer seat and org.manage. */
 onboardingPlanRoutes.put('/onboarding/settings', async (c) => {
   requireWriter(c);
   requirePerm(c, 'org.manage');
@@ -144,9 +147,9 @@ onboardingPlanRoutes.post('/onboarding-plans', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const id = await run(c, async (q) => {
-    const [a] = await q.query('select id, name from accounts where id = $1 and archived_at is null', [input.accountId]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'name'>>('select id, name from accounts where id = $1 and archived_at is null', [input.accountId]);
     if (!a) fail('not_found');
-    const [open] = await q.query(`select id from onboarding_plans where account_id = $1 and status in ('draft', 'active', 'paused')`, [input.accountId]);
+    const [open] = await q.query<Pick<OnboardingPlansRow, 'id'>>(`select id from onboarding_plans where account_id = $1 and status in ('draft', 'active', 'paused')`, [input.accountId]);
     if (open) fail('conflict');
     const tpl = await clientBlueprint(q, org.id, input.templateId ?? null);
     const [dept] = await q.query(`select key from departments where enabled and key in ('onboarding', 'success') order by (key = 'onboarding') desc limit 1`);
@@ -168,8 +171,14 @@ onboardingPlanRoutes.post('/onboarding-plans', async (c) => {
   return c.json({ plan: await fresh(c, id) }, 201);
 });
 
+/**
+ * One onboarding plan with its steps, people, goals, issues, fields and sites, as row security lets the reader see it.
+ */
 onboardingPlanRoutes.get('/onboarding-plans/:id', async (c) => c.json({ plan: await fresh(c, param(c, 'id')) }));
 
+/**
+ * Edits a plan's name, owner, dates, stage and other top-level fields. Writers only; row security decides which plans.
+ */
 onboardingPlanRoutes.patch('/onboarding-plans/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -211,7 +220,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/finish', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const handover = await run(c, async (q) => {
-    const rows = await q.query(`update onboarding_plans set updated_at = now() where id = $1 and status in ('active', 'paused') returning id`, [id]);
+    const rows = await q.query<Pick<OnboardingPlansRow, 'id'>>(`update onboarding_plans set updated_at = now() where id = $1 and status in ('active', 'paused') returning id`, [id]);
     if (!rows.length) fail('not_found');
     return finishPlan(q, org.id, id, c.get('auth').userId);
   });
@@ -232,18 +241,19 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/share', async (c) => {
   const org = c.get('org');
   const secret = randomToken(24);
   await run(c, async (q) => {
-    const rows = await q.query('update onboarding_plans set share_hash = $2, share_at = now(), updated_at = now() where id = $1 returning id', [id, await sha256Hex(secret)]);
+    const rows = await q.query<Pick<OnboardingPlansRow, 'id'>>('update onboarding_plans set share_hash = $2, share_at = now(), updated_at = now() where id = $1 returning id', [id, await sha256Hex(secret)]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'onboarding.shared', entity: 'org', entityId: org.id, meta: { plan: id } });
   });
   return c.json({ url: `${orgUrl(c.get('deps').config, org.slug)}/r/onboarding/${secret}` }, 201);
 });
 
+/** Turns off a plan's shared progress link; the old link stops working at once. 404 when unknown. */
 onboardingPlanRoutes.delete('/onboarding-plans/:id/share', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   await run(c, async (q) => {
-    const rows = await q.query('update onboarding_plans set share_hash = null, share_at = null, updated_at = now() where id = $1 returning id', [id]);
+    const rows = await q.query<Pick<OnboardingPlansRow, 'id'>>('update onboarding_plans set share_hash = null, share_at = null, updated_at = now() where id = $1 returning id', [id]);
     if (!rows.length) fail('not_found');
   });
   return c.json({ ok: true });
@@ -256,7 +266,7 @@ onboardingShareRoutes.get('/share/onboarding/:secret', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
   const hash = await sha256Hex(secret);
-  const id = await deps.db.system(async (q) => (await q.query('select id from onboarding_plans where org_id = $1 and share_hash = $2', [org.id, hash]))[0]?.id as string | undefined);
+  const id = await deps.db.system(async (q) => (await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where org_id = $1 and share_hash = $2', [org.id, hash]))[0]?.id as string | undefined);
   if (!id) fail('not_found');
   const now = nowOf(deps);
   const report = await deps.db.system(async (q) => {
@@ -291,7 +301,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/steps', async (c) => {
   const input = await body(c, z.object({ title: z.string().trim().min(1).max(200), body: z.string().max(2000).default(''), phase: z.string().regex(PHASE_KEY), side: z.enum(['vendor', 'customer', 'both']), dueOn: isoDate.nullable().optional(), after: z.array(z.string().max(60)).max(10).default([]), required: z.boolean().default(true) }));
   const org = c.get('org');
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     const keys = (await q.query<{ key: string }>('select key from onboarding_steps where plan_id = $1', [planId])).map((r) => r.key);
     let key = `own${keys.length + 1}`;
@@ -306,6 +316,9 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/steps', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/**
+ * Edits a step (title, owner, due date, status, dependencies); the plan's progress is recomputed. 404 when unknown.
+ */
 onboardingPlanRoutes.patch('/onboarding-steps/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -313,12 +326,12 @@ onboardingPlanRoutes.patch('/onboarding-steps/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const planId = await run(c, async (q) => {
-    const [s] = await q.query('select * from onboarding_steps where id = $1', [id]);
+    const [s] = await q.query<OnboardingStepsRow>('select * from onboarding_steps where id = $1', [id]);
     if (!s) fail('not_found');
     if (input.status === 'done' && s.status !== 'done') {
       // Only what the product cannot see is ticked by hand; the rest completes by itself.
       if (s.signal && isSignal(s.signal)) fail('validation', { fields: 'status' }, { fields: ['status'], reason: 'automatic' });
-      const others = await q.query('select key, status, depends_on from onboarding_steps where plan_id = $1', [s.plan_id]);
+      const others = await q.query<Pick<OnboardingStepsRow, 'key' | 'status' | 'depends_on'>>('select key, status, depends_on from onboarding_steps where plan_id = $1', [s.plan_id]);
       if (!unlocked({ dependsOn: s.depends_on ?? [] }, others.map((x) => ({ ...x, dependsOn: x.depends_on ?? [] })) as any)) fail('conflict');
     }
     const sets: string[] = [];
@@ -355,11 +368,12 @@ onboardingPlanRoutes.patch('/onboarding-steps/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Deletes a step and removes it from every step that waited on it, so nothing waits forever. 404 when unknown. */
 onboardingPlanRoutes.delete('/onboarding-steps/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   const planId = await run(c, async (q) => {
-    const [s] = await q.query('delete from onboarding_steps where id = $1 returning plan_id, key', [id]);
+    const [s] = await q.query<Pick<OnboardingStepsRow, 'plan_id' | 'key'>>('delete from onboarding_steps where id = $1 returning plan_id, key', [id]);
     if (!s) fail('not_found');
     // Nothing waits for a step that is gone.
     await q.query('update onboarding_steps set depends_on = array_remove(depends_on, $2) where plan_id = $1', [s.plan_id, s.key]);
@@ -378,7 +392,7 @@ onboardingPlanRoutes.put('/onboarding-plans/:id/phases', async (c) => {
   const planId = param(c, 'id');
   const input = await body(c, z.object({ phases: z.array(z.object({ key: z.string().regex(PHASE_KEY).optional(), name: z.string().trim().max(60).nullable() })).min(1).max(MAX_PHASES) }));
   await run(c, async (q) => {
-    const [p] = await q.query('select id, phases from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id' | 'phases'>>('select id, phases from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     const used = (await q.query<{ phase: string }>('select distinct phase from onboarding_steps where plan_id = $1', [planId])).map((r) => r.phase);
     const known = phaseOrder(p.phases, used).map((x) => x.key);
@@ -404,7 +418,7 @@ onboardingPlanRoutes.put('/onboarding-plans/:id/steps/order', async (c) => {
   const planId = param(c, 'id');
   const input = await body(c, z.object({ phase: z.string().regex(PHASE_KEY), ids: z.array(uuid).min(1).max(200) }));
   await run(c, async (q) => {
-    const [p] = await q.query('select id, phases from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id' | 'phases'>>('select id, phases from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     const used = (await q.query<{ phase: string }>('select distinct phase from onboarding_steps where plan_id = $1', [planId])).map((r) => r.phase);
     if (!phaseOrder(p.phases, used).some((x) => x.key === input.phase) && !PHASE_KEY_BUILT_IN(input.phase)) fail('validation', { fields: 'phase' }, { fields: ['phase'] });
@@ -454,7 +468,7 @@ onboardingPlanRoutes.post('/onboarding-steps/:id/answer', async (c) => {
     if (!s.account_id || !(s.form ?? []).length) fail('validation', { fields: 'values' }, { fields: ['values'] });
     const keys = Object.keys(input.values).filter((k) => s.form.includes(k));
     if (!keys.length) fail('validation', { fields: 'values' }, { fields: ['values'] });
-    const rows = await q.query(`update accounts set fields = fields || $2::jsonb, updated_at = now() where id = $1 returning id`, [s.account_id, JSON.stringify(Object.fromEntries(keys.map((k) => [k, input.values[k]])))]);
+    const rows = await q.query<Pick<AccountsRow, 'id'>>(`update accounts set fields = fields || $2::jsonb, updated_at = now() where id = $1 returning id`, [s.account_id, JSON.stringify(Object.fromEntries(keys.map((k) => [k, input.values[k]])))]);
     if (!rows.length) fail('not_found');
     await q.query(`update onboarding_steps set status = 'done', done_at = now(), done_by = $2, done_how = 'manual', updated_at = now() where id = $1 and status <> 'done'`, [id, auth.userId]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'onboarding.answered', entity: 'account', entityId: s.account_id, meta: { plan: s.plan_id, fields: keys } });
@@ -474,12 +488,12 @@ onboardingPlanRoutes.post('/onboarding-steps/:id/files', async (c) => {
   const f = await readUpload(c);
   const key = `${org.id}/onboarding/${id}/${crypto.randomUUID()}`;
   const planId = await run(c, async (q) => {
-    const [s] = await q.query('select plan_id, upload from onboarding_steps where id = $1', [id]);
+    const [s] = await q.query<Pick<OnboardingStepsRow, 'plan_id' | 'upload'>>('select plan_id, upload from onboarding_steps where id = $1', [id]);
     if (!s) fail('not_found');
     // The plan's storage cap (shared/src/plans.json), before anything is stored.
     await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
-    const [r] = await q.query(
+    const [r] = await q.query<Pick<FilesRow, 'id'>>(
       `insert into files (org_id, onboarding_step_id, name, size, mime, storage_key, uploaded_by) values ($1, $2, $3, $4, $5, $6, $7) returning id`,
       [org.id, id, f.name, f.size, f.mime, key, auth.userId],
     );
@@ -521,12 +535,13 @@ const personInput = z.object({
   userId: uuid.nullable().optional(),
 });
 
+/** Adds a person (ours or the customer's) to a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/people', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
   const input = await body(c, personInput);
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     if (input.userId && !(await q.query('select 1 from users where id = $1', [input.userId])).length) fail('bad_assignee');
     await q.query(
@@ -539,6 +554,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/people', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a plan person. 404 when unknown. */
 onboardingPlanRoutes.patch('/onboarding-people/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -556,6 +572,7 @@ onboardingPlanRoutes.patch('/onboarding-people/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a person from a plan. */
 onboardingPlanRoutes.delete('/onboarding-people/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -579,12 +596,13 @@ const goalInput = z.object({
   proofUrl: z.string().trim().max(500).regex(/^https?:\/\//).nullable().optional(),
 });
 
+/** Adds a success goal to a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/goals', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
   const input = await body(c, goalInput);
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     await q.query(
       `insert into onboarding_goals (org_id, plan_id, title, priority, status, target_on, proof_url, position) values ($1, $2, $3, $4, $5, $6, $7, (select count(*) from onboarding_goals where plan_id = $2))`,
@@ -595,6 +613,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/goals', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a goal (target, current value, status). */
 onboardingPlanRoutes.patch('/onboarding-goals/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -615,6 +634,7 @@ onboardingPlanRoutes.patch('/onboarding-goals/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a goal from a plan. */
 onboardingPlanRoutes.delete('/onboarding-goals/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -638,12 +658,13 @@ const issueInput = z.object({
   stepId: uuid.nullable().optional(),
 });
 
+/** Logs an issue (blocker, risk) on a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/issues', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
   const input = await body(c, issueInput);
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     await q.query(
       `insert into onboarding_issues (org_id, plan_id, step_id, title, body, side, type, urgency, due_on, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
@@ -654,6 +675,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/issues', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits an issue or changes its status. */
 onboardingPlanRoutes.patch('/onboarding-issues/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -684,7 +706,7 @@ onboardingPlanRoutes.post('/onboarding-issues/:id/ticket', async (c) => {
       const [t] = await q.query(`select r.id, r.account_id from records r join record_types rt on rt.id = r.type_id where r.id = $1 and rt.kind = 'ticket' and r.archived_at is null`, [input.recordId]);
       if (!t || (i.account_id && t.account_id !== i.account_id)) fail('not_found');
       // One ticket, one issue.
-      const [other] = await q.query('select id from onboarding_issues where record_id = $1 and plan_id = $2 and id <> $3', [input.recordId, i.plan_id, id]);
+      const [other] = await q.query<Pick<OnboardingIssuesRow, 'id'>>('select id from onboarding_issues where record_id = $1 and plan_id = $2 and id <> $3', [input.recordId, i.plan_id, id]);
       if (other) fail('conflict');
     }
     await q.query('update onboarding_issues set record_id = $2, updated_at = now() where id = $1', [id, input.recordId]);
@@ -694,13 +716,14 @@ onboardingPlanRoutes.post('/onboarding-issues/:id/ticket', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes an issue. Issues raised by a failed setup test cannot be deleted: they close when the test passes. */
 onboardingPlanRoutes.delete('/onboarding-issues/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   const planId = await run(c, async (q) => {
     const planId = await planOfChild(q, 'onboarding_issues', id);
     // A failed test's row goes away only when the test passes.
-    const rows = await q.query(`delete from onboarding_issues where id = $1 and source <> 'setup_test' returning id`, [id]);
+    const rows = await q.query<Pick<OnboardingIssuesRow, 'id'>>(`delete from onboarding_issues where id = $1 and source <> 'setup_test' returning id`, [id]);
     if (!rows.length) fail('conflict');
     return planId;
   });
@@ -719,15 +742,16 @@ const fieldInput = z.object({
   proofUrl: z.string().trim().max(500).regex(/^https?:\/\//).nullable().optional(),
 });
 
+/** Adds a data field to a plan's field-mapping list. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/fields', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
   const input = await body(c, fieldInput);
   const org = c.get('org');
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
-    const rows = await q.query(
+    const rows = await q.query<Pick<OnboardingFieldsRow, 'id'>>(
       `insert into onboarding_fields (org_id, plan_id, source, name, target, type, required, example, received, received_at, proof_url, position)
        values ($1, $2, 'custom', $3, $4, $5, $6, $7, $8, case when $8::text is null then null else now() end, $9, (select count(*) from onboarding_fields where plan_id = $2))
        on conflict do nothing returning id`,
@@ -768,6 +792,7 @@ onboardingPlanRoutes.patch('/onboarding-fields/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a field from a plan's mapping list. */
 onboardingPlanRoutes.delete('/onboarding-fields/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -783,12 +808,13 @@ onboardingPlanRoutes.delete('/onboarding-fields/:id', async (c) => {
 
 const siteInput = z.object({ name: z.string().trim().min(1).max(120), region: z.string().trim().max(80).default(''), stages: z.partialRecord(z.enum(PHASES_BUILT_IN), z.enum(SITE_STATUSES)).default({}) });
 
+/** Adds a site (location, store, region) to a rollout plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/sites', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
   const input = await body(c, siteInput);
   await run(c, async (q) => {
-    const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
+    const [p] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where id = $1', [planId]);
     if (!p) fail('not_found');
     await q.query(`insert into onboarding_sites (org_id, plan_id, name, region, stages, position) values ($1, $2, $3, $4, $5, (select count(*) from onboarding_sites where plan_id = $2))`, [
       c.get('org').id, planId, input.name, input.region, JSON.stringify(input.stages),
@@ -798,6 +824,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/sites', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a site's name, region or stage progress (stages merge, they are not replaced). */
 onboardingPlanRoutes.patch('/onboarding-sites/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -813,6 +840,7 @@ onboardingPlanRoutes.patch('/onboarding-sites/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a site from a plan. */
 onboardingPlanRoutes.delete('/onboarding-sites/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -922,7 +950,7 @@ onboardingPlanRoutes.post('/onboarding-templates', async (c) => {
       kind = (await q.query('select kind from onboarding_plans where id = $1', [input.fromPlan]))[0]?.kind ?? kind;
     }
     if (!bp) fail('validation', { fields: 'blueprint' }, { fields: ['blueprint'] });
-    const [r] = await q.query(
+    const [r] = await q.query<OnboardingTemplatesRow>(
       `insert into onboarding_templates (org_id, kind, name, summary, body, built_in, created_by) values ($1, $2, $3, $4, $5, $6, $7) returning *`,
       [org.id, kind, input.name, input.summary, JSON.stringify(bp), builtIn, c.get('auth').userId],
     );
@@ -932,12 +960,13 @@ onboardingPlanRoutes.post('/onboarding-templates', async (c) => {
   return c.json({ template: toTemplate(row) }, 201);
 });
 
+/** Edits a company plan template (name, summary, blueprint); 404 when unknown or not visible. */
 onboardingPlanRoutes.patch('/onboarding-templates/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(120).optional(), summary: z.string().max(1000).optional(), blueprint: blueprintShape.optional() }));
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<OnboardingTemplatesRow>(
       `update onboarding_templates set name = coalesce($2, name), summary = coalesce($3, summary), body = coalesce($4::jsonb, body), updated_at = now() where id = $1 and archived_at is null returning *`,
       [id, input.name ?? null, input.summary ?? null, input.blueprint ? JSON.stringify(input.blueprint) : null],
     );
@@ -952,7 +981,7 @@ onboardingPlanRoutes.delete('/onboarding-templates/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   await run(c, async (q) => {
-    const rows = await q.query('update onboarding_templates set archived_at = now() where id = $1 and archived_at is null returning id', [id]);
+    const rows = await q.query<Pick<OnboardingTemplatesRow, 'id'>>('update onboarding_templates set archived_at = now() where id = $1 and archived_at is null returning id', [id]);
     if (!rows.length) fail('not_found');
   });
   return c.json({ ok: true });
@@ -960,7 +989,7 @@ onboardingPlanRoutes.delete('/onboarding-templates/:id', async (c) => {
 
 /** A running plan as a template: its steps (with their order, sides and links), goals, mapping rows and metrics. */
 async function blueprintOfPlan(q: Q, planId: string): Promise<Blueprint> {
-  const [p] = await q.query('select started_on, target_on, phases from onboarding_plans where id = $1', [planId]);
+  const [p] = await q.query<Pick<OnboardingPlansRow, 'started_on' | 'target_on' | 'phases'>>('select started_on, target_on, phases from onboarding_plans where id = $1', [planId]);
   if (!p) fail('not_found');
   const steps = await q.query('select * from onboarding_steps where plan_id = $1 order by position', [planId]);
   // The plan's own phases, in its order, travel with the template (only when it changed them).

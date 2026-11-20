@@ -20,6 +20,10 @@ const run = (cmd: string, args: string[], env: Record<string, string> = {}) => {
   return r.stdout.toString();
 };
 
+/**
+ * Restores a backup into an empty database and checks it against its manifest (checksum, row counts, last migration).
+ * Creates the request roles first, because they belong to the server, not to the dump.
+ */
 export async function restore(opts: { url: string; file: string; passphrase?: string }): Promise<Manifest> {
   const manifestPath = opts.file.replace(/\.dump(\.enc)?$/, '.manifest.json');
   if (!existsSync(manifestPath)) throw new Error(`no manifest beside the backup (${manifestPath})`);

@@ -116,6 +116,7 @@ class Reader {
   }
 }
 
+/** Sends product mail through the workspace SMTP relay (ADR 0018), with no paid mail service. */
 export class SmtpRelayEmail implements EmailSender {
   constructor(
     private o: RelayOptions,
@@ -213,6 +214,7 @@ export function mailProvider(env: MailEnv): 'google_relay' | 'resend' | 'console
   return 'console';
 }
 
+/** The relay's settings from the environment; the sender defaults to the relay account. */
 export function relayOptions(env: MailEnv): RelayOptions {
   const from = env.EMAIL_FROM || `Curahold <${env.SMTP_RELAY_USER}>`;
   return {

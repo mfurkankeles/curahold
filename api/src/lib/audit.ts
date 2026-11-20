@@ -1,5 +1,11 @@
+// The company audit trail (audit_log): one append-only line per sensitive change, written in the same transaction as
+// the change. Read by GET /api/admin/audit and the trust page. Tests: tests/audit*.test.ts.
 import type { Q } from '../db';
 
+/**
+ * Writes one audit line (who, what action, on which entity, extra facts) in the caller's transaction, so the change
+ * and its line are saved together or not at all.
+ */
 export async function audit(
   q: Q,
   e: { orgId: string; actorId: string | null; action: string; entity: string; entityId?: string | null; meta?: object },

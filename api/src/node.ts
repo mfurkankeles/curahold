@@ -22,6 +22,10 @@ import { attachLive } from './live/node';
 import { assistantConfigFrom } from './assistant/cost';
 import { teamConfigFrom } from './team/config';
 
+/**
+ * Starts the whole product on one machine with an in-memory database and demo data (`npm run dev`, `start:local`):
+ * migrations, seed, API, static app and live updates.
+ */
 export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant'; fetch?: typeof fetch; connectors?: Config['connectors']; oauth?: Config['oauth'] }) {
   const pg = await createMemoryPg();
   const db = pgliteDb(pg);

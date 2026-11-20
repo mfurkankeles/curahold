@@ -8,6 +8,7 @@ import type { DemoServer } from './server';
 /** The address the portal person signs in with (the demo bar's "customer"). */
 export const PORTAL_EMAIL = 'selin@quillfield.example';
 
+/** Seeds the demo's customer portal (a contact, a shared task, replies, a request), said in the demo's language. */
 export async function seedPortal(server: DemoServer, locale: Locale = 'tr') {
   const { db } = server;
   const { locale: L, words: W } = await seedWords(locale);

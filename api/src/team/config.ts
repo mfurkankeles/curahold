@@ -25,6 +25,10 @@ export const TEAM_DEFAULTS: TeamConfig = {
   scheduler: 'auto',
 };
 
+/**
+ * The AI team's settings from the environment: models per profile and the monthly model-spend cap (TEAM_MONTHLY_USD).
+ * A missing or invalid cap falls back to the safe default, never to "no cap" (ADR 0010, 0011).
+ */
 export function teamConfigFrom(env: Record<string, string | undefined>): TeamConfig {
   const n = Number(env.TEAM_MONTHLY_USD);
   return {
@@ -39,6 +43,7 @@ export function teamConfigFrom(env: Record<string, string | undefined>): TeamCon
   };
 }
 
+/** The AI team's settings for this installation, or the defaults when none were given. */
 export const teamConfig = (deps: Deps): TeamConfig => deps.config.team ?? TEAM_DEFAULTS;
 
 /**

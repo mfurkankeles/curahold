@@ -69,6 +69,9 @@ export interface LiveHub {
   close(): Promise<void>;
 }
 
+/**
+ * Live updates on the Node server (self-host): a room per company with someone connected, plus the desk's console room.
+ */
 export async function attachLive(server: Server, opts: { db: Db; config: Config; listen?: Listen }): Promise<LiveHub> {
   const { db, config } = opts;
   const source = dbSource(db);

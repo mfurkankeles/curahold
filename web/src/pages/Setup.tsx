@@ -21,6 +21,7 @@ type Step = SetupStep | 'finish';
 const ORDER: Step[] = [...SETUP_STEPS, 'finish'];
 const MINUTES: Record<Step, number> = { company: 2, messaging: 3, accounts: 4, people: 4, automations: 2, finish: 0 };
 
+/** The setup wizard: company, template, tools, people and invitations, step by step. */
 export function SetupPage({ step }: { step: string | null }) {
   const { t, words } = useI18n();
   const { me, reloadMe } = useStore();

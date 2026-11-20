@@ -1,6 +1,7 @@
 // Signing in on the way to the consent screen comes back to it, even from
 // the email link opened in another tab.
 const RETURN = 'app-after-login';
+/** Remembers where to come back to after signing in (this tab only). */
 export function rememberReturn(to: string) {
   try {
     localStorage.setItem(RETURN, JSON.stringify({ to, exp: Date.now() + 20 * 60_000 }));
@@ -8,6 +9,7 @@ export function rememberReturn(to: string) {
     /* no storage: the person starts again from the app */
   }
 }
+/** The remembered return address, once (it is cleared as it is read). */
 export function takeReturn(): string | null {
   try {
     const raw = localStorage.getItem(RETURN);

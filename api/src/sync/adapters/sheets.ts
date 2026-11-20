@@ -20,6 +20,7 @@ interface Grid {
   firstCol: number;
 }
 
+/** A spreadsheet column letter from its number (1 is A, 27 is AA). */
 export function colLetter(n: number): string {
   let s = '';
   for (n += 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s;
@@ -156,6 +157,7 @@ const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';
 const GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
 const quoteTab = (t: string) => `'${t.replace(/'/g, "''")}'`;
 
+/** The spreadsheet id in a Google Sheets address (or a bare id); null for anything else. */
 export function googleSheetId(url: string): string | null {
   const m = /\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})/.exec(url) ?? /^([A-Za-z0-9_-]{30,})$/.exec(url.trim());
   return m ? m[1] : null;
@@ -208,6 +210,7 @@ export const gsheets = tabular('gsheets', googleBackend, {
   },
 });
 
+/** Finds a Google Sheet from its address and returns its id, name and tabs, with the connection's token. */
 export async function resolveGoogleFile(ctx: CrmCtx, url: string) {
   const id = googleSheetId(url);
   if (!id) throw new CrmError('That is not a Google Sheets link', 400);
@@ -293,6 +296,9 @@ export const excel = tabular('excel', excelBackend, {
   },
 });
 
+/**
+ * Finds an Excel workbook in OneDrive or SharePoint from a sharing address and returns its drive item and sheets.
+ */
 export async function resolveExcelFile(ctx: CrmCtx, url: string) {
   let u: URL;
   try {

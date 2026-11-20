@@ -481,6 +481,7 @@ export const STORAGE: StorageItem[] = [
 export { COOKIE_POLICY_VERSION } from './version';
 
 export const OPTIONAL_CATEGORIES: StorageCategory[] = ['analytics', 'marketing'];
+/** Whether a storage category needs consent before use; strictly necessary storage does not. */
 export const needsConsent = (c: StorageCategory) => OPTIONAL_CATEGORIES.includes(c);
 
 /** Glob match (only `*`), anchored. */

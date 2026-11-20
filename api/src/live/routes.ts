@@ -14,6 +14,10 @@ export const liveRoutes = new Hono<AppEnv>();
 
 const TABLE = { b: 'boards', a: 'accounts', t: 'tasks', p: 'sprints' } as const;
 
+/**
+ * A ticket for the live channel, for what the person asks to follow and may see now (checked under row security).
+ * Previewing as someone else or support access does not count as being there.
+ */
 liveRoutes.post('/live/ticket', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');

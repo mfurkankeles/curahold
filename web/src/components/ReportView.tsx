@@ -19,6 +19,7 @@ type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** The layout a report uses: its own choice, or the one its shape implies. */
 export const formatOf = (def: ReportDef): ReportFormat => def.format ?? (def.groups.length >= 2 && def.chart === 'table' ? 'matrix' : def.groups.length ? 'summary' : 'tabular');
 
+/** A report's result as a table or chart. */
 export function ReportView({ result, def, chart }: { result: ReportResult; def: ReportDef; chart: ChartKind }) {
   const { t } = useI18n();
   const format = formatOf(def);

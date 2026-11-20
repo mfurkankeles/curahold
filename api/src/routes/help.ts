@@ -4,6 +4,7 @@
 //                    grant / revoke support access, set the company policy.
 //   supportEntry   — before sign-in: support's one-time entry link and its
 //                    session, and the signed links to a request's files.
+import type { AccountsRow, HelpFilesRow, HelpMessagesRow, HelpRequestsRow, SupportGrantsRow } from '../db/rows.gen';
 import { trustedType } from '../lib/upload';
 import { Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
@@ -278,10 +279,10 @@ helpRoutes.post('/help', async (c) => {
     // The open customer by name, for the desk; only one this person can see.
     const ctx = { ...(input.context ?? {}) };
     if (ctx.refs?.accountId) {
-      const [a] = await q.query('select name from accounts where id = $1', [ctx.refs.accountId]);
+      const [a] = await q.query<Pick<AccountsRow, 'name'>>('select name from accounts where id = $1', [ctx.refs.accountId]);
       ctx.refs = a ? { ...ctx.refs, accountName: a.name } : (({ accountId: _, ...rest }) => rest)(ctx.refs);
     }
-    const [req] = await q.query(
+    const [req] = await q.query<HelpRequestsRow>(
       `insert into help_requests (org_id, user_id, category, impact, subject, description, steps, page_url, context, followers, needed_by, reply_token, last_message_at)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now()) returning *`,
       [
@@ -307,7 +308,7 @@ helpRoutes.post('/help', async (c) => {
       const data = await f.arrayBuffer();
       const mime = trustedType(f.type, data);
       await deps.storage.put(key, data, mime);
-      const [r] = await q.query(
+      const [r] = await q.query<HelpFilesRow>(
         `insert into help_files (org_id, request_id, name, mime, size, storage_key) values ($1, $2, $3, $4, $5, $6) returning *`,
         [org.id, req.id, name, mime, f.size, key],
       );
@@ -357,6 +358,7 @@ const threadInfo = (r: Row) => ({
   neededBy: r.needed_by ? new Date(r.needed_by).toISOString().slice(0, 10) : null,
 });
 
+/** The person's own help requests to Curahold support, newest first. */
 helpRoutes.get('/help', async (c) => {
   const auth = c.get('auth');
   const all = c.req.query('all') === '1' && auth.perms.includes('org.manage');
@@ -367,8 +369,8 @@ helpRoutes.get('/help', async (c) => {
       [all, auth.userId],
     );
     const ids = reqs.map((r) => r.id);
-    const files = ids.length ? await q.query('select id, request_id, name, size from help_files where request_id = any($1) order by created_at', [ids]) : [];
-    const grants = ids.length ? await q.query('select * from support_grants where request_id = any($1)', [ids]) : [];
+    const files = ids.length ? await q.query<Pick<HelpFilesRow, 'id' | 'request_id' | 'name' | 'size'>>('select id, request_id, name, size from help_files where request_id = any($1) order by created_at', [ids]) : [];
+    const grants = ids.length ? await q.query<SupportGrantsRow>('select * from support_grants where request_id = any($1)', [ids]) : [];
     return reqs.map(
       (r): HelpRequestInfo & { userName: string | null } => ({
         id: r.id,
@@ -401,9 +403,9 @@ helpRoutes.get('/help/:id', async (c) => {
     if (!r) fail('not_found');
     const canReply = r.user_id === auth.userId || (r.followers ?? []).includes(auth.userId);
     if (canReply && r.status === 'answered') await q.query('update help_requests set seen_at = now() where id = $1', [id]);
-    const messages = await q.query('select * from help_messages where request_id = $1 order by created_at, id', [id]);
-    const files = await q.query('select id, name, size from help_files where request_id = $1 order by created_at', [id]);
-    const [g] = r.grant_id ? await q.query('select * from support_grants where id = $1', [r.grant_id]) : [];
+    const messages = await q.query<HelpMessagesRow>('select * from help_messages where request_id = $1 order by created_at, id', [id]);
+    const files = await q.query<Pick<HelpFilesRow, 'id' | 'name' | 'size'>>('select id, name, size from help_files where request_id = $1 order by created_at', [id]);
+    const [g] = r.grant_id ? await q.query<SupportGrantsRow>('select * from support_grants where id = $1', [r.grant_id]) : [];
     return { r, messages, files, g, canReply };
   });
   const { r } = out;
@@ -438,7 +440,7 @@ helpRoutes.post('/help/:id/messages', async (c) => {
   if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
   const input = await body(c, z.object({ body: z.string().trim().min(1).max(20000) }));
   await run(c, async (q) => {
-    const [r] = await q.query('select user_id, followers from help_requests where id = $1', [id]);
+    const [r] = await q.query<Pick<HelpRequestsRow, 'user_id' | 'followers'>>('select user_id, followers from help_requests where id = $1', [id]);
     if (!r) fail('not_found');
     if (r.user_id !== auth.userId && !(r.followers ?? []).includes(auth.userId)) fail('forbidden');
     const [{ n }] = await q.query(`select count(*)::int as n from help_messages where user_id = $1 and created_at > now() - interval '1 hour'`, [auth.userId]);
@@ -456,7 +458,7 @@ helpRoutes.post('/help/:id/solve', async (c) => {
   const org = c.get('org');
   if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
   await run(c, async (q) => {
-    const rows = await q.query(`update help_requests set status = 'solved' where id = $1 and (user_id = $2 or $2 = any (followers)) returning ref`, [id, auth.userId]);
+    const rows = await q.query<Pick<HelpRequestsRow, 'ref'>>(`update help_requests set status = 'solved' where id = $1 and (user_id = $2 or $2 = any (followers)) returning ref`, [id, auth.userId]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'help.solved', entity: 'help_request', entityId: id, meta: { ref: rows[0].ref } });
   });
@@ -470,7 +472,7 @@ helpRoutes.put('/help/:id/followers', async (c) => {
   if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
   const input = await body(c, z.object({ userIds: z.array(uuid).max(10) }));
   const followers = await run(c, async (q) => {
-    const [r] = await q.query('select user_id from help_requests where id = $1', [id]);
+    const [r] = await q.query<Pick<HelpRequestsRow, 'user_id'>>('select user_id from help_requests where id = $1', [id]);
     if (!r) fail('not_found');
     if (r.user_id !== auth.userId) fail('forbidden');
     const list = await followersOf(q, input.userIds, auth.userId);
@@ -480,10 +482,11 @@ helpRoutes.put('/help/:id/followers', async (c) => {
   return c.json({ followers });
 });
 
+/** Downloads a file attached to one of the person's help requests; 404 otherwise. */
 helpRoutes.get('/help/files/:id', async (c) => {
   const id = param(c, 'id');
   const row = await run(c, async (q) => {
-    const [r] = await q.query('select * from help_files where id = $1', [id]);
+    const [r] = await q.query<HelpFilesRow>('select * from help_files where id = $1', [id]);
     if (!r) fail('not_found');
     return r;
   });
@@ -543,11 +546,15 @@ helpRoutes.put('/support/recording', async (c) => {
   return c.json({ recordSessions: on });
 });
 
+/**
+ * The person lets Curahold support in (view or edit, for a time), optionally tied to one of their own help requests.
+ * Consent is per person and recorded (lib/support.ts) (201).
+ */
 helpRoutes.post('/support/grants', async (c) => {
   const input = await body(c, grantInput);
   const g = await run(c, async (q) => {
     if (input.requestId) {
-      const [r] = await q.query('select id from help_requests where id = $1 and user_id = $2', [input.requestId, c.get('auth').userId]);
+      const [r] = await q.query<Pick<HelpRequestsRow, 'id'>>('select id from help_requests where id = $1 and user_id = $2', [input.requestId, c.get('auth').userId]);
       if (!r) fail('not_found');
     }
     const g = await giveGrant(c, q, input.hours as number, input.level, input.requestId ?? null);
@@ -557,13 +564,14 @@ helpRoutes.post('/support/grants', async (c) => {
   return c.json({ grant: toGrant(g) }, 201);
 });
 
+/** Withdraws a support grant at once; audited. Not allowed while previewing as someone else. */
 helpRoutes.delete('/support/grants/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
   if (c.get('previewBy')) fail('preview_read_only');
   const n = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<SupportGrantsRow, 'id'>>(
       `update support_grants set revoked_at = now(), revoked_by = $2 where id = $1 and revoked_at is null returning id`,
       [id, auth.userId],
     );
@@ -575,6 +583,10 @@ helpRoutes.delete('/support/grants/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * The company's rule for who may let support in: anyone, administrators only, or nobody. Needs org.manage; audited.
+ * Tightening it ends the grants it no longer allows, in the same step.
+ */
 helpRoutes.put('/support/policy', async (c) => {
   requirePerm(c, 'org.manage');
   if (c.get('previewBy')) fail('preview_read_only');
@@ -663,6 +675,7 @@ supportEntry.post('/support/enter', async (c) => {
   return c.json({ ok: true, until: new Date(s.until).toISOString() });
 });
 
+/** Support staff leave a company they were let into: their support session is revoked. */
 supportEntry.post('/support/leave', async (c) => {
   const token = getCookie(c, SUPPORT_COOKIE);
   if (token) {
@@ -684,7 +697,7 @@ supportEntry.get('/help-files/:id', async (c) => {
   if (!Number.isInteger(e) || e < Date.now() / 1000) fail('not_found');
   const want = await hmacHex(deps.config.authSecret, `help-file.${org.id}.${id}.${e}`);
   if (!safeEqual(s, want)) fail('not_found');
-  const [row] = await deps.db.system((q) => q.query('select * from help_files where id = $1 and org_id = $2', [id, org.id]));
+  const [row] = await deps.db.system((q) => q.query<HelpFilesRow>('select * from help_files where id = $1 and org_id = $2', [id, org.id]));
   if (!row) fail('not_found');
   return sendFile(c, row);
 });
@@ -697,7 +710,7 @@ supportEntry.put('/support/requests/:ref', async (c) => {
   const { status } = await body(c, z.object({ status: z.enum(['received', 'answered', 'solved']) }));
   const org = c.get('org');
   const rows = await c.get('deps').db.system((q) =>
-    q.query('update help_requests set status = $3, updated_at = now() where ref = $1 and org_id = $2 returning id', [ref, org.id, status]),
+    q.query<Pick<HelpRequestsRow, 'id'>>('update help_requests set status = $3, updated_at = now() where ref = $1 and org_id = $2 returning id', [ref, org.id, status]),
   );
   if (!rows.length) fail('not_found');
   return c.json({ ok: true });

@@ -26,6 +26,53 @@ import { zohoAccountsServer } from './zoho';
 const PAGE = 100;
 
 /** A request with the stored Authorization value ("Basic …" or "Bearer …"). */
+// The parts of each tool's API answers this file reads. Only what is used is listed; send() returns the parsed
+// JSON untyped and each caller states the shape it reads here. Ids arrive as numbers or strings depending on the tool.
+type Id = string | number;
+interface ZendeskUser { id: Id; name: string; email?: string | null }
+interface ZendeskOrg { id: Id; name: string; domain_names?: string[]; updated_at: string }
+interface ZendeskTicket {
+  id: Id; status: string; subject?: string; raw_subject?: string; priority?: string | null; created_at: string; updated_at: string;
+  requester_id?: Id; organization_id?: Id | null; assignee_id?: Id | null; via?: { channel?: string };
+}
+interface IntercomAdmin { id: Id; name: string; email?: string | null }
+interface IntercomCompany { id: Id; name: string; website?: string | null; updated_at?: number }
+interface IntercomConversation {
+  id: Id; title?: string | null; state?: string; priority?: string; created_at?: number; updated_at?: number; admin_assignee_id?: Id | null;
+  statistics?: { last_close_at?: number | null };
+  source?: { subject?: string; body?: string; delivered_as?: string; type?: string; author?: { email?: string | null } };
+}
+interface JsmIssue {
+  key: string;
+  fields?: {
+    [custom: string]: unknown;
+    summary?: string; created?: string; updated?: string; resolutiondate?: string | null;
+    status?: { name?: string; statusCategory?: { key?: string } }; priority?: { name?: string };
+    reporter?: { emailAddress?: string }; assignee?: { accountId?: string } | null;
+  };
+}
+interface AtlassianUser { accountId: string; accountType?: string; displayName: string; emailAddress?: string | null }
+interface FrontTeammate { id: Id; first_name?: string; last_name?: string; username?: string; email: string }
+interface FrontConversation {
+  id: Id; subject?: string; status?: string; is_private?: boolean; created_at?: number; waiting_since?: number;
+  last_message?: { created_at?: number; type?: string }; recipient?: { handle?: unknown }; assignee?: { id?: Id } | null;
+}
+interface FrontPage { _pagination?: { next?: unknown } }
+interface FreshdeskAgent { id: Id; contact?: { name?: string; email?: string | null } }
+interface FreshdeskCompany { id: Id; name: string; domains?: string[]; updated_at: string }
+interface FreshdeskTicket {
+  id: Id; subject?: string; status: number; priority: number; source: number; created_at: string; updated_at: string;
+  stats?: { resolved_at?: string | null; closed_at?: string | null }; requester?: { email?: string | null }; company_id?: Id | null; responder_id?: Id | null;
+}
+interface ZohoDeskOrg { id: Id; isDefault?: boolean; portalName?: string | null; companyName?: string | null }
+interface ZohoDeskAgent { id: Id; name?: string; firstName?: string; lastName?: string; emailId?: string | null }
+interface ZohoDeskAccount { id: Id; accountName: string; website: string | null; email: string | null; modifiedTime?: string | null }
+interface ZohoDeskTicket {
+  id: Id; subject?: string; status?: string; statusType?: string; priority?: string | null; channel?: string | null; webUrl?: string | null; email?: string | null;
+  createdTime?: string; modifiedTime?: string | null; closedTime?: string | null; accountId?: Id | null; assigneeId?: Id | null;
+  contact?: { email?: string | null; account?: { id?: Id } }; assignee?: { id?: Id } | null;
+}
+
 async function send(ctx: Pick<CrmCtx, 'fetch' | 'token'>, url: string, init: RequestInit & { json?: unknown } = {}, extra: Record<string, string> = {}): Promise<any> {
   const headers = new Headers(init.headers);
   headers.set('authorization', await ctx.token());
@@ -162,9 +209,9 @@ export const zendesk: CrmAdapter = {
   },
   async users(ctx) {
     const out: RemoteUser[] = [];
-    let url: string | null = `${zdBase(ctx)}/users.json?role[]=agent&role[]=admin&page[size]=${PAGE}`;
+    let url: string | null | undefined = `${zdBase(ctx)}/users.json?role[]=agent&role[]=admin&page[size]=${PAGE}`;
     while (url && out.length < 2000) {
-      const j: any = await send(ctx, url);
+      const j: { users?: ZendeskUser[]; meta?: { has_more?: boolean }; links?: { next?: string } } = await send(ctx, url);
       for (const u of j.users ?? []) out.push({ id: String(u.id), name: u.name, email: u.email ?? null });
       url = j.meta?.has_more ? j.links?.next : null;
     }
@@ -176,18 +223,18 @@ export const zendesk: CrmAdapter = {
       const j = await send(ctx, url);
       const from = since(opts.since);
       const rows = (j.organizations ?? [])
-        .filter((o: any) => !from || new Date(o.updated_at).getTime() >= from)
-        .map((o: any) => orgRow(String(o.id), o.name, o.domain_names ?? [], o.updated_at));
+        .filter((o: ZendeskOrg) => !from || new Date(o.updated_at).getTime() >= from)
+        .map((o: ZendeskOrg) => orgRow(String(o.id), o.name, o.domain_names ?? [], o.updated_at));
       return { rows, next: j.meta?.has_more ? j.links?.next : null };
     }
     // Incremental export: everything changed since a moment, in order, with the requesters alongside.
     const start = Math.floor(since(opts.since) / 1000);
     const url = opts.cursor ?? `${zdBase(ctx)}/incremental/tickets/cursor.json?start_time=${start}&include=users&per_page=${PAGE}`;
     const j = await send(ctx, url);
-    const emails = new Map<string, string>((j.users ?? []).map((u: any) => [String(u.id), u.email]));
+    const emails = new Map<string, string>((j.users ?? []).map((u: ZendeskUser) => [String(u.id), u.email]));
     const rows: RemoteRow[] = (j.tickets ?? [])
-      .filter((t: any) => t.status !== 'deleted')
-      .map((t: any) =>
+      .filter((t: ZendeskTicket) => t.status !== 'deleted')
+      .map((t: ZendeskTicket) =>
         ticketRow(String(t.id), t.updated_at, {
           subject: t.subject ?? t.raw_subject,
           status: t.status === 'new' ? 'open' : t.status === 'hold' ? 'pending' : t.status,
@@ -275,7 +322,7 @@ export const freshdesk: CrmAdapter = {
   async users(ctx) {
     const out: RemoteUser[] = [];
     for (let page = 1; page <= 20; page++) {
-      const list: any[] = await send(ctx, `${fdBase(ctx)}/agents?per_page=${PAGE}&page=${page}`);
+      const list: FreshdeskAgent[] = await send(ctx, `${fdBase(ctx)}/agents?per_page=${PAGE}&page=${page}`);
       for (const a of list ?? []) out.push({ id: String(a.id), name: a.contact?.name ?? '', email: a.contact?.email ?? null });
       if (!list || list.length < PAGE) break;
     }
@@ -284,14 +331,14 @@ export const freshdesk: CrmAdapter = {
   async list(ctx, object, opts) {
     const page = Number(opts.cursor ?? 1);
     if (object === 'organizations') {
-      const list: any[] = await send(ctx, `${fdBase(ctx)}/companies?per_page=${PAGE}&page=${page}`);
+      const list: FreshdeskCompany[] = await send(ctx, `${fdBase(ctx)}/companies?per_page=${PAGE}&page=${page}`);
       const from = since(opts.since);
       const rows = (list ?? []).filter((o) => !from || new Date(o.updated_at).getTime() >= from).map((o) => orgRow(String(o.id), o.name, o.domains ?? [], o.updated_at));
       return { rows, next: list?.length === PAGE ? String(page + 1) : null };
     }
     // Without a date Freshdesk lists only the last 30 days; ask from the start of time on a first run.
     const from = opts.since ?? '2000-01-01T00:00:00Z';
-    const list: any[] = await send(ctx, `${fdBase(ctx)}/tickets?updated_since=${encodeURIComponent(from)}&order_by=updated_at&order_type=asc&include=requester&per_page=${PAGE}&page=${page}`);
+    const list: FreshdeskTicket[] = await send(ctx, `${fdBase(ctx)}/tickets?updated_since=${encodeURIComponent(from)}&order_by=updated_at&order_type=asc&include=requester&per_page=${PAGE}&page=${page}`);
     const rows = (list ?? []).map((t) =>
       ticketRow(String(t.id), t.updated_at, {
         subject: t.subject,
@@ -375,14 +422,14 @@ export const intercom: CrmAdapter = {
   },
   async users(ctx) {
     const j = await send(ctx, `${icBase(ctx)}/admins`, {}, IC_VERSION);
-    return (j?.admins ?? []).map((a: any) => ({ id: String(a.id), name: a.name, email: a.email ?? null }));
+    return (j?.admins ?? []).map((a: IntercomAdmin) => ({ id: String(a.id), name: a.name, email: a.email ?? null }));
   },
   async list(ctx, object, opts) {
     if (object === 'organizations') {
       const url = `${icBase(ctx)}/companies/scroll${opts.cursor ? `?scroll_param=${encodeURIComponent(opts.cursor)}` : ''}`;
       const j = await send(ctx, url, {}, IC_VERSION);
       const from = since(opts.since) / 1000;
-      const data: any[] = j?.data ?? [];
+      const data: IntercomCompany[] = j?.data ?? [];
       const rows = data.filter((o) => !from || (o.updated_at ?? 0) >= from).map((o) => orgRow(String(o.id), o.name, [o.website ?? null], iso(o.updated_at)));
       return { rows, next: data.length ? (j.scroll_param ?? null) : null };
     }
@@ -393,7 +440,7 @@ export const intercom: CrmAdapter = {
       { method: 'POST', json: { query, pagination: { per_page: PAGE, ...(opts.cursor ? { starting_after: opts.cursor } : {}) }, sort: { field: 'updated_at', order: 'ascending' } } },
       IC_VERSION,
     );
-    const rows = (j?.conversations ?? []).map((cv: any) =>
+    const rows = (j?.conversations ?? []).map((cv: IntercomConversation) =>
       ticketRow(String(cv.id), iso(cv.updated_at), {
         subject: cv.title || cv.source?.subject || String(cv.source?.body ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120),
         status: cv.state === 'closed' ? 'solved' : cv.state === 'snoozed' ? 'pending' : 'open',
@@ -459,9 +506,9 @@ export const jsm: CrmAdapter = {
       if (!me?.accountId) throw new CrmError('That email and API token do not open this Atlassian site', 401, undefined, true);
       // Service desk projects, and the field that names a request's organisations.
       const desks = await send(ctx, `https://${site}.atlassian.net/rest/servicedeskapi/servicedesk?limit=50`);
-      const projects = (desks?.values ?? []).map((d: any) => d.projectKey).filter(Boolean);
+      const projects = (desks?.values ?? []).map((d: { projectKey?: string }) => d.projectKey).filter(Boolean);
       if (!projects.length) throw new CrmError('This Atlassian site has no service desk projects this account can see');
-      const fields: any[] = await send(ctx, `https://${site}.atlassian.net/rest/api/3/field`);
+      const fields: { id: string; schema?: { custom?: string } }[] = await send(ctx, `https://${site}.atlassian.net/rest/api/3/field`);
       const orgField = fields.find((f) => f.schema?.custom === 'com.atlassian.servicedesk:sd-customer-organizations')?.id ?? null;
       return { secret: { accessToken: auth }, config: { site, projects, orgField }, label: `${site}.atlassian.net`, instanceId: site };
     },
@@ -478,7 +525,7 @@ export const jsm: CrmAdapter = {
     const keys: string[] = ctx.config.projects ?? [];
     const seen = new Map<string, RemoteUser>();
     for (const k of keys.slice(0, 10)) {
-      const list: any[] = await send(ctx, `${jsmBase(ctx)}/rest/api/3/user/assignable/search?project=${encodeURIComponent(k)}&maxResults=200`);
+      const list: AtlassianUser[] = await send(ctx, `${jsmBase(ctx)}/rest/api/3/user/assignable/search?project=${encodeURIComponent(k)}&maxResults=200`);
       for (const u of list ?? []) if (u.accountType === 'atlassian') seen.set(u.accountId, { id: u.accountId, name: u.displayName, email: u.emailAddress ?? null });
     }
     return [...seen.values()];
@@ -487,7 +534,7 @@ export const jsm: CrmAdapter = {
     if (object === 'organizations') {
       const start = Number(opts.cursor ?? 0);
       const j = await send(ctx, `${jsmBase(ctx)}/rest/servicedeskapi/organization?start=${start}&limit=50`);
-      const rows = (j?.values ?? []).map((o: any) => orgRow(String(o.id), o.name, [], null));
+      const rows = (j?.values ?? []).map((o: { id: Id; name: string }) => orgRow(String(o.id), o.name, [], null));
       return { rows, next: j?.isLastPage === false ? String(start + 50) : null };
     }
     const keys: string[] = ctx.config.projects ?? [];
@@ -505,7 +552,7 @@ export const jsm: CrmAdapter = {
         ...(opts.cursor ? { nextPageToken: opts.cursor } : {}),
       },
     });
-    const rows = (j?.issues ?? []).map((i: any) => {
+    const rows = (j?.issues ?? []).map((i: JsmIssue) => {
       const f = i.fields ?? {};
       const cat = f.status?.statusCategory?.key;
       return ticketRow(i.key, f.updated ?? null, {
@@ -517,7 +564,7 @@ export const jsm: CrmAdapter = {
         requester: f.reporter?.emailAddress ?? null,
         channel: 'service desk',
         link: `${jsmBase(ctx)}/browse/${i.key}`,
-        organization: orgField ? (f[orgField]?.[0]?.id ?? null) : null,
+        organization: orgField ? ((f[orgField] as { id?: string }[] | undefined)?.[0]?.id ?? null) : null,
         assignee: f.assignee?.accountId ?? null,
       });
     });
@@ -534,7 +581,7 @@ export const jsm: CrmAdapter = {
 
 const FRONT = 'https://api2.frontapp.com';
 /** Front sends the address of the next page; it is followed only when it is Front's own, so the key never goes elsewhere. */
-const frontNext = (j: any): string | null => (typeof j?._pagination?.next === 'string' && j._pagination.next.startsWith(`${FRONT}/`) ? j._pagination.next : null);
+const frontNext = (j: FrontPage | null | undefined): string | null => (typeof j?._pagination?.next === 'string' && j._pagination.next.startsWith(`${FRONT}/`) ? j._pagination.next : null);
 
 export const front: CrmAdapter = {
   provider: 'front',
@@ -564,7 +611,7 @@ export const front: CrmAdapter = {
     const out: RemoteUser[] = [];
     let url: string | null = `${FRONT}/teammates?limit=100`;
     while (url && out.length < 2000) {
-      const j: any = await send(ctx, url);
+      const j: FrontPage & { _results?: FrontTeammate[] } = await send(ctx, url);
       for (const u of j?._results ?? []) out.push({ id: String(u.id), name: [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || u.email, email: u.email ?? null });
       url = frontNext(j);
     }
@@ -577,8 +624,8 @@ export const front: CrmAdapter = {
     const url = opts.cursor && opts.cursor.startsWith(`${FRONT}/`) ? opts.cursor : from ? `${FRONT}/conversations/search/${encodeURIComponent(`after:${from}`)}?limit=100` : `${FRONT}/conversations?limit=100`;
     const j = await send(ctx, url);
     const rows: RemoteRow[] = (j?._results ?? [])
-      .filter((c: any) => c.status !== 'deleted' && c.status !== 'spam' && !c.is_private)
-      .map((c: any) =>
+      .filter((c: FrontConversation) => c.status !== 'deleted' && c.status !== 'spam' && !c.is_private)
+      .map((c: FrontConversation) =>
         ticketRow(String(c.id), iso(c.last_message?.created_at ?? c.waiting_since ?? c.created_at), {
           subject: c.subject,
           status: c.status === 'archived' ? 'solved' : c.status === 'snoozed' ? 'pending' : 'open',
@@ -636,7 +683,7 @@ export function zohoDeskHost(accountsServer: string): string | null {
 }
 const zdHost = (ctx: { config: Record<string, any> }) => (/^https:\/\/desk\.(zoho\.[a-z.]+|zohocloud\.ca)$/.test(String(ctx.config.deskHost)) ? String(ctx.config.deskHost) : 'https://desk.zoho.com');
 const zd = (ctx: CrmCtx, path: string, init: Parameters<typeof call>[2] = {}) => call(ctx, `${zdHost(ctx)}/api/v1${path}`, { ...init, headers: { ...(init.headers as Record<string, string>), orgId: String(ctx.config.orgId) } }, 'zoho');
-const zdStatus = (t: any) => (String(t.statusType ?? '').toLowerCase() === 'closed' ? 'closed' : /hold|pending|waiting/i.test(String(t.status ?? t.statusType ?? '')) ? 'pending' : 'open');
+const zdStatus = (t: Pick<ZohoDeskTicket, 'status' | 'statusType'>) => (String(t.statusType ?? '').toLowerCase() === 'closed' ? 'closed' : /hold|pending|waiting/i.test(String(t.status ?? t.statusType ?? '')) ? 'pending' : 'open');
 
 export const zohodesk: CrmAdapter = {
   provider: 'zohodesk',
@@ -659,12 +706,12 @@ export const zohodesk: CrmAdapter = {
       if (!accountsServer || !deskHost) throw new CrmError('Unknown Zoho data centre');
       const j = await codeGrant(fetcher, `${accountsServer}/oauth/v2/token`, client, code, redirectUri, now);
       const orgs = await call(oneShotCtx(fetcher, now, j.access_token, {}), `${deskHost}/api/v1/organizations`, {}, 'zoho');
-      const list: any[] = orgs?.data ?? [];
+      const list: ZohoDeskOrg[] = orgs?.data ?? [];
       const o = list.find((x) => x.isDefault) ?? list[0];
       if (!o?.id) throw new CrmError('No Zoho Desk portal on this account', 404);
       const config = { accountsServer, deskHost, orgId: String(o.id) };
       const depts = await call(oneShotCtx(fetcher, now, j.access_token, config), `${deskHost}/api/v1/departments?isEnabled=true&limit=10`, { headers: { orgId: String(o.id) } }, 'zoho');
-      const dept = (depts?.data ?? []).find((d: any) => d.isDefault) ?? depts?.data?.[0];
+      const dept = (depts?.data ?? []).find((d: { id?: Id; isDefault?: boolean }) => d.isDefault) ?? depts?.data?.[0];
       return {
         secret: { accessToken: j.access_token, refreshToken: j.refresh_token, expiresAt: j.expiresAt },
         config: { ...config, departmentId: dept?.id ? String(dept.id) : null, portal: o.portalName ?? null },
@@ -687,7 +734,7 @@ export const zohodesk: CrmAdapter = {
     const out: RemoteUser[] = [];
     for (let from = 1; from < 2000; from += ZD_PAGE) {
       const j = await zd(ctx, `/agents?from=${from}&limit=${ZD_PAGE}&status=ACTIVE`);
-      const list: any[] = j?.data ?? [];
+      const list: ZohoDeskAgent[] = j?.data ?? [];
       for (const a of list) out.push({ id: String(a.id), name: String(a.name ?? [a.firstName, a.lastName].filter(Boolean).join(' ')), email: a.emailId ? String(a.emailId).toLowerCase() : null });
       if (list.length < ZD_PAGE) break;
     }
@@ -697,7 +744,7 @@ export const zohodesk: CrmAdapter = {
     const from = Number(opts.cursor ?? 1) || 1;
     if (object === 'organizations') {
       const j = await zd(ctx, `/accounts?from=${from}&limit=${ZD_PAGE}&sortBy=-modifiedTime`);
-      const list: any[] = j?.data ?? [];
+      const list: ZohoDeskAccount[] = j?.data ?? [];
       const sinceMs = since(opts.since);
       const rows = list.filter((a) => !sinceMs || !a.modifiedTime || new Date(a.modifiedTime).getTime() >= sinceMs).map((a) => orgRow(String(a.id), a.accountName, [a.website, a.email], a.modifiedTime ?? null));
       const older = sinceMs && list.some((a) => a.modifiedTime && new Date(a.modifiedTime).getTime() < sinceMs);
@@ -706,7 +753,7 @@ export const zohodesk: CrmAdapter = {
     // The range's end is rounded up to the next second, so a change made this very second is inside it.
     const range = opts.since ? `&modifiedTimeRange=${encodeURIComponent(`${isoSeconds(new Date(opts.since).toISOString())},${isoSeconds(new Date(ctx.now().getTime() + 1000).toISOString())}`)}&sortBy=modifiedTime` : '&sortBy=createdTime';
     const j = await zd(ctx, `${opts.since ? '/tickets/search' : '/tickets'}?from=${from}&limit=${ZD_PAGE}${range}&include=contacts,assignee`);
-    const list: any[] = j?.data ?? [];
+    const list: ZohoDeskTicket[] = j?.data ?? [];
     const rows = list.map((t) =>
       ticketRow(String(t.id), t.modifiedTime ?? t.closedTime ?? t.createdTime ?? null, {
         subject: t.subject,

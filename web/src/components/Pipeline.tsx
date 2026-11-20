@@ -23,10 +23,12 @@ import { usePhone } from './FilterSheet';
 
 const NONE = '__none__';
 
+/** The select fields a record board can be grouped by. */
 export function groupChoices(type: RecordType) {
   return type.fields.filter((f) => f.type === 'select' && (f.options?.length ?? 0) > 1 && !(type.kind === 'opportunity' && f.key === 'status'));
 }
 
+/** Records as a board grouped by a select field, moved by drag. */
 export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { type: RecordType; records: AppRecord[]; groupKey: string; onOpen: (r: AppRecord) => void; onChanged: (r: AppRecord) => void }) {
   const { t, locale, fmtDate } = useI18n();
   const { canWrite, toast, person } = useStore();

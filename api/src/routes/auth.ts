@@ -4,6 +4,7 @@
 //      GET /oauth/callback (central host) → back to the company with a
 //      one-time token → POST /auth/verify; a device seen for the first time
 //      must also enter a 6-digit code sent by email (POST /auth/device).
+import type { JoinRequestsRow, LoginTokensRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
 import { z } from 'zod';
@@ -50,6 +51,9 @@ const MAX_CODE_ATTEMPTS = 5;
 
 export const authRoutes = new Hono<AppEnv>();
 
+/**
+ * The company's public sign-in facts (name, logo, which sign-in methods it allows) for the sign-in page; no session needed.
+ */
 authRoutes.get('/org', (c) => {
   const org = c.get('org');
   const oauth = c.get('deps').config.oauth;
@@ -110,6 +114,11 @@ authRoutes.get('/logo', async (c) => {
   });
 });
 
+/**
+ * Starts an email sign-in: sends a link (or a join link to someone at the company's domain). Rate-limited per address;
+ * the answer is the same whether or not the address has an account, so it cannot be used to find out who works where.
+ * Under required SSO only backup administrators may use it ('sso_required').
+ */
 authRoutes.post('/auth/start', async (c) => {
   const input = await body(c, z.object({ email, backup: z.boolean().optional() }));
   const deps = c.get('deps');
@@ -273,7 +282,7 @@ authRoutes.post('/join', async (c) => {
   // A link sent before the company required SSO does not open a way around it.
   if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
   const outcome = await run(c, async (q) => {
-    const [tok] = await q.query(
+    const [tok] = await q.query<Pick<LoginTokensRow, 'email'>>(
       `update login_tokens set used_at = now()
         where token_hash = $1 and kind = 'join' and used_at is null and expires_at > now() returning email`,
       [await sha256Hex(input.token)],
@@ -281,7 +290,7 @@ authRoutes.post('/join', async (c) => {
     if (!tok) fail('invalid_token');
     const email = tok.email as string;
     if (!org.domains.includes(emailDomain(email))) fail('join_closed');
-    const [existing] = await q.query('select id, status from users where email = $1', [email]);
+    const [existing] = await q.query<Pick<UsersRow, 'id' | 'status'>>('select id, status from users where email = $1', [email]);
     if (existing) fail('already_member');
     if (org.auto_join) {
       const [role] = await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
@@ -299,7 +308,7 @@ authRoutes.post('/join', async (c) => {
     // Filed with owner access: the person asking cannot read requests (nor
     // should they), and the duplicate check needs to.
     await deps.db.system(async (q) => {
-      const inserted = await q.query(
+      const inserted = await q.query<Pick<JoinRequestsRow, 'id'>>(
         `insert into join_requests (org_id, email, name, note) values ($1, $2, $3, $4)
          on conflict (org_id, email) where status = 'pending' do nothing returning id`,
         [org.id, outcome.email, input.name, input.note || null],
@@ -339,6 +348,10 @@ async function loginFailed(c: C, via: 'link' | 'device_code' | 'second_step' | '
 
 const verifyInput = z.object({ token: z.string().min(20).max(200), deviceId, deviceLabel });
 
+/**
+ * Finishes a sign-in from an emailed link or a provider's token on this device; 'invalid_token' for anything stale,
+ * used or from another device. Under required SSO only a backup administrator's emailed link goes on.
+ */
 authRoutes.post('/auth/verify', async (c) => {
   const input = await body(c, verifyInput);
   const deps = c.get('deps');
@@ -353,7 +366,7 @@ authRoutes.post('/auth/verify', async (c) => {
     if (tok && (tok.kind !== 'magic' || !(await backupAdmin(c, { email: tok.email })))) fail('sso_required');
   }
   const attempt = () => run(c, async (q) => {
-    const [tok] = await q.query(
+    const [tok] = await q.query<Pick<LoginTokensRow, 'email' | 'kind' | 'device_id'>>(
       `update login_tokens set used_at = now()
         where token_hash = $1 and kind in ('magic', 'oauth') and used_at is null and expires_at > now()
         returning email, kind, device_id`,
@@ -413,6 +426,10 @@ authRoutes.post('/auth/verify', async (c) => {
   return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: outcome.method }, sso));
 });
 
+/**
+ * Signs in on a new device with the code shown on a trusted one. Wrong attempts are counted even when the code fails
+ * (the error is raised after the counter is committed), so guessing is bounded.
+ */
 authRoutes.post('/auth/device', async (c) => {
   const input = await body(
     c,
@@ -420,7 +437,7 @@ authRoutes.post('/auth/device', async (c) => {
   );
   if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
   const outcome = await run(c, async (q) => {
-    const [tok] = await q.query(
+    const [tok] = await q.query<Pick<LoginTokensRow, 'id' | 'email' | 'device_id' | 'code_hash' | 'attempts'>>(
       `update login_tokens set attempts = attempts + 1
         where token_hash = $1 and kind = 'device' and used_at is null and expires_at > now()
         returning id, email, device_id, code_hash, attempts`,
@@ -430,7 +447,7 @@ authRoutes.post('/auth/device', async (c) => {
     if (tok.attempts > MAX_CODE_ATTEMPTS) return { error: 'too_many_requests' as const };
     if (tok.code_hash !== (await sha256Hex(input.code))) return { error: 'invalid_token' as const };
     await q.query('update login_tokens set used_at = now() where id = $1', [tok.id]);
-    const [user] = await q.query(`select id from users where email = $1 and status in ('active', 'invited')`, [tok.email]);
+    const [user] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where email = $1 and status in ('active', 'invited')`, [tok.email]);
     if (!user) return { error: 'invalid_token' as const };
     await q.query(`update users set status = 'active' where id = $1 and status = 'invited'`, [user.id]);
     return { user: { id: user.id as string } };
@@ -463,16 +480,21 @@ authRoutes.post('/auth/second/setup', async (c) => {
   const input = await body(c, stepInput);
   const step = await takeStep(c, input.token, input.deviceId, false);
   if (hasFactor(await factorsOf(c, step.user_id))) fail('forbidden');
-  const [u] = await c.get('deps').db.system((q) => q.query('select email from users where org_id = $1 and id = $2', [c.get('org').id, step.user_id]));
+  const [u] = await c.get('deps').db.system((q) => q.query<Pick<UsersRow, 'email'>>('select email from users where org_id = $1 and id = $2', [c.get('org').id, step.user_id]));
   return c.json(await startTotp(c, { id: step.user_id, email: u.email }));
 });
 
+/** Passkey challenge options for the second sign-in step. */
 authRoutes.post('/auth/second/passkey', async (c) => {
   const input = await body(c, stepInput);
   const step = await takeStep(c, input.token, input.deviceId, false);
   return c.json(await passkeyOptions(c, 'confirm', step.user_id));
 });
 
+/**
+ * Checks the second sign-in step (authenticator app, passkey or a recovery code) and creates the session; audited.
+ * Setting up the app during sign-in shows the recovery codes once.
+ */
 authRoutes.post('/auth/second', async (c) => {
   const input = await body(
     c,
@@ -521,6 +543,9 @@ authRoutes.post('/auth/passkey/options', async (c) => {
   return c.json(await passkeyOptions(c, 'login', null));
 });
 
+/**
+ * Signs in with a passkey alone. Refused under required SSO; reports devices signed out to stay within the device limit.
+ */
 authRoutes.post('/auth/passkey', async (c) => {
   const input = await body(c, z.object({ challengeId: z.string().max(40), response: z.record(z.string(), z.any()), deviceId, deviceLabel }));
   if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
@@ -562,7 +587,7 @@ authRoutes.get('/calendar/:file', async (c) => {
   const org = c.get('org');
   const hash = await sha256Hex(m[1]);
   const [u] = await deps.db.tenant({ orgId: org.id, userId: null }, (q) =>
-    q.query(`select id, name, locale from users where calendar_token_hash = $1 and status = 'active'`, [hash]),
+    q.query<Pick<UsersRow, 'id' | 'name' | 'locale'>>(`select id, name, locale from users where calendar_token_hash = $1 and status = 'active'`, [hash]),
   );
   if (!u) return c.text('Not found', 404);
   const rows = await deps.db.tenant({ orgId: org.id, userId: u.id }, (q) =>
@@ -593,6 +618,10 @@ interface OAuthState {
   x: number; // expiry (ms)
 }
 
+/**
+ * Starts Google or Microsoft sign-in: a signed state (with this device) and a redirect to the provider. Refused under
+ * required SSO; a provider not configured redirects back with an error.
+ */
 authRoutes.get('/auth/oauth/:provider/start', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
@@ -615,6 +644,10 @@ function callbackUrl(c: C) {
   return `${cfg.scheme}://${cfg.centralHost}${port}/api/oauth/callback`;
 }
 
+/**
+ * The return from Google or Microsoft sign-in: checks the signed state and its expiry, finds the person in the company,
+ * and continues the sign-in on the same device. A customer portal's sign-in comes back here too and goes on to the portal.
+ */
 export async function oauthCallback(c: C) {
   const deps = c.get('deps');
   const cfg = deps.config;
@@ -637,7 +670,7 @@ export async function oauthCallback(c: C) {
   if (!org) return c.text('Unknown workspace', 404);
   const token = randomToken(32);
   const found = await deps.db.tenant({ orgId: org.id, userId: null }, async (q) => {
-    const [user] = await q.query(`select id from users where email = $1 and status in ('active', 'invited')`, [identity.email]);
+    const [user] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where email = $1 and status in ('active', 'invited')`, [identity.email]);
     if (!user) return false;
     await q.query(
       `insert into login_tokens (org_id, email, token_hash, kind, device_id, expires_at)
@@ -652,6 +685,10 @@ export async function oauthCallback(c: C) {
 
 export { callbackUrl };
 
+/**
+ * Sets the session cookie: host-only, HttpOnly, SameSite=Lax, Secure on https, so one company's session is never
+ * sent to another company's.
+ */
 export function setSessionCookie(c: C, token: string) {
   const cfg = c.get('deps').config;
   // Host-only cookie: a session for acme.curahold.com is never sent to any

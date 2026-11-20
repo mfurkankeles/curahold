@@ -11,6 +11,9 @@ import { fail } from './errors';
 // A label in each language the company writes it in (any of the nine).
 const label = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(80).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> }).refine((l) => Object.values(l).some(Boolean));
 
+/**
+ * Validates a board's custom task fields (unique keys, valid types and options); 'validation' naming the bad ones.
+ */
 export const taskFieldsSchema = z
   .array(
     z.object({
@@ -28,6 +31,7 @@ export const taskFieldsSchema = z
   .refine((list) => new Set(list.map((f) => f.key)).size === list.length, 'duplicate field keys')
   .refine((list) => list.every((f) => f.type !== 'select' || (f.options?.length ?? 0) > 0), 'a choice field needs options');
 
+/** Whether a field value counts as not filled in (null, undefined, empty text or false). */
 export const empty = (v: unknown) => v === null || v === undefined || v === '' || v === false;
 
 /** Checks values against the board's fields; returns the cleaned values. People must be members of the company. */

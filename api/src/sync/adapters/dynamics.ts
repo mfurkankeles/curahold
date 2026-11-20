@@ -9,6 +9,10 @@ const STANDARD = ['account', 'contact', 'opportunity', 'incident', 'task', 'lead
 const HINTS: Record<string, ObjectHint> = { account: 'account', contact: 'contact', opportunity: 'opportunity', incident: 'ticket', task: 'task' };
 const SKIP = new Set(['createdon', 'modifiedon', 'versionnumber', 'importsequencenumber', 'overriddencreatedon', 'timezoneruleversionnumber', 'utcconversiontimezonecode']);
 
+/**
+ * A Dynamics 365 organisation address cleaned to `https://<org>.crm*.dynamics.com`, or null for anything else (so the
+ * token is never sent to another host).
+ */
 export function orgUrlOf(raw: string): string | null {
   try {
     const u = new URL(/^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`);

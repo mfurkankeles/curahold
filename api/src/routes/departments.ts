@@ -1,5 +1,6 @@
 // Departments: who is in which, who leads it, whether the company has it, and
 // the record of the move into departments (administrators only).
+import type { DepartmentMembersRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { DEPARTMENT_KEYS } from '../../../shared/src/model';
@@ -39,6 +40,7 @@ const patchSchema = z.object({
   bandView: z.array(z.enum(DEPARTMENT_KEYS)).max(4).nullable().optional(),
 });
 
+/** Renames a department or turns it on or off; at least one stays on. Needs org.manage and a writer seat. */
 departmentRoutes.patch('/departments/:id', async (c) => {
   requireWriter(c);
   requirePerm(c, 'org.manage');
@@ -77,7 +79,7 @@ departmentRoutes.put('/departments/:id/people', async (c) => {
     const members = [...new Set(input.memberIds)].filter((m) => !leads.includes(m));
     const all = [...leads, ...members];
     if (all.length) {
-      const ok = await q.query(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [all]);
+      const ok = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [all]);
       if (ok.length !== all.length) fail('validation', { fields: 'memberIds' }, { fields: ['memberIds'] });
     }
     await q.query('delete from department_members where department_id = $1 and not (user_id = any($2::uuid[]))', [id, all]);
@@ -96,6 +98,10 @@ departmentRoutes.put('/departments/:id/people', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Adds a person to a department or changes their role there. A lead may add members; making or unmaking a lead
+ * needs a people manager (mayManageMembers). Department walls are enforced in SQL (ADR 0009).
+ */
 departmentRoutes.put('/departments/:id/members/:userId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -105,9 +111,9 @@ departmentRoutes.put('/departments/:id/members/:userId', async (c) => {
   const org = c.get('org');
   await run(c, async (q) => {
     await loadDepartment(q, id);
-    const [u] = await q.query(`select id from users where id = $1 and status <> 'deleted'`, [userId]);
+    const [u] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = $1 and status <> 'deleted'`, [userId]);
     if (!u) fail('not_found');
-    const [had] = await q.query('select role from department_members where department_id = $1 and user_id = $2', [id, userId]);
+    const [had] = await q.query<Pick<DepartmentMembersRow, 'role'>>('select role from department_members where department_id = $1 and user_id = $2', [id, userId]);
     // A lead may add members; making or unmaking a lead is a people manager's job.
     if (!(await mayManageMembers(q, auth, id, had?.role === 'lead' ? 'lead' : role))) fail('forbidden');
     if (had) await q.query('update department_members set role = $3 where department_id = $1 and user_id = $2', [id, userId, role]);
@@ -118,6 +124,7 @@ departmentRoutes.put('/departments/:id/members/:userId', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Removes a person from a department; same rule as adding. Audited. */
 departmentRoutes.delete('/departments/:id/members/:userId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

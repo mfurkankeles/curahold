@@ -1,10 +1,15 @@
 // Puts the org chart (shared/src/team/orgChart.ts) into the seats tables.
 // First run: every seat. Later runs keep the owner's edits unless he asks
 // for the default back (reset), and never touch a seat a person holds.
+import type { AgentsRow, SeatsRow } from '../db/rows.gen';
 import type { Q } from '../db';
 import { ORG_CHART } from '../../../shared/src/team/orgChart';
 import { auditLine } from '../lib/office';
 
+/**
+ * Creates the AI team's seats from the built-in org chart, leads first so every reports_to exists.
+ * With `reset`, seats return to their defaults; returns how many were added and reset.
+ */
 export async function seedOrgChart(q: Q, opts: { reset?: boolean; by: string }): Promise<{ added: number; reset: number }> {
   let added = 0;
   let reset = 0;
@@ -14,7 +19,7 @@ export async function seedOrgChart(q: Q, opts: { reset?: boolean; by: string }):
     return lead && n < 10 ? depth(lead, n + 1) : n;
   };
   for (const s of [...ORG_CHART].sort((a, b) => depth(a.seat) - depth(b.seat))) {
-    const [had] = await q.query('select filled_by from seats where seat = $1', [s.seat]);
+    const [had] = await q.query<Pick<SeatsRow, 'filled_by'>>('select filled_by from seats where seat = $1', [s.seat]);
     if (had && (!opts.reset || had.filled_by === 'human')) continue;
     await q.query(
       `insert into seats (seat, title, title_tr, team, reports_to, tier, state, cadence, weekly_budget, wake_trigger, card)
@@ -24,7 +29,7 @@ export async function seedOrgChart(q: Q, opts: { reset?: boolean; by: string }):
          wake_trigger = excluded.wake_trigger, card = excluded.card, updated_at = now()`,
       [s.seat, s.title, s.titleTr, s.team, s.reportsTo, s.tier, s.state, s.cadence, s.weeklyBudget, s.wakeTrigger ?? null, JSON.stringify({ ...s.card, level: s.level })],
     );
-    const [agent] = await q.query('select id from agents where seat = $1', [s.seat]);
+    const [agent] = await q.query<Pick<AgentsRow, 'id'>>('select id from agents where seat = $1', [s.seat]);
     if (agent) await q.query('update agents set name = $2, effort = $3 where id = $1', [agent.id, s.name, s.model]);
     else await q.query('insert into agents (seat, name, effort) values ($1, $2, $3)', [s.seat, s.name, s.model]);
     if (had) reset++;

@@ -1,3 +1,6 @@
+// The app's root: boots the session (/api/me), picks what to show (sign-in, verify, agreements, setup, the desk, the
+// shell with its routes), and wires diagnostics, the reauth dialog, preview mode and live updates. Every screen is its
+// own lazily loaded chunk; the one the address points at starts loading with the app. Entry: web/src/main.tsx.
 import { setCompanyZone } from './lib/time';
 import { ReauthDialog } from './components/Reauth';
 import { lazy, Suspense, useCallback, useEffect, useState, type ComponentType } from 'react';
@@ -121,6 +124,10 @@ type Boot =
   | { kind: 'signed-out'; org: OrgPublic; notice?: string | null }
   | { kind: 'signed-in'; org: OrgPublic; me: Me };
 
+/**
+ * The root component: session boot, the gates before the app (sign-in, second step, agreements), then the shell and the
+ * route's screen.
+ */
 export function App() {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
   // ?lang=tr on a link (the Turkish site's "Try it free") is the person's own choice, not a guess: it is kept like a pick on the page.

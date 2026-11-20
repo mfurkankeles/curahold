@@ -46,6 +46,9 @@ export function PrivacyLine() {
 
 type View = 'hidden' | 'banner' | 'manage';
 
+/**
+ * The consent banner and choices dialog. Nothing optional loads before a choice; the choice is recorded as evidence (ADR 0014).
+ */
 export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
   const s = useStrings();
   const { locale } = useI18n();

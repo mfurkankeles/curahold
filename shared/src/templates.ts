@@ -25,6 +25,7 @@ export interface Template {
   automations: AutomationPreset[];
 }
 
+/** A built-in text in the reader's language (a plain string is used as is). */
 export const pick = (l: Localized | string | undefined, locale: Locale): string => (typeof l === 'string' ? l : phraseIn(l, locale));
 
 /** The template's word for the people it serves, in every language (read when the company is created). */
@@ -486,4 +487,5 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
   },
 };
 
+/** Whether a value names a company template (industry starting point). */
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === 'string' && (TEMPLATE_KEYS as readonly string[]).includes(k);

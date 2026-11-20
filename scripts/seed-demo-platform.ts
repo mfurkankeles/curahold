@@ -40,6 +40,7 @@ function plan(i: number): { status: Status; plan: 'team' | 'business'; interval:
   return { status: 'canceled', plan: planKey, interval, seats, createdAgo: eventAgo + 30 + (i % 40), eventAgo };
 }
 
+/** Seeds the demo's platform side (desk staff, trial requests, console data) with invented companies. */
 export async function seedPlatform(db: Db, opts: { locale?: Locale } = {}): Promise<void> {
   const locale = opts.locale ?? 'tr';
   let s = 987654321;

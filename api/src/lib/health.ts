@@ -2,6 +2,7 @@
 // customer's "health_score" field when it changes, the daily run (for the
 // passing of time, and the snapshot behind trends), and picking up the
 // customers marked by triggers right after a request.
+import type { OrgsRow, RecordTypesRow } from '../db/rows.gen';
 import { computeHealth, DEFAULT_HEALTH, HEALTH_FIELD, healthConfig, type HealthConfig, type HealthInput, type HealthResult, type TouchKind } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
 import type { Deps } from '../context';
@@ -43,7 +44,7 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
       contacts.set(c.account_id, arr);
     }
   }
-  const [ticketType] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null limit 1`, [orgId]);
+  const [ticketType] = await q.query<Pick<RecordTypesRow, 'id'>>(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null limit 1`, [orgId]);
   const tickets = new Map<string, { open: number; urgent: number }>();
   if (ticketType) {
     const list = await q.query(
@@ -83,11 +84,13 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
   return out;
 }
 
+/** A company's health scoring rules, customer fields and time zone, read once for a scoring run. */
 export async function orgHealth(q: Q, orgId: string): Promise<{ cfg: HealthConfig; defs: AccountField[]; timezone: string }> {
-  const [o] = await q.query('select settings, account_fields, timezone from orgs where id = $1', [orgId]);
+  const [o] = await q.query<Pick<OrgsRow, 'settings' | 'account_fields' | 'timezone'>>('select settings, account_fields, timezone from orgs where id = $1', [orgId]);
   return { cfg: healthConfig(o?.settings?.health ?? DEFAULT_HEALTH), defs: o?.account_fields ?? [], timezone: o?.timezone || 'UTC' };
 }
 
+/** Scores customers' health (all, or the given ids) with the company's rules, or `override` for a preview. */
 export async function scoreAccounts(q: Q, orgId: string, ids: string[] | null, now: Date, override?: HealthConfig): Promise<Map<string, HealthResult>> {
   const { cfg, defs, timezone } = await orgHealth(q, orgId);
   const use = override ?? cfg;

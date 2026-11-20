@@ -5,6 +5,10 @@ const NO_STORAGE = 'no-storage-device-0000';
 // Set once storage turns out to be unusable, so every call in this page gives the same answer.
 let pinned: string | null = null;
 
+/**
+ * This browser's device id (made once and kept). Sessions and the device limit are per device, and the request-forgery
+ * check needs it on every change. Falls back to an in-memory id where storage does not keep values.
+ */
 export function getDeviceId(): string {
   if (pinned) return pinned;
   try {
@@ -24,6 +28,7 @@ export function getDeviceId(): string {
   }
 }
 
+/** A readable label for this device ("Chrome on macOS") for the devices list. */
 export function deviceLabel(): string {
   const ua = navigator.userAgent;
   const browser = /Edg\//.test(ua)
