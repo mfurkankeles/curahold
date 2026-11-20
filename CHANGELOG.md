@@ -12,6 +12,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Plans: a paying company's CuraAI money limit can no longer be set above its plan's allowance (full seats × the plan's
+  rate; a fixed amount in the trial), and the public help chat has its own monthly cap. Every plan is billed for at
+  least a few seats (3 by default; more in India and for some yearly plans), shown on the Billing page. A new trial is
+  10 seats and 1 GB a seat by default. All of these are operator settings (ADR 0022); prices are not final.
+- Turkish: the in-app cookie banner and the API reference address the reader as "siz", like the rest of the product.
 - The legal pages — terms, privacy notice, data processing agreement, acceptable use, SLA, order form, accessibility
   statement and the KVKK notice — are now in all eleven languages, each marked as a draft for the lawyer and saying that
   the English text prevails (for the KVKK notice, the Turkish). The privacy notice adds notes for India (grievance
@@ -166,6 +171,13 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Requests about personal data: a GDPR or UK GDPR request's due date is one calendar month after receipt (it showed up
+  to two days late in February), and moving a due date before the day the request came in is a clear error, not a
+  server error.
+- The owner's console no longer sends the same e-mail or phone alert twice when two sends overlap, and two different
+  alerts for the same screen both stay on the phone.
+- A save button pressed again while its ring was settling keeps its ring until the second save is back.
+- Help and CuraAI no longer leave a connection open when a language's help index is missing.
 - Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
   (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
   The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
@@ -222,6 +234,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Privacy: the desk's draft first reply on a help request now asks the AI model only when the person who wrote the
+  request has accepted CuraAI's notice; for anyone else support answers without a draft and nothing leaves Curahold
+  (an operator setting can rest it on the company's switch instead, ADR 0021). A visitor's cookie choice is stored only
+  with the hash of a text our banners really show. Answered requests about personal data are kept 3 years after closing,
+  then deleted (`RETENTION_PRIVACY_REQUEST_DAYS`), and appear in the privacy notice in every language.
 - Privacy: the server stores a hash of the consent words it actually served and refuses a consent without a policy version;
   old assistant consents are purged (the latest yes is kept); an erased portal person's consent proof stays, anonymised;
   AI drafts need the person's consent; a company's deletion certificate is e-mailed to its administrators.
