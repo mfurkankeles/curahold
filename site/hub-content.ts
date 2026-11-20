@@ -1,9 +1,11 @@
 // The content hub's words (/resources/, /templates/<slug>/, /glossary/<slug>/), in every site
-// language: two templates a customer team can copy and four plain definitions, each with one
+// language: four templates a customer team can copy and six plain definitions, each with one
 // line on what Curahold does about it. Written per language, not translated word for word;
 // every "In Curahold" line names only what the product does today (checked against the app:
 // renewal playbooks 90 days ahead, meetings whose next steps become tasks, the explainable
-// health score, the portal). Pages: scripts/site-hub.ts. Lengths: tests/site-seo.test.ts.
+// health score, the portal, the hand-over card of a won deal, the Cost to serve report).
+// The same items exist in every language: a smaller hub in all nine beats a bigger one in two.
+// Pages: scripts/site-hub.ts. Lengths: tests/site-seo.test.ts.
 import type { SiteLocale } from './locales';
 
 /** A block of an item's body: a heading, a paragraph, or a list (ordered for steps). */
@@ -117,6 +119,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Log the review as a meeting on the customer and write its next steps; when you save, each one becomes a task with an owner and a date, which you can share in the customer’s portal."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "Sales-to-onboarding hand-over checklist",
+        "seo": [
+          "Sales to onboarding hand-over checklist | Curahold",
+          "A hand-over checklist for won deals: who the stakeholders are, what was promised in the sale, open requests, key dates and the first call with the customer."
+        ],
+        "lead": "Most trouble in a customer’s first months starts at the hand-over: the sales team knew things the onboarding team never hears. Copy this list and fill it in before the deal changes hands.",
+        "body": [
+          {
+            "h": "What the hand-over must carry"
+          },
+          {
+            "ul": [
+              "Stakeholders: the decision maker, the day-to-day contact and the champion on their side, with how to reach each.",
+              "Promises made during the sale: features, dates, discounts, anything said in writing or on a call.",
+              "Open product requests the customer is waiting for, and what they were told about them.",
+              "Key dates: the close date, the go-live they expect and the renewal date.",
+              "Why they bought: the problem they want solved and how they will judge success."
+            ]
+          },
+          {
+            "h": "Before the first call"
+          },
+          {
+            "ol": [
+              "The seller and the onboarding owner read the list together, in 15 minutes.",
+              "Anything unclear goes back to the seller, not to the customer.",
+              "The first call opens by repeating the customer’s goal in their own words."
+            ]
+          }
+        ],
+        "curahold": "When a deal is won, Curahold can prepare a hand-over card for the next team with the stakeholders, the promises made, open product requests, and the close and renewal dates. The card waits until its new owner confirms it."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "Customer health score sheet template",
+        "seo": [
+          "Health score template: signals, points and bands | Curahold",
+          "A health score sheet you can copy: six signals a customer team can observe, the points each adds or removes, and the bands that show who needs attention."
+        ],
+        "lead": "A health score only helps if the team trusts it, and a team trusts a score it can explain. Start with a few signals you can see, give each a weight, and write down why.",
+        "body": [
+          {
+            "h": "Signals and points (start at 50)"
+          },
+          {
+            "ul": [
+              "Spoke with the customer in the last 30 days: +15. No contact for 60 days: −20.",
+              "A champion on their side who replies: +15. The champion left: −25.",
+              "Promised work overdue: −10 for each item, at most −30.",
+              "Open blockers or support requests older than two weeks: −10.",
+              "Usage steady or growing: +10. Falling for two months: −15.",
+              "Renewal less than 90 days away with no call booked: −10."
+            ]
+          },
+          {
+            "h": "Bands"
+          },
+          {
+            "ul": [
+              "70 and above: healthy; keep the rhythm.",
+              "40 to 69: watch; find the reason this week.",
+              "Below 40: at risk; the owner calls, and the team lead knows."
+            ]
+          },
+          {
+            "p": "Every quarter, check the weights against the customers you actually lost and kept, and change the ones that guessed wrong."
+          }
+        ],
+        "curahold": "Each customer gets a score from 0 to 100 built from rules you set, with its reasons listed and its trend over the last thirty days."
       },
       {
         "slug": "customer-health-score",
@@ -235,6 +311,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Customers sign in with a link in their email and see only what you share; the requests they raise land on your team’s board."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "Customer onboarding",
+        "seo": [
+          "What is customer onboarding? Steps and goals | Curahold",
+          "Customer onboarding is the work of taking a new customer from signature to first value: the hand-over from sales, setup, training and first visible results."
+        ],
+        "lead": "Customer onboarding is the time between the signature and the moment a new customer gets the value they bought, and the work a team does to make that time short.",
+        "body": [
+          {
+            "h": "What it usually covers"
+          },
+          {
+            "ul": [
+              "The hand-over from sales, with what was promised.",
+              "A kickoff call that agrees goals and dates.",
+              "Setup, data import and training.",
+              "A first result the customer can see and name."
+            ]
+          },
+          {
+            "h": "Why it matters"
+          },
+          {
+            "p": "Customers who see value early tend to stay. An onboarding that drags makes the first renewal conversation start from doubt."
+          }
+        ],
+        "curahold": "If you have an onboarding team, a won deal reaches it as one hand-over card with the stakeholders, the promises made, open requests and the key dates, and its tasks can be shared with the customer in their portal."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "Cost to serve",
+        "seo": [
+          "Cost to serve: what it is and how to measure it | Curahold",
+          "Cost to serve is what it takes to look after a customer, in hours or money, set against what they pay. How to measure it and what to do before the renewal."
+        ],
+        "lead": "Cost to serve is the effort a team spends looking after a customer, set against what that customer pays.",
+        "body": [
+          {
+            "h": "How to measure it"
+          },
+          {
+            "p": "The simplest measure is hours: the time the team logged on a customer over the last twelve months, divided by their yearly contract value. Comparing every customer on the same scale shows who takes the most care for what they pay."
+          },
+          {
+            "h": "What to do with it"
+          },
+          {
+            "ul": [
+              "Find the work behind a high number: repeated requests, a missing feature, a training gap.",
+              "Fix the cause before the renewal, or price the extra service into it.",
+              "Do not judge a customer on this number alone: a demanding customer can also be your best reference."
+            ]
+          }
+        ],
+        "curahold": "The Cost to serve report shows, for each customer, the hours spent in the last 12 months for every 1,000 of yearly value, so you can see who costs most to look after."
       }
     ]
   },
@@ -319,6 +454,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Değerlendirmeyi müşteri üzerinde bir toplantı olarak kaydedin ve sonraki adımlarını yazın; kaydettiğinizde her biri sorumlusu ve tarihi olan bir göreve dönüşür, isterseniz müşterinin portalında paylaşılır."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "Satıştan onboarding’e devir kontrol listesi",
+        "seo": [
+          "Satıştan onboarding’e devir kontrol listesi | Curahold",
+          "Kazanılan fırsatlar için devir kontrol listesi: paydaşlar kim, satışta neler söz verildi, açık talepler, kritik tarihler ve müşteriyle ilk görüşme."
+        ],
+        "lead": "Müşterinin ilk aylarındaki sorunların çoğu devirde başlar: satış ekibinin bildiği bir şey onboarding ekibine hiç ulaşmaz. Bu listeyi kopyalayın ve fırsat el değiştirmeden önce doldurun.",
+        "body": [
+          {
+            "h": "Devirde mutlaka aktarılması gerekenler"
+          },
+          {
+            "ul": [
+              "Paydaşlar: karar verici, günlük muhatap ve müşteri tarafındaki destekçi; her birine nasıl ulaşılacağı.",
+              "Satış sırasında verilen sözler: özellikler, tarihler, indirimler; yazılı ya da görüşmede söylenen her şey.",
+              "Müşterinin beklediği açık ürün talepleri ve bunlar hakkında kendisine ne söylendiği.",
+              "Kritik tarihler: kapanış tarihi, beklenen canlıya geçiş ve yenileme tarihi.",
+              "Neden satın aldıkları: çözmek istedikleri sorun ve başarıyı neye göre ölçecekleri."
+            ]
+          },
+          {
+            "h": "İlk görüşmeden önce"
+          },
+          {
+            "ol": [
+              "Satış temsilcisi ve onboarding sorumlusu listeyi birlikte, 15 dakikada okur.",
+              "Belirsiz kalan her şey müşteriye değil, satış temsilcisine sorulur.",
+              "İlk görüşme, müşterinin hedefini kendi sözcükleriyle tekrar ederek açılır."
+            ]
+          }
+        ],
+        "curahold": "Bir fırsat kazanıldığında Curahold sonraki ekip için bir devir kartı hazırlayabilir: paydaşlar, verilen sözler, açık ürün talepleri, kapanış ve yenileme tarihleri. Kart, yeni sorumlusu onaylayana kadar bekler."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "Müşteri sağlık skoru tablosu şablonu",
+        "seo": [
+          "Sağlık skoru şablonu: sinyaller, puanlar, eşikler | Curahold",
+          "Kopyalayabileceğiniz bir sağlık skoru tablosu: ekibin görebildiği altı sinyal, her birinin eklediği ya da düşürdüğü puan ve kime bakılacağını gösteren eşikler."
+        ],
+        "lead": "Sağlık skoru ancak ekip ona güvenirse işe yarar; ekip de açıklayabildiği skora güvenir. Görebildiğiniz birkaç sinyalle başlayın, her birine bir ağırlık verin ve nedenini yazın.",
+        "body": [
+          {
+            "h": "Sinyaller ve puanlar (50’den başlayın)"
+          },
+          {
+            "ul": [
+              "Son 30 günde müşteriyle görüşüldü: +15. 60 gündür temas yok: −20.",
+              "Müşteri tarafında yanıt veren bir destekçi var: +15. Destekçi ayrıldı: −25.",
+              "Söz verilen iş gecikti: her biri için −10, en fazla −30.",
+              "İki haftadan eski açık engel ya da destek talebi: −10.",
+              "Kullanım sabit ya da artıyor: +10. İki aydır azalıyor: −15.",
+              "Yenilemeye kalan süre 90 günün altında ve görüşme planlanmadı: −10."
+            ]
+          },
+          {
+            "h": "Eşikler"
+          },
+          {
+            "ul": [
+              "70 ve üzeri: sağlıklı; ritmi koruyun.",
+              "40–69: izlenmeli; nedenini bu hafta bulun.",
+              "40’ın altı: riskli; sorumlu müşteriyi arar, ekip lideri haberdar olur."
+            ]
+          },
+          {
+            "p": "Ağırlıkları her çeyrek, gerçekten kaybettiğiniz ve tuttuğunuz müşterilerle karşılaştırın; yanlış tahmin edenleri değiştirin."
+          }
+        ],
+        "curahold": "Her müşterinin, sizin koyduğunuz kurallardan oluşan 0–100 arası bir skoru olur; nedenleri sıralanır ve son otuz gündeki gidişatı görünür."
       },
       {
         "slug": "customer-health-score",
@@ -437,6 +646,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "Müşteriler e-postalarındaki bir bağlantıyla girer ve yalnızca paylaştıklarınızı görür; açtıkları talepler ekibinizin panosuna düşer."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "Müşteri onboarding’i",
+        "seo": [
+          "Müşteri onboarding’i nedir? Adımlar ve hedefler | Curahold",
+          "Müşteri onboarding’i, yeni bir müşteriyi imzadan ilk değere taşıma işidir: satıştan devir, kurulum, eğitim ve müşterinin görebildiği ilk sonuçlar."
+        ],
+        "lead": "Müşteri onboarding’i (müşteri kurulumu), imza ile yeni müşterinin satın aldığı değeri ilk kez gördüğü an arasındaki dönem ve bu dönemi kısaltmak için ekibin yaptığı iştir.",
+        "body": [
+          {
+            "h": "Genellikle neleri kapsar"
+          },
+          {
+            "ul": [
+              "Verilen sözlerle birlikte satıştan devir.",
+              "Hedeflerin ve tarihlerin netleştiği bir başlangıç toplantısı.",
+              "Kurulum, veri aktarımı ve eğitim.",
+              "Müşterinin görebildiği ve adını koyabildiği ilk sonuç."
+            ]
+          },
+          {
+            "h": "Neden önemli"
+          },
+          {
+            "p": "Değeri erken gören müşteriler kalmaya yatkındır. Uzayan bir onboarding, ilk yenileme görüşmesinin şüpheyle başlamasına yol açar."
+          }
+        ],
+        "curahold": "Bir onboarding ekibiniz varsa kazanılan fırsat ona tek bir devir kartıyla ulaşır: paydaşlar, verilen sözler, açık talepler ve kritik tarihler. Görevleri, müşterinin portalında müşteriyle paylaşılabilir."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "Hizmet maliyeti (cost to serve)",
+        "seo": [
+          "Hizmet maliyeti nedir, nasıl ölçülür? | Curahold",
+          "Hizmet maliyeti, bir müşteriyle ilgilenmenin saat ya da para olarak tuttuğunu müşterinin ödediğiyle karşılaştırır. Nasıl ölçülür, sonuçla ne yapılır?"
+        ],
+        "lead": "Hizmet maliyeti, bir ekibin bir müşteriyle ilgilenmek için harcadığı emeğin, o müşterinin ödediği tutarla karşılaştırılmasıdır.",
+        "body": [
+          {
+            "h": "Nasıl ölçülür"
+          },
+          {
+            "p": "En basit ölçü saattir: ekibin son on iki ayda bir müşteri için kaydettiği süre, yıllık sözleşme değerine bölünür. Bütün müşterileri aynı ölçekte karşılaştırmak, ödediğine göre en çok emeği kimin aldığını gösterir."
+          },
+          {
+            "h": "Sonuçla ne yapılır"
+          },
+          {
+            "ul": [
+              "Yüksek bir sayının arkasındaki işi bulun: tekrarlayan talepler, eksik bir özellik, bir eğitim açığı.",
+              "Nedeni yenilemeden önce giderin ya da ek hizmeti yenileme fiyatına yansıtın.",
+              "Bir müşteriyi yalnızca bu sayıyla değerlendirmeyin: zahmetli bir müşteri en iyi referansınız da olabilir."
+            ]
+          }
+        ],
+        "curahold": "Hizmet maliyeti raporu, her müşteri için son 12 ayda yıllık değerin her 1.000’i için harcanan saati gösterir; bakımı en pahalı olanları görürsünüz."
       }
     ]
   },
@@ -521,6 +789,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "سجّل المراجعة اجتماعًا على العميل واكتب خطواتها التالية؛ عند الحفظ تصبح كل خطوة مهمة لها مسؤول وتاريخ، ويمكنك مشاركتها في بوابة العميل."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "قائمة تحقق لتسليم العميل من المبيعات إلى فريق التأهيل",
+        "seo": [
+          "قائمة تحقق التسليم من المبيعات إلى التأهيل | Curahold",
+          "قائمة تحقق لتسليم الصفقات الرابحة: من هم أصحاب المصلحة، وما الذي وُعد به أثناء البيع، والطلبات المفتوحة، والتواريخ المهمة، وأول مكالمة مع العميل."
+        ],
+        "lead": "تبدأ معظم مشكلات الأشهر الأولى مع العميل عند التسليم: يعرف فريق المبيعات أمورًا لا تصل أبدًا إلى فريق التأهيل. انسخ هذه القائمة واملأها قبل أن تنتقل الصفقة إلى الفريق التالي.",
+        "body": [
+          {
+            "h": "ما يجب أن ينتقل مع التسليم"
+          },
+          {
+            "ul": [
+              "أصحاب المصلحة: صاحب القرار، وجهة الاتصال اليومية، والمؤيد لدى العميل، وطريقة الوصول إلى كل منهم.",
+              "الوعود التي قُطعت أثناء البيع: الميزات والتواريخ والخصومات، وكل ما قيل كتابةً أو في مكالمة.",
+              "طلبات المنتج المفتوحة التي ينتظرها العميل، وما قيل له بشأنها.",
+              "التواريخ المهمة: تاريخ الإغلاق، وموعد بدء التشغيل الذي يتوقعه، وتاريخ التجديد.",
+              "سبب الشراء: المشكلة التي يريد حلها، وكيف سيحكم على النجاح."
+            ]
+          },
+          {
+            "h": "قبل المكالمة الأولى"
+          },
+          {
+            "ol": [
+              "يقرأ مندوب المبيعات ومسؤول التأهيل القائمة معًا في 15 دقيقة.",
+              "أي نقطة غير واضحة تعود إلى مندوب المبيعات، لا إلى العميل.",
+              "تبدأ المكالمة الأولى بإعادة هدف العميل بكلماته هو."
+            ]
+          }
+        ],
+        "curahold": "عند الفوز بصفقة، يستطيع Curahold تجهيز بطاقة تسليم للفريق التالي تضم أصحاب المصلحة والوعود المقطوعة وطلبات المنتج المفتوحة وتاريخَي الإغلاق والتجديد، وتبقى البطاقة بانتظار أن يؤكدها مسؤولها الجديد."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "قالب جدول مؤشر صحة العميل",
+        "seo": [
+          "قالب مؤشر صحة العميل: الإشارات والنقاط والحدود | Curahold",
+          "جدول لمؤشر الصحة يمكنك نسخه: ست إشارات يستطيع الفريق ملاحظتها، والنقاط التي تضيفها كل إشارة أو تخصمها، والحدود التي تبيّن من يحتاج إلى اهتمام."
+        ],
+        "lead": "لا يفيد مؤشر الصحة إلا إذا وثق به الفريق، والفريق يثق بمؤشر يستطيع تفسيره. ابدأ بإشارات قليلة تراها بنفسك، وأعطِ كلًّا منها وزنًا، واكتب السبب.",
+        "body": [
+          {
+            "h": "الإشارات والنقاط (ابدأ من 50)"
+          },
+          {
+            "ul": [
+              "تواصلت مع العميل خلال آخر 30 يومًا: أضف 15. لا تواصل منذ 60 يومًا: اخصم 20.",
+              "لدى العميل مؤيد يرد على الرسائل: أضف 15. غادر المؤيد: اخصم 25.",
+              "عمل موعود متأخر: اخصم 10 عن كل بند، بحد أقصى 30.",
+              "عوائق أو طلبات دعم مفتوحة منذ أكثر من أسبوعين: اخصم 10.",
+              "الاستخدام ثابت أو في ازدياد: أضف 10. في انخفاض منذ شهرين: اخصم 15.",
+              "التجديد بعد أقل من 90 يومًا دون مكالمة محددة: اخصم 10."
+            ]
+          },
+          {
+            "h": "الحدود"
+          },
+          {
+            "ul": [
+              "70 فأكثر: سليم؛ حافظ على الإيقاع.",
+              "من 40 إلى 69: يحتاج إلى متابعة؛ اعرف السبب هذا الأسبوع.",
+              "أقل من 40: في خطر؛ يتصل المسؤول بالعميل ويُبلَّغ قائد الفريق."
+            ]
+          },
+          {
+            "p": "راجع الأوزان كل ربع سنة مقارنةً بالعملاء الذين خسرتهم فعلًا والذين احتفظت بهم، وغيّر ما أخطأ التقدير منها."
+          }
+        ],
+        "curahold": "لكل عميل مؤشر من 0 إلى 100 مبني على قواعد تحددها أنت، مع قائمة بأسبابه واتجاهه خلال آخر ثلاثين يومًا."
       },
       {
         "slug": "customer-health-score",
@@ -639,6 +981,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "يدخل العملاء برابط في بريدهم ولا يرون إلا ما تشاركه، وتصل الطلبات التي يرفعونها إلى لوحة فريقك."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "تأهيل العملاء",
+        "seo": [
+          "ما هو تأهيل العملاء؟ الخطوات والأهداف | Curahold",
+          "تأهيل العملاء هو العمل الذي ينقل العميل الجديد من التوقيع إلى أول قيمة: التسليم من المبيعات، والإعداد، والتدريب، وأولى النتائج التي يراها بنفسه."
+        ],
+        "lead": "تأهيل العملاء هو الفترة الممتدة بين التوقيع واللحظة التي يحصل فيها العميل الجديد على القيمة التي اشتراها، والعمل الذي يقوم به الفريق لتقصيرها.",
+        "body": [
+          {
+            "h": "ما الذي يشمله عادةً"
+          },
+          {
+            "ul": [
+              "التسليم من المبيعات مع ما وُعد به.",
+              "اجتماع انطلاق يُتفق فيه على الأهداف والتواريخ.",
+              "الإعداد واستيراد البيانات والتدريب.",
+              "نتيجة أولى يراها العميل ويستطيع تسميتها."
+            ]
+          },
+          {
+            "h": "لماذا يهم"
+          },
+          {
+            "p": "العملاء الذين يرون القيمة مبكرًا يميلون إلى البقاء، أما التأهيل الذي يطول فيجعل أول حديث عن التجديد يبدأ بالشك."
+          }
+        ],
+        "curahold": "إذا كان لديك فريق تأهيل، تصله الصفقة الرابحة في بطاقة تسليم واحدة تضم أصحاب المصلحة والوعود المقطوعة والطلبات المفتوحة والتواريخ المهمة، ويمكن مشاركة مهامها مع العميل في بوابته."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "تكلفة الخدمة",
+        "seo": [
+          "ما هي تكلفة الخدمة؟ تعريف لفرق خدمة العملاء | Curahold",
+          "تكلفة الخدمة هي ما تتطلبه رعاية عميل ما من ساعات أو مال مقارنةً بما يدفعه. كيف تُقاس، وماذا تفعل بنتيجتها قبل موعد التجديد."
+        ],
+        "lead": "تكلفة الخدمة هي الجهد الذي يبذله الفريق في رعاية عميل ما، مقارنةً بما يدفعه هذا العميل.",
+        "body": [
+          {
+            "h": "كيف تُقاس"
+          },
+          {
+            "p": "أبسط مقياس هو الساعات: الوقت الذي سجّله الفريق على العميل خلال الاثني عشر شهرًا الماضية، مقسومًا على قيمة عقده السنوية. ومقارنة جميع العملاء بالمقياس نفسه تكشف من يحصل على أكبر قدر من الرعاية مقابل ما يدفعه."
+          },
+          {
+            "h": "ماذا تفعل بالنتيجة"
+          },
+          {
+            "ul": [
+              "ابحث عن العمل الذي يقف وراء الرقم المرتفع: طلبات متكررة، أو ميزة ناقصة، أو فجوة في التدريب.",
+              "عالج السبب قبل التجديد، أو أدرج الخدمة الإضافية في سعره.",
+              "لا تحكم على العميل بهذا الرقم وحده، فالعميل كثير المطالب قد يكون أيضًا أفضل مرجع لك."
+            ]
+          }
+        ],
+        "curahold": "يعرض تقرير تكلفة الخدمة لكل عميل الساعات المستغرقة في آخر 12 شهرًا لكل 1,000 من القيمة السنوية، فترى من الأكثر تكلفة في الرعاية."
       }
     ]
   },
@@ -723,6 +1124,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "תעדו את הסקירה כפגישה על הלקוח וכתבו את הצעדים הבאים; בשמירה כל צעד הופך למשימה עם אחראי ותאריך, שאפשר לשתף בפורטל של הלקוח."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "צ׳קליסט מסירה ממכירות לצוות הקליטה",
+        "seo": [
+          "צ׳קליסט מסירת לקוח ממכירות לצוות הקליטה | Curahold",
+          "צ׳קליסט מסירה לעסקאות שנסגרו: מי בעלי העניין, מה הובטח במכירה, אילו בקשות עדיין פתוחות, תאריכים חשובים והשיחה הראשונה עם הלקוח."
+        ],
+        "lead": "רוב הבעיות בחודשים הראשונים של לקוח מתחילות במסירה: אנשי המכירות יודעים דברים שצוות הקליטה לא שומע עליהם לעולם. העתיקו את הרשימה ומלאו אותה לפני שהעסקה עוברת ידיים.",
+        "body": [
+          {
+            "h": "מה המסירה חייבת לכלול"
+          },
+          {
+            "ul": [
+              "בעלי העניין: מקבל ההחלטות, איש הקשר היומיומי והתומך הפנימי אצל הלקוח, ואיך משיגים כל אחד מהם.",
+              "הבטחות שניתנו במכירה: יכולות, תאריכים, הנחות, כל מה שנאמר בכתב או בשיחה.",
+              "בקשות מוצר פתוחות שהלקוח מחכה להן, ומה נאמר לו עליהן.",
+              "תאריכים חשובים: תאריך הסגירה, מועד העלייה לאוויר שהלקוח מצפה לו ותאריך החידוש.",
+              "למה הם קנו: הבעיה שהם רוצים לפתור ואיך ימדדו הצלחה."
+            ]
+          },
+          {
+            "h": "לפני השיחה הראשונה"
+          },
+          {
+            "ol": [
+              "איש המכירות ואחראי הקליטה קוראים את הרשימה יחד, ב־15 דקות.",
+              "כל דבר לא ברור חוזר לאיש המכירות, לא ללקוח.",
+              "השיחה הראשונה נפתחת בחזרה על המטרה של הלקוח במילים שלו."
+            ]
+          }
+        ],
+        "curahold": "כשעסקה נסגרת, Curahold יכולה להכין כרטיס מסירה לצוות הבא עם בעלי העניין, ההבטחות שניתנו, בקשות המוצר הפתוחות ותאריכי הסגירה והחידוש. הכרטיס ממתין עד שהאחראי החדש מאשר אותו."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "תבנית טבלת ציון בריאות ללקוח",
+        "seo": [
+          "תבנית ציון בריאות ללקוח: אותות, נקודות וספים | Curahold",
+          "טבלת ציון בריאות להעתקה: שישה אותות שהצוות יכול לראות, כמה נקודות כל אחד מוסיף או מוריד, והספים שמראים לאילו לקוחות צריך לשים לב."
+        ],
+        "lead": "ציון בריאות עוזר רק אם הצוות סומך עליו, וצוות סומך על ציון שהוא יכול להסביר. התחילו בכמה אותות שאתם רואים, תנו לכל אחד משקל וכתבו למה.",
+        "body": [
+          {
+            "h": "אותות ונקודות (מתחילים מ־50)"
+          },
+          {
+            "ul": [
+              "שיחה עם הלקוח ב־30 הימים האחרונים: להוסיף 15. אין קשר 60 יום: להוריד 20.",
+              "יש אצל הלקוח תומך פנימי שעונה: להוסיף 15. התומך עזב: להוריד 25.",
+              "עבודה שהובטחה ומתעכבת: להוריד 10 על כל פריט, עד 30.",
+              "חסמים או פניות תמיכה שפתוחים יותר משבועיים: להוריד 10.",
+              "שימוש יציב או עולה: להוסיף 10. יורד חודשיים ברציפות: להוריד 15.",
+              "החידוש בעוד פחות מ־90 יום ולא נקבעה שיחה: להוריד 10."
+            ]
+          },
+          {
+            "h": "ספים"
+          },
+          {
+            "ul": [
+              "70 ומעלה: בריא; שומרים על הקצב.",
+              "40 עד 69: במעקב; מוצאים את הסיבה השבוע.",
+              "מתחת ל־40: בסיכון; האחראי מתקשר, וראש הצוות מעודכן."
+            ]
+          },
+          {
+            "p": "בדקו את המשקלים כל רבעון מול הלקוחות שבאמת איבדתם ושמרתם, ושנו את אלה שטעו."
+          }
+        ],
+        "curahold": "לכל לקוח יש ציון בין 0 ל-100 שנבנה מכללים שאתם קובעים, עם רשימת הסיבות והמגמה בשלושים הימים האחרונים."
       },
       {
         "slug": "customer-health-score",
@@ -841,6 +1316,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "הלקוחות נכנסים בקישור מהמייל ורואים רק מה שאתם משתפים; הבקשות שהם פותחים מגיעות ללוח של הצוות שלכם."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "קליטת לקוחות",
+        "seo": [
+          "מהי קליטת לקוחות (Onboarding)? שלבים ומטרות | Curahold",
+          "קליטת לקוחות היא העבודה שמביאה לקוח חדש מהחתימה אל הערך הראשון: המסירה מהמכירות, ההקמה, ההדרכה והתוצאות הראשונות שהוא רואה בעצמו."
+        ],
+        "lead": "קליטת לקוחות היא התקופה שבין החתימה לרגע שבו לקוח חדש מקבל את הערך שקנה, והעבודה שהצוות עושה כדי לקצר אותה.",
+        "body": [
+          {
+            "h": "מה זה כולל בדרך כלל"
+          },
+          {
+            "ul": [
+              "המסירה מהמכירות, עם מה שהובטח.",
+              "פגישת פתיחה שמסכמת מטרות ותאריכים.",
+              "הקמה, ייבוא נתונים והדרכה.",
+              "תוצאה ראשונה שהלקוח רואה ויכול לקרוא לה בשם."
+            ]
+          },
+          {
+            "h": "למה זה חשוב"
+          },
+          {
+            "p": "לקוחות שרואים ערך מוקדם נוטים להישאר. קליטה שנמשכת יותר מדי גורמת לשיחת החידוש הראשונה להתחיל מספק."
+          }
+        ],
+        "curahold": "אם יש לכם צוות קליטה, עסקה שנסגרה מגיעה אליו ככרטיס מסירה אחד עם בעלי העניין, ההבטחות שניתנו, הבקשות הפתוחות והתאריכים החשובים, ואפשר לשתף את המשימות שלה עם הלקוח בפורטל שלו."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "עלות שירות",
+        "seo": [
+          "מהי עלות שירות? הגדרה לצוותים שמטפלים בלקוחות | Curahold",
+          "עלות שירות היא מה שנדרש כדי לטפל בלקוח, בשעות או בכסף, מול מה שהוא משלם. איך מודדים אותה ומה עושים עם התוצאה לפני החידוש."
+        ],
+        "lead": "עלות שירות היא המאמץ שהצוות משקיע בטיפול בלקוח, מול מה שהלקוח הזה משלם.",
+        "body": [
+          {
+            "h": "איך מודדים"
+          },
+          {
+            "p": "המדד הפשוט ביותר הוא שעות: הזמן שהצוות רשם על הלקוח ב־12 החודשים האחרונים, חלקי ערך החוזה השנתי שלו. השוואה של כל הלקוחות באותו קנה מידה מראה מי מקבל הכי הרבה טיפול ביחס למה שהוא משלם."
+          },
+          {
+            "h": "מה עושים עם זה"
+          },
+          {
+            "ul": [
+              "מצאו את העבודה שמאחורי מספר גבוה: בקשות חוזרות, יכולת חסרה, פער בהדרכה.",
+              "טפלו בסיבה לפני החידוש, או תמחרו את השירות הנוסף לתוכו.",
+              "אל תשפטו לקוח לפי המספר הזה בלבד: לקוח תובעני יכול להיות גם הממליץ הטוב ביותר שלכם."
+            ]
+          }
+        ],
+        "curahold": "דוח עלות השירות מציג לכל לקוח את השעות שהושקעו ב־12 החודשים האחרונים לכל 1,000 של ערך שנתי, כך שרואים על מי הכי יקר לשמור."
       }
     ]
   },
@@ -925,6 +1459,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "بازبینی را به‌عنوان جلسه روی پروندهٔ مشتری ثبت کنید و گام‌های بعدی را بنویسید؛ با ذخیره، هر گام وظیفه‌ای با مسئول و تاریخ می‌شود که می‌توانید در پورتال مشتری به اشتراک بگذارید."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "چک‌لیست تحویل مشتری از فروش به تیم راه‌اندازی",
+        "seo": [
+          "چک‌لیست تحویل مشتری از فروش به تیم راه‌اندازی | Curahold",
+          "چک‌لیست تحویل برای معامله‌های برنده‌شده: ذی‌نفعان چه کسانی‌اند، در فروش چه قول‌هایی داده شد، درخواست‌های باز، تاریخ‌های مهم و نخستین تماس با مشتری."
+        ],
+        "lead": "بیشتر دردسرهای ماه‌های اول مشتری از تحویل شروع می‌شود: تیم فروش چیزهایی می‌داند که هرگز به تیم راه‌اندازی نمی‌رسد. این فهرست را کپی کنید و پیش از آنکه معامله دست‌به‌دست شود، پُرش کنید.",
+        "body": [
+          {
+            "h": "آنچه تحویل باید همراه داشته باشد"
+          },
+          {
+            "ul": [
+              "ذی‌نفعان: تصمیم‌گیرنده، رابط روزمره و حامی داخلی در سمت مشتری، و راه تماس با هر یک.",
+              "قول‌هایی که هنگام فروش داده شد: قابلیت‌ها، تاریخ‌ها، تخفیف‌ها؛ هر چه کتبی یا در تماس گفته شد.",
+              "درخواست‌های باز محصول که مشتری منتظرشان است، و آنچه درباره‌شان به او گفته شد.",
+              "تاریخ‌های مهم: تاریخ بستن معامله، زمان شروع به کاری که انتظار دارد و تاریخ تمدید.",
+              "چرا خریدند: مشکلی که می‌خواهند حل شود و اینکه موفقیت را با چه می‌سنجند."
+            ]
+          },
+          {
+            "h": "پیش از نخستین تماس"
+          },
+          {
+            "ol": [
+              "فروشنده و مسئول راه‌اندازی فهرست را با هم، در ۱۵ دقیقه، می‌خوانند.",
+              "هر نکتهٔ مبهم به فروشنده برمی‌گردد، نه به مشتری.",
+              "نخستین تماس با تکرار هدف مشتری به زبان خود او آغاز می‌شود."
+            ]
+          }
+        ],
+        "curahold": "وقتی معامله‌ای برنده می‌شود، Curahold می‌تواند برای تیم بعدی کارت تحویل آماده کند که ذی‌نفعان، قول‌های داده‌شده، درخواست‌های باز محصول و تاریخ‌های بستن و تمدید را در خود دارد. کارت منتظر می‌ماند تا مسئول تازه‌اش آن را تأیید کند."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "قالب جدول امتیاز سلامت مشتری",
+        "seo": [
+          "قالب امتیاز سلامت: نشانه‌ها، امتیازها و آستانه‌ها | Curahold",
+          "جدول امتیاز سلامتی که می‌توانید کپی کنید: شش نشانه که تیم می‌بیند، امتیازی که هر کدام می‌افزاید یا می‌کاهد و آستانه‌هایی که نشان می‌دهند به چه کسی باید رسید."
+        ],
+        "lead": "امتیاز سلامت فقط وقتی به کار می‌آید که تیم به آن اعتماد کند، و تیم به امتیازی اعتماد می‌کند که بتواند توضیحش دهد. با چند نشانه که خودتان می‌بینید شروع کنید، به هر کدام وزنی بدهید و دلیلش را بنویسید.",
+        "body": [
+          {
+            "h": "نشانه‌ها و امتیازها (از ۵۰ شروع کنید)"
+          },
+          {
+            "ul": [
+              "در ۳۰ روز گذشته با مشتری صحبت شده: ۱۵ امتیاز اضافه کنید. ۶۰ روز بی‌تماس: ۲۰ کم کنید.",
+              "حامی داخلی‌ای در سمت مشتری که پاسخ می‌دهد: ۱۵ اضافه کنید. حامی رفته است: ۲۵ کم کنید.",
+              "کار قول‌داده‌شده عقب افتاده: برای هر مورد ۱۰ کم کنید، حداکثر ۳۰.",
+              "مانع یا درخواست پشتیبانیِ بازِ قدیمی‌تر از دو هفته: ۱۰ کم کنید.",
+              "استفاده ثابت یا رو به افزایش: ۱۰ اضافه کنید. دو ماه رو به کاهش: ۱۵ کم کنید.",
+              "کمتر از ۹۰ روز تا تمدید و هیچ تماسی برنامه‌ریزی نشده: ۱۰ کم کنید."
+            ]
+          },
+          {
+            "h": "آستانه‌ها"
+          },
+          {
+            "ul": [
+              "۷۰ و بالاتر: سالم؛ ریتم را حفظ کنید.",
+              "۴۰ تا ۶۹: زیر نظر؛ همین هفته دلیلش را پیدا کنید.",
+              "زیر ۴۰: در خطر؛ مسئول تماس می‌گیرد و سرپرست تیم در جریان قرار می‌گیرد."
+            ]
+          },
+          {
+            "p": "وزن‌ها را هر فصل با مشتریانی که واقعاً از دست داده‌اید یا نگه داشته‌اید مقایسه کنید و آن‌هایی را که اشتباه پیش‌بینی کرده‌اند تغییر دهید."
+          }
+        ],
+        "curahold": "هر مشتری امتیازی از ۰ تا ۱۰۰ دارد که از قواعد شما ساخته می‌شود، با فهرست دلایل و روند سی روز گذشته."
       },
       {
         "slug": "customer-health-score",
@@ -1043,6 +1651,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "مشتریان با پیوندی در ایمیل‌شان وارد می‌شوند و فقط آنچه را شما به اشتراک می‌گذارید می‌بینند؛ درخواست‌هایشان به برد تیم شما می‌رسد."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "راه‌اندازی مشتری",
+        "seo": [
+          "راه‌اندازی مشتری چیست؟ مراحل و اهداف آن | Curahold",
+          "راه‌اندازی مشتری کاری است که مشتری تازه را از امضا به نخستین ارزش می‌رساند: تحویل از فروش، پیکربندی، آموزش و نخستین نتیجه‌هایی که خودش می‌بیند."
+        ],
+        "lead": "راه‌اندازی مشتری دورهٔ میان امضای قرارداد و لحظه‌ای است که مشتری تازه ارزشی را که خریده به دست می‌آورد، و کاری که تیم برای کوتاه کردن این دوره انجام می‌دهد.",
+        "body": [
+          {
+            "h": "معمولاً چه چیزهایی را در بر می‌گیرد"
+          },
+          {
+            "ul": [
+              "تحویل از فروش، همراه با قول‌های داده‌شده.",
+              "جلسهٔ آغاز که اهداف و تاریخ‌ها در آن توافق می‌شود.",
+              "پیکربندی، ورود داده‌ها و آموزش.",
+              "نخستین نتیجه‌ای که مشتری می‌بیند و می‌تواند نامش را بگوید."
+            ]
+          },
+          {
+            "h": "چرا مهم است"
+          },
+          {
+            "p": "مشتریانی که زود ارزش را می‌بینند معمولاً می‌مانند. راه‌اندازی‌ای که طول بکشد، نخستین گفت‌وگوی تمدید را با تردید آغاز می‌کند."
+          }
+        ],
+        "curahold": "اگر تیم راه‌اندازی دارید، معاملهٔ برنده‌شده با یک کارت تحویل به آن می‌رسد که ذی‌نفعان، قول‌های داده‌شده، درخواست‌های باز و تاریخ‌های مهم را در خود دارد، و وظیفه‌هایش را می‌توان در پورتال مشتری با او به اشتراک گذاشت."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "هزینهٔ خدمت‌رسانی",
+        "seo": [
+          "هزینهٔ خدمت‌رسانی چیست؟ تعریفی برای تیم‌های مشتری | Curahold",
+          "هزینهٔ خدمت‌رسانی یعنی رسیدگی به یک مشتری چقدر ساعت یا پول می‌برد، در برابر آنچه می‌پردازد. چطور سنجیده می‌شود و پیش از تمدید با نتیجه‌اش چه کنیم."
+        ],
+        "lead": "هزینهٔ خدمت‌رسانی تلاشی است که تیم صرف رسیدگی به یک مشتری می‌کند، در برابر مبلغی که همان مشتری می‌پردازد.",
+        "body": [
+          {
+            "h": "چطور سنجیده می‌شود"
+          },
+          {
+            "p": "ساده‌ترین سنجه ساعت است: زمانی که تیم در ۱۲ ماه گذشته برای مشتری ثبت کرده، تقسیم بر ارزش سالانهٔ قراردادش. مقایسهٔ همهٔ مشتریان با یک مقیاس نشان می‌دهد چه کسی در برابر آنچه می‌پردازد بیشترین رسیدگی را می‌گیرد."
+          },
+          {
+            "h": "با نتیجه چه کنیم"
+          },
+          {
+            "ul": [
+              "کار پشت عدد بالا را پیدا کنید: درخواست‌های تکراری، قابلیتی که نیست، کمبودی در آموزش.",
+              "علت را پیش از تمدید برطرف کنید، یا خدمت اضافه را در قیمت تمدید بگنجانید.",
+              "مشتری را فقط با این عدد نسنجید: مشتری پرتوقع می‌تواند بهترین معرف شما هم باشد."
+            ]
+          }
+        ],
+        "curahold": "گزارش هزینهٔ خدمت‌رسانی برای هر مشتری ساعت‌های صرف‌شده در ۱۲ ماه گذشته به‌ازای هر ۱٬۰۰۰ از ارزش سالانه را نشان می‌دهد تا ببینید نگهداری چه کسی گران‌تر است."
       }
     ]
   },
@@ -1127,6 +1794,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "把回顾记录为客户的一次会议并写下后续步骤，保存后每一步都会变成有负责人和日期的任务，还可以在客户门户中共享。"
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "从销售到上线团队的客户交接清单",
+        "seo": [
+          "从销售到上线团队的客户交接清单模板 | Curahold",
+          "赢单后的客户交接清单：关键人有哪些、销售过程中承诺了什么、还有哪些未完成的需求、重要日期，以及与客户的第一次会议应该怎么开始，让上线团队从第一天就接得住。"
+        ],
+        "lead": "客户头几个月的问题，大多始于交接：销售知道的情况，上线团队往往从未听说。复制这份清单，在商机交出之前把它填好。",
+        "body": [
+          {
+            "h": "交接时必须带上的内容"
+          },
+          {
+            "ul": [
+              "关键人：决策人、日常对接人和客户内部的支持者，以及联系每个人的方式。",
+              "销售过程中的承诺：功能、日期、折扣，书面或电话里说过的一切。",
+              "客户正在等待的未完成产品需求，以及就此告诉过客户的内容。",
+              "重要日期：成交日期、客户期待的上线日期和续约日期。",
+              "购买原因：想解决的问题，以及客户如何判断成功。"
+            ]
+          },
+          {
+            "h": "第一次会议之前"
+          },
+          {
+            "ol": [
+              "销售和上线负责人花 15 分钟一起过一遍清单。",
+              "任何不清楚的地方，回头问销售，而不是问客户。",
+              "第一次会议先用客户自己的话复述客户的目标。"
+            ]
+          }
+        ],
+        "curahold": "赢单后，Curahold 可以为下一个团队准备一张交接卡，汇总关键人、已做出的承诺、未完成的产品需求，以及成交日期和续约日期；交接卡会一直等待新负责人确认。"
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "客户健康评分表模板",
+        "seo": [
+          "客户健康评分表模板：信号、分值与分档 | Curahold",
+          "一份可直接复制的健康评分表：团队能观察到的六个信号、每个信号加减多少分，以及帮你判断哪些客户需要关注的分档标准，附季度复盘方法，让每一分都有据可依。"
+        ],
+        "lead": "健康评分只有在团队信任它时才有用，而团队只信任自己解释得清的分数。从几个看得见的信号开始，给每个信号定一个权重，并写下理由。",
+        "body": [
+          {
+            "h": "信号与分值（从 50 分起算）"
+          },
+          {
+            "ul": [
+              "最近 30 天内与客户沟通过：+15。60 天没有联系：−20。",
+              "客户方有会回复的支持者：+15。支持者已离职：−25。",
+              "承诺的工作逾期：每项 −10，最多 −30。",
+              "超过两周未解决的障碍或支持请求：−10。",
+              "使用量稳定或上升：+10。连续两个月下降：−15。",
+              "距续约不到 90 天且尚未约会议：−10。"
+            ]
+          },
+          {
+            "h": "分档"
+          },
+          {
+            "ul": [
+              "70 分及以上：健康，保持节奏。",
+              "40–69 分：需关注，本周内找出原因。",
+              "40 分以下：有风险，负责人主动联系客户，并告知团队负责人。"
+            ]
+          },
+          {
+            "p": "每个季度拿真实流失和留存的客户对照检查权重，把判断错的项改掉。"
+          }
+        ],
+        "curahold": "每个客户都有一个按您设定的规则计算的 0 到 100 分评分，并列出原因和最近 30 天的变化趋势。"
       },
       {
         "slug": "customer-health-score",
@@ -1245,6 +1986,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "客户通过邮件中的链接登录，只能看到您共享的内容；他们提交的需求会进入您团队的看板。"
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "客户上线",
+        "seo": [
+          "什么是客户上线（Onboarding）？流程与目标 | Curahold",
+          "客户上线是把新客户从签约带到首次获得价值的工作，包括销售交接、配置、培训，以及客户能亲眼看到的第一批成果。本文说明它通常包含哪些环节、为什么重要，以及如何缩短它。"
+        ],
+        "lead": "客户上线是指从签约到新客户第一次获得所购买价值之间的这段时间，以及团队为缩短这段时间所做的工作。",
+        "body": [
+          {
+            "h": "通常包括"
+          },
+          {
+            "ul": [
+              "销售交接，附带已做出的承诺。",
+              "确定目标和日期的启动会。",
+              "配置、数据导入和培训。",
+              "客户能亲眼看到、说得出来的第一个成果。"
+            ]
+          },
+          {
+            "h": "为什么重要"
+          },
+          {
+            "p": "早早看到价值的客户更愿意留下；拖得太久的上线，会让第一次续约沟通从怀疑开始。"
+          }
+        ],
+        "curahold": "如果你有上线团队，赢单的商机会以一张交接卡送到他们手中，包含关键人、已做出的承诺、未完成的需求和重要日期；其中的任务可以在客户门户里与客户共享。"
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "服务成本",
+        "seo": [
+          "什么是服务成本？客户团队的衡量方法 | Curahold",
+          "服务成本是照顾一个客户所花的时间或金钱，与该客户付费的对比。本文说明如何衡量服务成本，以及在续约之前如何利用这个结果采取行动，避免只看数字就下结论。"
+        ],
+        "lead": "服务成本是团队照顾一个客户所投入的精力，与这个客户所付费用之间的对比。",
+        "body": [
+          {
+            "h": "如何衡量"
+          },
+          {
+            "p": "最简单的衡量单位是小时：团队过去 12 个月在某个客户上记录的时间，除以该客户的年度合同金额。用同一把尺子比较所有客户，就能看出谁相对付费占用了最多的照顾。"
+          },
+          {
+            "h": "结果怎么用"
+          },
+          {
+            "ul": [
+              "找出数字偏高背后的工作：反复出现的请求、缺少的功能、培训上的空白。",
+              "在续约前解决根源，或把额外服务计入续约价格。",
+              "不要只凭这个数字评价客户：要求多的客户，也可能是你最好的推荐人。"
+            ]
+          }
+        ],
+        "curahold": "服务成本报表按客户列出近 12 个月每 1,000 年度价值花费的小时，让你看出谁的服务成本最高。"
       }
     ]
   },
@@ -1329,6 +2129,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "把檢討記錄為客戶的一場會議並寫下後續步驟，儲存後每一步都會變成有負責人和日期的任務，也可以在客戶入口網站中分享。"
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "從業務到導入團隊的客戶交接清單",
+        "seo": [
+          "從業務到導入團隊的客戶交接清單範本 | Curahold",
+          "贏單後的客戶交接清單：關鍵人有哪些、銷售過程中承諾了什麼、還有哪些未完成的需求、重要日期，以及與客戶的第一次會議該怎麼開始，讓導入團隊從第一天就接得住。"
+        ],
+        "lead": "客戶頭幾個月的問題，多半從交接開始：業務知道的事，導入團隊往往從沒聽說。複製這份清單，在交易交出去之前把它填好。",
+        "body": [
+          {
+            "h": "交接時一定要帶上的內容"
+          },
+          {
+            "ul": [
+              "關鍵人：決策者、日常窗口和客戶內部的支持者，以及聯絡每個人的方式。",
+              "銷售過程中的承諾：功能、日期、折扣，書面或電話中說過的一切。",
+              "客戶正在等待的未完成產品需求，以及對此告訴過客戶的內容。",
+              "重要日期：成交日期、客戶期待的正式啟用日期和續約日期。",
+              "購買原因：想解決的問題，以及客戶如何判斷成功。"
+            ]
+          },
+          {
+            "h": "第一次會議之前"
+          },
+          {
+            "ol": [
+              "業務和導入負責人花 15 分鐘一起看過清單。",
+              "任何不清楚的地方，回頭問業務，而不是問客戶。",
+              "第一次會議先用客戶自己的話重述客戶的目標。"
+            ]
+          }
+        ],
+        "curahold": "贏單後，Curahold 可以為下一個團隊準備一張交接卡，彙整關鍵人、已做出的承諾、未完成的產品需求，以及成交日期和續約日期；交接卡會等待新負責人確認。"
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "客戶健康評分表範本",
+        "seo": [
+          "客戶健康評分表範本：訊號、分數與分級 | Curahold",
+          "一份可以直接複製的健康評分表：團隊看得到的六個訊號、每個訊號加減多少分，以及幫你判斷哪些客戶需要關注的分級標準，附每季檢討方法，讓每一分都有憑有據。"
+        ],
+        "lead": "健康評分只有在團隊信任時才有用，而團隊只信任自己說得清楚的分數。從幾個看得到的訊號開始，替每個訊號訂一個權重，並寫下理由。",
+        "body": [
+          {
+            "h": "訊號與分數（從 50 分起算）"
+          },
+          {
+            "ul": [
+              "最近 30 天內和客戶談過：+15。60 天沒有聯絡：−20。",
+              "客戶方有會回覆的支持者：+15。支持者離職：−25。",
+              "承諾的工作逾期：每項 −10，最多 −30。",
+              "超過兩週未解決的障礙或支援請求：−10。",
+              "使用量持平或上升：+10。連續兩個月下降：−15。",
+              "距離續約不到 90 天且還沒約會議：−10。"
+            ]
+          },
+          {
+            "h": "分級"
+          },
+          {
+            "ul": [
+              "70 分以上：健康，維持節奏。",
+              "40–69 分：需留意，這週內找出原因。",
+              "40 分以下：有風險，負責人主動聯絡客戶，並讓團隊主管知道。"
+            ]
+          },
+          {
+            "p": "每季拿實際流失和留下的客戶對照檢查權重，把判斷錯的項目改掉。"
+          }
+        ],
+        "curahold": "每位客戶都有依您設定的規則計算的 0 到 100 分評分，並列出原因與最近 30 天的變化趨勢。"
       },
       {
         "slug": "customer-health-score",
@@ -1447,11 +2321,70 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "客戶透過電子郵件中的連結登入，只會看到您分享的內容；他們提出的需求會進入您團隊的看板。"
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "客戶導入",
+        "seo": [
+          "什麼是客戶導入（Onboarding）？流程與目標 | Curahold",
+          "客戶導入是把新客戶從簽約帶到第一次獲得價值的工作，包括業務交接、設定、教育訓練，以及客戶能親眼看到的第一批成果。本文說明它包含什麼、為何重要。"
+        ],
+        "lead": "客戶導入是指從簽約到新客戶第一次獲得所購買價值之間的這段時間，以及團隊為了縮短這段時間所做的工作。",
+        "body": [
+          {
+            "h": "通常包含"
+          },
+          {
+            "ul": [
+              "業務交接，附上已做出的承諾。",
+              "確認目標與日期的啟動會議。",
+              "設定、資料匯入與教育訓練。",
+              "客戶能親眼看到、說得出來的第一個成果。"
+            ]
+          },
+          {
+            "h": "為什麼重要"
+          },
+          {
+            "p": "早點看到價值的客戶比較願意留下；拖太久的導入，會讓第一次續約討論從懷疑開始。"
+          }
+        ],
+        "curahold": "如果你有導入團隊，贏單的交易會以一張交接卡送到他們手上，包含關鍵人、已做出的承諾、未完成的需求和重要日期；其中的任務可以在客戶入口網站與客戶共享。"
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "服務成本",
+        "seo": [
+          "什麼是服務成本？客戶團隊的衡量方法 | Curahold",
+          "服務成本是照顧一個客戶所花的時間或金錢，和該客戶付費的對比。本文說明如何衡量服務成本，以及在續約之前如何運用這個結果採取行動，避免只看數字就下結論。"
+        ],
+        "lead": "服務成本是團隊照顧一個客戶所投入的心力，和這個客戶所付費用之間的對比。",
+        "body": [
+          {
+            "h": "如何衡量"
+          },
+          {
+            "p": "最簡單的單位是小時：團隊過去 12 個月在某個客戶上記錄的時間，除以該客戶的年度合約金額。用同一把尺比較所有客戶，就能看出誰相對於付費占用了最多照顧。"
+          },
+          {
+            "h": "結果怎麼用"
+          },
+          {
+            "ul": [
+              "找出數字偏高背後的工作：重複出現的請求、缺少的功能、教育訓練的缺口。",
+              "在續約前解決根本原因，或把額外服務反映在續約價格中。",
+              "不要只憑這個數字評價客戶：要求多的客戶，也可能是你最好的推薦人。"
+            ]
+          }
+        ],
+        "curahold": "服務成本報表依客戶列出近 12 個月每 1,000 年度價值花費的小時，讓你看出誰的服務成本最高。"
       }
     ]
   },
   ja: {
-    "title": "カスタマーチームのための\u200bテンプレートと\u200b用語集",
+    "title": "カスタマーチームのための​テンプレートと​用語集",
     "lead": "顧客を守る仕事に使える、コピーできるテンプレートとわかりやすい用語解説。更新、ビジネスレビュー、ヘルススコア、解約を取り上げます。",
     "seo": [
       "カスタマーサクセスのテンプレートと用語集 | Curahold",
@@ -1531,6 +2464,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "レビューを顧客の会議として記録し、次のステップを書いて保存すると、それぞれが担当者と期日つきのタスクになります。顧客のポータルで共有することもできます。"
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "営業からオンボーディングへの引き継ぎチェックリスト",
+        "seo": [
+          "営業からオンボーディングへの引き継ぎチェックリスト | Curahold",
+          "受注した商談の引き継ぎチェックリストです。関係者は誰か、営業中に何を約束したか、未対応の要望、重要な日付、顧客との最初の打ち合わせまでを整理します。"
+        ],
+        "lead": "契約直後の数か月に起きるトラブルの多くは、引き継ぎから始まります。営業が知っていることが、オンボーディング担当に届かないのです。このリストをコピーし、商談を引き継ぐ前に埋めてください。",
+        "body": [
+          {
+            "h": "引き継ぎで必ず渡すこと"
+          },
+          {
+            "ul": [
+              "関係者：意思決定者、日々の窓口、顧客側の推進役と、それぞれへの連絡方法。",
+              "営業中にした約束：機能、日付、値引きなど、書面でも口頭でも伝えたことすべて。",
+              "顧客が待っている未対応の製品要望と、それについて伝えた内容。",
+              "重要な日付：成約日、顧客が期待する稼働開始日、契約の更新日。",
+              "購入の理由：解決したい課題と、成功をどう判断するか。"
+            ]
+          },
+          {
+            "h": "最初の打ち合わせの前に"
+          },
+          {
+            "ol": [
+              "営業担当とオンボーディング担当が、15分でリストを一緒に読みます。",
+              "不明な点は、顧客ではなく営業担当に確認します。",
+              "最初の打ち合わせは、顧客の目標を顧客自身の言葉で確認するところから始めます。"
+            ]
+          }
+        ],
+        "curahold": "商談を受注すると、Curahold は次のチームに向けて引き継ぎカードを用意できます。関係者、約束した内容、未対応の製品要望、成約日と更新日がまとまっており、新しい担当者が確認するまで待機します。"
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "ヘルススコア表テンプレート",
+        "seo": [
+          "ヘルススコア表テンプレート：シグナルと配点 | Curahold",
+          "そのまま使えるヘルススコア表です。チームが確認できる6つのシグナル、それぞれの加点と減点、注意が必要な顧客を見分けるしきい値をまとめました。"
+        ],
+        "lead": "ヘルススコアは、チームが信頼してはじめて役に立ちます。そしてチームが信頼するのは、説明できるスコアです。目に見える少数のシグナルから始め、それぞれに重みを付け、その理由を書き残しましょう。",
+        "body": [
+          {
+            "h": "シグナルと配点（50点から開始）"
+          },
+          {
+            "ul": [
+              "直近30日以内に顧客と話した：+15。60日間連絡なし：−20。",
+              "返信をくれる推進役が顧客側にいる：+15。推進役が退職した：−25。",
+              "約束した作業が遅れている：1件につき−10、最大−30。",
+              "2週間以上未解決の障害やサポート依頼がある：−10。",
+              "利用が横ばいまたは増加：+10。2か月連続で減少：−15。",
+              "更新まで90日を切り、打ち合わせが未設定：−10。"
+            ]
+          },
+          {
+            "h": "しきい値"
+          },
+          {
+            "ul": [
+              "70点以上：良好。今のリズムを保ちます。",
+              "40〜69点：要注意。今週中に原因を探ります。",
+              "40点未満：リスクあり。担当者が連絡し、チームリーダーにも共有します。"
+            ]
+          },
+          {
+            "p": "四半期ごとに、実際に失った顧客と継続した顧客を見比べて重みを見直し、予測が外れた項目を修正しましょう。"
+          }
+        ],
+        "curahold": "すべての顧客に、自社で決めたルールから算出する0〜100のスコアが付き、その理由と過去30日の推移を確認できます。"
       },
       {
         "slug": "customer-health-score",
@@ -1649,6 +2656,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "顧客はメールのリンクからログインし、共有した内容だけを確認できます。顧客が出した依頼はチームのボードに届きます。"
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "カスタマーオンボーディング",
+        "seo": [
+          "カスタマーオンボーディングとは？流れと目的 | Curahold",
+          "カスタマーオンボーディングとは、新しい顧客を契約から最初の価値まで導く取り組みです。営業からの引き継ぎ、設定、トレーニング、最初の成果までを解説します。"
+        ],
+        "lead": "カスタマーオンボーディングとは、契約してから新しい顧客が購入した価値を初めて実感するまでの期間と、その期間を短くするためにチームが行う仕事のことです。",
+        "body": [
+          {
+            "h": "主な内容"
+          },
+          {
+            "ul": [
+              "約束した内容を含む、営業からの引き継ぎ。",
+              "目標と日程を合意するキックオフ。",
+              "設定、データ移行、トレーニング。",
+              "顧客が自分で確認し、言葉にできる最初の成果。"
+            ]
+          },
+          {
+            "h": "なぜ重要か"
+          },
+          {
+            "p": "早い段階で価値を実感した顧客は継続しやすい傾向があります。オンボーディングが長引くと、最初の更新の話し合いが不信から始まってしまいます。"
+          }
+        ],
+        "curahold": "オンボーディングチームがある場合、受注した商談は、関係者、約束した内容、未対応の要望、重要な日付をまとめた1枚の引き継ぎカードとして届きます。そのタスクは顧客ポータルで顧客と共有できます。"
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "サービス提供コスト",
+        "seo": [
+          "サービス提供コストとは？測り方と活かし方 | Curahold",
+          "サービス提供コストとは、顧客対応にかかる時間や費用を、その顧客の支払額と比べたものです。測り方と、更新の前に結果をどう活かすかを解説します。"
+        ],
+        "lead": "サービス提供コストとは、チームが顧客のために費やす労力を、その顧客が支払う金額と比べたものです。",
+        "body": [
+          {
+            "h": "測り方"
+          },
+          {
+            "p": "最もシンプルな指標は時間です。直近12か月にチームがその顧客に記録した時間を、年間契約額で割ります。すべての顧客を同じ尺度で比べると、支払額に対して最も手がかかっている顧客がわかります。"
+          },
+          {
+            "h": "結果の活かし方"
+          },
+          {
+            "ul": [
+              "数字が高い原因となっている作業を探します。繰り返される依頼、足りない機能、トレーニング不足などです。",
+              "更新までに原因を解消するか、追加の対応を更新価格に反映します。",
+              "この数字だけで顧客を評価しないでください。要求の多い顧客が、最高の推薦者になることもあります。"
+            ]
+          }
+        ],
+        "curahold": "サービス提供コストのレポートは、顧客ごとに直近12か月で年間価値1,000あたりに費やした時間を示すので、手のかかる顧客がひと目でわかります。"
       }
     ]
   },
@@ -1733,6 +2799,80 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "리뷰를 고객의 미팅으로 기록하고 다음 단계를 적어 저장하면, 각 단계가 담당자와 기한이 있는 작업이 됩니다. 고객 포털에서 공유할 수도 있습니다."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "영업에서 온보딩으로 넘기는 인계 체크리스트",
+        "seo": [
+          "영업에서 온보딩으로의 인계 체크리스트 | Curahold",
+          "수주한 거래의 인계 체크리스트입니다. 이해관계자는 누구인지, 영업 중 무엇을 약속했는지, 열린 요청, 주요 날짜, 고객과의 첫 미팅까지 정리합니다."
+        ],
+        "lead": "고객의 첫 몇 달에 생기는 문제는 대부분 인계에서 시작됩니다. 영업이 아는 내용이 온보딩 팀에는 끝내 전달되지 않기 때문입니다. 이 목록을 복사해 거래가 넘어가기 전에 채우세요.",
+        "body": [
+          {
+            "h": "인계 때 반드시 넘겨야 할 것"
+          },
+          {
+            "ul": [
+              "이해관계자: 의사결정자, 일상 담당자, 고객 측 지지자, 그리고 각자에게 연락하는 방법.",
+              "영업 중 한 약속: 기능, 날짜, 할인 등 서면이나 통화로 말한 모든 것.",
+              "고객이 기다리는 열린 제품 요청과 그에 대해 안내한 내용.",
+              "주요 날짜: 계약 체결일, 고객이 기대하는 가동 시작일, 갱신일.",
+              "구매 이유: 해결하려는 문제와 성공을 판단하는 기준."
+            ]
+          },
+          {
+            "h": "첫 미팅 전에"
+          },
+          {
+            "ol": [
+              "영업 담당자와 온보딩 담당자가 15분 동안 목록을 함께 읽습니다.",
+              "불분명한 점은 고객이 아니라 영업 담당자에게 확인합니다.",
+              "첫 미팅은 고객의 목표를 고객의 말 그대로 다시 확인하며 시작합니다."
+            ]
+          }
+        ],
+        "curahold": "거래를 수주하면 Curahold가 다음 팀을 위한 인계 카드를 준비할 수 있습니다. 이해관계자, 약속한 내용, 열린 제품 요청, 체결일과 갱신일이 담기며, 새 담당자가 확인할 때까지 기다립니다."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "고객 헬스 스코어 표 템플릿",
+        "seo": [
+          "헬스 스코어 템플릿: 신호, 점수, 기준선 | Curahold",
+          "그대로 복사해 쓰는 헬스 스코어 표입니다. 팀이 확인할 수 있는 신호 여섯 가지, 신호별 가점과 감점, 관심이 필요한 고객을 가르는 기준선을 담았습니다."
+        ],
+        "lead": "헬스 스코어는 팀이 믿을 때만 쓸모가 있고, 팀은 설명할 수 있는 점수를 믿습니다. 눈에 보이는 몇 가지 신호로 시작해 각각에 가중치를 주고, 그 이유를 적어 두세요.",
+        "body": [
+          {
+            "h": "신호와 점수 (50점에서 시작)"
+          },
+          {
+            "ul": [
+              "최근 30일 안에 고객과 대화함: +15. 60일 동안 연락 없음: −20.",
+              "답장하는 지지자가 고객 측에 있음: +15. 지지자가 떠남: −25.",
+              "약속한 작업이 지연됨: 건당 −10, 최대 −30.",
+              "2주 넘게 열려 있는 장애나 지원 요청: −10.",
+              "사용량이 유지되거나 늘어남: +10. 두 달째 감소: −15.",
+              "갱신까지 90일이 안 남았는데 미팅이 잡히지 않음: −10."
+            ]
+          },
+          {
+            "h": "기준선"
+          },
+          {
+            "ul": [
+              "70점 이상: 양호. 지금의 리듬을 유지합니다.",
+              "40~69점: 주의. 이번 주 안에 원인을 찾습니다.",
+              "40점 미만: 위험. 담당자가 연락하고 팀장에게도 알립니다."
+            ]
+          },
+          {
+            "p": "분기마다 실제로 잃은 고객, 지킨 고객과 비교해 가중치를 점검하고, 예측이 틀린 항목은 고치세요."
+          }
+        ],
+        "curahold": "모든 고객에게 직접 정한 규칙으로 계산한 0~100점의 점수가 붙고, 그 이유와 최근 30일의 추이를 확인할 수 있습니다."
       },
       {
         "slug": "customer-health-score",
@@ -1851,6 +2991,65 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "고객은 이메일 링크로 로그인해 공유한 내용만 봅니다. 고객이 남긴 요청은 팀의 보드로 들어옵니다."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "고객 온보딩",
+        "seo": [
+          "고객 온보딩이란? 단계와 목표 | Curahold",
+          "고객 온보딩은 새 고객을 계약에서 첫 가치까지 이끄는 일입니다. 영업 인계, 설정, 교육, 그리고 고객이 직접 확인하는 첫 성과까지 설명합니다."
+        ],
+        "lead": "고객 온보딩은 계약 후 새 고객이 구매한 가치를 처음 체감하기까지의 기간이자, 그 기간을 줄이기 위해 팀이 하는 일입니다.",
+        "body": [
+          {
+            "h": "보통 포함하는 것"
+          },
+          {
+            "ul": [
+              "약속한 내용을 담은 영업의 인계.",
+              "목표와 일정을 합의하는 킥오프 미팅.",
+              "설정, 데이터 가져오기, 교육.",
+              "고객이 직접 보고 말할 수 있는 첫 성과."
+            ]
+          },
+          {
+            "h": "왜 중요한가"
+          },
+          {
+            "p": "가치를 일찍 체감한 고객은 계속 남는 경향이 있습니다. 온보딩이 길어지면 첫 갱신 논의가 의심에서 시작됩니다."
+          }
+        ],
+        "curahold": "온보딩 팀이 있다면 수주한 거래는 이해관계자, 약속한 내용, 열린 요청, 주요 날짜를 담은 인계 카드 한 장으로 전달됩니다. 그 작업은 고객 포털에서 고객과 공유할 수 있습니다."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "서비스 비용",
+        "seo": [
+          "서비스 비용이란? 측정 방법과 활용법 | Curahold",
+          "서비스 비용은 고객을 관리하는 데 드는 시간이나 돈을 그 고객이 내는 금액과 비교한 값입니다. 측정 방법과 갱신 전에 결과를 활용하는 법을 정리했습니다."
+        ],
+        "lead": "서비스 비용은 팀이 한 고객을 관리하는 데 들이는 노력을, 그 고객이 내는 금액과 비교한 것입니다.",
+        "body": [
+          {
+            "h": "측정 방법"
+          },
+          {
+            "p": "가장 간단한 기준은 시간입니다. 최근 12개월 동안 팀이 그 고객에게 기록한 시간을 연간 계약 금액으로 나눕니다. 모든 고객을 같은 기준으로 비교하면, 내는 금액에 비해 가장 손이 많이 가는 고객이 보입니다."
+          },
+          {
+            "h": "결과 활용법"
+          },
+          {
+            "ul": [
+              "높은 숫자 뒤에 있는 일을 찾으세요. 반복되는 요청, 빠진 기능, 교육 공백 같은 것입니다.",
+              "갱신 전에 원인을 해결하거나, 추가 서비스를 갱신 가격에 반영하세요.",
+              "이 숫자만으로 고객을 판단하지 마세요. 요구가 많은 고객이 가장 좋은 추천 고객이 되기도 합니다."
+            ]
+          }
+        ],
+        "curahold": "서비스 비용 보고서는 고객별로 최근 12개월 동안 연간 가치 1,000당 들인 시간을 보여 주므로, 관리 비용이 가장 큰 고객을 알 수 있습니다."
       }
     ]
   },

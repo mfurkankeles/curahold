@@ -12,9 +12,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
-- Sales site: a small content hub in all nine languages (/resources/): a renewal playbook template, a business review (QBR)
-  agenda template, and plain definitions of customer health score, churn, contract renewal and customer portal, each saying
-  only what Curahold does today. Linked from the Resources menu and the footer.
+- Sales site: a small content hub in all nine languages (/resources/): four templates (renewal playbook, business review (QBR)
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
+  contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
+  what Curahold does today. Linked from the Resources menu and the footer.
 - Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
   use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
   by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).
