@@ -5005,6 +5005,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'demo.bar.step.data': '架空の顧客データを読み込んでいます。',
   'demo.bar.step.app': 'アプリを開いています。',
   'demo.bar.failed': 'デモを開始できませんでした。ページを再読み込みしてもう一度お試しください。',
+  'demo.bar.still': 'まだ準備中です。処理の遅い端末では、初回の起動に少し時間がかかります。',
   "demo.bar.stuck": "デモにログインできませんでした。",
   'demo.bar.note': '架空のデータで、すべてこのタブの中で動いています。再読み込みすると最初からやり直しです。',
   'demo.bar.as': '表示中のユーザー',

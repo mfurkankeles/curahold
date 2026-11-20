@@ -117,3 +117,79 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 }
 .popmenu__item:focus-visible, .menu__item:focus-visible, .picker__opt:has(:focus-visible), .fchip:focus-visible, .toast__action:focus-visible, .toast__close:focus-visible { outline: var(--ring); outline-offset: -2px; }
 .avatar[data-initials]::before { content: attr(data-initials); }
+
+/* ------------------------------------------------------------ loading (components/Loader.tsx, lib/loading.ts, lib/busy.ts)
+   The brand loader: the mark's arc draws itself and its dot swells once at the end of each turn. */
+.loader { display: inline-grid; justify-items: center; gap: 12px; color: var(--brand); }
+.loader[data-size='48'] { padding: 24px; }
+.loader__arc { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 100; animation: loader-draw var(--loop-loader) cubic-bezier(.65, 0, .35, 1) infinite; }
+.loader__dot { fill: var(--loader-dot); transform-box: fill-box; transform-origin: center; animation: loader-dot var(--loop-loader) cubic-bezier(.65, 0, .35, 1) infinite; }
+.loader__word { color: var(--ink-2); font-size: var(--fs-s); }
+.loader:not([data-size='48']) .loader__word { display: none; }
+@keyframes loader-draw { 0% { stroke-dashoffset: 100; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -100; } }
+@keyframes loader-dot { 0%, 50%, 100% { transform: scale(1); } 62% { transform: scale(1.35); } }
+.loader[data-leaving] { animation: fade-out var(--dur-1) var(--ease-in) var(--hold, 0ms) forwards !important; }
+.center-note .loader { margin: auto; }
+.ask__wait { display: flex; align-items: center; gap: 8px; }
+.ask__wait .loader { display: inline-flex; }
+
+/* The route bar: a 2 px brand line that creeps to 80 % while a screen loads, then fills and fades. */
+.routebar { position: fixed; inset-block-start: 0; inset-inline: 0; z-index: 1000; height: 2px; background: var(--brand); pointer-events: none; transform-origin: left center; transform: scaleX(0); }
+:root[dir='rtl'] .routebar { transform-origin: right center; }
+.routebar[data-state='run'] { transform: scaleX(.8); transition: transform var(--loop-route) var(--ease-out); }
+.routebar[data-state='done'] { transform: scaleX(1); opacity: 0; transition: transform var(--dur-1) linear, opacity var(--dur-2) linear var(--dur-1); }
+@media (prefers-reduced-motion: reduce) { .routebar[data-state] { transform: scaleX(1); opacity: 1; } .routebar[data-state='done'] { opacity: 0; } }
+
+/* A button that saves or sends: the label stays; after --dur-2 its first icon turns into a 14 px ring; a tick when done. */
+.btn[aria-busy='true'], .btn[data-done] { position: relative; cursor: progress; }
+.btn[aria-busy='true'] > .icon:first-child { animation: busy-hide 0s linear var(--dur-2) forwards; }
+.btn[data-done] > .icon:first-child { visibility: hidden; }
+@keyframes busy-hide { to { visibility: hidden; } }
+.btn[aria-busy='true']::before, .btn[data-done]::before {
+  content: ''; position: absolute; inset-inline-start: 12px; inset-block-start: calc(50% - 7px); width: 14px; height: 14px; box-sizing: border-box;
+}
+.btn--small[aria-busy='true']::before, .btn--small[data-done]::before { inset-inline-start: 8px; }
+.btn[aria-busy='true']::before { border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: var(--r-pill); opacity: 0; animation: busy-show 0s linear var(--dur-2) forwards, spin var(--loop-spin) linear infinite; }
+.btn[data-done]::before { background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7.5l3 3 6-7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.btn:not(:has(> .icon:first-child))[aria-busy='true']::before, .btn:not(:has(> .icon:first-child))[data-done]::before { display: none; }
+@keyframes busy-show { to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(1turn); } }
+/* Reduce motion: the ring stands still and shows at once. */
+@media (prefers-reduced-motion: reduce) { .btn[aria-busy='true']::before { opacity: 1; } .btn[aria-busy='true'] > .icon:first-child { visibility: hidden; } }
+
+/* Skeletons in the shape of a dashboard (tiles over panes) and of a side panel (title, fields, sections). */
+.skeleton--dash { gap: 16px; }
+.skeleton__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.skeleton__tile { display: grid; gap: 12px; padding: 16px; min-height: 104px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); align-content: start; }
+.skeleton .skeleton__big { height: 28px; width: 46%; }
+.skeleton__panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.skeleton__pane { display: grid; gap: 12px; padding: 16px; min-height: 260px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); align-content: start; }
+.skeleton .skeleton__chart { height: 168px; border-radius: var(--r-s); }
+.skeleton--panel { gap: 20px; }
+.skeleton .skeleton__heading { height: 24px; width: 70%; }
+.skeleton__props { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-m); }
+.skeleton__props b { height: 32px; }
+.skeleton .skeleton__button { height: 34px; width: 140px; }
+.skeleton .skeleton__block { height: 96px; }
+
+/* ------------------------------------------------------------ Close (components/ui.tsx CloseButton)
+   Every dialog, panel, sheet and popover closes with this, at the end corner of its header: 44 × 44, a
+   visible fill, a little space from whatever sits before it (the task panel's Delete). Esc does the same. */
+.closex {
+  flex: none; display: grid; place-items: center; inline-size: var(--tap); block-size: var(--tap); margin-inline-start: auto;
+  border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sunk); color: var(--ink); cursor: pointer;
+  transition: background-color var(--dur-1) ease, border-color var(--dur-1) ease;
+}
+.closex:hover { background: var(--brand-wash); border-color: var(--field-line); }
+.closex:active { transform: scale(.96); }
+* + .closex { margin-inline-start: 12px; }
+.panel__head .closex, .bell__head .closex, .filtersheet__head .closex, .qa__head .closex { margin-inline-start: 12px; }
+.panel__head > :not(.closex) + .closex { position: relative; }
+.panel__head > :not(.closex) + .closex::before { content: ''; position: absolute; inset-inline-start: -7px; inset-block: 8px; inline-size: 1px; background: var(--line); }
+.palette-top { display: flex; align-items: center; gap: 8px; padding-inline-end: 8px; }
+.palette-top .palette-input { flex: 1; min-inline-size: 0; }
+.bell__head { gap: 8px; }
+/* A phone shows the panel as a whole screen: Back sits at the start of its header (as on every page); on a
+   desktop the panel floats over the page and Close at the end is enough. */
+.panel__phoneback { display: none; }
+@media (max-width: 600px) { .panel__phoneback { display: inline-flex; } }

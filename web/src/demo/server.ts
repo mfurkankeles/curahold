@@ -81,7 +81,15 @@ export interface DemoServer {
   portalSignIn: (email: string) => Promise<void>;
   /** The last call the API refused as signed out, for the notice when signing in again does not help. */
   denied: { last: string | null };
+  /**
+   * Seeding mode on or off. On: the after-request work (customer health scores, then webhooks)
+   * waits instead of running after every one of the seed's ~230 calls; off: it runs once for all.
+   */
+  seeding: (on: boolean) => Promise<void>;
 }
+
+/** Lets the browser paint (the boot screen's progress and loader) between long stretches of database work. */
+export const breathe = () => new Promise<void>((r) => setTimeout(r, 0));
 
 /** The customer portal's address in the demo: another site than the app's, as in production. */
 export const PORTAL_ORIGIN = 'https://demo.curahold-portal.com';
@@ -94,7 +102,7 @@ const DEVICE = (() => {
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 })();
 
-export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: Locale = 'tr'): Promise<DemoServer> {
+export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void | Promise<void>, locale: Locale = 'tr'): Promise<DemoServer> {
   step(8, 'db');
   const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
     import('../../../api/src/app'),
@@ -108,16 +116,22 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
       .then((r) => (r.ok ? r.blob() : undefined))
       .catch(() => undefined),
   ]);
+  await step(24, 'db');
   const pg = new PGlite(fsBundle ? { fsBundle } : {});
   await pg.waitReady;
   const db = pgliteDb(pg);
-  step(55, 'schema');
+  await step(40, 'schema');
   const files = import.meta.glob('../../../db/migrations/*.sql', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-  await migrate(
-    db,
-    Object.entries(files).map(([p, sql]) => ({ name: p.split('/').pop()!, sql })),
-  );
-  step(72, 'data');
+  const all = Object.entries(files)
+    .map(([p, sql]) => ({ name: p.split('/').pop()!, sql }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  // In slices, in order, with a paint between: one long run of SQL froze the boot screen for seconds.
+  const SLICES = 8;
+  for (let k = 0; k < SLICES; k++) {
+    await migrate(db, all.slice(Math.floor((k * all.length) / SLICES), Math.floor(((k + 1) * all.length) / SLICES)));
+    await step(40 + Math.round((20 * (k + 1)) / SLICES), 'schema');
+  }
+  await step(62, 'data');
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
   const config: Config = {
@@ -143,7 +157,8 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     limitScale: 0,
   };
   const email = new services.MemoryEmail();
-  const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };
+  const runDeferred = (p: Promise<unknown>) => void p;
+  const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: runDeferred };
   const app = createApp(deps);
   const portal = createPortalApp(deps);
   const jar = new Jar();
@@ -202,7 +217,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   // a realistic shape. RLS keeps them out of the demo user's own views.
   const { seedPlatform } = await import('../../../scripts/seed-demo-platform');
   await seedPlatform(db, { locale });
-  step(82, 'data');
+  await step(72, 'data');
 
   // Every call the app makes to its own address is answered here.
   const nativeFetch = globalThis.fetch.bind(globalThis);
@@ -225,7 +240,17 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     const token = /#token=([A-Za-z0-9_-]+)/.exec(mail?.text ?? '')?.[1];
     if (token) await portalCall('POST', '/papi/auth/verify', { token });
   };
-  return { db, request, call, jar, portalCall, emails: email.sent, portalSignIn, denied };
+  // While the demo's own seed runs, each write would score the customers it touched and try the
+  // webhooks right after answering (api/src/app.ts): a quarter of the start-up time, redone ~230
+  // times. The seed waits for none of it, so it runs once at the end, with the same result.
+  const seeding = async (on: boolean) => {
+    deps.defer = on ? undefined : runDeferred;
+    if (on) return;
+    const [{ flushHealth }, { deliverWebhooks }] = await Promise.all([import('../../../api/src/lib/health'), import('../../../api/src/lib/webhooks')]);
+    await flushHealth(deps, 100_000);
+    await deliverWebhooks(deps, 20);
+  };
+  return { db, request, call, jar, portalCall, emails: email.sent, portalSignIn, denied, seeding };
 }
 
 /** Signs `email` in through the real email-link flow and returns the session cookie. */

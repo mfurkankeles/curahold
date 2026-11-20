@@ -5005,6 +5005,7 @@ export const tr: Record<MessageKey, string> = {
   'demo.bar.step.data': 'Uydurma bir müşteri portföyü yükleniyor.',
   'demo.bar.step.app': 'Uygulama açılıyor.',
   'demo.bar.failed': 'Demo açılamadı. Sayfayı yenileyip tekrar deneyin.',
+  'demo.bar.still': 'Hâlâ hazırlanıyor. Daha yavaş bir cihazda ilk açılış biraz daha uzun sürer.',
   'demo.bar.stuck': 'Demo oturumu açılamadı.',
   'demo.bar.note': 'Uydurma verilerle, tamamen bu sekmede çalışıyor. Yenileyince sıfırlanır.',
   'demo.bar.as': 'Kim olarak',

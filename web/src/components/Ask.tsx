@@ -27,6 +27,7 @@ import { docsFile, docsHref, docsHtml, docsLink, docsSectionHref, docsUrlHref } 
 import { navigate } from '../lib/router';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
+import { Loader } from './Loader';
 
 type Message =
   | { id: number; by: 'you'; text: string }
@@ -320,6 +321,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
   );
   const write = (q: string) => (
     <button type="button" className="btn btn--small ask__write" onClick={() => onWrite(q)}>
+      <Icon name="send" size={16} />
       {t('ask.write')}
     </button>
   );
@@ -397,6 +399,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
                 </div>
               ) : (
                 <p className="ask__wait" role="status">
+                  <Loader size={16} now label={t('ask.ai.thinking')} />
                   {t('ask.ai.thinking')}
                 </p>
               )}
@@ -546,6 +549,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
           <>
             {' '}
             <button type="button" className="btn btn--quiet btn--small" disabled={deciding} onClick={() => void answerConsent(false)}>
+              <Icon name="undo" size={16} />
               {t('assistConsent.withdrawAction')}
             </button>
           </>
@@ -568,6 +572,7 @@ function FixButtons({ fixes }: { fixes: { label: string; to: string }[] }) {
           </a>
         ) : (
           <button key={f.to} type="button" className="btn btn--small" onClick={() => navigate(f.to)}>
+            <Icon name="arrowRight" size={16} />
             {f.label}
           </button>
         ),

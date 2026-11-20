@@ -5005,6 +5005,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'demo.bar.step.data': '正在載入一組虛構的客戶。',
   'demo.bar.step.app': '正在開啟應用程式。',
   'demo.bar.failed': '示範無法啟動。請重新整理頁面再試一次。',
+  'demo.bar.still': '仍在準備中。在較慢的裝置上，首次啟動需要多一點時間。',
   'demo.bar.stuck': '示範無法讓你登入。',
   'demo.bar.note': '虛構資料，完全在此分頁中執行。重新整理即從頭開始。',
   'demo.bar.as': '目前身分',

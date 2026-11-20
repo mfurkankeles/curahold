@@ -19,7 +19,7 @@ import {
   type Page,
 } from '../../../shared/src/pages';
 import { PROVIDER_NAMES } from '../components/Connections';
-import { EmptyState, LoadError, SkeletonCards } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonDash } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted, loadStart, startKnown } from '../components/GettingStarted';
 import { Avatar, Confirm, ConvertedNote, Dialog } from '../components/ui';
@@ -130,7 +130,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   if (!pages)
     return (
       <div className="page u-pt-24">
-        <SkeletonCards count={4} label={t('common.loading')} />
+        <SkeletonDash label={t('common.loading')} />
       </div>
     );
 
@@ -176,6 +176,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
               </button>
             ) : (
               <button className="btn" onClick={() => navigate('/my')}>
+                <Icon name="checkCircle" size={16} />
                 {t('nav.myTasks')}
               </button>
             )}
@@ -645,13 +646,16 @@ export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { dra
         <div className="toolbar">
           {d.id && (
             <button className="btn btn--danger" onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={16} />
               {t('home.deletePage')}
             </button>
           )}
           <button className="btn" onClick={onCancel}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={busy || !d.name.trim()} onClick={save}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </div>
@@ -717,10 +721,10 @@ export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { dra
               tools={
                 <div className="pane__tools">
                   <button className="btn btn--quiet btn--small" aria-label={t('home.moveEarlier', { card: title(card) })} disabled={i === 0} onClick={() => move(i, -1)}>
-                    ←
+                    <Icon name="chevronLeft" size={16} />
                   </button>
                   <button className="btn btn--quiet btn--small" aria-label={t('home.moveLater', { card: title(card) })} disabled={i === d.cards.length - 1} onClick={() => move(i, 1)}>
-                    →
+                    <Icon name="chevronRight" size={16} />
                   </button>
                   <select
                     className="select pane__size"
@@ -735,10 +739,11 @@ export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { dra
                     ))}
                   </select>
                   <button className="btn btn--small" onClick={() => setEditing(card)}>
+                    <Icon name="sliders" size={16} />
                     {t('home.cardSettings')}
                   </button>
                   <button className="btn btn--quiet btn--small" aria-label={t('home.removeCard', { card: title(card) })} onClick={() => setCards((cs) => cs.filter((c) => c.id !== card.id))}>
-                    ✕
+                    <Icon name="close" size={16} />
                   </button>
                 </div>
               }
@@ -830,9 +835,11 @@ function CardSettings({ card, onSave, onClose }: { card: Card; onSave: (c: Card)
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" onClick={() => onSave(c)}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>

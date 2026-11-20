@@ -7,8 +7,8 @@
 // aria-labelledby and the a11y checks only ever see the real interface.
 import { useCallback, useRef, type MutableRefObject, type RefObject } from 'react';
 
-/** The longest an exit may hold its stand-in, in case the browser never reports the animation finished. */
-const LONGEST_MS = 400;
+/** The longest a stand-in may stay, in case the browser never reports the animation finished (the loader's hold of up to 400 ms + its fade). */
+const LONGEST_MS = 700;
 
 /** Every stand-in on screen right now (tests and screens that look for an open dialog skip them with `:not([data-leaving])`). */
 export const LEAVING = '[data-leaving]';
