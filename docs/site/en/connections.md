@@ -67,7 +67,7 @@ Good to know:
 
 ## Google Sheets and Excel
 
-A spreadsheet is the simplest way to bring data in, and it works for any tool that can export one. Connect a Google Sheet, or an Excel file in OneDrive or SharePoint, tab by tab; each tab can be customers, contacts or a record type of your own. Pick the column that identifies a row, so a row that changes updates the same customer instead of adding a second one.
+A spreadsheet is the simplest way to bring data in, and it works for any tool that can export one. Connect a Google Sheet, or an Excel file in OneDrive or SharePoint, tab by tab; each tab can be customers, contacts or a record type of your own. Pick the column that identifies a row, so a row that changes updates the same customer instead of adding a second one. A spreadsheet keeps no change time per row, so when the same cell changed on both sides the change made in Curahold wins; to let the spreadsheet win instead, choose that on the connection's Settings tab.
 
 ## Support tools
 
@@ -88,10 +88,14 @@ The connection's **Status** tab says what happened in plain words, with the serv
 To reconnect:
 
 1. Open **Settings → CRMs and spreadsheets**.
+   ![CRMs and spreadsheets in the Settings menu, ringed](img/sync-stops-1.webp)
 2. Click the connection marked **Needs attention**.
+   ![The connection that needs attention, ringed](img/sync-stops-2.webp)
 3. Click **Reconnect** at the top of the page.
-4. Sign in to the same account as before (or paste the new key) and approve.
-5. Click **Sync now**. The fields you matched stay as they were.
+   ![The Reconnect button, ringed](img/sync-stops-3.webp)
+   Sign in to the same account as before (or paste the new key) and approve.
+4. Click **Sync now**. The fields you matched stay as they were.
+   ![The Sync now button, ringed](img/sync-stops-4.webp)
 
 To remove a connection, open it, click **⋯** and choose **Remove**. Syncing stops; customers, contacts and opportunities that came over stay in Curahold and nothing is deleted in the other tool. For an accounting program, the balances, invoices and payments read from it are removed from customers' pages.
 
