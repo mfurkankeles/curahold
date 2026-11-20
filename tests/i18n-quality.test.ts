@@ -89,6 +89,32 @@ describe('English singular after a count of one', () => {
   });
 });
 
+describe('Hebrew singular after a count of one', () => {
+  // "1 ימים", "1 משימות הועברו": for exactly one Hebrew says the noun, then "one" in its gender, and the verb agrees.
+  const he = (key: MessageKey, vars: Record<string, number>) => translate('he', key, vars);
+  it('says "יום אחד", "משימה אחת הועברה", and keeps the count otherwise', () => {
+    expect(he('time.daysAgo', { n: 1 })).toBe('לפני יום אחד');
+    expect(he('time.daysAgo', { n: 4 })).toBe('לפני 4 ימים');
+    expect(he('board.bulk.moved', { n: 1 })).toBe('משימה אחת הועברה.');
+    expect(he('board.bulk.moved', { n: 2 })).toBe('2 משימות הועברו.');
+    expect(he('import.problems', { n: 1 })).toBe('שורה אחת דורשת בדיקה');
+    expect(he('conn.linkedPeople', { n: 1 })).toBe('אדם מקושר אחד');
+    expect(he('setup.minutesLeft', { n: 1 })).toBe('נותרה כדקה אחת');
+    // A one-letter prefix joins the word ("בשורה"); before a numeral it keeps its hyphen ("ב-3").
+    expect(he('sh.import.badDates.problem', { n: 1 })).toMatch(/^בשורה אחת /);
+    expect(he('sh.import.badDates.problem', { n: 3 })).toMatch(/^ב-3 שורות /);
+    expect(he('auto.when.account_every.text', { n: 1 })).toMatch(/^כל יום /);
+  });
+  it('no Hebrew string shows "1" before a plural noun it knows', () => {
+    const d = dictionaries.he as Record<string, string>;
+    const bad = Object.keys(d)
+      .filter((k) => !k.endsWith('.one'))
+      .flatMap((k) => [...d[k].matchAll(/\{(\w+)\}/g)].map((m) => [k, translate('he', k as MessageKey, { [m[1]]: 1 })] as const))
+      .filter(([, s]) => /(^|[^\d])1 (ימים|משימות|שורות|אנשים|קבצים|שבועות|פעמים|לקוחות|דקות|שעות)(?![\p{L}])/u.test(s));
+    expect(bad.map(([k, s]) => `${k}: ${s}`).join('\n')).toBe('');
+  });
+});
+
 describe('dictionaries: completeness and shape', () => {
   it.each(others.map((l) => [l] as const))('%s has every key, and none English does not have', (l) => {
     const own = dict(l);
