@@ -36,7 +36,7 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   its saving ring and tick, not only the ones in dialogs. A task, record or opportunity card grows into its panel.
 - Sales site: prices are hidden until launch ("pricing announced at launch") and the EU data claim only shows once it is
   confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; demo links open in the visitor's language
-  where the demo has it. The home page paints faster on phones (less inline CSS, one film scene at first).
+  where the demo has it.
 - Billing refuses countries we never sell to, in the billing profile, at checkout and at sign-up.
 - Help centre: every picture is retaken in all eleven languages from the current product (today's labels, Turkish "siz",
   the customer's own address instead of a developer's). A help page shared or found in search shows a fuller description,
