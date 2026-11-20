@@ -34,6 +34,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `portal_bad_code` | 400 | That code is wrong or has run out. Ask for a new one. |
 | `portal_bad_password` | 400 | Wrong email or password. |
 | `portal_file_type` | 400 | … can't be attached. Pictures, PDF, Word, Excel, PowerPoint, OpenDocument, text, CSV and ZIP files can. |
+| `portal_file_unsafe` | 400 | … can't be attached: its contents look unsafe (a packed archive too large to open, a program or macro inside, or a PDF that runs code). Send it as a plain file instead. |
 | `portal_internal_email` | 400 | That address belongs to someone in your company. The portal is for customers. |
 | `portal_method_off` | 400 | This way of signing in is switched off. |
 | `portal_no_method` | 400 | Leave at least one way of signing in: email, Google, Microsoft or password. |
@@ -103,6 +104,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `plan_limit_storage` | 413 | Your plan’s file space (… GB) is full. Delete files you no longer need, or choose a larger plan. |
 | `portal_quota` | 413 | Your provider's storage for files is full. Please send the file another way, or ask them to make room. |
 | `repeat_mismatch` | 422 | This request was sent with a key that already belongs to a different change. Nothing was changed. |
+| `file_quarantined` | 423 | This file is being checked for viruses. Try again in a minute. |
 | `analytics_budget` | 429 | Today's analytics budget of … rows is used up. Try again later. |
 | `portal_locked` | 429 | Too many wrong tries. Try again in … minutes, or reset your password. |
 | `too_many_requests` | 429 | Too many attempts. Wait a few minutes and try again. |
