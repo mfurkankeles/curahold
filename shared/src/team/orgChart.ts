@@ -245,7 +245,9 @@ const ACTIVE: SeatDef[] = [
       responsibilities: [
         'Triage security alerts with runbooks (SOC); severity by CVSS.',
         'AppSec review of every agent-written branch and new dependency.',
-        'Run the security testing calendar against our own staging copy only (weekly scan, monthly red-team until the Offensive Security seat wakes).',
+        // The calendar and its commands: docs/security/testing-calendar.md, scripts/security/scan.ts. The probe in it
+        // refuses every host but staging and localhost, so this seat cannot be steered at production or a third party.
+        'Run the security testing calendar (docs/security/testing-calendar.md) against our own staging copy only: weekly and monthly scans with scripts/security/scan.ts, monthly red-team until the Offensive Security seat wakes.',
         'Review agent behaviour alerts (over-reach, gate bypass attempts) and recommend un-pausing or not.',
       ],
       kpis: ['Critical findings fixed within 72 h, high within 7 days', 'Every branch has an AppSec verdict', 'Zero secrets in agent outputs'],
