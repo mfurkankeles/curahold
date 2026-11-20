@@ -432,15 +432,18 @@ function CalendarPop({
         <div className="datepop__foot">
           {allowed(today) && (
             <button type="button" className="btn btn--small" onClick={() => (onRange ? move(today) : pick(today))}>
+              <Icon name="calendar" size={16} />
               {t('date.today')}
             </button>
           )}
           {clearable && (
             <button type="button" className="btn btn--small btn--quiet" onClick={() => (onRange ? onRange({ from: '', to: '' }) : onPick(''))}>
+              <Icon name="close" size={16} />
               {t('date.clear')}
             </button>
           )}
           <button type="button" className="btn btn--small btn--quiet datepop__done" onClick={() => onClose(true)}>
+            <Icon name="check" size={16} />
             {t('date.done')}
           </button>
         </div>

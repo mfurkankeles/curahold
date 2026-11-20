@@ -8,7 +8,7 @@ import { useStore } from '../lib/store';
 import { useDepartments } from '../lib/departments';
 import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
-import { trapTab } from './ui';
+import { trapTab, CloseButton } from './ui';
 import { useLeave } from '../lib/leave';
 
 interface Found {
@@ -209,22 +209,25 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
           else trapTab(e.nativeEvent, box.current);
         }}
       >
-        <input
-          ref={input}
-          className="palette-input"
-          value={q}
-          placeholder={t('search.placeholder')}
-          aria-label={t('search.placeholder')}
-          role="combobox"
-          aria-expanded="true"
-          aria-controls="palette-list"
-          aria-activedescendant={items[active] ? `pi-${active}` : undefined}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setActive(0);
-          }}
-          onKeyDown={onKey}
-        />
+        <div className="palette-top">
+          <input
+            ref={input}
+            className="palette-input"
+            value={q}
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.placeholder')}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="palette-list"
+            aria-activedescendant={items[active] ? `pi-${active}` : undefined}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setActive(0);
+            }}
+            onKeyDown={onKey}
+          />
+          <CloseButton onClick={onClose} />
+        </div>
         <div className="palette-list" id="palette-list" role="listbox" ref={list}>
           {items.length === 0 && <p className="palette-none">{t('search.none')}</p>}
           {items.map((it, i) => {

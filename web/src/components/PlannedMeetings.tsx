@@ -159,6 +159,7 @@ export function AccountPlanned({ account }: { account: Account }) {
       {past.length > 0 && (
         <div className="planned__past">
           <button className="btn btn--quiet btn--small" aria-expanded={showPast} onClick={() => setShowPast((v) => !v)}>
+            <Icon name="history" size={16} />
             {t('planned.recent')} <span className="num muted">{past.length}</span>
           </button>
           {showPast && (
@@ -270,9 +271,11 @@ function PlanDialog({ account, planned, onClose, onSaved }: { account: Account; 
         <>
           {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={() => void save()}>
+            <Icon name="check" size={16} />
             {editing ? t('plannedForm.saveEdit') : t('plannedForm.save')}
           </button>
         </>
@@ -409,9 +412,11 @@ function HoldDialog({ account, planned, onClose, onDone }: { account: Account; p
         <>
           {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={busy} onClick={() => void confirm()}>
+            <Icon name="check" size={16} />
             {t('plannedHold.confirm')}
           </button>
         </>
@@ -477,9 +482,11 @@ function PostponeDialog({ planned, onClose, onDone }: { planned: PlannedMeeting;
         <>
           {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={busy} onClick={() => void confirm()}>
+            <Icon name="check" size={16} />
             {t('plannedPostpone.confirm')}
           </button>
         </>
@@ -530,9 +537,11 @@ function CancelDialog({ planned, onClose, onDone }: { planned: PlannedMeeting; o
         <>
           {error && <span className="error-text" role="alert">{error}</span>}
           <button className="btn" onClick={onClose}>
+            <Icon name="check" size={16} />
             {t('plannedCancel.keep')}
           </button>
           <button className="btn btn--danger" disabled={busy} onClick={() => void confirm()}>
+            <Icon name="check" size={16} />
             {t('plannedCancel.confirm')}
           </button>
         </>
@@ -600,6 +609,7 @@ function TypeManager({ types, onChange }: { types: MeetingType[]; onChange: (t: 
           <Icon name="plus" size={13} /> {t('plannedTypes.add')}
         </button>
         <button type="button" className="btn btn--small" disabled={busy} onClick={() => void save()}>
+          <Icon name="check" size={16} />
           {t('plannedTypes.save')}
         </button>
       </div>

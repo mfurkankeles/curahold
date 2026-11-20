@@ -165,6 +165,7 @@ function SummaryTable({ r }: { r: Ok }) {
           {t('rb.showing', { shown: f.num(Math.min(limit, table?.rows.length ?? 0), 0), total: f.num(r.matched, 0) })}
           {limit < (table?.rows.length ?? 0) && (
             <button type="button" className="btn btn--small btn--quiet" onClick={() => setLimit((n) => n + PAGE_ROWS * 2)}>
+              <Icon name="chevronDown" size={16} />
               {t('rb.showMore', { n: f.num(Math.min((table?.rows.length ?? 0) - limit, PAGE_ROWS * 2), 0) })}
             </button>
           )}

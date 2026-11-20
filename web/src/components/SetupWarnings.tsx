@@ -27,6 +27,7 @@ export function SetupWarnings({ path }: { path: string }) {
           {t('sh.warn.title', { n: list.length })}
         </h3>
         <button type="button" className="btn btn--quiet btn--small" onClick={() => navigate('/setup-health')}>
+          <Icon name="arrowRight" size={16} />
           {t('sh.warn.all')}
         </button>
       </div>
@@ -40,6 +41,7 @@ export function SetupWarnings({ path }: { path: string }) {
             </span>
             {c.fix !== path && (
               <button type="button" className="btn btn--small" onClick={() => navigate(c.fix)}>
+                <Icon name="arrowRight" size={16} />
                 {c.fixLabel}
               </button>
             )}

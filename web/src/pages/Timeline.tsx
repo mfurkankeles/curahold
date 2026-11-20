@@ -132,6 +132,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
                   <Icon name="chevronLeft" size={16} />
                 </button>
                 <button className="btn" onClick={() => setStart(mondayOf(addDays(today, -7)))}>
+                  <Icon name="calendar" size={16} />
                   {t('calendar.today')}
                 </button>
                 <button className="btn btn--icon" onClick={() => setStart(addDays(start, 21))} aria-label={t('calendar.next')}>

@@ -10,6 +10,7 @@ import { relativeTime } from '../lib/time';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
 import { useLeave } from '../lib/leave';
+import { CloseButton } from './ui';
 
 export function Bell() {
   const leavePop = useLeave<HTMLDivElement>();
@@ -78,9 +79,11 @@ export function Bell() {
             <strong>{t('bell.title')}</strong>
             {data.unread > 0 && (
               <button className="btn btn--quiet btn--small" onClick={() => post('/notifications/read', { all: true }).then(load)}>
+                <Icon name="check" size={16} />
                 {t('bell.readAll')}
               </button>
             )}
+            <CloseButton onClick={() => setOpen(false)} />
           </div>
           {data.notifications.length === 0 ? (
             <EmptyState compact icon="inbox" tone="done" title={t('bell.emptyTitle')} body={t('bell.emptyBody')} />

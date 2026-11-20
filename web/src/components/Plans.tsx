@@ -215,13 +215,16 @@ export function PlanEditor({ plan, draft, onClose, onSaved }: { plan: PlanTempla
         <>
           {plan && (
             <button className="btn btn--danger u-me-auto" onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           )}
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={save}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -388,6 +391,7 @@ export function PlaybooksSettings() {
                   </div>
                   {manage && (
                     <button className="btn btn--small" onClick={() => setEditing({ plan: p })}>
+                      <Icon name="edit" size={16} />
                       {t('common.edit')}
                     </button>
                   )}
@@ -431,6 +435,7 @@ export function PlaybooksSettings() {
                   {t('plans.tasksN', { n: ex.steps.length })} · {anchorText.anchor(ex.anchor)}
                 </p>
                 <button className="btn btn--small" onClick={() => setEditing({ plan: null, draft: draftOf(ex, locale) })}>
+                  <Icon name="book" size={16} />
                   {t('plans.useExample')}
                 </button>
               </article>

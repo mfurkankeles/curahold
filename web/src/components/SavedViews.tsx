@@ -258,6 +258,7 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
             onKeyDown={(e) => e.key === 'Enter' && void save()}
           />
           <button type="button" className="btn btn--primary btn--small" disabled={!canSave || !name.trim() || busy} onClick={() => void save()}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </div>

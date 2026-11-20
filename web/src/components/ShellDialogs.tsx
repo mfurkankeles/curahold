@@ -26,6 +26,7 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
             <Icon name="external" size={14} />
           </a>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.close')}
           </button>
         </>
@@ -48,6 +49,7 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
                     onAction(n.action!);
                   }}
                 >
+                  <Icon name="check" size={16} />
                   {pick(n.action.label, locale)}
                 </button>
               )}

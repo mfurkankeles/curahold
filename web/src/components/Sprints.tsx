@@ -142,6 +142,7 @@ function SprintForm({ boardId, sprint, onClose, onSaved }: { boardId: string; sp
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -158,6 +159,7 @@ function SprintForm({ boardId, sprint, onClose, onSaved }: { boardId: string; sp
               }
             }}
           >
+            <Icon name="plus" size={16} />
             {sprint ? t('common.save') : t('common.create')}
           </button>
         </>
@@ -273,6 +275,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
     return (
       <EmptyState compact icon="play" title={t('pm.sprint.noActive')} body={t('pm.sprint.noActiveBody')}>
         <button className="btn" onClick={onList}>
+          <Icon name="calendar" size={16} />
           {t('pm.sprints')}
         </button>
       </EmptyState>
@@ -287,6 +290,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
         <Presence who={here.who} />
         {canWrite && (
           <button className="btn btn--small" onClick={() => setClosing(true)}>
+            <Icon name="check" size={16} />
             {t('pm.sprint.complete')}
           </button>
         )}
@@ -403,11 +407,13 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
               <span className="pm-rowactions">
                 {s.state === 'future' && (
                   <button className="btn btn--small" onClick={() => setStarting(s)}>
+                    <Icon name="arrowRight" size={16} />
                     {t('pm.sprint.start')}
                   </button>
                 )}
                 {s.state === 'active' && (
                   <button className="btn btn--small" onClick={() => setClosing(s)}>
+                    <Icon name="check" size={16} />
                     {t('pm.sprint.complete')}
                   </button>
                 )}
@@ -526,6 +532,7 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
                 }
               }}
             >
+              <Icon name="trash" size={16} />
               {t('pm.removeFromSprint')}
             </button>
           )}

@@ -6,6 +6,7 @@ import { ApiFailure, onReauth, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { passkeyAnswer, passkeysHere } from '../lib/passkey';
 import { Dialog } from './ui';
+import { Icon } from './icons';
 
 type Options = { methods: ('totp' | 'passkey' | 'recovery' | 'email')[]; passkey?: { challengeId: string; options: unknown } };
 
@@ -92,6 +93,7 @@ export function ReauthDialog() {
           <>
             <p>{t('sec.confirm.emailBody')}</p>
             <button type="button" className="btn btn--primary" onClick={() => void sendEmail()}>
+              <Icon name="send" size={16} />
               {t('sec.confirm.sendEmail')}
             </button>
           </>
@@ -108,12 +110,14 @@ export function ReauthDialog() {
               )}
             </label>
             <button className="btn btn--primary" disabled={busy}>
+              <Icon name="check" size={16} />
               {t('common.confirm')}
             </button>
           </>
         )}
         {has('passkey') && passkeysHere() && (
           <button type="button" className="btn" onClick={() => void usePasskey()}>
+            <Icon name="key" size={16} />
             {t('sec.second.usePasskey')}
           </button>
         )}
@@ -126,6 +130,7 @@ export function ReauthDialog() {
               setMode(mode === 'totp' ? 'recovery' : 'totp');
             }}
           >
+            <Icon name="key" size={16} />
             {mode === 'totp' ? t('sec.second.useRecovery') : t('sec.second.useCode')}
           </button>
         )}

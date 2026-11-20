@@ -223,6 +223,7 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
           </select>
           <input className="input" autoFocus value={q} placeholder={t('task.links.search')} aria-label={t('task.links.search')} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setAdding(false))} />
           <button className="btn btn--quiet btn--small" onClick={() => setAdding(false)}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           {found.length > 0 && (
@@ -292,7 +293,8 @@ export function TimeSection({ task, editable, reload }: { task: TaskDetail; edit
         <div className="timeadd">
           {QUICK_MINUTES.map((m) => (
             <button key={m} className="btn btn--small" onClick={() => add(m)}>
-              + {hoursText(m, locale)}
+              <Icon name="plus" size={16} />
+              {hoursText(m, locale)}
             </button>
           ))}
           <input
@@ -408,6 +410,7 @@ export function ChecklistMenu({ task, reload }: { task: TaskDetail; reload: Relo
                 <div className="popmenu__form">
                   <input className="input" autoFocus value={naming} aria-label={t('task.checklist.namePrompt')} placeholder={t('task.checklist.namePrompt')} maxLength={120} onChange={(e) => setNaming(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void saveAs()} />
                   <button className="btn btn--primary btn--small" disabled={!naming.trim()} onClick={saveAs}>
+                    <Icon name="check" size={16} />
                     {t('common.save')}
                   </button>
                 </div>

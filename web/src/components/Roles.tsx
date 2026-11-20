@@ -188,6 +188,7 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
           </div>
           <div className="rolecard__actions">
             <button className="btn btn--small" onClick={() => setWho({ title: t('settings.roles.inRole', { role: role.name }), people: inRole(role) })}>
+              <Icon name="people" size={16} />
               {t('settings.roles.people', { n: inRole(role).length })}
             </button>
             {seeAs(role)}
@@ -329,6 +330,7 @@ function PeopleList({ title, people, roles, onClose }: { title: string; people: 
                 <div className="muted">{roles.find((r) => r.id === p.roleId)?.name}</div>
               </div>
               <button className="btn btn--small" onClick={() => setOpen(p.id)}>
+                <Icon name="eye" size={16} />
                 {t('settings.roles.whatCan')}
               </button>
             </li>
@@ -403,6 +405,7 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
                 </td>
                 <td className="u-text-align-end">
                   <button className="btn btn--small" onClick={() => setOpen(p.id)}>
+                    <Icon name="eye" size={16} />
                     {t('settings.roles.whatCan')}
                   </button>
                 </td>
@@ -480,6 +483,7 @@ export function AccessDialog({ userId, roles, onChanged, onClose }: { userId: st
                 <div className="field__hint">{t('preview.explain')}</div>
               </div>
               <button className="btn" onClick={() => startPreview(a.userId, a.name)}>
+                <Icon name="arrowRight" size={16} />
                 {t('preview.start')}
               </button>
             </div>
@@ -577,6 +581,7 @@ function NewRole({ roles, onClose, onDone }: { roles: Role[]; onClose: () => voi
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -596,6 +601,7 @@ function NewRole({ roles, onClose, onDone }: { roles: Role[]; onClose: () => voi
               }
             }}
           >
+            <Icon name="plus" size={16} />
             {t('common.create')}
           </button>
         </>
@@ -649,6 +655,7 @@ function RenameRole({ role, onClose, onDone }: { role: Role; onClose: () => void
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -664,6 +671,7 @@ function RenameRole({ role, onClose, onDone }: { role: Role; onClose: () => void
               }
             }}
           >
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -689,6 +697,7 @@ function RemoveRole({ role, roles, members, onClose, onDone }: { role: Role; rol
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -704,6 +713,7 @@ function RemoveRole({ role, roles, members, onClose, onDone }: { role: Role; rol
               }
             }}
           >
+            <Icon name="trash" size={16} />
             {members.length ? t('settings.roles.moveAndDelete') : t('common.delete')}
           </button>
         </>

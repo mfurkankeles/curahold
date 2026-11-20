@@ -110,6 +110,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       <div className="page">
         <EmptyState icon="board" tone="calm" title={t('board.unavailable')} body={t('board.unavailableBody')}>
           <button className="btn" onClick={() => navigate('/home')}>
+            <Icon name="home" size={16} />
             {t('states.notAllowed.home')}
           </button>
         </EmptyState>
@@ -203,6 +204,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           <Icon name="zap" size={16} />
           <span>{t('board.firstHint')}</span>
           <button className="btn btn--small" onClick={() => quickAdd({ boardId: board.id, status: board.columns[0].key })}>
+            <Icon name="plus" size={16} />
             {t('board.newTask')}
           </button>
           <button className="btn btn--small btn--quiet" onClick={() => setImporting(true)}>
@@ -264,6 +266,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           <Icon name="filter" size={16} />
           <span>{t('filters.noneMatch', { n: win ? win.all : tasks.length })}</span>
           <button className="btn btn--small" onClick={() => setFilters({})}>
+            <Icon name="close" size={16} />
             {t('filters.clear')}
           </button>
         </div>
@@ -558,6 +561,7 @@ function KanbanColumn({ col, tasks, win, onMore, doneKeys, canWrite, onAdd }: { 
         {reading && <div className="column__reading" role="status">{t('common.loading')}</div>}
         {finished && total > DONE_SHOWN + 2 && (
           <button className="btn btn--quiet btn--small column__more" onClick={() => setAll((v) => !v)}>
+            <Icon name="chevronDown" size={16} />
             {all ? t('board.doneLess') : t('board.doneMore', { n: total - DONE_SHOWN })}
           </button>
         )}
@@ -898,6 +902,7 @@ export function BulkBar({ board, ids, total, onSelectAll, onDone }: { /** Withou
         ))}
       </select>
       <button className="btn btn--small btn--quiet" disabled={busy} onClick={() => apply({ archived: true }, 'board.bulk.archived')}>
+        <Icon name="inbox" size={16} />
         {t('board.bulk.archive')}
       </button>
     </div>

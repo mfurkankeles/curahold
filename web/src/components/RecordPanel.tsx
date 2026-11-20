@@ -26,7 +26,7 @@ import { FavoriteButton } from './Favorites';
 import { useAnchorText } from './Plans';
 import { OpenIn, RecordDialog } from './Records';
 import { CommentView, Composer, FileItem, postRecordComment } from './Thread';
-import { Avatar, Avatars, useFocusTrap } from './ui';
+import { Avatar, Avatars, useFocusTrap, CloseButton } from './ui';
 
 export function RecordPanel({ recordId, onChanged }: { recordId: string; onChanged: () => void }) {
   const { t, locale, fmtDate, words } = useI18n();
@@ -149,7 +149,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
       <div className="scrim" ref={leaveScrim} onClick={close} />
       <aside className="panel recpanel" role="dialog" aria-modal="true" aria-label={rec?.name ?? t('common.loading')} tabIndex={-1} ref={leavePanel}>
         <header className="panel__head">
-          <PanelBack />
+          <PanelBack onClose={close} />
           {type && <span className="recpanel__type">{typeLabel(type, locale, false)}</span>}
           <span className="topbar__spacer" />
           {rec && canWrite && type && (
@@ -173,9 +173,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
           >
             <Icon name="link" size={16} />
           </button>
-          <button className="btn btn--quiet btn--icon" aria-label={t('common.close')} onClick={close}>
-            <Icon name="close" size={18} />
-          </button>
+          <CloseButton onClick={close} />
         </header>
         {error ? (
           <div className="panel__body">
@@ -269,6 +267,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
                     ))}
                   </select>
                   <button className="btn btn--small" disabled={!planId} onClick={applyPlan}>
+                    <Icon name="check" size={16} />
                     {t('recordPanel.apply')}
                   </button>
                 </div>

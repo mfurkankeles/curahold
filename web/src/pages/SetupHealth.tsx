@@ -100,6 +100,7 @@ export function SetupHealthPage() {
             {data.checks.length > 0 && !failing.length && (
               <EmptyState icon="checkCircle" tone="done" title={t('sh.allGood.title')} body={t('sh.allGood.body')}>
                 <button className="btn btn--primary" onClick={() => navigate('/setup-test')}>
+                  <Icon name="arrowRight" size={16} />
                   {t('sh.toTest')}
                 </button>
               </EmptyState>
@@ -132,6 +133,7 @@ export function SetupHealthPage() {
                           </button>
                           {c.manual && (
                             <button type="button" className="btn btn--small btn--quiet" onClick={() => void confirm(c, true)}>
+                              <Icon name="check" size={16} />
                               {t('sh.confirm')}
                             </button>
                           )}

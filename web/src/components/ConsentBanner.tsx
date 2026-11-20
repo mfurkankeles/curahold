@@ -24,6 +24,7 @@ import {
   saveConsent,
   type ConsentState,
 } from '../lib/consent';
+import { Icon } from './icons';
 
 const useStrings = (): ConsentStrings => {
   const { locale } = useI18n();
@@ -169,12 +170,15 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
           </ul>
           <div className="consent-actions">
             <button type="button" className="btn" onClick={() => apply((p) => rejectAll(undefined, p))}>
+              <Icon name="close" size={16} />
               {s.rejectAll}
             </button>
             <button type="button" className="btn" onClick={() => apply((p) => chooseConsent({ analytics, marketing }, undefined, p))}>
+              <Icon name="check" size={16} />
               {s.save}
             </button>
             <button type="button" className="btn" onClick={() => apply((p) => acceptAll(undefined, p))}>
+              <Icon name="check" size={16} />
               {s.acceptAll}
             </button>
           </div>
@@ -191,12 +195,15 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
       </div>
       <div className="consent-actions">
         <button type="button" className="btn btn--quiet" onClick={openManage}>
+          <Icon name="sliders" size={16} />
           {s.manage}
         </button>
         <button type="button" className="btn" onClick={() => apply((p) => rejectAll(undefined, p))}>
+          <Icon name="close" size={16} />
           {s.rejectAll}
         </button>
         <button type="button" className="btn" onClick={() => apply((p) => acceptAll(undefined, p))}>
+          <Icon name="check" size={16} />
           {s.acceptAll}
         </button>
       </div>

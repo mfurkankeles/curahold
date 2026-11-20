@@ -40,6 +40,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
       <div className="toolbar">
         <input className="input u-flex-1 u-min-width-220" readOnly value={value} onFocus={(e) => e.target.select()} />
         <button type="button" className="btn" onClick={() => copy(value)}>
+          <Icon name="copy" size={16} />
           {t('me.copy')}
         </button>
       </div>
@@ -137,6 +138,7 @@ export function AnalyticsTab() {
                     </button>
                   )}
                   <button type="button" className="btn btn--quiet btn--small" onClick={() => setRevoking(k)}>
+                    <Icon name="trash" size={16} />
                     {t('dev.keys.revoke')}
                   </button>
                 </div>
@@ -244,6 +246,7 @@ function ShowKey({ title, token, onClose }: { title: string; token: string; onCl
       onClose={onClose}
       footer={
         <button type="button" className="btn btn--primary" onClick={onClose}>
+          <Icon name="check" size={16} />
           {t('dev.done')}
         </button>
       }
@@ -253,6 +256,7 @@ function ShowKey({ title, token, onClose }: { title: string; token: string; onCl
         <div className="toolbar">
           <input className="input once__value" readOnly value={token} onFocus={(e) => e.target.select()} aria-label={t('dev.keys.copyNow')} />
           <button type="button" className="btn btn--primary" onClick={() => copy(token)}>
+            <Icon name="copy" size={16} />
             {t('me.copy')}
           </button>
         </div>
@@ -306,6 +310,7 @@ function NewAnalyticsKey({ onClose, onMade }: { onClose: () => void; onMade: (to
       footer={
         <>
           <button type="button" className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="newanalyticskey" disabled={busy || invalid}>

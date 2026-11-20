@@ -23,7 +23,7 @@ import { AccountPicker } from './AccountPicker';
 import { Icon, type IconName } from './icons';
 import { TaskFieldInput } from './TaskExtras';
 import { RepeatPicker } from './TaskPanel';
-import { Avatar, PeoplePicker } from './ui';
+import { Avatar, PeoplePicker, CloseButton } from './ui';
 import type { Locale } from '../../../shared/src/i18n';
 import { DateField } from './DateField';
 import { useLeave } from '../lib/leave';
@@ -404,6 +404,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             <Icon name="board" size={22} />
             <p>{t('quick.noBoards')}</p>
             <button className="btn" onClick={onClose}>
+              <Icon name="close" size={16} />
               {t('common.close')}
             </button>
           </div>
@@ -419,9 +420,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
           <h2 className="qa__title" id="qa-title">
             <Icon name="plus" size={16} /> {many ? t('quick.titleMany', { n: lines.length }) : t('quick.title')}
           </h2>
-          <button className="btn btn--quiet btn--icon btn--small" onClick={onClose} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {/* ------------------------------------------------------------ title */}
@@ -756,6 +755,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             <span>{t('quick.keep')}</span>
           </label>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={submit}>
+            <Icon name="plus" size={16} />
             {busy ? t('common.saving') : many ? t('quick.addMany', { n: lines.length }) : t('quick.add')}
           </button>
         </div>

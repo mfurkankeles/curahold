@@ -191,9 +191,11 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
             )}
             <div className="inline-actions u-justify-content-flex-start">
               <button className="btn" onClick={undo} disabled={busy}>
+                <Icon name="undo" size={16} />
                 {t('import.undo')}
               </button>
               <button className="btn btn--quiet" onClick={() => { setSheet(null); setResult(null); }}>
+                <Icon name="upload" size={16} />
                 {t('import.another')}
               </button>
             </div>
@@ -267,6 +269,7 @@ export function Importer({ onImported, compact, file: firstFile }: { onImported?
           <div className="muted">{t('import.rows', { n: sheet.rows.length })}</div>
         </div>
         <button className="btn btn--quiet btn--small" onClick={() => setSheet(null)}>
+          <Icon name="upload" size={16} />
           {t('import.changeFile')}
         </button>
       </div>

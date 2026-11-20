@@ -202,6 +202,7 @@ export function HandoverCard({ id, onDone }: { id: string; onDone: () => void })
             <div className="flow-add">
               <input className="input" value={promise} placeholder={t('flow.promise.add')} aria-label={t('flow.promise.add')} maxLength={500} onChange={(e) => setPromise(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.ctrlKey && !e.metaKey && (e.preventDefault(), void addPromise())} />
               <button className="btn btn--small" disabled={!promise.trim()} onClick={() => void addPromise()}>
+                <Icon name="plus" size={16} />
                 {t('common.add')}
               </button>
             </div>
@@ -296,6 +297,7 @@ export function HandoverCard({ id, onDone }: { id: string; onDone: () => void })
             <kbd>{modKey()}</kbd>+<kbd>{CAP.enter}</kbd> {t('flow.handover.confirm')}
           </span>
           <button className="btn btn--quiet" onClick={() => void dismiss()}>
+            <Icon name="close" size={16} />
             {t('flow.handover.notNow')}
           </button>
           <button className="btn btn--primary" disabled={!owner || busy} onClick={() => void confirm()}>
@@ -499,6 +501,7 @@ export function WaitingFor({ account, flow, reload }: { account: Account; flow: 
         <div className="flow-add">
           <input className="input" value={promise} placeholder={t('flow.promise.add')} aria-label={t('flow.promise.add')} maxLength={500} onChange={(e) => setPromise(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), void add())} />
           <button className="btn btn--small" disabled={!promise.trim()} onClick={() => void add()}>
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </div>
@@ -509,6 +512,7 @@ export function WaitingFor({ account, flow, reload }: { account: Account; flow: 
         <EmptyState compact icon="link" title={t('flow.waiting.empty')} body={t('flow.waiting.emptyBody')}>
           {canWrite && (
             <button className="btn" onClick={() => setLinking(true)}>
+              <Icon name="link" size={16} />
               {t('flow.link.button')}
             </button>
           )}
@@ -856,9 +860,11 @@ export function MeetingPromises({ meeting }: { meeting: { id: string; accountId:
           footer={
             <>
               <button className="btn btn--quiet" onClick={() => setDraft(null)}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <button className="btn btn--primary" disabled={busy || !pick.size} onClick={() => void apply()}>
+                <Icon name="check" size={16} />
                 {t('flow.meeting.save', { n: pick.size })}
               </button>
             </>

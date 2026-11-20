@@ -253,6 +253,7 @@ export function CommentView({ comment, author, canDelete, deleteUrl, onDeleted }
                 if (await save(() => del(deleteUrl), false)) onDeleted();
               }}
             >
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           )}

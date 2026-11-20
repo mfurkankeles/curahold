@@ -4,6 +4,7 @@ import type { Account } from '../../../shared/src/model';
 import { get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
+import { Icon } from './icons';
 
 export function AccountPicker({ value, name, onChange, disabled }: { value: string | null; name: string | null; onChange: (id: string | null, name?: string | null) => void; disabled?: boolean }) {
   const { t, words } = useI18n();
@@ -71,6 +72,7 @@ export function AccountPicker({ value, name, onChange, disabled }: { value: stri
           ))}
           {canWrite && q.trim() && !exact && (
             <button className="picker__opt picker__opt--btn" onClick={create}>
+              <Icon name="plus" size={16} />
               <span>{t('task.createAccount', { name: q.trim() })}</span>
             </button>
           )}

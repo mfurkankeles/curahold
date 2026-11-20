@@ -15,7 +15,7 @@ import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
-import { PeoplePicker, useFocusTrap } from './ui';
+import { CloseButton, PeoplePicker, useFocusTrap } from './ui';
 import { Icon, type IconName } from './icons';
 import { doneTarget } from '../lib/tasks';
 import { useToggleDone } from './Tick';
@@ -26,7 +26,7 @@ import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
 import { isPmBoard, PmRows } from './Pm';
 import { DateField } from './DateField';
-import { LoadError, SkeletonRows } from './Empty';
+import { LoadError, SkeletonRows, SkeletonPanel } from './Empty';
 import { typing } from '../lib/shell';
 import { takeSeed } from './taskSeed';
 import '../surfaces/employee-work.css';
@@ -187,7 +187,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
       <div className="scrim" ref={leaveScrim} onClick={close} />
       <aside className="panel ew-panel" role="dialog" aria-modal="true" aria-label={view?.title ?? t('common.loading')} tabIndex={-1} ref={leavePanel} onInput={here.typing}>
         <div className="panel__head">
-          <PanelBack up={task?.parent ? { title: task.parent.title, go: () => openOver('task', task.parent!.id, true) } : null} />
+          <PanelBack up={task?.parent ? { title: task.parent.title, go: () => openOver('task', task.parent!.id, true) } : null} onClose={close} />
           <span className="panel__crumb" data-sub={task?.parent ? true : undefined}>{board?.name}</span>
           <Presence who={here.who} />
           {task && !task.parentId && <FollowButton task={task} reload={load} />}
@@ -214,9 +214,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               <Icon name="trash" size={16} />
             </button>
           )}
-          <button className="btn btn--quiet btn--icon btn--small" onClick={close} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={close} />
         </div>
         {error && (
           <div className="panel__body">
@@ -225,7 +223,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
         )}
         {!view && !error && (
           <div className="panel__body">
-            <SkeletonRows rows={6} label={t('common.loading')} />
+            <SkeletonPanel label={t('common.loading')} />
           </div>
         )}
         {view && !error && (
@@ -549,6 +547,7 @@ function Subtasks({ task, doneKeys, firstKey, doneKey, editable, reload, onChang
         <form onSubmit={add} className="u-display-flex u-gap-4 u-mt-4">
           <input className="input" placeholder={t('task.addSubtask')} aria-label={t('task.addSubtask')} value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)} />
           <button className="btn" disabled={!title.trim()}>
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </form>
@@ -599,6 +598,7 @@ function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean
         <>
           <input ref={input} type="file" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
           <button className="btn btn--small u-justify-self-start" onClick={() => input.current?.click()}>
+            <Icon name="upload" size={16} />
             {t('task.upload')}
           </button>
         </>

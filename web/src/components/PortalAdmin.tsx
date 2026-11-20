@@ -228,6 +228,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                   {canWrite && p.status !== 'disabled' && (
                     <>
                       <button className="btn btn--quiet btn--small" onClick={() => act(() => post(`/portal/users/${p.id}/resend`), t('portal.people.resent'))}>
+                        <Icon name="refresh" size={16} />
                         {t('portal.people.resend')}
                       </button>
                       <button
@@ -242,6 +243,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                           }
                         }}
                       >
+                        <Icon name="close" size={16} />
                         {t('portal.people.disable')}
                       </button>
                     </>
@@ -249,9 +251,11 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                   {privacy && (
                     <>
                       <button className="btn btn--quiet btn--small" onClick={() => void exportData(p)}>
+                        <Icon name="download" size={16} />
                         {t('portal.people.export')}
                       </button>
                       <button className="btn btn--quiet btn--small btn--danger" onClick={() => setErase(p)}>
+                        <Icon name="trash" size={16} />
                         {t('portal.people.erase')}
                       </button>
                     </>
@@ -317,6 +321,7 @@ function BrandSection({ settings, value: b, onChange: setB }: { settings: Portal
             </div>
             {b.color && (
               <button type="button" className="btn btn--quiet btn--small pbrand__reset" onClick={() => (setB({ ...b, color: null }), setHex(''))}>
+                <Icon name="undo" size={16} />
                 {t('portal.admin.colorDefault')}
               </button>
             )}
@@ -325,6 +330,7 @@ function BrandSection({ settings, value: b, onChange: setB }: { settings: Portal
             <span className="field__label">{t('portal.admin.logo')}</span>
             <span className="field__hint">{settings.logoUrl ? t('portal.admin.logoLead') : t('portal.admin.noLogo')}</span>
             <button type="button" className="btn btn--small pbrand__logo" onClick={() => navigate('/settings/company')}>
+              <Icon name="edit" size={16} />
               {t('portal.admin.changeLogo')}
             </button>
           </div>
@@ -436,6 +442,7 @@ function UploadsSection({ settings, onSaved }: { settings: PortalSettings; onSav
             .catch(() => toast(t('errors.server'), 'error'))
         }
       >
+        <Icon name="check" size={16} />
         {t('common.save')}
       </button>
     </section>

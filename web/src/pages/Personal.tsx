@@ -233,6 +233,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                 <div className="toolbar">
                   <input className="input u-flex-1 u-min-width-240" readOnly value={calendar.url} onFocus={(e) => e.target.select()} aria-label={t('me.calendar')} />
                   <button className="btn" onClick={() => copy(calendar.url!)}>
+                    <Icon name="copy" size={16} />
                     {t('me.copy')}
                   </button>
                 </div>
@@ -241,6 +242,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
             ) : (
               <div className="toolbar">
                 <button className="btn" onClick={makeCalendar}>
+                  <Icon name="calendar" size={16} />
                   {calendar.enabled ? t('me.calendarNew') : t('me.calendarMake')}
                 </button>
                 {calendar.enabled && (
@@ -250,6 +252,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                       if (await run(() => del('/me/calendar'), false)) setCalendar({ enabled: false });
                     }}
                   >
+                    <Icon name="calendar" size={16} />
                     {t('me.calendarOff')}
                   </button>
                 )}
@@ -302,6 +305,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
 
           <div className="wizard__nav">
             <button className="btn btn--primary" disabled={busy} onClick={save}>
+              <Icon name="check" size={16} />
               {mode === 'welcome' ? t('me.start') : t('common.save')}
             </button>
             {mode === 'welcome' && <span className="field__hint">{t('me.changeLater')}</span>}

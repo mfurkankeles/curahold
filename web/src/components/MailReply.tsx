@@ -88,6 +88,7 @@ export function MailReply({ connectionId, accountId, activity, onSent }: { conne
           {busy ? t('mailbox.reply.sending' as MessageKey) : t('mailbox.reply.send' as MessageKey)}
         </button>
         <button type="button" className="btn btn--quiet btn--small" onClick={() => (setOpen(false), setError(null))}>
+          <Icon name="close" size={16} />
           {t('common.cancel')}
         </button>
         <span className="field__hint">{t('mailbox.reply.hint' as MessageKey)}</span>

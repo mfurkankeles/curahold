@@ -12,6 +12,7 @@ import { navigate } from '../lib/router';
 import type { SecondStepNeeded } from '../../../shared/src/identity';
 import { SecondStepForm } from '../components/SecondStep';
 import { passkeysHere, signInWithPasskey } from '../lib/passkey';
+import { Icon } from '../components/icons';
 
 function errorText(e: unknown, t: ReturnType<typeof useI18n>['t']) {
   if (e instanceof ApiFailure) return e.status === 0 ? t('errors.network') : e.body.message || t('errors.server');
@@ -130,6 +131,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
           </a>
         )}
         <button className="btn btn--quiet" onClick={() => setSent(null)}>
+          <Icon name="mail" size={16} />
           {t('auth.useAnother')}
         </button>
       </AuthFrame>
@@ -143,6 +145,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
         <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <button className="btn btn--primary" disabled={busy}>
+        <Icon name="send" size={16} />
         {t('auth.sendLink')}
       </button>
     </form>
@@ -170,6 +173,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
         {error && <div className="notice notice--error" role="alert">{error}</div>}
         {backup ? emailForm : <SsoSignIn org={org} info={sso} primary />}
         <button type="button" className="btn btn--quiet" onClick={() => (setBackup(!backup), setError(null))}>
+          <Icon name="eye" size={16} />
           {backup ? t('auth.backup.back') : t('auth.backup.open')}
         </button>
       </AuthFrame>
@@ -199,16 +203,19 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
             }
           }}
         >
+          <Icon name="key" size={16} />
           {t('sec.passkeySignIn')}
         </button>
       )}
       {org.loginMethods.google && (
         <button className="btn" onClick={() => oauth('google')}>
+          <Icon name="key" size={16} />
           {t('auth.google')}
         </button>
       )}
       {org.loginMethods.microsoft && (
         <button className="btn" onClick={() => oauth('microsoft')}>
+          <Icon name="key" size={16} />
           {t('auth.microsoft')}
         </button>
       )}
@@ -281,6 +288,7 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
           <textarea className="textarea" rows={2} maxLength={500} value={note} placeholder={t('join.notePlaceholder')} onChange={(e) => setNote(e.target.value)} />
         </label>
         <button className="btn btn--primary" disabled={busy || !token || !name.trim()}>
+          <Icon name="send" size={16} />
           {t('join.send')}
         </button>
       </form>
@@ -352,6 +360,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
         <>
           <div className="notice notice--error" role="alert">{error}</div>
           <button className="btn btn--primary" onClick={() => navigate('/login')}>
+            <Icon name="arrowLeft" size={16} />
             {t('common.back')}
           </button>
         </>
@@ -367,7 +376,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
             <input className="input code-input" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
           </label>
           {import.meta.env.DEV && challenge.devCode && <span className="field__hint">dev: {challenge.devCode}</span>}
-          <button className="btn btn--primary">{t('auth.deviceConfirm')}</button>
+          <button className="btn btn--primary"><Icon name="check" size={16} /> {t('auth.deviceConfirm')}</button>
         </form>
       )}
     </AuthFrame>

@@ -10,6 +10,7 @@ import { CountUp } from './CountUp';
 import { EmptyState } from './Empty';
 import { intlTag } from '../../../shared/src/i18n';
 import { currencySign, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
+import { Icon } from './icons';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** Colours for parts that have none of their own, in an order that keeps neighbours apart. */
@@ -524,6 +525,7 @@ export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
           {t('rb.showing', { shown: f.num(rows.length, 0), total: f.num(r.matched, 0) })}
           {left > 0 && (
             <button type="button" className="btn btn--small btn--quiet" onClick={() => setLimit((n) => n + PAGE_ROWS * 2)}>
+              <Icon name="chevronDown" size={16} />
               {t('rb.showMore', { n: f.num(Math.min(left, PAGE_ROWS * 2), 0) })}
             </button>
           )}

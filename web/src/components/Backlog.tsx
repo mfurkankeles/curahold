@@ -277,6 +277,7 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
                     {picked.length ? t('pm.plan.picked', { n: n(picked.length), points: t('pm.points.short', { n: n(pointsOf(picked)) }) }) : t('pm.plan.pickHint')}
                   </span>
                   <button className="btn btn--primary btn--small" disabled={!picked.length || !target} onClick={() => addTo([...selected])}>
+                    <Icon name="plus" size={16} />
                     {t('pm.addToSprint')}
                   </button>
                   {sprint?.state === 'future' && !open.some((s) => s.state === 'active') && (sprint.totals?.items ?? 0) > 0 && (
@@ -371,12 +372,14 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
         ) : shown.length === 0 && ready ? (
           <EmptyState compact icon="hourglass" tone="done" title={t('flow.demand.readyEmpty', { days: RENEWAL_WINDOW_DAYS })}>
             <button className="btn" onClick={toggleReady}>
+              <Icon name="list" size={16} />
               {t('pm.epics.all')}
             </button>
           </EmptyState>
         ) : shown.length === 0 ? (
           <EmptyState compact icon="filter" title={t('pm.backlog.epicEmpty')}>
             <button className="btn" onClick={() => (setEpic('all'), setQ(''))}>
+              <Icon name="list" size={16} />
               {t('pm.epics.all')}
             </button>
           </EmptyState>

@@ -13,7 +13,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useI18n } from '../lib/i18n';
 import { Icon } from './icons';
-import { trapTab } from './ui';
+import { trapTab, CloseButton } from './ui';
 import { useLeave } from '../lib/leave';
 
 export const PHONE = '(max-width: 860px)';
@@ -107,18 +107,18 @@ function Sheet({ title, count, onClear, onClose, children }: { title?: string; c
           <h2 className="filtersheet__title" id={head}>
             {title ?? t('filters.sheetTitle')}
           </h2>
-          <button type="button" className="btn btn--quiet btn--icon" onClick={onClose} aria-label={t('common.close')}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="filtersheet__body">{children}</div>
         <div className="filtersheet__foot">
           {onClear && (
             <button type="button" className="btn btn--quiet" disabled={!count} onClick={onClear}>
+              <Icon name="close" size={16} />
               {t('filters.clear')}
             </button>
           )}
           <button type="button" className="btn btn--primary filtersheet__apply" onClick={onClose}>
+            <Icon name="check" size={16} />
             {t('filters.apply')}
           </button>
         </div>
