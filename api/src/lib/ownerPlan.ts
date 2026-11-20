@@ -3,7 +3,7 @@
 // the owner's hand-kept investor pipeline, and loading all of it (with the
 // monthly targets and tasks) from the business plan's targets file. Over the
 // owner connection, like the rest of the console (lib/ownerConsole.ts): the
-// tables are the owner's own (migration 0247); the milestone counts read
+// tables are the owner's own (migration 0248); the milestone counts read
 // across companies and return numbers only, never a company's records.
 import type { FundraisingWindowsRow, InvestorPipelineRow, PlanBudgetRow } from '../db/rows.gen';
 import {

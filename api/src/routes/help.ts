@@ -332,7 +332,7 @@ helpRoutes.post('/help', async (c) => {
     (async () => {
       await tellSupport(deps, org, { name: auth.name, email: auth.email, role: auth.roleKey }, req, saved, grant);
       // A request that blocks a customer's work reaches the owner's phones too. After the commit, like the desk's
-      // mail: the owner's outbox is not the company's, and the request role has no grant on it (migration 0247).
+      // mail: the owner's outbox is not the company's, and the request role has no grant on it (migration 0248).
       if (req.impact === 'blocking')
         await pushToOwner(deps, `push:help:${req.ref}`, (l) => ({ title: ownerWord(l, 'help.push.title'), body: ownerWord(l, 'help.push.body', { ref: req.ref, company: org.name.slice(0, 80) }), url: `/support?r=${encodeURIComponent(req.ref)}`, urgency: 'high' }));
       // A first answer drafted from the docs, as a note only the desk sees (routes/assist.ts).

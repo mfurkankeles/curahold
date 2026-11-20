@@ -10,7 +10,7 @@ import type { FundraisingWindowsRow, InvestorPipelineRow, OwnerPushDevicesRow, P
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CHECKLIST } from '../../../shared/src/checklist';
-import { INVESTOR_KINDS, INVESTOR_STAGES, readPlanFile, TARGET_METRICS, WINDOW_STATUSES, type OwnerPushState } from '../../../shared/src/ownerPlan';
+import { INVESTOR_KINDS, INVESTOR_STAGES, isOwnerLocale, readPlanFile, TARGET_METRICS, WINDOW_STATUSES, type OwnerPushState } from '../../../shared/src/ownerPlan';
 import { ownerWord } from '../../../shared/src/i18n/owner';
 import { TRIAL_DEPARTMENTS, TRIAL_REQUEST_STATUSES } from '../../../shared/src/trialRequest';
 import type { AppEnv } from '../context';
@@ -404,7 +404,7 @@ ownerRoutes.post('/plan/investors/:id/restore', async (c) => {
 ownerRoutes.get('/summary', async (c) => c.json(await previewCeoSummary(c.get('deps'))));
 /** Turns the Monday summary on or off and sets the language of what the console sends the owner (summary and phone alerts). */
 ownerRoutes.put('/summary', async (c) => {
-  const input = await body(c, z.object({ enabled: z.boolean().optional(), locale: z.enum(['tr', 'en']).optional() }));
+  const input = await body(c, z.object({ enabled: z.boolean().optional(), locale: z.string().refine(isOwnerLocale).optional() }));
   const who = await by(c);
   await c.get('deps').db.system(async (q) => {
     if (input.enabled !== undefined) await writeConsoleSetting(q, 'ceoSummary.enabled', input.enabled, who);

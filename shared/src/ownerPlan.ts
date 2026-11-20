@@ -5,7 +5,7 @@
 // both by the console's "load from the plan" button and by
 // scripts/plan/load-targets.ts, so the two can never read it differently.
 // Pure TypeScript: no imports outside shared.
-import { ownerWord } from './i18n/owner';
+import { OWNER_LOCALES, ownerWord } from './i18n/owner';
 import { PLAN_METRICS } from './ownerConsole';
 
 /**
@@ -104,6 +104,9 @@ export interface OwnerInvestorSide {
   /** Investors put aside in the last 30 days, which can still be brought back. */
   removed: { id: string; name: string; deletedAt: string }[];
 }
+
+/** One of the owner console's two languages (OWNER_LOCALES): what the summary and phone alerts are written in. */
+export const isOwnerLocale = (v: unknown): v is 'tr' | 'en' => typeof v === 'string' && (OWNER_LOCALES as string[]).includes(v);
 
 /** The weekly CEO summary's settings (console_settings `ceoSummary.*`). */
 export interface CeoSummarySettings {

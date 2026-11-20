@@ -10,6 +10,7 @@ import type { OwnerKey } from '../../../../shared/src/i18n/owner';
 import {
   INVESTOR_KINDS,
   INVESTOR_STAGES,
+  isOwnerLocale,
   readPlanFile,
   WINDOW_STATUSES,
   type FundraisingWindow,
@@ -675,7 +676,7 @@ function ImportDialog({ onClose, onDone, failed }: { onClose: () => void; onDone
   const [scenario, setScenario] = useState<string | null>(null);
   const [done, setDone] = useState<ImportAnswer | null>(null);
   const [busy, setBusy] = useState(false);
-  const read: PlanImportResult | null = useMemo(() => (file ? readPlanFile(file, scenario, locale === 'en' ? 'en' : 'tr') : null), [file, scenario, locale]);
+  const read: PlanImportResult | null = useMemo(() => (file ? readPlanFile(file, scenario, isOwnerLocale(locale) ? locale : 'tr') : null), [file, scenario, locale]);
   const pick = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     setDone(null);

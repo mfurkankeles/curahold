@@ -1,12 +1,12 @@
 // What the console sends to the owner himself: the weekly CEO summary by
 // e-mail and alerts to his phones (Web Push). The owner is not a user of any
 // company, so the companies' notification outbox (lib/notify.ts) cannot carry
-// it; this is the same idea on his own table (owner_outbox, migration 0247):
+// it; this is the same idea on his own table (owner_outbox, migration 0248):
 // a row written in the transaction that caused it, with a unique key so a
 // repeat is a no-op, sent after it commits and retried a few times.
 // Also the owner's own console settings for these (language, summary on/off).
 import type { OwnerOutboxRow, OwnerPushDevicesRow } from '../db/rows.gen';
-import type { CeoSummarySettings } from '../../../shared/src/ownerPlan';
+import { isOwnerLocale, type CeoSummarySettings } from '../../../shared/src/ownerPlan';
 import { defer, type Deps } from '../context';
 import type { Q } from '../db';
 import { sendPush } from './webpush';
@@ -23,7 +23,7 @@ export async function ownerMailSettings(q: Q): Promise<CeoSummarySettings> {
   const out = { ...OWNER_SETTING_DEFAULTS };
   for (const r of rows) {
     if (r.key === 'ceoSummary.enabled' && typeof r.value === 'boolean') out.enabled = r.value;
-    if (r.key === 'owner.locale' && (r.value === 'tr' || r.value === 'en')) out.locale = r.value;
+    if (r.key === 'owner.locale' && isOwnerLocale(r.value)) out.locale = r.value;
   }
   return out;
 }

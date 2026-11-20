@@ -6,7 +6,7 @@
 // readers (no model call, so no AI cost and nothing invented); queued in the
 // owner's outbox under the week's key, so it goes once however often the
 // hourly job runs, and a short push follows on his phones if he added any.
-import type { Locale } from '../../../shared/src/i18n';
+import { intlTag, type Locale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
 import { weekOf } from '../../../shared/src/office';
 import type { CeoSummaryPreview } from '../../../shared/src/ownerPlan';
@@ -65,7 +65,7 @@ async function weekFigures(deps: Deps, from: Date, to: Date) {
  */
 export async function composeCeoSummary(deps: Deps, from: Date, to: Date, locale: 'tr' | 'en'): Promise<{ subject: string; text: string }> {
   const w = (k: OwnerKey, v?: Record<string, string | number>) => ownerWord(locale as Locale, k, v);
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   const n = (v: number) => new Intl.NumberFormat(tag, { maximumFractionDigits: 1 }).format(v);
   const usd = (v: number) => new Intl.NumberFormat(tag, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
   const date = (d: Date | string, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }) => new Intl.DateTimeFormat(tag, { timeZone: 'UTC', ...opts }).format(typeof d === 'string' ? new Date(`${d}T00:00:00Z`) : d);
