@@ -15,6 +15,7 @@ import { useI18n } from '../lib/i18n';
 import { Icon } from './icons';
 import { trapTab, CloseButton } from './ui';
 import { useLeave } from '../lib/leave';
+import { useDragClose } from '../lib/dragClose';
 
 export const PHONE = '(max-width: 860px)';
 
@@ -84,6 +85,7 @@ function Sheet({ title, count, onClear, onClose, children }: { title?: string; c
   const close = useRef(onClose);
   close.current = onClose;
   const head = useId();
+  useDragClose(box, onClose, { handle: '.filtersheet__head' });
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     box.current?.querySelector<HTMLElement>('.filtersheet__body button, .filtersheet__body input, .filtersheet__body select')?.focus();

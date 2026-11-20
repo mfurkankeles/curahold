@@ -19,6 +19,8 @@ import { dayParts, formatDayLong, formatDayNumeric, formatInt, formatMonthYear, 
 import { useDismiss } from './Menus';
 import { Icon } from './icons';
 import { useLeave } from '../lib/leave';
+import { SHEET_PHONE, useDragClose } from '../lib/dragClose';
+import { useMedia } from './FilterSheet';
 
 type Range = { from: string; to: string };
 
@@ -302,6 +304,8 @@ function CalendarPop({
   const box = useRef<HTMLDivElement>(null);
   const leaveScrim = useLeave<HTMLSpanElement>();
   const leaveBox = useLeave<HTMLDivElement>(box);
+  // On a phone the picker is a bottom sheet with nothing to scroll, so the whole sheet is the handle.
+  useDragClose(box, () => onClose(true), { handle: '.datepop', on: useMedia(SHEET_PHONE) });
   const grid = useRef<HTMLTableElement>(null);
   const headId = useId();
   const p = dayParts(focus)!;
