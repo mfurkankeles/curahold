@@ -306,7 +306,7 @@ export function SsoSettings() {
         {!ready && !form.enabled && <p className="field__hint">{k('sso.needsDetails')}</p>}
         {tested && (
           <p className={`notice sso__effect${tested.ok ? ' sso__ok' : ' notice--error'}`} role="status">
-            {tested.ok ? t('sso.test.ok', { email: tested.as }) : t('sso.test.failed', { reason: t(`sso.test.why.${['oauth_failed', 'no_account', 'not_configured'].includes(tested.reason) ? tested.reason : 'oauth_failed'}` as MessageKey) })}
+            {tested.ok ? t('sso.test.ok', { email: tested.as }) : t('sso.test.failed', { reason: t(`sso.test.why.${['oauth_failed', 'no_account', 'not_configured', 'bad_secret', 'bad_signature', 'bad_token', 'idp_unreachable'].includes(tested.reason) ? tested.reason : 'oauth_failed'}` as MessageKey) })}
           </p>
         )}
         <div className="sso__test">
