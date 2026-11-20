@@ -233,14 +233,14 @@
 /* ------------------------------------------------------------ privacy request log (components/PrivacyRequests.tsx)
    One row per request: what, who, law and dates on the start side; its state and the two closing actions on the end
    side. Late requests carry the late colours with an icon and words, never colour alone. */
-.privreq__list { display: grid; gap: 8px; margin-block: 12px; }
-.privreq { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.privreq__list { display: grid; gap: var(--s-2); margin-block: var(--s-3); }
+.privreq { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
 .privreq[data-late] { border-color: var(--late-line); background: var(--late-wash); }
 .privreq[data-status='done'], .privreq[data-status='refused'] { color: var(--ink-2); }
 .privreq__main { min-inline-size: 0; flex: 1 1 280px; }
-.privreq__meta { font-size: var(--fs-s); margin-block-start: 4px; }
-.privreq__note { font-size: var(--fs-s); margin-block-start: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.privreq__side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.privreq__state { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: var(--r-pill); background: var(--surface-2); font-size: var(--fs-xs); font-weight: 600; }
+.privreq__meta { font-size: var(--fs-s); margin-block-start: var(--s-1); }
+.privreq__note { font-size: var(--fs-s); margin-block-start: var(--s-1); white-space: pre-wrap; overflow-wrap: anywhere; }
+.privreq__side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.privreq__state { display: inline-flex; align-items: center; gap: var(--s-1); padding: var(--s-1) var(--s-2); border-radius: var(--r-pill); background: var(--surface-2); font-size: var(--fs-xs); font-weight: 600; }
 .privreq__state[data-late] { background: var(--surface); color: var(--late); }
 
