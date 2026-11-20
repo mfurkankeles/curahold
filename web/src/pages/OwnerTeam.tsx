@@ -1151,7 +1151,18 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
       </div>
       {list.error && !list.data ? <LoadError onRetry={list.reload} /> : null}
       {!list.data && !list.error ? <SkeletonRows label={w('common.loading')} /> : null}
-      {list.data && !rows.length ? <EmptyState icon="calendar" title={w('meet.empty')} /> : null}
+      {list.data && !rows.length ? (
+        (list.data.meetings ?? []).length ? (
+          <EmptyState icon="search" title={w('meet.noMatch')} body={w('meet.noMatchBody')} />
+        ) : (
+          <EmptyState icon="calendar" title={w('meet.empty')} body={w('meet.emptyBody')}>
+            <button type="button" className="btn btn--primary" onClick={() => setCalling(true)}>
+              <Icon name="people" size={16} />
+              {w('meet.call')}
+            </button>
+          </EmptyState>
+        )
+      ) : null}
       <ul className="tm-meetings">
         {rows.map((m) => (
           <li key={m.id}>

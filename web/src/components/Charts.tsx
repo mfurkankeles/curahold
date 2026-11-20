@@ -194,7 +194,7 @@ export function ReportChart({ result, chart, compact, goal, apart }: { result: R
   }
 
   if (r.table) return <RowsTable r={r} compact={compact} />;
-  if (!r.groups.length || r.matched === 0) return <EmptyState compact icon="chart" title={t('rb.nothing')} />;
+  if (!r.groups.length || r.matched === 0) return <EmptyState compact icon="filter" title={t('rb.nothing')} body={t('rb.nothingBody')} />;
   if (chart === 'table') return <GroupTable r={r} label={label} />;
   const drawn =
     chart === 'donut' ? (
@@ -526,7 +526,7 @@ export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
   const table = r.table!;
   // A long list draws its first rows and more on request: two thousand rows at once kept a big report from opening in time.
   const [limit, setLimit] = useState(PAGE_ROWS);
-  if (!table.rows.length) return <EmptyState compact icon="list" title={t('rb.nothing')} />;
+  if (!table.rows.length) return <EmptyState compact icon="filter" title={t('rb.nothing')} body={t('rb.nothingBody')} />;
   const rows = table.rows.slice(0, compact ? 8 : limit);
   const left = compact ? 0 : table.rows.length - rows.length;
   const cell = (v: string | number | null, type: string) => {

@@ -681,7 +681,12 @@ export function RevenueSection({ beat, failed, go }: { beat: number; failed: (e:
                 <section className="ccard" aria-labelledby="oc-inv">
                   <h2 className="ccard__title" id="oc-inv">{o('revenue.invoices')}</h2>
                   {d.invoices.length === 0 ? (
-                    <EmptyState compact icon="coins" title={o('revenue.noInvoices')} />
+                    <EmptyState compact icon="coins" title={o('revenue.noInvoices')} body={o('revenue.noInvoicesBody')}>
+                      <button type="button" className="btn" onClick={() => go({ section: 'trials' })}>
+                        <Icon name="hourglass" size={16} />
+                        {o('revenue.toTrials')}
+                      </button>
+                    </EmptyState>
                   ) : (
                     <table className="octable">
                       <thead>
@@ -773,7 +778,21 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
       <Loading data={data} error={error} reload={reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="hourglass" title={o('trials.empty')} />
+            state === 'all' ? (
+              <EmptyState icon="hourglass" title={o('trials.emptyAll')} body={o('trials.emptyBody')}>
+                <button type="button" className="btn" onClick={() => go({ section: 'requests' })}>
+                  <Icon name="form" size={16} />
+                  {o('trials.toRequests')}
+                </button>
+              </EmptyState>
+            ) : (
+              <EmptyState icon="filter" title={o('common.emptyView')} body={o('common.emptyViewBody')}>
+                <button type="button" className="btn" onClick={() => setState('all')}>
+                  <Icon name="list" size={16} />
+                  {o('common.showAll')}
+                </button>
+              </EmptyState>
+            )
           ) : (
             <div className="ccard octablewrap">
               <table className="octable">
@@ -868,7 +887,19 @@ export function RequestsSection({ beat, failed, open, go }: { beat: number; fail
       <Loading data={list.data} error={list.error} reload={list.reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="form" title={o('requests.empty')} body={o('requests.emptyBody')} />
+            <EmptyState icon="form" title={o('requests.empty')} body={o('requests.emptyBody')}>
+              {status === 'all' ? (
+                <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>
+                  <Icon name="sliders" size={16} />
+                  {o('requests.settings')}
+                </button>
+              ) : (
+                <button type="button" className="btn" onClick={() => setStatus('all')}>
+                  <Icon name="list" size={16} />
+                  {o('common.showAll')}
+                </button>
+              )}
+            </EmptyState>
           ) : (
             <div className="ocsplit" data-open={chosen ? '' : undefined}>
               <ul className="ocreqs" aria-label={o('nav.requests')}>
@@ -2172,7 +2203,12 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
       <Loading data={data} error={error} reload={reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="history" title={o('activity.empty')} />
+            <EmptyState icon="history" title={o('activity.emptyTitle')} body={o('activity.emptyBody')}>
+              <button type="button" className="btn" onClick={() => go({ section: 'supportview' })}>
+                <Icon name="lifebuoy" size={16} />
+                {o('activity.toSupport')}
+              </button>
+            </EmptyState>
           ) : (
             <div className="ccard octablewrap">
               <table className="octable">

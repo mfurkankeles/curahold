@@ -39,6 +39,19 @@ export const hoursText = (minutes: number, locale: Locale) => {
   return h && m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : h ? unit(h, 'hour') : unit(m, 'minute');
 };
 
+/** A report card with nothing to count yet: where its figures come from, and the way to make some. */
+function ReportsEmpty({ icon }: { icon: 'chart' | 'people' | 'board' }) {
+  const { t } = useI18n();
+  return (
+    <EmptyState compact icon={icon} title={t('reports.emptyTitle')} body={t('reports.emptyBody')}>
+      <button type="button" className="btn" onClick={() => navigate('/my')}>
+        <Icon name="check" size={16} />
+        {t('reports.toMyTasks')}
+      </button>
+    </EmptyState>
+  );
+}
+
 /** Two columns per week: what came in, what got done (side by side, never added up). */
 function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
   const { t } = useI18n();
@@ -242,7 +255,7 @@ export function ReportsPage() {
             {t('reports.flowTitle')}
           </h2>
                 <p className="sheet__hint">{t('reports.flowHint')}</p>
-                {work.weeks.some((w) => w.created || w.done) ? <WeekChart weeks={work.weeks} /> : <EmptyState compact icon="chart" title={t('reports.noData')} />}
+                {work.weeks.some((w) => w.created || w.done) ? <WeekChart weeks={work.weeks} /> : <ReportsEmpty icon="chart" />}
               </section>
               <div className="reports__grid">
               <section className="sheet">
@@ -267,7 +280,7 @@ export function ReportsPage() {
                     }))}
                   />
                 ) : (
-                  <EmptyState compact icon="people" title={t('reports.noData')} />
+                  <ReportsEmpty icon="people" />
                 )}
               </section>
               {/* Beside who carries what: the same people's logged time. */}
@@ -309,7 +322,7 @@ export function ReportsPage() {
                       }))}
                     />
                   ) : (
-                    <EmptyState compact icon="board" title={t('reports.noData')} />
+                    <ReportsEmpty icon="board" />
                   )}
                 </section>
               )}
@@ -329,7 +342,12 @@ export function ReportsPage() {
           )
         ) : customers.total === 0 ? (
           <div className="sheet">
-            <EmptyState compact icon="building" title={t('accounts.emptyTitle')} />
+            <EmptyState compact icon="building" title={t('accounts.emptyTitle')} body={t('reports.accountsEmptyBody')}>
+              <button type="button" className="btn" onClick={() => navigate('/accounts')}>
+                <Icon name="building" size={16} />
+                {t('reports.toAccounts')}
+              </button>
+            </EmptyState>
           </div>
         ) : (
           // Targets and health across the page; renewals and the pipeline side by side, the same height.
