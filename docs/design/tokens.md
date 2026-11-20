@@ -44,13 +44,37 @@ Negative margins that cancel a border (−1px, −2px) are not spacing and are a
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--dur-fast` | 150ms | Hover, press, colour and border changes, small pops (menus, tooltips) |
-| `--dur` | 200ms | Anything that moves or changes size: panels, dialogs, toasts, pages, charts filling in |
-| `--stagger` | 40ms | Delay step between siblings landing one after another (`calc(var(--n) * var(--stagger))`) |
-| `--ease` | cubic-bezier(.2, .7, .3, 1) | Default easing for movement |
-| `--ease-out` | ease-out | Things leaving |
+| `--dur-1` | 100ms | Hover, press, colour and border changes; menus and popovers closing; everything under "reduce motion" |
+| `--dur-2` | 150ms | Menus, tooltips, the palette opening; dialogs, panels and toasts closing |
+| `--dur-3` | 200ms | Dialogs, panels and toasts opening; page content; a phone sheet closing |
+| `--dur-4` | 280ms | A phone sheet opening; a list item growing into its page (the upper limit) |
+| `--ease-out` | cubic-bezier(.2, .7, .3, 1) | Things arriving (also `--ease`) |
+| `--ease-in` | cubic-bezier(.4, 0, 1, 1) | Things leaving |
+| `--ease-move` | cubic-bezier(.2, 0, 0, 1) | Things that change place or size (sheets, shared elements) |
+| `--dist-1` / `--dist-2` / `--dist-3` | 4 / 8 / 16px | How far a menu / a dialog or page / a panel travels |
+| `--stagger` | 30ms | Delay step between siblings landing one after another, at most 5 (150 ms in all) |
 
-Interface motion is always 150–200 ms. All motion is off under `prefers-reduced-motion: reduce`.
+`--dur-fast` (= `--dur-2`) and `--dur` (= `--dur-3`) are the older names and still work.
+
+Rules: an exit is 50 ms shorter than its entry; only `opacity` and `transform` move; nothing a hand starts
+takes over 300 ms; one leading movement at a time. Under `prefers-reduced-motion: reduce` nothing moves, but
+whatever opens or closes still fades for 100 ms, so a change of state is never lost.
+
+**Exits.** React removes a closed element at once, so `lib/leave.ts` leaves a stand-in in its place: a copy
+(scroll position and field values kept, no ids, `inert`, hidden from screen readers) with `data-leaving`,
+which plays the exit in `motion.css` and removes itself. Give a new overlay `ref={useLeave()}` on its root
+(or `useLeave(existingRef)`) and an exit rule; code that looks for an open dialog skips stand-ins
+(`.dialog:not([data-leaving])`). `tests/motion.test.ts` reads the durations.
+
+| Element | In | Out |
+| --- | --- | --- |
+| Task / record panel | 200 ms, 16 px from the end side + fade | 150 ms back the same way |
+| Dialog, quick add | 200 ms, 8 px up + scale .98 | 150 ms the reverse |
+| Search palette | 150 ms, scale .98 | 100 ms |
+| Menu, popover, calendar | 150 ms, 4 px | 100 ms |
+| Toast | 200 ms, 8 px up | 150 ms down |
+| Phone sheet (filters, calendar) | 280 ms from below, `--ease-move` | 200 ms down |
+| Scrims | 150 ms fade | 100 ms |
 
 Ambient loops are not answers to a hand, so they are outside the 150–200 ms rule. These are all of them:
 

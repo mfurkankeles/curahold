@@ -2,6 +2,7 @@
 // move, Escape closes and gives focus back to the button that opened it.
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Icon, type IconName } from './icons';
+import { useLeave } from '../lib/leave';
 
 /** Closes a pop-up on a click outside it or on Escape. */
 export function useDismiss(ref: RefObject<HTMLElement>, open: boolean, onClose: () => void) {
@@ -58,6 +59,7 @@ export function MenuButton({
   const ref = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLDivElement>(null);
+  const leaveList = useLeave<HTMLDivElement>(list);
   const close = (refocus = true) => {
     setOpen(false);
     if (refocus) trigger.current?.focus();
@@ -90,7 +92,7 @@ export function MenuButton({
         {label}
       </span>
       {open && (
-        <div className="popmenu" data-place={place} role="menu" aria-label={label} ref={list} onKeyDown={onKey}>
+        <div className="popmenu" data-place={place} role="menu" aria-label={label} ref={leaveList} onKeyDown={onKey}>
           {header}
           {items.map((it, i) =>
             it === 'sep' ? (

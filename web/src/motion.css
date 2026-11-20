@@ -1,7 +1,8 @@
-/* Motion. Three things move, and nothing else:
+/* Motion. Four things move, and nothing else:
    a page arriving, figures and charts filling in as their data lands,
-   and whatever answers a hand (a press, a tick, a card picked up).
-   Everything here is switched off by "reduce motion" (see styles.css). */
+   whatever answers a hand (a press, a tick, a card picked up), and what opens and closes over the page.
+   Durations and curves are the tokens of styles.css (docs/design/tokens.md "Motion"). Under "reduce
+   motion" everything stops except a 100 ms fade of what opens and closes (end of this file). */
 
 @keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
 @keyframes grow-w { from { width: 0; } }
@@ -43,7 +44,7 @@
 .donut__arc { animation: sweep var(--dur) var(--ease) backwards; animation-delay: calc(var(--i, 0) * var(--stagger)); }
 
 /* A hand on the page. */
-.btn { transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) ease, filter var(--dur-fast) ease; }
+.btn { transition: background-color var(--dur-1) ease, border-color var(--dur-1) ease, color var(--dur-1) ease, box-shadow var(--dur-1) ease, transform var(--dur-1) ease, filter var(--dur-1) ease; }
 .btn:active:not(:disabled) { transform: scale(.97); }
 .btn--primary { background: var(--grad, var(--brand)); background-origin: border-box; }
 .btn--primary:hover { background: var(--grad, var(--brand-ink)); filter: brightness(1.08); }
@@ -82,3 +83,55 @@
 /* The active page in the sidebar slides its marker in. */
 .navlink[aria-current='page'] { animation: nav-on var(--dur) var(--ease); }
 @keyframes nav-on { from { transform: scale(.97); opacity: .6; } }
+
+/* ------------------------------------------------------------ opening and closing
+   Entries take --dur-3 (menus, the palette and popovers --dur-2) on --ease-out; exits are 50 ms shorter on
+   --ease-in and play on the stand-in lib/leave.ts leaves where the closed element was ([data-leaving]).
+   The stand-in replays nothing else: every other animation inside it is off. tests/motion.test.ts reads these. */
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes panel-in { from { opacity: 0; transform: translateX(calc(var(--side) * var(--dist-3))); } }
+@keyframes panel-out { to { opacity: 0; transform: translateX(calc(var(--side) * var(--dist-3))); } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(var(--dist-2)) scale(.98); } }
+@keyframes modal-out { to { opacity: 0; transform: translateY(var(--dist-2)) scale(.98); } }
+@keyframes palette-in { from { opacity: 0; transform: scale(.98); } }
+@keyframes palette-out { to { opacity: 0; transform: scale(.98); } }
+@keyframes menu-out { to { opacity: 0; transform: translateY(calc(-1 * var(--dist-1))); } }
+@keyframes menu-out-up { to { opacity: 0; transform: translateY(var(--dist-1)); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(var(--dist-2)) scale(.98); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(var(--dist-2)); } }
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes sheet-out { to { transform: translateY(100%); } }
+:root { --side: 1; }
+:root[dir='rtl'] { --side: -1; }
+
+.scrim, .shell__scrim, .dialog, .qa-wrap, .palette-wrap { animation: fade-in var(--dur-2) var(--ease-out) backwards; }
+.panel { animation: panel-in var(--dur-3) var(--ease-out) backwards; }
+.dialog__box, .qa { animation: modal-in var(--dur-3) var(--ease-out) backwards; }
+.palette-box { animation: palette-in var(--dur-2) var(--ease-out) backwards; }
+.popmenu, .bell__pop { animation-duration: var(--dur-2); animation-timing-function: var(--ease-out); }
+.toast { animation: toast-in var(--dur-3) var(--ease-out) backwards; }
+
+[data-leaving] { pointer-events: none; }
+[data-leaving], [data-leaving] * { animation: none !important; transition: none !important; }
+:is(.scrim, .shell__scrim, .datepop__scrim)[data-leaving] { animation: fade-out var(--dur-1) var(--ease-in) forwards !important; }
+.panel[data-leaving] { animation: panel-out var(--dur-2) var(--ease-in) forwards !important; }
+:is(.dialog, .qa-wrap)[data-leaving] { animation: fade-out var(--dur-2) var(--ease-in) forwards !important; }
+:is(.dialog, .qa-wrap)[data-leaving] > :is(.dialog__box, .qa) { animation: modal-out var(--dur-2) var(--ease-in) forwards !important; }
+.palette-wrap[data-leaving] { animation: fade-out var(--dur-1) var(--ease-in) forwards !important; }
+.palette-wrap[data-leaving] > .palette-box { animation: palette-out var(--dur-1) var(--ease-in) forwards !important; }
+:is(.popmenu, .bell__pop, .datepop)[data-leaving] { animation: menu-out var(--dur-1) var(--ease-in) forwards !important; }
+.popmenu[data-place='up'][data-leaving] { animation-name: menu-out-up !important; }
+.toast[data-leaving] { animation: toast-out var(--dur-2) var(--ease-in) forwards !important; }
+.filtersheet[data-leaving] { animation: fade-out var(--dur-3) var(--ease-in) forwards !important; }
+.filtersheet[data-leaving] > .filtersheet__box { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
+@media (max-width: 600px) {
+  .datepop[data-leaving] { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
+}
+
+/* Reduce motion: nothing moves, but what opens and closes still fades (100 ms), so a change of state is
+   never lost. Specific enough to win over the exits above and the "everything off" rule in styles.css. */
+@media (prefers-reduced-motion: reduce) {
+  :is(.scrim, .shell__scrim, .dialog, .qa-wrap, .palette-wrap, .panel, .popmenu, .bell__pop, .toast, .datepop, .datepop__scrim, .filtersheet) { animation: fade-in var(--dur-1) linear !important; }
+  :is(.scrim, .shell__scrim, .dialog, .qa-wrap, .palette-wrap, .panel, .popmenu, .bell__pop, .toast, .datepop, .datepop__scrim, .filtersheet)[data-leaving] { animation: fade-out var(--dur-1) linear forwards !important; }
+  :is(.dialog, .qa-wrap, .palette-wrap, .filtersheet)[data-leaving] > * { animation: none !important; }
+}

@@ -39,6 +39,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Motion: dialogs, side panels, menus, popovers, the search palette, phone sheets and toasts now animate out as well as in
+  (100–150 ms, always shorter than the way in); phone sheets slide up from the bottom (280 ms); one set of motion tokens
+  (`--dur-1…4`, `--ease-in/out/move`, `--dist-1…3`). With "reduce motion" on, opening and closing still fade for 100 ms so the
+  change is not lost.
+
 - Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
   `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched

@@ -18,6 +18,7 @@ import { todayIso } from '../lib/time';
 import { dayParts, formatDayLong, formatDayNumeric, formatInt, formatMonthYear, formatTime, isoDay, monthGrid, parseDay, parseTime, shiftDay, shiftMonth, weekdayNames, weekdayOf, weekStart } from '../lib/format';
 import { useDismiss } from './Menus';
 import { Icon } from './icons';
+import { useLeave } from '../lib/leave';
 
 type Range = { from: string; to: string };
 
@@ -299,6 +300,8 @@ function CalendarPop({
   const [start, setStart] = useState<string | null>(null); // range: the first day picked, waiting for the second
   const [place, setPlace] = useState<{ x: number; y: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const leaveScrim = useLeave<HTMLSpanElement>();
+  const leaveBox = useLeave<HTMLDivElement>(box);
   const grid = useRef<HTMLTableElement>(null);
   const headId = useId();
   const p = dayParts(focus)!;
@@ -361,9 +364,9 @@ function CalendarPop({
 
   return (
     <>
-      <span className="datepop__scrim" aria-hidden="true" onMouseDown={() => onClose(false)} />
+      <span ref={leaveScrim} className="datepop__scrim" aria-hidden="true" onMouseDown={() => onClose(false)} />
       <div
-        ref={box}
+        ref={leaveBox}
         className="datepop"
         role="dialog"
         aria-labelledby={headId}

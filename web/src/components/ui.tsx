@@ -4,6 +4,7 @@ import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
 import { Icon } from './icons';
 import { formatDate } from '../lib/format';
+import { useLeave } from '../lib/leave';
 
 /** Avatar tones: --avatar-0 … --avatar-7 in styles.css. */
 const AVATAR_TONES = 8;
@@ -116,7 +117,7 @@ export function trapTab(e: KeyboardEvent, box: HTMLElement | null) {
 export function useFocusTrap(box: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (document.querySelector('.dialog')) return;
+      if (document.querySelector('.dialog:not([data-leaving])')) return;
       trapTab(e, box.current);
     };
     document.addEventListener('keydown', onKey);
@@ -127,6 +128,7 @@ export function useFocusTrap(box: RefObject<HTMLElement | null>) {
 export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
+  const leave = useLeave<HTMLDivElement>();
   // The latest onClose, without re-running the focus effect on every render
   // (that would pull focus away from whatever the person is typing in).
   const close = useRef(onClose);
@@ -146,7 +148,7 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
       if (e.key === 'Escape') close.current();
       else {
         // Only the topmost dialog holds the focus.
-        const open = document.querySelectorAll('.dialog__box');
+        const open = document.querySelectorAll('.dialog__box:not([data-leaving] *)');
         if (open[open.length - 1] === box.current) trapTab(e, box.current);
       }
     };
@@ -157,7 +159,7 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
     };
   }, [opener]);
   return (
-    <div className="dialog" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="dialog" ref={leave} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`dialog__box${wide ? ' dialog__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>
         <div className="dialog__top">
           <h2 className="dialog__head" id="dlg-title">

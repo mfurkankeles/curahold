@@ -26,7 +26,7 @@
   position: fixed; z-index: 60; top: var(--y, 0); left: var(--x, 0); inline-size: 304px; visibility: hidden;
   display: grid; gap: 8px; padding: 12px; background: var(--surface); color: var(--ink);
   border: 1px solid var(--line-strong); border-radius: var(--r-m); box-shadow: var(--shadow-2);
-  animation: datepop-in var(--dur-fast) var(--ease);
+  animation: datepop-in var(--dur-2) var(--ease-out);
 }
 .datepop[data-placed] { visibility: visible; }
 @keyframes datepop-in { from { opacity: 0; transform: translateY(-4px); } }
@@ -57,12 +57,11 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
   .datepop {
     inset: auto 0 0 0; inline-size: auto; visibility: visible; padding: 16px 16px 24px;
     border-radius: var(--r-l); border-end-start-radius: 0; border-end-end-radius: 0; border-block-end: 0; box-shadow: var(--shadow-3);
-    animation: sheet-up var(--dur) var(--ease);
+    animation: sheet-in var(--dur-4) var(--ease-move);
   }
   .datepop__day { min-block-size: var(--tap); font-size: var(--fs-m); }
   .datepop__foot .btn { min-block-size: var(--tap); }
 }
-@keyframes sheet-up { from { transform: translateY(24px); opacity: .6; } }
 @media (pointer: coarse) { .datepop__day { min-block-size: var(--tap); } }
 @media (prefers-reduced-motion: reduce) { .datepop, .datepop__scrim { animation: none; } }
 
@@ -77,7 +76,7 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 .filtersheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; background: var(--scrim); animation: fade-in var(--dur-fast) ease; }
 .filtersheet__box {
   display: flex; flex-direction: column; inline-size: 100%; max-block-size: 88vh; background: var(--surface); color: var(--ink);
-  border-radius: var(--r-l); border-end-start-radius: 0; border-end-end-radius: 0; box-shadow: var(--shadow-3); animation: sheet-up var(--dur) var(--ease);
+  border-radius: var(--r-l); border-end-start-radius: 0; border-end-end-radius: 0; box-shadow: var(--shadow-3); animation: sheet-in var(--dur-4) var(--ease-move);
 }
 .filtersheet__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-block-end: 1px solid var(--line); }
 .filtersheet__title { margin: 0; font-size: var(--fs-l); font-weight: 600; }

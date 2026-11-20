@@ -31,6 +31,7 @@ import { Icon, type IconName } from './icons';
 import { useDismiss } from './Menus';
 import { Confirm, Dialog } from './ui';
 import { DateField } from './DateField';
+import { useLeave } from '../lib/leave';
 
 /** The icon that says what a playbook's dates count from. */
 const ANCHOR_ICON: Record<PlanAnchor, IconName> = { start: 'play', renewal: 'repeat', close: 'funnel' };
@@ -60,6 +61,7 @@ export function useAnchorText() {
 
 /** "Apply a playbook" on a customer's page: pick one, pick the start day, done. */
 export function PlanMenu({ accountId, accountName, onApplied }: { accountId: string; accountName: string; onApplied: () => void }) {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const { can, toast, canWrite } = useStore();
   const anchorText = useAnchorText();
@@ -96,7 +98,7 @@ export function PlanMenu({ accountId, accountName, onApplied }: { accountId: str
         {t('plans.button')}
       </button>
       {open && (
-        <div className="popmenu filterpop planpop" role="menu" aria-label={t('plans.button')}>
+        <div ref={leavePop} className="popmenu filterpop planpop" role="menu" aria-label={t('plans.button')}>
           {anyFromStart && (
             <label className="field">
               <span className="filterpop__label">{t('plans.start')}</span>

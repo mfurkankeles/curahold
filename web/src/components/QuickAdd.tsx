@@ -26,6 +26,7 @@ import { RepeatPicker } from './TaskPanel';
 import { Avatar, PeoplePicker } from './ui';
 import type { Locale } from '../../../shared/src/i18n';
 import { DateField } from './DateField';
+import { useLeave } from '../lib/leave';
 
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
 
@@ -65,6 +66,7 @@ const EXAMPLES: Partial<Record<Locale, string[]>> & { en: string[] } = {
 };
 
 export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClose: () => void }) {
+  const leaveWrap = useLeave<HTMLDivElement>();
   const { t, locale, fmtDate, words } = useI18n();
   const { me, boards, people, toast } = useStore();
 
@@ -396,7 +398,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
 
   if (!boards.length) {
     return (
-      <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="qa-wrap" ref={leaveWrap} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
         <div className="qa" role="dialog" aria-modal="true" aria-label={t('quick.title')} onKeyDown={onDialogKey}>
           <div className="qa__empty">
             <Icon name="board" size={22} />
@@ -411,7 +413,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   }
 
   return (
-    <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="qa-wrap" ref={leaveWrap} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="qa" role="dialog" aria-modal="true" aria-labelledby="qa-title" onKeyDown={onDialogKey}>
         <div className="qa__head">
           <h2 className="qa__title" id="qa-title">

@@ -19,6 +19,7 @@ import { useDepartments } from '../lib/departments';
 import { formatDateTime, formatNumber } from '../lib/format';
 import { syncConflictText } from './syncNote';
 import { useUndo } from '../lib/undo';
+import { useLeave } from '../lib/leave';
 
 type Reload = () => void | Promise<void>;
 const useFail = () => {
@@ -345,6 +346,7 @@ export function TimeSection({ task, editable, reload }: { task: TaskDetail; edit
 
 /** "Add a checklist": saved lists become subtasks; the task's own subtasks can be saved as a new list. */
 export function ChecklistMenu({ task, reload }: { task: TaskDetail; reload: Reload }) {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const { toast } = useStore();
   const fail = useFail();
@@ -384,7 +386,7 @@ export function ChecklistMenu({ task, reload }: { task: TaskDetail; reload: Relo
         {t('task.checklist')}
       </button>
       {open && (
-        <div className="popmenu" role="menu">
+        <div ref={leavePop} className="popmenu" role="menu">
           {list === null && <span className="popmenu__note">{t('common.loading')}</span>}
           {list?.length === 0 && <span className="popmenu__note">{t('task.checklist.none')}</span>}
           {list?.map((c) => (

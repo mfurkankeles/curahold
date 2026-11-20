@@ -9,8 +9,10 @@ import { navigate } from '../lib/router';
 import { relativeTime } from '../lib/time';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
+import { useLeave } from '../lib/leave';
 
 export function Bell() {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const [data, setData] = useState<{ notifications: Notification[]; unread: number }>({ notifications: [], unread: 0 });
   const [open, setOpen] = useState(false);
@@ -71,7 +73,7 @@ export function Bell() {
         {data.unread > 0 && <span className="bell__count num" aria-hidden="true">{data.unread > 99 ? '99+' : data.unread}</span>}
       </button>
       {open && (
-        <div className="bell__pop" role="dialog" aria-label={t('bell.title')}>
+        <div ref={leavePop} className="bell__pop" role="dialog" aria-label={t('bell.title')}>
           <div className="bell__head">
             <strong>{t('bell.title')}</strong>
             {data.unread > 0 && (

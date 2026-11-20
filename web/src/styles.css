@@ -88,11 +88,23 @@
   --s-6: 24px;
   --s-8: 32px;
 
-  --dur-fast: 150ms;
-  --dur: 200ms;
-  --stagger: 40ms;
-  --ease: cubic-bezier(.2, .7, .3, 1);
-  --ease-out: ease-out;
+  /* Motion (docs/design/tokens.md): four durations, three curves, three distances. An exit is 50 ms
+     shorter than its entry; only opacity and transform move; nothing a hand starts takes over 300 ms. */
+  --dur-1: 100ms;
+  --dur-2: 150ms;
+  --dur-3: 200ms;
+  --dur-4: 280ms;
+  --ease-out: cubic-bezier(.2, .7, .3, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-move: cubic-bezier(.2, 0, 0, 1);
+  --dist-1: 4px;
+  --dist-2: 8px;
+  --dist-3: 16px;
+  --stagger: 30ms;
+  /* The older names, kept for the rules written with them. */
+  --dur-fast: var(--dur-2);
+  --dur: var(--dur-3);
+  --ease: var(--ease-out);
   /* Ambient loops: not a response to a hand, so outside the 150–200 ms rule. */
   --loop-shimmer: 1.4s;
   --loop-shine: 1.2s;
@@ -674,7 +686,6 @@ tr.vspacer td { padding: 0; border: 0; }
   box-shadow: var(--shadow-panel);
   display: flex; flex-direction: column; animation: panel-in var(--dur) ease-out;
 }
-@keyframes panel-in { from { transform: translateX(24px); opacity: .4; } }
 .panel__head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .panel__crumb { color: var(--ink-3); font-size: var(--fs-s); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A subtask's way back to the task it belongs to. Its name gives way first when the panel is narrow. */
@@ -734,7 +745,6 @@ tr.vspacer td { padding: 0; border: 0; }
   display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--on-ink); padding-block: 8px 8px; padding-inline-start: 12px; padding-inline-end: 8px;
   border-radius: var(--r-m); box-shadow: var(--shadow-2); max-width: 560px; animation: toast-in var(--dur) var(--ease);
 }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 .toast__icon { flex: none; color: var(--toast-icon); }
 .toast__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .toast__close { flex: none; width: 26px; height: 26px; border: 0; border-radius: var(--r-s); background: none; color: inherit; opacity: .7; cursor: pointer; display: grid; place-items: center; }
@@ -2572,7 +2582,7 @@ a.targetline:hover { border-color: var(--line-strong); }
   .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom)); }
   /* It steps aside while the person types or scrolls down (CuraAI.tsx), and comes back when they scroll up. */
   .cura__fab { transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), visibility 0s linear 0s; }
-  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out), visibility 0s linear var(--dur); }
+  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-in), opacity var(--dur) var(--ease-in), visibility 0s linear var(--dur); }
   .cura__fabname { display: none; }
   .cura__mark { width: 40px; height: 40px; }
   /* The whole screen, measured from its edges: a width in vw can be wider than what a phone shows. */

@@ -14,6 +14,7 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNod
 import { useI18n } from '../lib/i18n';
 import { Icon } from './icons';
 import { trapTab } from './ui';
+import { useLeave } from '../lib/leave';
 
 export const PHONE = '(max-width: 860px)';
 
@@ -75,6 +76,7 @@ function FilterButton({ count, open, onOpen }: { count: number; open: boolean; o
 
 /** A modal sheet from the bottom of a phone: title, the controls, Clear and Apply. */
 function Sheet({ title, count, onClear, onClose, children }: { title?: string; count: number; onClear?: () => void; onClose: () => void; children: ReactNode }) {
+  const leaveSheet = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
@@ -99,7 +101,7 @@ function Sheet({ title, count, onClear, onClose, children }: { title?: string; c
     };
   }, []);
   return (
-    <div className="filtersheet" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={leaveSheet} className="filtersheet" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="filtersheet__box" role="dialog" aria-modal="true" aria-labelledby={head} ref={box}>
         <div className="filtersheet__head">
           <h2 className="filtersheet__title" id={head}>

@@ -10,6 +10,7 @@ import { Presence } from './Presence';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, setQuery } from '../lib/router';
 import { PanelBack } from './BackBar';
+import { useLeave } from '../lib/leave';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
@@ -57,6 +58,8 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   const [notice, setNotice] = useState<string | null>(null);
   const [more, setMore] = useState(moreOpen);
   const panel = useRef<HTMLDivElement>(null);
+  const leaveScrim = useLeave<HTMLDivElement>();
+  const leavePanel = useLeave<HTMLDivElement>(panel);
   useFocusTrap(panel);
 
   const load = useCallback(async () => {
@@ -81,7 +84,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   useLive('tasks', () => {
     const at = document.activeElement;
     const typing = !!at && at !== panel.current && !!panel.current?.contains(at) && /^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName);
-    if (!typing && !document.querySelector('.dialog')) void load();
+    if (!typing && !document.querySelector('.dialog:not([data-leaving])')) void load();
   });
 
   // Who else has this task open, and who is typing in it (the live channel).
@@ -103,9 +106,9 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
     const prev = document.activeElement as HTMLElement | null;
     panel.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !document.querySelector('.dialog')) close();
+      if (e.key === 'Escape' && !document.querySelector('.dialog:not([data-leaving])')) close();
       // Single keys while the panel has the focus and nothing is being typed: finish, assign, move.
-      if (e.altKey || e.ctrlKey || e.metaKey || typing(e) || document.querySelector('.dialog, .picker__pop')) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || typing(e) || document.querySelector('.dialog:not([data-leaving]), .picker__pop')) return;
       if (!panel.current?.contains(document.activeElement) && document.activeElement !== document.body) return;
       const k = e.key.toLowerCase();
       const el = (sel: string) => panel.current?.querySelector<HTMLElement>(sel);
@@ -181,8 +184,8 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
 
   return (
     <>
-      <div className="scrim" onClick={close} />
-      <aside className="panel ew-panel" role="dialog" aria-modal="true" aria-label={view?.title ?? t('common.loading')} tabIndex={-1} ref={panel} onInput={here.typing}>
+      <div className="scrim" ref={leaveScrim} onClick={close} />
+      <aside className="panel ew-panel" role="dialog" aria-modal="true" aria-label={view?.title ?? t('common.loading')} tabIndex={-1} ref={leavePanel} onInput={here.typing}>
         <div className="panel__head">
           <PanelBack up={task?.parent ? { title: task.parent.title, go: () => openOver('task', task.parent!.id, true) } : null} />
           <span className="panel__crumb" data-sub={task?.parent ? true : undefined}>{board?.name}</span>

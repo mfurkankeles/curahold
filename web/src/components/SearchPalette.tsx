@@ -9,6 +9,7 @@ import { useDepartments } from '../lib/departments';
 import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
 import { trapTab } from './ui';
+import { useLeave } from '../lib/leave';
 
 interface Found {
   accounts: { id: string; name: string }[];
@@ -31,6 +32,7 @@ interface Item {
 const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
 
 export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
+  const leaveWrap = useLeave<HTMLDivElement>();
   const { t, words, locale } = useI18n();
   const { me, boards, people, can, canWrite } = useStore();
   const depts = useDepartments();
@@ -194,7 +196,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
 
   let lastGroup = '';
   return (
-    <div className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={leaveWrap} className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       {/* Escape closes from wherever the focus is in it, and Tab goes round inside it (WCAG 2.1.2). */}
       <div
         className="palette-box"

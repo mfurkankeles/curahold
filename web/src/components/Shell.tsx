@@ -33,6 +33,7 @@ import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from '../lib/recordTypes';
 import { typeLabel } from '../../../shared/src/records';
 import { formatDateTime } from '../lib/format';
+import { useLeave } from '../lib/leave';
 
 // Dialogs opened on demand: their code loads the first time one opens.
 const BoardSettings = lazy(() => import('./BoardSettings').then((m) => ({ default: m.BoardSettings })));
@@ -84,6 +85,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const { path, search } = useLocation();
   const narrow = useNarrow();
   const [navOpen, setNavOpen] = useState(false);
+  const leaveScrim = useLeave<HTMLDivElement>();
   const [newBoard, setNewBoard] = useState(false);
   const depts = useDepartments();
   // Boards by department, in the departments' order: the ones this person is in (even while
@@ -537,7 +539,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             {meMenu}
           </div>
         </nav>
-        {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
+        {navOpen && <div className="shell__scrim" ref={leaveScrim} onClick={() => setNavOpen(false)} aria-hidden="true" />}
         <main className="main" id="main" tabIndex={-1} ref={mainRef}>
           <OfflineBar />
           {me.previewBy && (
@@ -637,30 +639,39 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         <UndoKey toasts={toasts} dismiss={dismiss} />
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
-            <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
-              <Icon name={x.tone === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast__icon" />
-              <span className="toast__text">{x.text}</span>
-              {x.action && (
-                <button
-                  className="toast__action"
-                  aria-keyshortcuts={x.action.undo ? 'Control+Z Meta+Z' : undefined}
-                  title={x.action.undo ? `${x.action.label} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'} Z)` : undefined}
-                  onClick={async () => {
-                    dismiss(x.id);
-                    await x.action!.run();
-                  }}
-                >
-                  {x.action.label}
-                </button>
-              )}
-              <button className="toast__close" aria-label={t('common.close')} onClick={() => dismiss(x.id)}>
-                <Icon name="close" size={14} />
-              </button>
-            </div>
+            <ToastItem key={x.id} toast={x} dismiss={dismiss} />
           ))}
         </div>
       </div>
     </ShellCtx.Provider>
+  );
+}
+
+/** One toast; it animates out when it goes (lib/leave.ts). */
+function ToastItem({ toast: x, dismiss }: { toast: Toast; dismiss: (id: number) => void }) {
+  const { t } = useI18n();
+  const leave = useLeave<HTMLDivElement>();
+  return (
+    <div ref={leave} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
+      <Icon name={x.tone === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast__icon" />
+      <span className="toast__text">{x.text}</span>
+      {x.action && (
+        <button
+          className="toast__action"
+          aria-keyshortcuts={x.action.undo ? 'Control+Z Meta+Z' : undefined}
+          title={x.action.undo ? `${x.action.label} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'} Z)` : undefined}
+          onClick={async () => {
+            dismiss(x.id);
+            await x.action!.run();
+          }}
+        >
+          {x.action.label}
+        </button>
+      )}
+      <button className="toast__close" aria-label={t('common.close')} onClick={() => dismiss(x.id)}>
+        <Icon name="close" size={14} />
+      </button>
+    </div>
   );
 }
 

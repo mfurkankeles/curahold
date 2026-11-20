@@ -16,6 +16,7 @@ import { FilterGroup, usePhone } from './FilterSheet';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import '../surfaces/exports-views.css';
+import { useLeave } from '../lib/leave';
 
 type State = Record<string, unknown>;
 interface View {
@@ -166,6 +167,7 @@ export function useSavedViews<S extends State>({ scope, boardId, state, onApply 
 
 /** The views of a list: a "Views" popover on a desktop, a group of its own in the phone filter sheet. */
 export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Whether there is anything to keep yet (a filter on, an order or layout chosen). */ canSave?: boolean }) {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const { canWrite } = useStore();
   const phone = usePhone();
@@ -290,7 +292,7 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
         {!active && list.length > 0 && <span className="fcount fcount--quiet num">{list.length}</span>}
       </button>
       {open && (
-        <div className="popmenu filterpop" role="dialog" aria-label={t('views.title')} data-place={place}>
+        <div ref={leavePop} className="popmenu filterpop" role="dialog" aria-label={t('views.title')} data-place={place}>
           {body}
         </div>
       )}
