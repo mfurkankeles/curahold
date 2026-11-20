@@ -3631,7 +3631,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "时间一到会自动结束，你也可以随时结束",
   'help.grant.point.log': "每次访问都会记录在你公司的活动日志中",
   'help.grant.on': "已开启：Curahold 支持人员可以打开你的账户",
-  'home.load.accountsN': "{n} 个{accounts_l}",
+  'home.load.accountsN': '{n} 个{accounts_l}',
   'home.load.openN': "{n} 个未完成",
   'home.load.overdueN': "{n} 个已逾期",
   'home.load.attentionN': "{n} 个有风险",
@@ -6961,4 +6961,9 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': '企业',
   'settings.unused.title': '此工作区未使用{topic}',
   'settings.unused.body': '这里没有需要设置的内容：这部分对整个工作区都已关闭，并非只对你。其他设置都在“设置”中。',
+  'common.new': '新建',
+  'board.settingsShort': '设置',
+  'board.importShort': '导入',
+  'home.load.accountsN.one': '{n} 个{account_l}',
+  'start.task.bodyPhone': '点按屏幕底部的 +。',
 };

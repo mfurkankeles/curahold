@@ -501,6 +501,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               canWrite && depts.canOpenBoards ? (
                 <button className="sidebar__add" onClick={() => setNewBoard(true)} aria-label={t('nav.newBoard')} title={t('nav.newBoard')}>
                   <Icon name="plus" size={16} />
+                  <span>{t('common.new')}</span>
                 </button>
               ) : undefined,
             )}

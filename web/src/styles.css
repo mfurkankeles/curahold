@@ -523,7 +523,7 @@ main[tabindex='-1']:focus { outline: none; }
   font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; background: var(--today); color: var(--on-status);
 }
 .navlink__count[data-tone='late'] { background: var(--late); }
-.sidebar__add { border: 0; background: transparent; color: var(--well-ink); cursor: pointer; border-radius: var(--r-s); width: 26px; height: 26px; display: grid; place-items: center; }
+.sidebar__add { border: 0; background: transparent; color: var(--well-ink); cursor: pointer; border-radius: var(--r-s); height: 26px; padding-inline: 4px 8px; display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: var(--fs-xs); font-weight: 600; }
 .sidebar__add:hover { background: var(--well-2); color: var(--well-hi); }
 .sidebar__foot { border-top: 1px solid var(--well-3); margin-top: 8px; padding-top: 8px; display: grid; gap: 4px; }
 .sidebar__memenu .popmenu { inset-inline-start: 0; inset-inline-end: auto; width: 100%; min-width: 264px; }

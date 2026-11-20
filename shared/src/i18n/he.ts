@@ -3430,7 +3430,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "זה מסתיים מעצמו כשהזמן נגמר, ואפשר לסיים אותו בכל רגע",
   'help.grant.point.log': "כל ביקור נרשם ביומן הפעילות של החברה שלך",
   'help.grant.on': "פתוח: התמיכה של Curahold יכולה לפתוח את החשבון שלך",
-  'home.load.accountsN': "{n} {accounts_l}",
+  'home.load.accountsN': '{n} {accounts_l}',
   'home.load.openN': "{n} פתוחות",
   'home.load.overdueN': "{n} באיחור",
   'home.load.attentionN': "{n} בסיכון",
@@ -6961,4 +6961,9 @@ export const he: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'חברות',
   'settings.unused.title': '{topic} לא בשימוש בסביבת העבודה הזו',
   'settings.unused.body': 'אין כאן מה להגדיר: החלק הזה כבוי לכל סביבת העבודה, לא רק לך. כל השאר נמצא בהגדרות.',
+  'common.new': 'חדש',
+  'board.settingsShort': 'הגדרות',
+  'board.importShort': 'ייבוא',
+  'home.load.accountsN.one': '{n} {account_l}',
+  'start.task.bodyPhone': 'הקישו על + בתחתית המסך.',
 };

@@ -9,6 +9,7 @@ import { TASKS_CHANGED, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
 import { SetupEntry } from './SetupWarnings';
+import { usePhone } from './FilterSheet';
 import { ADMIN_PERMS } from '../../../shared/src/model';
 import type { Locale } from '../../../shared/src/i18n';
 
@@ -39,6 +40,7 @@ export const startKnown = () => known !== undefined;
 /** The getting-started checklist on Home. */
 export function GettingStarted() {
   const { t, locale } = useI18n();
+  const phone = usePhone();
   const { canWrite, me } = useStore();
   const shell = useShell();
   const [state, setState] = useState<StartState | null>(known ?? null);
@@ -100,7 +102,8 @@ export function GettingStarted() {
             </span>
             <span className="start__text">
               <strong>{t(`start.${s}.title` as any)}</strong>
-              <span className="muted">{t(`start.${s}.body` as any)}</span>
+              {/* A phone has no keyboard shortcut to offer: the + at the bottom is the way in. */}
+              <span className="muted">{t(s === 'task' && phone ? 'start.task.bodyPhone' : (`start.${s}.body` as any))}</span>
             </span>
             {state.steps[s] ? (
               <span className="sr-only">{t('start.done')}</span>

@@ -6976,6 +6976,11 @@ export const en = {
   'settings.vocab.company.other': 'Companies',
   'settings.unused.title': '{topic} is not used in this workspace',
   'settings.unused.body': 'There is nothing to set here: this part is switched off for the whole workspace, not for you alone. Everything else is in Settings.',
+  'common.new': 'New',
+  'board.settingsShort': 'Settings',
+  'board.importShort': 'Import',
+  'home.load.accountsN.one': '{n} {account_l}',
+  'start.task.bodyPhone': 'Tap + at the bottom of the screen.',
 } as const;
 
 export type MessageKey = keyof typeof en;

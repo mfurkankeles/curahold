@@ -3631,7 +3631,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "시간이 끝나면 자동으로 종료되며, 언제든 직접 종료할 수 있습니다",
   'help.grant.point.log': "모든 접속 기록이 회사의 활동 로그에 남습니다",
   'help.grant.on': "열림: Curahold 지원팀이 내 계정을 열 수 있습니다",
-  'home.load.accountsN': "{n}개 {accounts_l}",
+  'home.load.accountsN': '{n}개 {accounts_l}',
   'home.load.openN': "진행 중 {n}개",
   'home.load.overdueN': "기한 초과 {n}개",
   'home.load.attentionN': "위험 {n}개",
@@ -6961,4 +6961,9 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': '기업',
   'settings.unused.title': '이 워크스페이스에서는 {topic}을(를) 사용하지 않습니다',
   'settings.unused.body': '여기서 설정할 것은 없습니다. 이 기능은 본인만이 아니라 워크스페이스 전체에서 꺼져 있습니다. 나머지 설정은 모두 설정에 있습니다.',
+  'common.new': '새로 만들기',
+  'board.settingsShort': '설정',
+  'board.importShort': '가져오기',
+  'home.load.accountsN.one': '{n}개 {account_l}',
+  'start.task.bodyPhone': '화면 아래쪽의 +를 누르세요.',
 };

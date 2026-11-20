@@ -3557,7 +3557,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "Ia tamat sendiri apabila masanya habis, dan anda boleh menamatkannya bila-bila masa",
   'help.grant.point.log': "Setiap lawatan ditulis dalam log aktiviti syarikat anda",
   'help.grant.on': "Terbuka: sokongan Curahold boleh membuka akaun anda",
-  'home.load.accountsN': "{n} {accounts_l}",
+  'home.load.accountsN': '{n} {accounts_l}',
   'home.load.openN': "{n} terbuka",
   'home.load.overdueN': "{n} lewat",
   'home.load.attentionN': "{n} berisiko",
@@ -6907,4 +6907,9 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'Syarikat',
   'settings.unused.title': '{topic} tidak digunakan dalam ruang kerja ini',
   'settings.unused.body': 'Tiada apa-apa untuk ditetapkan di sini: bahagian ini dimatikan untuk seluruh ruang kerja, bukan untuk anda sahaja. Semua yang lain ada dalam Tetapan.',
+  'common.new': 'Baharu',
+  'board.settingsShort': 'Tetapan',
+  'board.importShort': 'Import',
+  'home.load.accountsN.one': '{n} {account_l}',
+  'start.task.bodyPhone': 'Ketik + di bahagian bawah skrin.',
 };

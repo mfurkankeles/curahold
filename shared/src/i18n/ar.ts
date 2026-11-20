@@ -3631,7 +3631,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "ينتهي من تلقاء نفسه عند انتهاء المدة، ويمكنك إنهاؤه في أي لحظة",
   'help.grant.point.log': "تُسجَّل كل زيارة في سجل نشاط شركتك",
   'help.grant.on': "مفتوح: يستطيع دعم Curahold فتح حسابك",
-  'home.load.accountsN': "{n} {accounts_l}",
+  'home.load.accountsN': '{accounts_l}: {n}',
   'home.load.openN': "{n} مفتوحة",
   'home.load.overdueN': "{n} متأخرة",
   'home.load.attentionN': "{n} معرّضة للخطر",
@@ -6961,4 +6961,9 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'الشركات',
   'settings.unused.title': 'لا يُستخدم {topic} في مساحة العمل هذه',
   'settings.unused.body': 'لا يوجد ما يُضبط هنا: هذا الجزء متوقف لمساحة العمل كلها، لا لك وحدك. كل ما عداه في الإعدادات.',
+  'common.new': 'جديد',
+  'board.settingsShort': 'الإعدادات',
+  'board.importShort': 'استيراد',
+  'home.load.accountsN.one': '{account_l}: {n}',
+  'start.task.bodyPhone': 'اضغط على + أسفل الشاشة.',
 };

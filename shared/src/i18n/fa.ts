@@ -3631,7 +3631,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "با تمام شدن زمان خودبه‌خود پایان می‌یابد و هر لحظه می‌توانید آن را پایان دهید",
   'help.grant.point.log': "هر بازدید در گزارش فعالیت شرکت شما ثبت می‌شود",
   'help.grant.on': "باز: پشتیبانی Curahold می‌تواند حساب شما را باز کند",
-  'home.load.accountsN': "{n} {accounts_l}",
+  'home.load.accountsN': '{n} {account_l}',
   'home.load.openN': "{n} باز",
   'home.load.overdueN': "{n} عقب‌افتاده",
   'home.load.attentionN': "{n} در خطر",
@@ -6961,4 +6961,9 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'شرکت‌ها',
   'settings.unused.title': '{topic} در این فضای کاری استفاده نمی‌شود',
   'settings.unused.body': 'اینجا چیزی برای تنظیم نیست: این بخش برای کل فضای کاری خاموش است، نه فقط برای شما. بقیهٔ موارد در تنظیمات است.',
+  'common.new': 'جدید',
+  'board.settingsShort': 'تنظیمات',
+  'board.importShort': 'ورود داده',
+  'home.load.accountsN.one': '{n} {account_l}',
+  'start.task.bodyPhone': 'روی + در پایین صفحه بزنید.',
 };

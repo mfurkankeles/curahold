@@ -158,8 +158,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     </button>
   );
   const settingsButton = board.canManage && (
-    <button className="btn btn--icon" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
+    <button className="btn" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
       <Icon name="sliders" size={16} />
+      <span className={phone ? 'sr-only' : undefined}>{t('board.settingsShort')}</span>
     </button>
   );
   return (
@@ -189,8 +190,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           {!phone && view === 'list' && exportMenu}
           {!phone && formButton}
           {view !== 'archive' && canWrite && (
-            <button className="btn btn--icon hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
+            <button className="btn hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
               <Icon name="upload" size={16} />
+              {t('board.importShort')}
             </button>
           )}
           {!phone && settingsButton}

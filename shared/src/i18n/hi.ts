@@ -3557,7 +3557,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'help.grant.point.ends': "समय पूरा होने पर यह अपने आप खत्म हो जाता है, और आप इसे किसी भी पल खत्म कर सकते हैं",
   'help.grant.point.log': "हर विज़िट आपकी कंपनी के गतिविधि लॉग में दर्ज होती है",
   'help.grant.on': "खुला: Curahold सपोर्ट आपका अकाउंट खोल सकता है",
-  'home.load.accountsN': "{n} {accounts_l}",
+  'home.load.accountsN': '{n} {accounts_l}',
   'home.load.openN': "{n} खुले",
   'home.load.overdueN': "{n} देर से",
   'home.load.attentionN': "{n} जोखिम में",
@@ -6907,4 +6907,9 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'settings.vocab.company.other': 'कंपनियाँ',
   'settings.unused.title': 'इस वर्कस्पेस में {topic} इस्तेमाल नहीं होता',
   'settings.unused.body': 'यहां सेट करने को कुछ नहीं है: यह हिस्सा सिर्फ़ आपके लिए नहीं, पूरे वर्कस्पेस के लिए बंद है। बाकी सब सेटिंग में है।',
+  'common.new': 'नया',
+  'board.settingsShort': 'सेटिंग',
+  'board.importShort': 'इंपोर्ट',
+  'home.load.accountsN.one': '{n} {account_l}',
+  'start.task.bodyPhone': 'स्क्रीन के नीचे + पर टैप करें।',
 };

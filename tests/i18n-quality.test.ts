@@ -168,7 +168,7 @@ const SAME_AS_ENGLISH = new Set([
 // (Malay "status", "data", "menu", "agenda", "media", "item" are standard Malay; DBP).
 const SAME_IN: Partial<Record<Locale, Set<string>>> = {
   ms: new Set([
-    'sh.gate.title', 'ob.phase.golive', 'task.status', 'settings.people.status', 'import.untitled', 'accounts.import', 'accounts.importTitle', 'sync.tab.status',
+    'sh.gate.title', 'ob.phase.golive', 'task.status', 'settings.people.status', 'import.untitled', 'accounts.import', 'accounts.importTitle', 'board.importShort', 'sync.tab.status',
     'fields.colorName.plum', 'support.region.au', 'portal.people.status', 'portal.status', 'nav.menu', 'docs.menu', 'rb.format.matrix', 'meetings.minutes',
     'calendar.minutes', 'desk.replay.length', 'plannedForm.agenda', 'pm.flow.medianShort', 'platform.col.status', 'platform.sub.status', 'pm.burndown',
     'pm.burndown.ideal', 'tpl.idea', 'tpl.standard', 'rtype.neutral', 'rtype.status', 'rsrc.status', 'settings.audit.entity', 'trial.dept.onboarding',

@@ -386,6 +386,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
           <strong>{t('import.drop')}</strong>
           <span className="muted">{t('imp.dropHint')}</span>
           <span className="btn btn--small" aria-hidden="true">
+            <Icon name="upload" size={15} />
             {t('import.choose')}
           </span>
         </label>
