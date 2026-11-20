@@ -193,3 +193,5 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
    desktop the panel floats over the page and Close at the end is enough. */
 .panel__phoneback { display: none; }
 @media (max-width: 600px) { .panel__phoneback { display: inline-flex; } }
+/* With Back at the start of a phone panel there is no room for the board's name beside it. */
+@media (max-width: 600px) { .panel__phoneback ~ .panel__crumb { display: none; } }
