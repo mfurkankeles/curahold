@@ -77,16 +77,18 @@ async function applyMail(deps: Deps, conn: LoadedCrm, items: MailItem[], urlKeys
 
 /**
  * A meeting from a calendar: one meeting activity under the customer its guests belong to, kept up to date when the
- * meeting is moved or renamed there, and taken away when it is cancelled. Only the title, the time, the length and
- * the guests are kept — never the description.
+ * meeting is moved or renamed there. Only the title, the time, the length and the guests are kept — never the
+ * description.
+ *
+ * Why a cancelled meeting is left alone: deletes go through the trash, and the trash needs a person as the one who
+ * deleted (app_trash_put checks app_can_write()); a sync has none, and connections do not record who connected them.
+ * Deleting outright could lose notes or next steps someone added to the meeting here, so the machine never removes
+ * it: it stays as it was, and a person deletes it from the timeline (into the trash) if it did not take place.
+ * Removing it automatically would need a trash entry with no person behind it: a product decision, not made here.
  */
 async function applyMeeting(q: Q, conn: LoadedCrm, m: MailItem, urlKeys: string[], st: SyncStats) {
   const ext = m.externalId.slice(0, 200);
-  if (m.cancelled) {
-    const gone = await q.query(`delete from activities where org_id = $1 and source = $2 and external_id = $3 and kind = 'meeting' returning id`, [conn.orgId, conn.provider, ext]);
-    st.archived += gone.length;
-    return;
-  }
+  if (m.cancelled) return;
   const account = await accountForEmails(q, conn.orgId, m.participants, urlKeys);
   if (!account) return;
   const minutes = m.minutes && m.minutes >= 1 ? Math.min(1440, Math.round(m.minutes)) : null;

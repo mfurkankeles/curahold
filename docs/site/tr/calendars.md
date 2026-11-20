@@ -25,7 +25,7 @@ Müşterinin sayfasında **Zaman çizelgesi**'ni aç ve **Google Calendar içind
 
 ## Sınırlar ve zamanlama
 
-Saatte bir okunur; son bir haftada adı değişen ya da iptal edilen toplantı güncellenir ya da kaldırılır. Google ve Microsoft dakikadaki istekleri sınırlar: "meşgul" cevabı okumayı duraklatır, okuma sonraki sefer devam eder.
+Saatte bir okunur; son bir haftada taşınan ya da adı değişen toplantı güncellenir. İptal edilen toplantı yerinde kalır: yapılmadıysa zaman çizelgesinden sil (çöp kutusuna gider). Google ve Microsoft dakikadaki istekleri sınırlar: "meşgul" cevabı okumayı duraklatır, okuma sonraki sefer devam eder.
 
 ## Bir sorun olursa
 

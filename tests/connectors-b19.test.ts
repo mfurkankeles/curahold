@@ -343,7 +343,7 @@ for (const cal of [
       expect(meetings[0].minutes).toBeGreaterThan(0);
     });
 
-    it('a meeting changed there is changed here; a cancelled one is taken away; nothing is doubled', async () => {
+    it('a meeting changed there is changed here; a cancelled one is left for a person to delete; nothing is doubled', async () => {
       later(60);
       const renamed = `${cal.customer} review (moved)`;
       cal.mock.remoteEdit!(world.ctl(cal.provider), renamed);
@@ -353,7 +353,8 @@ for (const cal of [
       cal.cancel();
       later(60);
       await runSync(id);
-      expect((await ada.get(`/api/accounts/${account}/meetings`)).json.meetings.some((m: any) => m.title === renamed)).toBe(false);
+      // Not deleted by the sync (the trash needs a person): it stays, unchanged and not doubled.
+      expect((await ada.get(`/api/accounts/${account}/meetings`)).json.meetings.filter((m: any) => m.title === renamed)).toHaveLength(1);
     });
 
     it('out: a meeting planned here goes into the calendar with the customer\'s people invited', async () => {

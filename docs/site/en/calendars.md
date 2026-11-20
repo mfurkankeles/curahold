@@ -25,7 +25,7 @@ On a customer's page, open **Timeline** and click **Plan a meeting in Google Cal
 
 ## Limits and timing
 
-Read every hour; a renamed or cancelled meeting of the last week is updated or taken away. Google and Microsoft limit requests per minute: a busy answer pauses the read, which carries on next time.
+Read every hour; a meeting of the last week that was moved or renamed is updated. A cancelled meeting stays: delete it from the timeline if it did not take place (it goes to the trash). Google and Microsoft limit requests per minute: a busy answer pauses the read, which carries on next time.
 
 ## If something goes wrong
 
