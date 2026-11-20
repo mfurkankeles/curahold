@@ -3502,7 +3502,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.plan_limit_seats': "Planınız en fazla {cap} tam kullanıcı içeriyor ve hepsi kullanımda. Görüntüleyen olarak (ücretsiz) davet edin ya da daha büyük bir plan seçin.",
   'errors.plan_limit_storage': "Planınızın dosya alanı ({cap} GB) doldu. Artık gerekmeyen dosyaları silin ya da daha büyük bir plan seçin.",
   'errors.plan_limit_connectors': "Planınız en fazla {cap} bağlı araç içeriyor. Birini kaldırın ya da daha büyük bir plan seçin.",
-  'errors.plan_limit_ai': "Planınız aylık en fazla {cap} USD yapay zekâ sınırına izin veriyor. Daha düşük bir sınır seçin; daha fazla koltuk ya da daha büyük bir plan bu sınırı yükseltir.",
+  'errors.plan_limit_ai': "Planınız aylık en fazla {cap} USD yapay zekâ sınırına izin veriyor. Daha düşük bir sınır seçin; daha fazla tam kullanıcı ya da daha büyük bir plan bu sınırı yükseltir.",
   'timeline.today': 'Bugün',
   'timeline.yesterday': 'Dün',
   'timeline.automatic': 'Otomatik kural',

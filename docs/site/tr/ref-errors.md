@@ -82,6 +82,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `email_taken` | 409 | Şirketinizde bu e-postayı kullanan biri zaten var. |
 | `handover_confirmed` | 409 | Bu devir zaten onaylandı. |
 | `last_admin` | 409 | Şirketinizde en az bir aktif yönetici kalmalı. |
+| `plan_limit_ai` | 409 | Planınız aylık en fazla … USD yapay zekâ sınırına izin veriyor. Daha düşük bir sınır seçin; daha fazla tam kullanıcı ya da daha büyük bir plan bu sınırı yükseltir. |
 | `plan_limit_connectors` | 409 | Planınız en fazla … bağlı araç içeriyor. Birini kaldırın ya da daha büyük bir plan seçin. |
 | `plan_limit_seats` | 409 | Planınız en fazla … tam kullanıcı içeriyor ve hepsi kullanımda. Görüntüleyen olarak (ücretsiz) davet edin ya da daha büyük bir plan seçin. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
