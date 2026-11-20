@@ -65,6 +65,8 @@ export interface ConsentFlags {
   jpTransferConsent: boolean;
   /** Malaysia: consent box to handle the request (PDPA s. 6(1)(a); s. 6(2)(a) may make it unnecessary — lawyer's switch, on by default). */
   myConsentBox: boolean;
+  /** India: consent box to handle the request (DPDP s. 6(1); s. 7(a) may make it unnecessary — lawyer's switch, on by default). */
+  inConsentBox: boolean;
   /**
    * Türkiye: Curahold is registered in İYS (İleti Yönetim Sistemi) as a service provider and approvals are uploaded there
    * (owner task, go-live checklist). Off: the two Turkish marketing boxes (TR.M1/M2) are not offered at all, so no approval
@@ -82,6 +84,7 @@ export const DEFAULT_FLAGS: ConsentFlags = {
   trStandardContractsNotified: false,
   jpTransferConsent: false,
   myConsentBox: true,
+  inConsentBox: true,
   trIysRegistered: false,
 };
 
@@ -664,6 +667,7 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         kind: 'consent',
         required: true,
         box: true,
+        when: 'inConsentBox',
         master: 'hi',
         basis: 'DPDP Act 2023 s. 6(1): free, specific, informed, unconditional and unambiguous, by a clear affirmative action, limited to the data needed for this purpose; never bundled with marketing (separate box IN.M). s. 7(a) (voluntarily given for a specified purpose) may make the box unnecessary — lawyer to decide. (taslak — avukat onayı gerekli)',
         texts: {

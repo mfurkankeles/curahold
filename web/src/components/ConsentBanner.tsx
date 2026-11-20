@@ -133,7 +133,7 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
     // The record (version, hash of the words shown, country from the edge): best effort.
     void sha256Hex(bannerText(s as unknown as Record<string, string>, inUse)).then((textHash) => {
       const event = consentEvent(next, { inUse, textHash, locale, surface: 'app' });
-      if (signedIn) void post('/consent', { ...event, source: 'app' }).catch(() => undefined);
+      if (signedIn) void post('/consent', { ...event, source: 'app', inUse }).catch(() => undefined);
       else sendConsentEvent('/api/consent-event', event);
     });
   };
