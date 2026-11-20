@@ -2,8 +2,8 @@
 // KVKK/GDPR tools), teams, roles and the activity log.
 import { DepartmentsTab } from '../components/Departments';
 import { Icon, PageIcon } from '../components/icons';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { accountWords, helpLanguageOf, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { accountWords, helpLanguageOf, LOCALE_INFO, LOCALES, translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { SETTINGS_HELP } from '../../../shared/src/helpLinks';
 import { docsHref, docsLink } from '../lib/docs';
 import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
@@ -317,10 +317,8 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
     locale: me.org.locale,
     timezone: me.org.timezone,
     currency: me.org.currency,
-    terms: {
-      en: { one: me.org.terms.account?.en?.one ?? '', other: me.org.terms.account?.en?.other ?? '' },
-      tr: { one: me.org.terms.account?.tr?.one ?? '', other: me.org.terms.account?.tr?.other ?? '' },
-    },
+    // Every language the product speaks, so a preset can fill them all and a save never drops one.
+    terms: Object.fromEntries(LOCALES.map((l) => [l, { one: me.org.terms.account?.[l]?.one ?? '', other: me.org.terms.account?.[l]?.other ?? '' }])) as Record<Locale, { one: string; other: string }>,
   });
   type Form = ReturnType<typeof savedForm>;
   const [base, setBase] = useState<Form>(savedForm);
@@ -365,7 +363,9 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
   }
   // The words this company will see, in the language on screen (English otherwise).
   const shown = accountWords(viewer, { account: terms });
-  const word = (l: 'en' | 'tr', k: 'one' | 'other', label: string) => (
+  // Typed words for English, the company's language and the reader's own; the presets fill every language.
+  const typed = [...new Set<Locale>(['en', locale, viewer])];
+  const word = (l: Locale, k: 'one' | 'other', label: string) => (
     <label className="field">
       <span className="field__label">{label}</span>
       <input className="input" maxLength={40} value={terms[l][k]} placeholder={accountWords(l)[k]} onChange={(e) => setTerms({ ...terms, [l]: { ...terms[l], [k]: e.target.value } })} />
@@ -437,19 +437,22 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
         <div className="field u-mb-12">
           <span className="field__label">{t('settings.company.vocabularyPick')}</span>
           <div className="rb-chips">
-            {VOCAB.map((v) => (
-              <button key={v.en.one} type="button" className="rb-chip" aria-pressed={terms.en.one === v.en.one && terms.tr.one === v.tr.one} onClick={() => setTerms({ en: { ...v.en }, tr: { ...v.tr } })}>
-                {((v as Partial<Record<Locale, { one: string }>>)[viewer] ?? v.en).one}
-              </button>
-            ))}
+            {VOCAB.map((id) => {
+              const of = (l: Locale) => ({ one: translate(l, `settings.vocab.${id}.one`), other: translate(l, `settings.vocab.${id}.other`) });
+              return (
+                <button key={id} type="button" className="rb-chip" aria-pressed={terms.en.one === of('en').one && terms[viewer].one === of(viewer).one} onClick={() => setTerms(Object.fromEntries(LOCALES.map((l) => [l, of(l)])) as Form['terms'])}>
+                  {t(`settings.vocab.${id}.one`)}
+                </button>
+              );
+            })}
           </div>
         </div>
         <p className="field__hint u-m-0-0-8">{t('settings.company.vocabularyOwn')}</p>
         <div className="form__row">
-          {word('en', 'one', `${LOCALE_INFO.en.name} · ${t('settings.company.singular')}`)}
-          {word('en', 'other', `${LOCALE_INFO.en.name} · ${t('settings.company.plural')}`)}
-          {word('tr', 'one', `${LOCALE_INFO.tr.name} · ${t('settings.company.singular')}`)}
-          {word('tr', 'other', `${LOCALE_INFO.tr.name} · ${t('settings.company.plural')}`)}
+          {typed.flatMap((l) => [
+            <Fragment key={`${l}-one`}>{word(l, 'one', `${LOCALE_INFO[l].name} · ${t('settings.company.singular')}`)}</Fragment>,
+            <Fragment key={`${l}-other`}>{word(l, 'other', `${LOCALE_INFO[l].name} · ${t('settings.company.plural')}`)}</Fragment>,
+          ])}
         </div>
       </div>
       {/* The effect of what is on screen, before it is saved. */}
@@ -476,16 +479,9 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
   );
 }
 
-/** What companies most often call the organisations they look after: one click fills all four words. */
-const VOCAB: { en: { one: string; other: string }; tr: { one: string; other: string } }[] = [
-  { en: { one: 'Customer', other: 'Customers' }, tr: { one: 'Müşteri', other: 'Müşteriler' } },
-  { en: { one: 'Partner', other: 'Partners' }, tr: { one: 'Partner', other: 'Partnerler' } },
-  { en: { one: 'Account', other: 'Accounts' }, tr: { one: 'Hesap', other: 'Hesaplar' } },
-  { en: { one: 'Dealer', other: 'Dealers' }, tr: { one: 'Bayi', other: 'Bayiler' } },
-  { en: { one: 'Brand', other: 'Brands' }, tr: { one: 'Marka', other: 'Markalar' } },
-  { en: { one: 'Member', other: 'Members' }, tr: { one: 'Üye', other: 'Üyeler' } },
-  { en: { one: 'Company', other: 'Companies' }, tr: { one: 'Firma', other: 'Firmalar' } },
-];
+/** What companies most often call the organisations they look after: one click fills the words in every language
+ * (`settings.vocab.<id>.one/.other` in each dictionary). */
+const VOCAB = ['customer', 'partner', 'account', 'dealer', 'brand', 'member', 'company'] as const;
 
 function PeopleTab() {
   const { t } = useI18n();

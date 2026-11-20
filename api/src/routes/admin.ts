@@ -6,7 +6,7 @@ import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requireFresh } from '../lib/identity';
-import { translate } from '../../../shared/src/i18n';
+import { LOCALES, translate, type Locale } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type PersonAccess, type Role } from '../../../shared/src/model';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
@@ -73,7 +73,8 @@ adminRoutes.patch('/org', async (c) => {
           }
         })
         .optional(),
-      terms: z.object({ account: z.object({ en: termWords.optional(), tr: termWords.optional() }).optional() }).optional(),
+      // Every shipped language may carry the company's own words (a preset fills them all).
+      terms: z.object({ account: z.object(Object.fromEntries(LOCALES.map((l) => [l, termWords.optional()])) as Record<Locale, z.ZodOptional<typeof termWords>>).optional() }).optional(),
       currency: z.string().regex(/^[A-Z]{3}$/).optional(),
       joinRequests: z.boolean().optional(),
       autoJoin: z.boolean().optional(),

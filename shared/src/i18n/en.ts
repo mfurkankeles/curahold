@@ -6960,6 +6960,20 @@ export const en = {
   "audit.inbound_hook.updated": "changed an incoming webhook",
   "audit.inbound_hook.rotated": "gave an incoming webhook a new secret",
   "audit.inbound_hook.deleted": "removed an incoming webhook",
+  'settings.vocab.customer.one': 'Customer',
+  'settings.vocab.customer.other': 'Customers',
+  'settings.vocab.partner.one': 'Partner',
+  'settings.vocab.partner.other': 'Partners',
+  'settings.vocab.account.one': 'Account',
+  'settings.vocab.account.other': 'Accounts',
+  'settings.vocab.dealer.one': 'Dealer',
+  'settings.vocab.dealer.other': 'Dealers',
+  'settings.vocab.brand.one': 'Brand',
+  'settings.vocab.brand.other': 'Brands',
+  'settings.vocab.member.one': 'Member',
+  'settings.vocab.member.other': 'Members',
+  'settings.vocab.company.one': 'Company',
+  'settings.vocab.company.other': 'Companies',
 } as const;
 
 export type MessageKey = keyof typeof en;

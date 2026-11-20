@@ -23,6 +23,9 @@ describe('setup wizard, start to finish', () => {
 
     expect((await admin.post('/api/setup/step', { step: 'company', done: true })).json.done).toEqual(['company']);
     await admin.patch('/api/admin/org', { terms: { account: { en: { one: 'Client', other: 'Clients' } } } });
+    // A preset fills every language, so the server keeps words for any shipped language, not only en/tr.
+    await admin.patch('/api/admin/org', { terms: { account: { en: { one: 'Client', other: 'Clients' }, ja: { one: '取引先', other: '取引先' } } } });
+    expect((await admin.get('/api/me')).json.org.terms.account.ja).toEqual({ one: '取引先', other: '取引先' });
     await admin.post('/api/setup/step', { step: 'messaging', done: true });
 
     // Customers from a spreadsheet; owners do not exist yet.
