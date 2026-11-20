@@ -190,6 +190,7 @@ export const LEGAL_PAGES = [
   'legal-aup',
   'legal-order-form',
   'legal-cookies',
+  'legal-refunds',
   'legal-subprocessors',
   'legal-accessibility',
 ] as const;

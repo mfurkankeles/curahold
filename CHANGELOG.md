@@ -12,6 +12,16 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Legal drafts (all eleven languages): the terms cover monthly and yearly plans, renewal, plan and seat changes and
+  refer to a new **Refund policy** page (draft for the lawyer, linked from the site footer and the trust page); the
+  privacy notice and DPA give the AI question retention the product really applies (none, 7, 30 by default, 90 or 365
+  days; answers are not kept), list the public website chat as Curahold's own activity, and explain an AI assistant a
+  user connects through the connector; the terms and acceptable use policy allow that connector use; the sanctions
+  clause says what the product refuses (Iran) and the fair-use paragraph says what is limited; internal notes are out
+  of the public text. The cookie page lists the Turnstile human check on public forms (cookie choices are asked again).
+- The sales site no longer says the old tool becomes optional, that e-mails show on the timeline, or that accounting is
+  available today; the settings hint says rule runs and hand-overs are not counted or sold per plan, fair use applies.
+
 - The legal pages — terms, privacy notice, data processing agreement, acceptable use, SLA, order form, accessibility
   statement and the KVKK notice — are now in all eleven languages, each marked as a draft for the lawyer and saying that
   the English text prevails (for the KVKK notice, the Turkish). The privacy notice adds notes for India (grievance

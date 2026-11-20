@@ -107,6 +107,11 @@ export function scan(root: string = ROOT): Found[] {
     for (const line of text.split('\n')) {
       if (!/(\.src\s*=|addScript\(|injectScript\(|loadScript\(|<script[^>]*\bsrc=|importScripts\()/.test(line)) continue;
       for (const m of line.matchAll(/https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g)) add(found, m[1]!, 'script', rel);
+      // A loader that assigns a constant (`s.src = SCRIPT`, humanCheck.tsx): the constant's own address counts too.
+      for (const m of line.matchAll(/\.src\s*=\s*([A-Z][A-Z0-9_]*)\b/g)) {
+        const host = /^https:\/\/([a-z0-9.-]+\.[a-z]{2,})/.exec(consts.get(m[1]!) ?? '')?.[1];
+        if (host) add(found, host, 'script', rel);
+      }
     }
   }
   for (const file of SERVER_DIRS.flatMap((d) => walk(join(root, d)))) {

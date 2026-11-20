@@ -559,6 +559,7 @@ function footerHtml(locale: SiteLocale): string {
           ${li(u.legal('dpa'), c.footer.links.dpa)}
           ${li(u.legal('subprocessors'), c.footer.links.subprocessors)}
           ${li(u.legal('cookies'), c.footer.links.cookies)}
+          ${li(u.legal('refunds'), c.footer.links.refunds)}
           ${li(u.legal('accessibility'), c.footer.links.accessibility)}
         </ul>
       </div>

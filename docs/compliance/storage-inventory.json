@@ -1,6 +1,6 @@
 {
-  "policyVersion": "2026-11-19.2",
-  "date": "2026-11-19",
+  "policyVersion": "2026-11-21.1",
+  "date": "2026-11-21",
   "draft": "taslak — avukat onayı gerekli",
   "items": [
     {
@@ -1187,6 +1187,34 @@
       "planned": null,
       "foundIn": [
         "web/src/components/Billing.tsx"
+      ]
+    },
+    {
+      "name": "Cloudflare Turnstile",
+      "pattern": "Cloudflare Turnstile",
+      "type": "script",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Cloudflare Turnstile: checks that a person, not a robot, is filling in a public form (trial request, sign-up, portal sign-in). Loaded only on those forms and only when the check is switched on; Cloudflare sees the IP address and browser signals under its own privacy policy.",
+      "duration": {
+        "kind": "provider"
+      },
+      "party": "third",
+      "company": "Cloudflare, Inc.",
+      "countries": [
+        "US"
+      ],
+      "host": "challenges.cloudflare.com",
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "portal"
+      ],
+      "onlyWhen": "turnstile",
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/humanCheck.tsx"
       ]
     }
   ]

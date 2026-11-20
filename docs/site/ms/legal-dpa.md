@@ -6,7 +6,7 @@ summary: Cara Curahold memproses data peribadi bagi pihak pelanggan — peranan,
 ---
 # Perjanjian pemprosesan data (DPA)
 
-> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-19.draft2. Sebahagian daripada Terma perkhidmatan; salinan yang boleh ditandatangani tersedia atas permintaan. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai. Bukan nasihat undang-undang.
+> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft3. Sebahagian daripada Terma perkhidmatan; salinan yang boleh ditandatangani tersedia atas permintaan. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai. Bukan nasihat undang-undang.
 
 Perjanjian antara Pelanggan dan **[Nama sah syarikat]** ("Curahold") ini terpakai apabila Curahold memproses data peribadi untuk Pelanggan. Ia memenuhi GDPR / UK GDPR perkara 28, KVKK perkara 12 dan terma pemproses undang-undang lain dalam Lampiran 4. Ia mengatasi Terma perkhidmatan berkenaan data peribadi.
 
@@ -58,7 +58,9 @@ Data peribadi dipindahkan ke luar negara Pelanggan hanya dengan perlindungan dal
 
 ## 11. Ciri AI
 
-Ciri AI memproses data hanya apabila pentadbir telah menghidupkannya, menghantar hanya yang minimum diperlukan, dan menyimpan log perbualan selama 30 hari. Tiada Data Pelanggan, gesaan atau output digunakan untuk melatih model. Di bawah KVKK, pembekal AI di luar negara ialah pemindahan yang dilindungi oleh Lampiran 4, bukan oleh persetujuan semata-mata.
+Ciri AI memproses data hanya apabila pentadbir telah menghidupkannya, dan menghantar hanya yang minimum diperlukan. Soalan disimpan mengikut pilihan pentadbir Pelanggan (tiada, 7, 30 secara lalai, 90 atau 365 hari); jawapan tidak disimpan, kecuali jawapan yang diambil daripada dokumentasi sahaja boleh diguna semula selama 7 hari. Tiada Data Pelanggan, gesaan atau output digunakan untuk melatih model, sama ada oleh Curahold atau subpemproses AI-nya. Di bawah KVKK, pembekal AI di luar negara ialah pemindahan yang dilindungi oleh Lampiran 4, bukan oleh persetujuan semata-mata.
+
+**Pembantu AI yang disambungkan pengguna Pelanggan.** Pengguna boleh menyambungkan pembantu AI mereka sendiri kepada Perkhidmatan melalui penyambung Curahold (MCP). Pembantu itu bertindak sebagai pengguna tersebut, dengan kebenaran pengguna itu, dan mengubah data hanya jika pengguna membenarkan perubahan semasa menyambungkannya. Apa yang dibaca pembantu itu keluar dari Perkhidmatan atas arahan Pelanggan (Terma perkhidmatan, seksyen 10) dan pergi kepada syarikat AI yang dipilih pengguna; syarikat itu bukan subpemproses Curahold, dan penyimpanan data serta sebarang penggunaan untuk latihan tertakluk pada perjanjian Pelanggan atau pengguna sendiri dengannya. Pentadbir boleh melihat dan memutuskan sambungan aplikasi yang disambungkan dalam tetapan pembangun.
 
 ## 12. Liabiliti, tempoh
 
@@ -100,7 +102,7 @@ Senarai semasa ialah halaman **Subpemproses**, yang dijana daripada inventori da
 
 ## Lampiran 4 — Penunggang pemindahan
 
-Lampirkan penunggang bagi negara Pelanggan (kajian §2.3, untuk dilengkapkan oleh peguam):
+Lampirkan penunggang bagi negara Pelanggan untuk dilengkapkan oleh peguam):
 
 | Pelanggan di | Penunggang |
 | --- | --- |
