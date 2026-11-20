@@ -41,7 +41,7 @@ The **+ New** button on the left adds anything from one place: a task, a custome
 
 ## Language
 
-Curahold speaks nine languages: English, Turkish, Arabic, Hebrew, Persian, Simplified and Traditional Chinese, Japanese and Korean. The language is chosen in one of two places:
+Curahold speaks eleven languages: English, Turkish, Arabic, Hebrew, Persian, Simplified and Traditional Chinese, Japanese, Korean, Hindi and Malay. The language is chosen in one of two places:
 
 - **For yourself:** Your settings → Language. It follows you to every device.
 - **For the company:** an administrator sets it in Settings → Company. New people then start in that language, and emails to the whole company use it.

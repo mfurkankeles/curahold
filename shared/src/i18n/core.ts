@@ -3,7 +3,7 @@
 // dictionary itself; `translate` reads whatever has been registered.
 //
 // - The server, the sales-site build and the tests import `./index`, which
-//   registers all nine dictionaries synchronously (and re-exports this file).
+//   registers all eleven dictionaries synchronously (and re-exports this file).
 // - The web app and the portal are built with `index` swapped for this file
 //   (see ./vite-plugin.ts): they register only the language in use, fetched on
 //   demand, already filled with English wherever a phrase is not yet translated.
@@ -13,7 +13,7 @@ export type Dictionary = Partial<Record<MessageKey, string>>;
 
 const registry: Partial<Record<Locale, Dictionary>> = {};
 
-/** The registered dictionaries (all nine through `./index`; only loaded ones in the browser). */
+/** The registered dictionaries (all eleven through `./index`; only loaded ones in the browser). */
 export const dictionaries = registry as Record<Locale, Dictionary>;
 export function registerDictionary(locale: Locale, dict: Dictionary) {
   registry[locale] = dict;
@@ -25,7 +25,7 @@ export type { MessageKey };
 // others are turned on with their own correct name and reading direction, and
 // fall back to English for any phrase not yet translated (see `translate`), so
 // adding a language is safe before its dictionary is complete.
-export type Locale = 'en' | 'tr' | 'ar' | 'he' | 'fa' | 'zh-Hans' | 'zh-Hant' | 'ja' | 'ko';
+export type Locale = 'en' | 'tr' | 'ar' | 'he' | 'fa' | 'zh-Hans' | 'zh-Hant' | 'ja' | 'ko' | 'hi' | 'ms';
 
 export interface LocaleInfo {
   /** The language's name in its own words — what the picker shows. */
@@ -49,6 +49,8 @@ export const LOCALE_INFO: Record<Locale, LocaleInfo> = {
   'zh-Hant': { name: '繁體中文', english: 'Chinese (Traditional)', dir: 'ltr', bcp47: 'zh-Hant' },
   ja: { name: '日本語', english: 'Japanese', dir: 'ltr', bcp47: 'ja' },
   ko: { name: '한국어', english: 'Korean', dir: 'ltr', bcp47: 'ko' },
+  hi: { name: 'हिन्दी', english: 'Hindi', dir: 'ltr', bcp47: 'hi' },
+  ms: { name: 'Bahasa Melayu', english: 'Malay', dir: 'ltr', bcp47: 'ms' },
 };
 
 export const LOCALES = Object.keys(LOCALE_INFO) as Locale[];
@@ -71,6 +73,8 @@ const DEFAULT_TERMS: Record<Locale, { one: string; other: string }> = {
   'zh-Hant': { one: '客戶', other: '客戶' },
   ja: { one: '顧客', other: '顧客' },
   ko: { one: '고객', other: '고객' },
+  hi: { one: 'ग्राहक', other: 'ग्राहक' },
+  ms: { one: 'Pelanggan', other: 'Pelanggan' },
 };
 
 export function accountWords(locale: Locale, terms?: Terms | null) {
@@ -185,7 +189,7 @@ function agreeNumbers(locale: Locale, template: string, vars: Vars): string {
  * form built-in content takes (template boards and fields, record types, ready
  * reports and pages). Show it with `labelOf`/`pick` in the reader's language;
  * when it is written into a company's data, JSON keeps the values present then:
- * all nine on the server (every dictionary registered), the active one in the
+ * all eleven on the server (every dictionary registered), the active one in the
  * browser. Stored data is never translated again afterwards.
  */
 export function phrase(key: MessageKey): Partial<Record<Locale, string>> {
@@ -230,13 +234,13 @@ export function dayFirst(locale: Locale): boolean {
 /** What separates the columns of a spreadsheet file here: ";" where the decimal mark is a comma. */
 /**
  * The languages the help centre is written in (scripts/build-docs.ts): all
- * nine. Help search, CuraAI answers and help links use the person's own
+ * eleven. Help search, CuraAI answers and help links use the person's own
  * language; a page a language has no translation of yet (developer pages,
  * legal texts outside English and Turkish) is built there as the English page
  * with a note, so every link resolves. tests/i18n-help.test.ts checks this
  * list against the docs folders.
  */
-export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const satisfies readonly Locale[];
+export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'hi', 'ms'] as const satisfies readonly Locale[];
 export type HelpLanguage = (typeof HELP_LANGUAGES)[number];
 export const helpLanguageOf = (locale: Locale): HelpLanguage => ((HELP_LANGUAGES as readonly Locale[]).includes(locale) ? (locale as HelpLanguage) : 'en');
 

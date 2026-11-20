@@ -100,7 +100,7 @@ describe('the interface has no hard-coded text', () => {
 });
 
 describe('the locale registry', () => {
-  const EXPECTED: Locale[] = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'];
+  const EXPECTED: Locale[] = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'hi', 'ms'];
 
   it('lists every supported locale once', () => {
     expect([...LOCALES].sort()).toEqual([...EXPECTED].sort());

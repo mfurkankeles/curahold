@@ -1,5 +1,5 @@
 // Setup health and "Test your setup" (shared/src/setupHealth.ts): every check
-// ships with its words and its help text in the nine languages; the checks run
+// ships with its words and its help text in the eleven languages; the checks run
 // as the person asking (row security, roles), each with its one-click fix; and
 // the test list keeps every try with its evidence, turns a failed step into an
 // issue, and closes only through the go-live gate (required steps, then two
@@ -21,7 +21,7 @@ import { login, setup, type Env } from './helpers';
 const has = (l: (typeof LOCALES)[number], key: string) => translate(l, key as MessageKey) !== key;
 
 describe('the registry', () => {
-  it('gives every check a query, a fix screen, and its words in all nine languages', () => {
+  it('gives every check a query, a fix screen, and its words in all eleven languages', () => {
     expect(new Set(CHECKS.map((c) => c.id)).size).toBe(CHECKS.length);
     for (const c of CHECKS) {
       expect(!!SQL_CHECKS[c.id] || !!CONFIG_CHECKS[c.id], `${c.id} has no query`).toBe(true);
@@ -51,7 +51,7 @@ describe('the registry', () => {
 });
 
 describe('the assistant', () => {
-  it('catches "what is wrong with my setup" in all nine languages, for free', () => {
+  it('catches "what is wrong with my setup" in all eleven languages, for free', () => {
     const asked = allCases().filter((c) => c.key.startsWith('live-setup'));
     expect(asked.length).toBeGreaterThanOrEqual(18);
     for (const c of asked) expect(asksAboutSetup(c.question), c.key).toBe(true);

@@ -2,7 +2,7 @@
 // matches the registry; the static pages' consent bundle loads no pixel before
 // consent (run in a small fake DOM); the evidence tables keep the fields a
 // review asks for; the trial consent texts follow the research's rules; every
-// generated text exists in all nine languages.
+// generated text exists in every language.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
@@ -40,7 +40,7 @@ describe('storage inventory (generated from the code)', () => {
     for (const [path, content] of outputs(ROOT)) expect(readFileSync(path, 'utf8'), path).toBe(content);
   });
 
-  it('has every purpose and every page word in all nine languages', () => {
+  it('has every purpose and every page word in every language', () => {
     for (const p of Object.values(PURPOSES)) for (const l of LOCALES) expect(p[l], l).toBeTruthy();
     for (const l of LOCALES) {
       const t = COOKIE_PAGE[l];
@@ -62,7 +62,7 @@ describe('legal pack generated from the data inventory', () => {
     for (const [path, content] of legalOutputs()) expect(readFileSync(path, 'utf8'), path).toBe(content);
   });
 
-  it('lists the AI provider and the company mailbox provider, and every sub-processor purpose in nine languages', () => {
+  it('lists the AI provider and the company mailbox provider, and every sub-processor purpose in eleven languages', () => {
     const ids = SUBPROCESSORS.map((s) => s.id);
     expect(ids).toContain('anthropic');
     expect(ids).toContain('googleWorkspace');
@@ -90,7 +90,7 @@ describe('legal pack generated from the data inventory', () => {
 });
 
 describe('mail guides (Google Workspace, SMTP relay)', () => {
-  it('exist in all nine languages with the same sections, records and settings', () => {
+  it('exist in every language with the same sections, records and settings', () => {
     for (const page of ['mail-google-workspace', 'mail-smtp-relay']) {
       const en = readFileSync(join(ROOT, 'docs', 'site', 'en', `${page}.md`), 'utf8');
       const shape = (t: string) => ({ h2: (t.match(/^## /gm) ?? []).length, codes: [...t.matchAll(/`([^`\n]+)`/g)].map((m) => m[1]).filter((c) => /[_=.:@]/.test(c!)).sort() });
@@ -306,6 +306,19 @@ describe('trial consent texts per country (research §1.15)', () => {
     expect(ids(consentSetFor({ declared: 'SA', locale: 'ar', vars, flags: { saConsentBox: false } }))).not.toContain('SA.C');
   });
 
+  it('gives India a notice with the grievance route and a separate consent box, and Malaysia its notice in Malay and English together', () => {
+    expect(ids(consentSetFor({ declared: 'IN', locale: 'hi', vars }))).toEqual(['IN.N', 'IN.C', 'IN.M', 'ALL.A']);
+    const inN = consentSetFor({ declared: 'IN', locale: 'en', vars }).blocks[0]!;
+    expect(inN.shown[0]!.text).toMatch(/Data Protection Board of India/);
+    expect(ids(consentSetFor({ declared: 'MY', locale: 'en', vars }))).toEqual(['MY.N', 'MY.C', 'MY.M', 'ALL.A']);
+    expect(ids(consentSetFor({ declared: 'MY', locale: 'en', vars, flags: { myConsentBox: false } }))).not.toContain('MY.C');
+    for (const locale of ['en', 'ms', 'hi'] as const) {
+      const shown = consentSetFor({ declared: 'MY', locale, vars }).blocks[0]!.shown.map((s) => s.lang);
+      expect(shown, locale).toContain('ms');
+      expect(shown, locale).toContain('en');
+    }
+  });
+
   it('applies both rule sets when the connection comes from a stricter country', () => {
     const c = consentSetFor({ declared: 'DE', ipCountry: 'KR', locale: 'en', vars });
     expect(c.ruleSets).toEqual(['EU', 'KR']);
@@ -326,11 +339,11 @@ describe('trial consent texts per country (research §1.15)', () => {
         expect(b.texts[b.master], `${b.id} ${b.master}`).toBeTruthy();
         expect(b.id.startsWith(`${set}.`)).toBe(true);
       }
-    for (const country of ['TR', 'DE', 'US', 'AE', 'SA', 'QA', 'IL', 'JP', 'KR', 'TW', 'HK', 'SG'])
+    for (const country of ['TR', 'DE', 'US', 'AE', 'SA', 'QA', 'IL', 'JP', 'KR', 'TW', 'HK', 'SG', 'IN', 'MY'])
       for (const b of consentSetFor({ declared: country, locale: 'en', vars }).blocks) for (const s of b.shown) expect(s.text, s.textId).not.toMatch(/\{[a-z_]+\}/);
   });
 
-  it('has the generic notice, marketing box and capacity line in all nine languages', () => {
+  it('has the generic notice, marketing box and capacity line in every language', () => {
     for (const l of LOCALES) {
       const c = consentSetFor({ declared: 'US', locale: l, vars });
       expect(c.blocks.every((b) => b.shown.length === 1 && b.shown[0]!.lang === l), l).toBe(true);

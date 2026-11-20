@@ -145,7 +145,7 @@ Bir dosyanın satırlarından müşteri alır (CSV ya da Excel senin tarafında 
 | `mapping` | nesne | zorunlu |  |
 | `newFields` | nesne listesi | isteğe bağlı | en çok 40 öğe |
 | `runAutomations` | evet/hayır | isteğe bağlı |  |
-| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı |  |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko \| hi \| ms | isteğe bağlı |  |
 
 ### `GET /imports`
 

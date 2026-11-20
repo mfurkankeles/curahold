@@ -339,7 +339,7 @@ await step('a new company signs up alone and lands in the setup wizard, signed i
   const p = founder.page;
   await p.goto(`${central}/`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('input[type=email]');
-  // Nine languages, chosen from a list; this founder works in Turkish.
+  // Eleven languages, chosen from a list; this founder works in Turkish.
   await p.select('.auth__langs select', 'tr');
   await p.waitForFunction(() => document.documentElement.lang === 'tr' && document.querySelector('.auth__title')?.textContent === "Ekibin için Curahold'i kur");
   await shot(p, 'p2-01-signup');

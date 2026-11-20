@@ -11,9 +11,10 @@
 // DOCS_APP_HREF says where "Go to the app" leads from the docs folder then.
 //
 // --preview (or DOCS_PREVIEW=1; implies --relative) is the small copy for a
-// host that takes a few hundred files: all nine languages, but no .md twin
-// per page, a page a language does not have yet links to the English page
-// instead of a copy of it, and the languages other than English show the
+// host that takes a few hundred files (512): every language, but no .md twin
+// per page; past English a language keeps its user guide (Turkish its legal
+// pages too; past Turkish, not the one-vendor setup guides) and every other page
+// links to the English one instead of a copy of it; and the languages other than English show the
 // English pictures (DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish ones too). The production build is unchanged.
 //
 // DOCS_DATA_ONLY=1 keeps only what the try-it demo reads at run time when its
@@ -68,9 +69,12 @@ const OWN = new Map<string, Lang[]>();
 const BORROWED = new Set<string>();
 /** Preview only: the language whose page or picture a link really goes to. */
 const pageLang = (lang: string, slug: string) => (PREVIEW && BORROWED.has(`${lang}/${slug}`) ? 'en' : lang);
+/** Preview only: a setup guide for one vendor's tool (Stripe, Odoo CRM, WhatsApp …), as opposed to an overview page. */
+const VENDOR_GUIDE = (file: string) =>
+  file.startsWith('accounting-') || ['chat-notifications.md', 'odoo-crm.md', 'calendars.md', 'zoho-desk.md', 'whatsapp.md', 'azure-devops.md', 'incoming-webhooks.md'].includes(file);
 /**
  * Preview only: the languages that keep their own pictures (the others show the English ones).
- * English alone by default, so all nine languages fit a 512-file host with the guides' pictures;
+ * English alone by default, so every language fits a 512-file host with the guides' pictures;
  * DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish pictures too (about 60 files more).
  */
 const PREVIEW_PICTURES = (process.env.DOCS_PREVIEW_PICTURES ?? 'en').split(',').map((x) => x.trim()).filter(Boolean);
@@ -247,9 +251,11 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
       image({ href, text }: Tokens.Image) {
         const m = /^img\/([\w-]+\.webp)$/.exec(href);
         if (!m) throw new Error(`${from}/${file}: pictures are img/<name>.webp (got ${href})`);
-        const size = webpSize(join(SRC, from, 'img', m[1]));
+        // A language whose screens are not taken yet shows the English picture.
+        const pic = existsSync(join(SRC, from, 'img', m[1])) ? from : 'en';
+        const size = webpSize(join(SRC, pic, 'img', m[1]));
         if (!size) throw new Error(`${from}/${file}: ${href} is missing; take it with scripts/docs/shots.ts`);
-        return `<img class="shot" src="/docs/${from}/img/${m[1]}" width="${size[0]}" height="${size[1]}" alt="${esc(text)}" loading="lazy" decoding="async">`;
+        return `<img class="shot" src="/docs/${pic}/img/${m[1]}" width="${size[0]}" height="${size[1]}" alt="${esc(text)}" loading="lazy" decoding="async">`;
       },
       table(token: Tokens.Table) {
         const head = token.header.map((c) => `<th>${this.parser.parseInline(c.tokens)}</th>`).join('');
@@ -371,7 +377,13 @@ function build() {
     const needed = english.filter((f) => WHOLE.includes(lang) || parse('en', f).section === 'help');
     const missing = needed.filter((f) => !own.has(f));
     if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
-    all[lang] = english.map((f) => parse(lang, f, own.has(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
+    // The preview keeps to a small host's file budget (ADR 0016): past English, a language carries its user guide
+    // (Turkish its legal pages too) and links to the English page for the rest. Past Turkish, the one-vendor
+    // setup guides link to English too: with eleven languages they alone were 150 files over the cap, and the
+    // overview pages they hang off (Connections, Accounting) stay in the language. The production build keeps every page.
+    const kept = (f: string) =>
+      !PREVIEW || lang === 'en' || (['help', ...(lang === 'tr' ? ['legal'] : [])].includes(parse('en', f).section) && (lang === 'tr' || !VENDOR_GUIDE(f)));
+    all[lang] = english.map((f) => parse(lang, f, own.has(f) && kept(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
     for (const p of all[lang]) if (p.borrowed) BORROWED.add(`${lang}/${p.slug}`);
     for (const p of all[lang]) if (!p.borrowed) OWN.set(p.slug, [...(OWN.get(p.slug) ?? []), lang]);
   }

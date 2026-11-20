@@ -28,7 +28,7 @@
       "tr": "318e6b6b3bcd4b92e3ea411aa6a52050f86003a7bc3bc1c20afb4a7866fd8c41"
     },
     "legal-privacy": {
-      "en": "84b7a65a367a19720f44ced55c7c86ef0aaf2afc3c1b0a065f6b2ca2f8bfaef5",
+      "en": "807066bbe03ec9692fba70e8601b5cfaf6f0e0cad69cfc87582886195b82bcea",
       "tr": "b85709bef57aed58348d618a9dbd644f6a6a58f0eab2b566ddb00012a6fe9366"
     },
     "legal-kvkk": {
@@ -44,7 +44,9 @@
       "zh-Hans": "ab43d8232635bfcc24e010e627618dad3f9a8d0b5d6a31965da0a945c05539fa",
       "zh-Hant": "029bd083ba976544f6277dcf726f51243765eebf2f3336611b1cd362599aa4d0",
       "ja": "e86b6e2ee9edb6d9844a9bb27081acc44a24303bcae6ffb4210e259a3cd37573",
-      "ko": "2e82a36eff12a4c83ce30f691b6e766073bd0bac13c735c794377bbf8145b3b7"
+      "ko": "2e82a36eff12a4c83ce30f691b6e766073bd0bac13c735c794377bbf8145b3b7",
+      "hi": "b3ff4213f6cb3cd1833144675c4c3fc05f038f543018b93a2b4e476e14cfafb3",
+      "ms": "df2374a30a26bbb5d72cc13ded3a5dafa301f0e8d260b98f27b4f98f8f850a33"
     },
     "legal-subprocessors": {
       "en": "e4fb28f4fd07fa6f7c0fdf5220bb87324eab1e668a836a00dca2a6706ca242f5",
@@ -55,7 +57,9 @@
       "zh-Hans": "9d4366c7f451fa2c01e6c4619c32a72e6461ddda42f17b231ac36ac466be0de8",
       "zh-Hant": "a0a47f725c0ae64adab579664e0683b38899a8fa2fdfdc6967b283144d0f85d7",
       "ja": "c645a7af45baeca46da4851202d9241a614cc598688ff41765820ac068cdc035",
-      "ko": "7563a671084158a2b84e51cafcdebfcb6d848a440ece4c75a0f96e22c678fbb2"
+      "ko": "7563a671084158a2b84e51cafcdebfcb6d848a440ece4c75a0f96e22c678fbb2",
+      "hi": "7bb1936fac64b71b459cd9054370b34e40ac7222048a754162f3571f354145a9",
+      "ms": "f38e250e81d4693f5b31aaefb2b1f24f60e89961c6cd24757475b52443974394"
     }
   }
 }

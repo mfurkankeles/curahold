@@ -81,7 +81,7 @@ export async function modelDraft(env: DraftEnv, kind: DraftKind, locale: Locale,
   }
 }
 
-// Words that mark a promise or a next step in meeting notes, in the nine languages.
+// Words that mark a promise or a next step in meeting notes, in the eleven languages.
 const PROMISE_RE = /\b(we will|we'll|we shall|will send|will share|will deliver|promised?|commit(ted)?|guarantee)\b|(göndereceğiz|yapacağız|paylaşacağız|ileteceğiz|söz|taahhüt|sağlayacağız)|(سنرسل|سنقوم|وعد|نلتزم)|(נשלח|נעשה|הבטח)|(می‌فرستیم|انجام می‌دهیم|قول)|(我们会|我們會|承诺|承諾|将提供|將提供)|(いたします|お送りします|約束|対応します)|(보내드리겠|하겠습니다|약속)/i;
 const STEP_RE = /^\s*(?:[-*•]|\d+[.)]|\[ \])\s+|\b(next step|action item|to ?do|follow.?up)\b|(sonraki adım|aksiyon|yapılacak)|(الخطوة التالية)|(הצעד הבא)|(گام بعدی)|(下一步)|(次のステップ|宿題)|(다음 단계)/i;
 

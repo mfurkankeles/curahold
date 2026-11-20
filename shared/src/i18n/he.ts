@@ -5240,7 +5240,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': 'להתחיל סיור',
   'demo.hub.card.meta': '{m} דק׳ · {s} שלבים',
   'demo.hub.band.title': 'ראיתם מספיק? נסו עם הלקוחות שלכם.',
-  "demo.hub.band.text": "בקשו סביבת עבודה לצוות שלכם: שלושה חודשים בחינם, בלי כרטיס אשראי, בתשע שפות.",
+  "demo.hub.band.text": "בקשו סביבת עבודה לצוות שלכם: שלושה חודשים בחינם, בלי כרטיס אשראי, באחת עשרה שפות.",
   'demo.hub.band.primary': 'להתחיל בחינם',
   'demo.hub.band.secondary': 'לקרוא את התיעוד',
   'demo.hub.foot.home': 'דף הבית של Curahold',

@@ -12,7 +12,7 @@
 // Adding a check (docs/DEVELOPER.md, "Setup health"):
 //   1. an entry in CHECKS below;
 //   2. its query in api/src/lib/setupHealth.ts (SQL_CHECKS or CONFIG_CHECKS);
-//   3. sh.<id>.problem / .why / .fix in all nine dictionaries;
+//   3. sh.<id>.problem / .why / .fix in all eleven dictionaries;
 //   4. `npx tsx scripts/docs/setup-health-page.ts` to write it into the help pages.
 // tests/setup-health.test.ts fails until all four are there.
 import type { DepartmentKey, Perm } from './model';
@@ -276,7 +276,7 @@ export const gateOpen = (steps: Pick<TestStepResult, 'required' | 'status'>[]) =
 
 // ------------------------------------------------------------------ the assistant's free rule
 
-// "What's wrong with my setup?" in the nine languages: answered from the checks
+// "What's wrong with my setup?" in every language: answered from the checks
 // themselves, without a model (zero cost). Kept narrow on purpose: a question
 // that names something else goes the usual way.
 const ASKS: RegExp[] = [
@@ -297,6 +297,8 @@ const ASKS: RegExp[] = [
   /(設定|配置)(有什麼|哪裡)(問題|不對)|為什麼(不能用|無法運作|不工作)|(設定|配置)(還)?缺(什麼|少什麼)/,
   /(設定|セットアップ)(の|に)?(何が|どこが)(問題|おかしい|間違)|なぜ(動かない|うまくいかない)|(設定|セットアップ)(で|に)(まだ)?足りない/,
   /(설정|셋업)(에|이)? (뭐가|무엇이|어디가) (문제|잘못)|왜 (작동|동작)(하지 않|이 안|안 하)|(설정|셋업)에서 (아직 )?빠진/,
+  /(सेटअप|सेटिंग|कॉन्फ़िगरेशन)\s?(में)? (क्या|कहां) (गड़बड़|गलत|समस्या|दिक्कत)|(सेटअप|सेटिंग) में (अभी )?(भी )?(क्या )?कमी|सेटअप हेल्थ|(यह|ये) काम क्यों नहीं (कर रहा|करता)/,
+  /\bapa yang (salah|tidak kena|tak kena|kurang|masih kurang|belum lengkap) (dengan|dalam|pada) (persediaan|tetapan|konfigurasi)\b|\bkesihatan persediaan\b|\bkenapa (ia )?tidak berfungsi\b|\bmengapa (ia )?tidak berfungsi\b/i,
 ];
 
 export function asksAboutSetup(question: string): boolean {

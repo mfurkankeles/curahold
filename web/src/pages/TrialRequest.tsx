@@ -140,7 +140,7 @@ const readTicket = (): { ticket: string; email: string; freeMail: boolean } | nu
 };
 
 // A language spoken mostly in one country suggests that country when the connection does not say.
-const HOME_COUNTRY: Partial<Record<Locale, string>> = { tr: 'TR', ja: 'JP', ko: 'KR', 'zh-Hans': 'CN', 'zh-Hant': 'TW', he: 'IL' };
+const HOME_COUNTRY: Partial<Record<Locale, string>> = { tr: 'TR', ja: 'JP', ko: 'KR', 'zh-Hans': 'CN', 'zh-Hant': 'TW', he: 'IL', hi: 'IN', ms: 'MY' };
 
 const STEPS: MessageKey[] = ['trial.step.email', 'trial.step.you', 'trial.step.company', 'trial.step.use', 'trial.step.consent'];
 type Errors = Record<string, string>;

@@ -541,7 +541,7 @@ Claude yapar — durum sayfasını yayınlar (Cloudflare Pages, ücretsiz, uygul
 npx wrangler pages deploy tools/status-page --project-name curahold-status
 ```
 
-Adresi `https://curahold-status.pages.dev` olur (kontrol et: ad doluysa Claude başka bir ad seçer). Sayfa her dakika sağlık adreslerini sorar ve dokuz dilde gösterir:
+Adresi `https://curahold-status.pages.dev` olur (kontrol et: ad doluysa Claude başka bir ad seçer). Sayfa her dakika sağlık adreslerini sorar ve on bir dilde gösterir:
 
 ![Durum sayfası, masaüstü](img/status-desktop.png)
 

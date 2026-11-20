@@ -1,4 +1,4 @@
-// Runs the assistant's evaluation (cases.ts, 333 cases in nine languages)
+// Runs the assistant's evaluation (cases.ts, 333 cases in eleven languages)
 // through the real core (api/src/assistant/core.ts).
 //
 //   npx tsx tests/assistant-eval/run.ts                 # no key: free rules + docs search, fixed checks
