@@ -17,7 +17,7 @@ export const fold = (s: string) => foldText(s).replace(/\s+/g, ' ').trim();
 const HEADERS: Record<TaskImportField, string[]> = {
   title: ['title', 'name', 'task', 'task name', 'summary', 'subject', 'card name', 'item', 'item name', 'başlık', 'görev', 'görev adı', 'konu', 'iş', 'ad', 'adı'],
   description: ['description', 'notes', 'note', 'details', 'body', 'card description', 'açıklama', 'not', 'notlar', 'detay', 'ayrıntı'],
-  status: ['status', 'state', 'section', 'column', 'list', 'list name', 'stage', 'section/column', 'group', 'durum', 'sütun', 'liste', 'aşama', 'bölüm'],
+  status: ['status', 'state', 'section', 'column', 'list', 'list name', 'stage', 'section/column', 'group', 'durum', 'sütun', 'liste', 'liste adı', 'aşama', 'bölüm'],
   assignee: ['assignee', 'assignees', 'assigned to', 'assignee email', 'owner', 'responsible', 'person', 'people', 'members', 'atanan', 'atananlar', 'sorumlu', 'kişi', 'sahibi', 'üye', 'üyeler'],
   dueDate: ['due', 'due date', 'deadline', 'end date', 'due on', 'bitiş', 'bitiş tarihi', 'son tarih', 'termin', 'teslim tarihi'],
   startDate: ['start', 'start date', 'start on', 'begin', 'başlangıç', 'başlangıç tarihi'],

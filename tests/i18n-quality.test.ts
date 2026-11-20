@@ -76,6 +76,19 @@ describe('number agreement (CLDR plural rules)', () => {
   });
 });
 
+describe('English singular after a count of one', () => {
+  // A renewals list said "1 renewals": the noun after a count of exactly one is singular in English.
+  const en = (key: MessageKey, n: number) => translate('en', key, { n });
+  it('says "1 renewal", "1 day", "1 reply", and keeps the plural otherwise', () => {
+    expect([1, 2].map((n) => en('acards.renewalsCount', n))).toEqual(['1 renewal', '2 renewals']);
+    expect([1, 7].map((n) => en('time.daysAgo', n))).toEqual(['1 day ago', '7 days ago']);
+    expect(en('portal.replies', 1)).toBe('1 reply');
+    expect(en('repeat.dayN', 1)).toBe('Every 1 day');
+    expect(translate('ar', 'acards.renewalsCount', { n: 1 })).toBe('1 تجديد');
+    expect(translate('tr', 'acards.renewalsCount', { n: 1 })).toBe('1 yenileme');
+  });
+});
+
 describe('dictionaries: completeness and shape', () => {
   it.each(others.map((l) => [l] as const))('%s has every key, and none English does not have', (l) => {
     const own = dict(l);

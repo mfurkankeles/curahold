@@ -127,12 +127,35 @@ const COUNTED: Partial<Record<Locale, [string, string, string][]>> = {
     ['قواعد', 'قاعدة', 'قاعدة'], ['فواتير', 'فاتورة', 'فاتورة'], ['صفقات', 'صفقة', 'صفقة'], ['ردود', 'رد', 'ردًا'],
     ['دعوات', 'دعوة', 'دعوة'], ['جولات', 'جولة', 'جولة'], ['نقاط', 'نقطة', 'نقطة'], ['تعليقات', 'تعليق', 'تعليقًا'],
     ['طلبات', 'طلب', 'طلبًا'], ['رسائل', 'رسالة', 'رسالة'], ['حسابات', 'حساب', 'حسابًا'], ['شركات', 'شركة', 'شركة'],
+    ['تجديدات', 'تجديد', 'تجديدًا'],
   ],
 };
+
+// English: a dictionary writes "{n} days"; for exactly 1 the noun right after the count is singular
+// ("1 day", "1 renewal" — a renewals list once said "1 renewals"). A key's own "<key>.one" form still
+// wins (for a sentence whose verb changes too). Every noun the dictionary counts is listed here.
+const SINGULAR: Partial<Record<Locale, Record<string, string>>> = {
+  en: Object.fromEntries(
+    (
+      'days tasks rows steps files weeks points changes minutes records items times lists roles months seats hours tours rules kinds ' +
+      'invitations permissions fields customers renewals deals contacts cards subtasks comments links passkeys values questions datasets ' +
+      'invoices boards updates people:person replies:reply entries:entry deliveries:delivery accounts opportunities:opportunity companies:company'
+    )
+      .split(' ')
+      .map((w) => (w.includes(':') ? (w.split(':') as [string, string]) : [w, w.slice(0, -1)])),
+  ),
+};
+const singularPattern = new Map<Locale, RegExp>();
 const pluralRules = new Map<Locale, Intl.PluralRules>();
 const countedPattern = new Map<Locale, { re: RegExp; forms: Map<string, [string, string, string]> }>();
 
 function agreeNumbers(locale: Locale, template: string, vars: Vars): string {
+  const single = SINGULAR[locale];
+  if (single && template.includes('{')) {
+    let re = singularPattern.get(locale);
+    if (!re) singularPattern.set(locale, (re = new RegExp(`\\{(\\w+)\\} (${Object.keys(single).join('|')})(?![\\p{L}\\p{M}])`, 'gu')));
+    return template.replace(re, (m, name: string, word: string) => (String(vars[name]) === '1' ? `{${name}} ${single[word]}` : m));
+  }
   const nouns = COUNTED[locale];
   if (!nouns || !template.includes('{')) return template;
   let p = countedPattern.get(locale);

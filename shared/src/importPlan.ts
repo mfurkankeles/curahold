@@ -201,7 +201,8 @@ const MORE: Partial<Record<ImportField, string[]>> = {
   comments: ['comments', 'comment', 'updates', 'update', 'latest update', 'activity', 'yorumlar', 'yorum', 'güncellemeler'],
   dependsOn: ['depends on', 'dependencies', 'dependency', 'blocked by', 'waiting on', 'waits for', 'predecessors', 'dependent on', 'is blocked by', 'bağımlılık', 'bağımlılıklar', 'şuna bağlı', 'engelleyen', 'önce bitmesi gereken'],
   points: ['story points', 'story point', 'points', 'story point estimate', 'sprint points', 'puan', 'hikaye puanı', 'efor puanı'],
-  list: ['project', 'projects', 'board', 'board name', 'folder', 'folder name', 'list', 'list name', 'proje', 'projeler', 'pano', 'klasör'],
+  // Turkish exports say "Liste" ("Liste adı") for the list a task lives in; without it the Boards step was skipped.
+  list: ['project', 'projects', 'board', 'board name', 'folder', 'folder name', 'list', 'list name', 'proje', 'projeler', 'pano', 'pano adı', 'klasör', 'liste', 'liste adı', 'listeler'],
 };
 const MORE_BY = new Map<string, ImportField>();
 for (const [f, names] of Object.entries(MORE)) for (const h of names!) MORE_BY.set(fold(h), f as ImportField);

@@ -1,6 +1,7 @@
 // Customers at a glance: cards that say what needs attention, the renewals
 // coming up month by month, and which customers have which products.
 import { useMoney } from '../lib/money';
+import { sumMoney } from '../../../shared/src/money';
 import { reviewDue } from '../../../shared/src/rhythm';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useWindow } from '../lib/windowing';
@@ -183,6 +184,7 @@ export function AccountCards({
               )}
               <a
                 className="acard__name"
+                data-hero-key={a.id}
                 href={`/accounts/${a.id}`}
                 onClick={(e) => {
                   e.preventDefault();
@@ -220,6 +222,7 @@ export function AccountCards({
             </dl>
             <footer className="acard__foot">
               <button className="btn btn--small btn--quiet" onClick={() => navigate(`/accounts/${a.id}#tasks`)}>
+                <Icon name="list" size={16} />
                 {t('acards.tasks', { n: a.openTasks ?? 0 })}
               </button>
             </footer>
@@ -269,8 +272,16 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
   }
   const keys = [...groups.keys()].sort((x, y) => (x === 'past' ? -1 : y === 'past' ? 1 : x.localeCompare(y)));
   if (!keys.length) return <div className="empty sheet">{t('acards.noRenewals')}</div>;
-  const sum = (list: { a: Account }[]) => (value ? list.reduce((n, r) => n + cur.toBase(Number(r.a.fields[value.key]) || 0, r.a.currency), 0) : 0);
-  const money = (n: number) => (value ? fmt(value, n) : '');
+  // A month's total in the company's currency; amounts in a currency without a rate are totalled in their
+  // own currency beside it (never counted one to one), and a converted total is marked "≈".
+  const total = (list: { a: Account }[]) => {
+    if (!value) return '';
+    const amounts = list.filter((r) => r.a.fields[value.key] !== null && r.a.fields[value.key] !== undefined && r.a.fields[value.key] !== '').map((r) => ({ amount: Number(r.a.fields[value.key]), currency: r.a.currency }));
+    const s = sumMoney(amounts, cur);
+    const others = Object.entries(s.other).map(([c, n]) => cur.format(n, c));
+    const base = s.base || !others.length ? [`${s.converted ? '≈ ' : ''}${cur.format(s.base)}`] : [];
+    return [...base, ...others].join(' + ');
+  };
   return (
     <div className="renewals">
       {keys.map((k) => {
@@ -283,8 +294,8 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
               <h3>{month}</h3>
               <span className="muted">
                 {t('acards.renewalsCount', { n: list.length })}
-                {value && <> · {money(sum(list))}</>}
-                {risky.length > 0 && value && <> · <span className="schip" data-tone="amber">{t('acards.atStake', { value: money(sum(risky)) })}</span></>}
+                {value && <> · {total(list)}</>}
+                {risky.length > 0 && value && <> · <span className="schip" data-tone="amber">{t('acards.atStake', { value: total(risky) })}</span></>}
               </span>
             </header>
             <table className="table renewals__table">

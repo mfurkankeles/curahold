@@ -25,6 +25,29 @@ export function toBase(amount: number, currency: string | null | undefined, m: M
   return typeof r === 'number' && r > 0 ? amount * r : amount;
 }
 
+/**
+ * A total of amounts that may be in several currencies, without inventing a rate: what is in the
+ * company's currency or has a rate is added up in it (`converted` says whether a rate was used, for the
+ * "≈" mark); an amount in a currency without a rate stays a total of its own in `other`, never counted
+ * one to one (a renewals list once added dollars to lira and printed the sum with a lira sign).
+ */
+export function sumMoney(items: { amount: number; currency?: string | null }[], m: Money): { base: number; converted: boolean; other: Record<string, number> } {
+  let base = 0;
+  let converted = false;
+  const other: Record<string, number> = {};
+  for (const { amount, currency } of items) {
+    if (!Number.isFinite(amount)) continue;
+    const c = currency || m.base;
+    const r = m.rates[c];
+    if (c === m.base) base += amount;
+    else if (typeof r === 'number' && r > 0) {
+      base += amount * r;
+      converted = true;
+    } else other[c] = (other[c] ?? 0) + amount;
+  }
+  return { base, converted, other };
+}
+
 /** From the company's currency into `currency`. */
 export function fromBase(amount: number, currency: string | null | undefined, m: Money): number {
   if (!currency || currency === m.base) return amount;
