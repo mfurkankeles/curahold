@@ -94,7 +94,9 @@ export const CHECKS: SetupCheckDef[] = [
   { id: 'assistant.noKey', area: 'assistant', severity: 'medium', fixer: ['owner'], fix: '/docs/ai-assistants' },
 ];
 
+/** The ids of every setup health check. */
 export const CHECK_IDS = CHECKS.map((c) => c.id);
+/** A setup health check by id, or null. */
 export const checkDef = (id: string) => CHECKS.find((c) => c.id === id) ?? null;
 
 /** One check's result, as the API returns it (already in the reader's language). */
@@ -182,7 +184,9 @@ export const TEST_STEPS: TestStepDef[] = [
   { id: 'jira', group: 'product', auto: true, required: true, minutes: 2, input: 'connection', fixer: ['connections.manage'], fix: '/settings/sources' },
   { id: 'accounting', group: 'finance', auto: true, required: true, minutes: 2, input: 'connection', fixer: ['connections.manage'], fix: '/settings/sources' },
 ];
+/** The ids of every go-live test step. */
 export const TEST_IDS = TEST_STEPS.map((s) => s.id);
+/** A go-live test step by id, or null. */
 export const testStepDef = (id: string) => TEST_STEPS.find((s) => s.id === id) ?? null;
 
 /**
@@ -299,6 +303,7 @@ const ASKS: RegExp[] = [
   /(설정|셋업)(에|이)? (뭐가|무엇이|어디가) (문제|잘못)|왜 (작동|동작)(하지 않|이 안|안 하)|(설정|셋업)에서 (아직 )?빠진/,
 ];
 
+/** Whether an assistant question is about the company's setup, so it may be answered from setup health. */
 export function asksAboutSetup(question: string): boolean {
   const q = question.trim();
   return q.length <= 200 && ASKS.some((r) => r.test(q));

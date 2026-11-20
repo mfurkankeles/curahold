@@ -60,6 +60,10 @@ export interface LoadedCrm {
   secret: CrmSecret;
 }
 
+/**
+ * One sync connection of a company with its credentials unsealed; null when unknown. db.system() with both id and
+ * org_id, because the sync job runs without a signed-in person.
+ */
 export async function loadCrm(deps: Deps, orgId: string, id: string): Promise<LoadedCrm | null> {
   const [r] = await deps.db.system((q) => q.query(`select * from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, orgId]));
   if (!r || !isCrm(r.provider)) return null;
@@ -77,6 +81,7 @@ export async function loadCrm(deps: Deps, orgId: string, id: string): Promise<Lo
   };
 }
 
+/** A stored sync setup with defaults for anything missing (older connections saved fewer keys). */
 export function normalizeSync(raw: any): SyncConfig {
   return { objects: Array.isArray(raw?.objects) ? raw.objects : [], owners: raw?.owners ?? {}, conflict: raw?.conflict ?? 'latest', file: raw?.file, startedAt: raw?.startedAt };
 }
@@ -1347,6 +1352,10 @@ function errorCode(e: unknown): SyncErrorCode | undefined {
   return undefined;
 }
 
+/**
+ * Runs one sync of a connection: pull, push and conflicts per mapped object, or mail attachment for mailboxes. Records
+ * the run and its problems. Owner access throughout, with every statement filtered on this org_id.
+ */
 export async function syncConnection(deps: Deps, orgId: string, connectionId: string, opts: RunOptions): Promise<SyncRun | null> {
   const conn = await loadCrm(deps, orgId, connectionId);
   if (!conn || conn.status === 'disabled' || !conn.sync.startedAt) return null;
@@ -1439,6 +1448,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   return toRun(row);
 }
 
+/** A sync_runs row as the API's SyncRun. */
 export const toRun = (r: Row): SyncRun => ({
   id: r.id,
   mode: r.mode,

@@ -711,6 +711,9 @@ ${chromeTail(locale, rel, 'page')}
 `;
 }
 
+/**
+ * The public site's home page in one language, as static HTML. Split plan for this 600-line function: docs/HANDOVER.md.
+ */
 export function page(locale: SiteLocale): string {
   const c = siteCopy(locale);
   const { tour, bento, cta } = c;

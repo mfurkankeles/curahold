@@ -298,6 +298,9 @@ export const CLARIFY: Ambiguity[] = [
 const LATIN = /^[\x20-\x7e]+$/;
 /** Does the question hold one of these words? Latin words match a word's start ("kisileri" holds "kisi"); others match anywhere. */
 const foldedWords = new WeakMap<Words, string[]>();
+/**
+ * Whether a folded text contains all of a set of words, folded the same way (CJK, Hangul and kana split, Arabic kept).
+ */
 export function holds(folded: string, words: Words): boolean {
   let list = foldedWords.get(words);
   // Folded the same way as the question: Hangul and kana come apart into their parts, Arabic loses nothing it needs.

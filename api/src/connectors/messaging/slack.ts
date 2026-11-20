@@ -17,6 +17,10 @@ export const SLACK_SCOPES = [
 
 const FATAL = new Set(['invalid_auth', 'account_inactive', 'token_revoked', 'not_authed', 'missing_scope', 'team_access_not_granted']);
 
+/**
+ * Calls a Slack Web API method with a bot token. Throws on a rate limit or `ok: false`; a revoked or uninstalled
+ * app throws FatalChatError so the connection is marked broken instead of retried.
+ */
 export async function slackApi(deps: Deps, token: string, method: string, params: Record<string, unknown> = {}, get = false) {
   const f = fetchOf(deps);
   let res: Response;
@@ -42,6 +46,7 @@ export async function slackApi(deps: Deps, token: string, method: string, params
   return json;
 }
 
+/** Slack's "add to workspace" address with our client id, scopes and signed state. */
 export function slackAuthorizeUrl(cfg: Config, redirectUri: string, state: string) {
   const u = new URL('https://slack.com/oauth/v2/authorize');
   u.searchParams.set('client_id', cfg.connectors.slack!.clientId);
@@ -51,6 +56,7 @@ export function slackAuthorizeUrl(cfg: Config, redirectUri: string, state: strin
   return u.toString();
 }
 
+/** Exchanges Slack's OAuth code for the workspace's bot token and team. */
 export async function slackExchange(deps: Deps, code: string, redirectUri: string) {
   const s = deps.config.connectors.slack!;
   const res = await fetchOf(deps)('https://slack.com/api/oauth.v2.access', {
@@ -80,6 +86,7 @@ export async function verifySlackRequest(deps: Deps, raw: string, timestamp: str
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/** A notification as Slack Block Kit blocks, with action buttons when the connection can take them. */
 export function slackBlocks(msg: ChatMessage, withActions = true) {
   const blocks: any[] = [
     { type: 'section', text: { type: 'mrkdwn', text: `*${esc(msg.title)}*${msg.body ? `\n${esc(msg.body)}` : ''}` } },

@@ -12,6 +12,7 @@ import { createHandover, loopBack } from '../api/src/lib/handoff';
 import { translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { BUILTIN_TYPES } from '../shared/src/records';
 
+/** Seeds the demo's customer flow: who owns each customer in each department, and their hand-offs. */
 export async function seedFlow(
   q: Q,
   o: { orgId: string; ids: Record<string, string>; locale: Locale; accounts: Record<string, string>; boards: { pipeline: string; delivery: string } },

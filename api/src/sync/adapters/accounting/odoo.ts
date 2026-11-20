@@ -58,6 +58,7 @@ export async function send(fetcher: typeof fetch, url: string, db: string, key: 
 
 const transportOf = (config: Record<string, any>): Transport => (config.transport === 'jsonrpc' ? { kind: 'jsonrpc', uid: Number(config.uid) } : { kind: 'json2' });
 
+/** Calls an Odoo model method over its JSON-RPC (or XML-RPC) API with the connection's database and key. */
 export async function odoo(ctx: CrmCtx, model: string, method: string, kw: Record<string, unknown>) {
   return send(ctx.fetch, String(ctx.config.url), String(ctx.config.database ?? ''), await ctx.token(), transportOf(ctx.config), model, method, kw);
 }

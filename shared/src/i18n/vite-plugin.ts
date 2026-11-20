@@ -112,6 +112,10 @@ export function staticClosure(entries: string[]): string[] {
 const MARKS = ['first-screen', 'no-phrases'];
 const DYNAMIC = /\bimport\(\s*(\/\*([^*]*)\*\/\s*)?(['"])(\.{1,2}\/[^'"]+)\3\s*\)/g;
 
+/**
+ * The Vite plugin that splits dictionaries for the browser: the first screen's phrases come with it, the rest after.
+ * Keeps the first load small in eleven languages.
+ */
 export function i18nForBrowser({ swap, keys, first }: I18nPluginOptions): Plugin {
   // Split in two: the phrases the first screen's own files use come with it;
   // the rest follows, and every other screen waits for it (see `transform`).

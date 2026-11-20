@@ -1,3 +1,6 @@
+// Messaging connectors (Slack, Teams, Google Chat, plain webhooks for Lark, Telegram and others): the adapter list,
+// which ones this install offers, loading a connection with its credentials unsealed, and linking chat users to people.
+// Used by notify.ts (sending), routes/connections.ts and routes/hooks.ts (incoming buttons).
 import type { ProviderInfo } from '../../../../shared/src/model';
 import { secretsKey, type Config, type Deps } from '../../context';
 import type { Q } from '../../db';
@@ -42,6 +45,10 @@ export async function loadConnection(deps: Deps, orgId: string, id: string): Pro
   return rows[0] ? rowToConn(rows[0], secretsKey(deps.config)) : null;
 }
 
+/**
+ * A connection found by the outside tool's id (a Slack team, a Teams tenant), for incoming events; credentials unsealed.
+ * db.system() because an incoming event has no signed-in person; the row it finds names its own org_id.
+ */
 export async function connectionByExternal(deps: Deps, provider: string, externalId: string): Promise<LoadedConnection | null> {
   const rows = await deps.db.system((q) =>
     q.query(`select * from connections where provider = $1 and external_id = $2 and status <> 'disabled'`, [provider, externalId]),
@@ -49,11 +56,17 @@ export async function connectionByExternal(deps: Deps, provider: string, externa
   return rows[0] ? rowToConn(rows[0], secretsKey(deps.config)) : null;
 }
 
+/**
+ * Records whether the last call over a connection worked (and the error if not); a disabled connection stays disabled.
+ */
 export async function markConnection(q: Q, id: string, ok: boolean, error?: string) {
   if (ok) await q.query(`update connections set status = 'active', last_error = null, last_ok_at = now() where id = $1 and status <> 'disabled'`, [id]);
   else await q.query(`update connections set status = 'error', last_error = $2, updated_at = now() where id = $1 and status <> 'disabled'`, [id, (error ?? '').slice(0, 300)]);
 }
 
+/**
+ * Links a chat tool's user to a person in the company. One outside account belongs to one person: re-linking moves it.
+ */
 export async function upsertIdentity(deps: Deps, conn: LoadedConnection, userId: string, externalId: string, data: Record<string, unknown> = {}) {
   await deps.db.system(async (q) => {
     // One service account belongs to one person; a re-link moves it.

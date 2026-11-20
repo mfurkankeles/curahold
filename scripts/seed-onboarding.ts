@@ -15,6 +15,9 @@ import { builtInTemplate } from '../shared/src/onboarding';
 
 const shiftSql = `update onboarding_steps set start_on = start_on - $2::int, due_on = due_on - $2::int where plan_id = $1`;
 
+/**
+ * Seeds the demo's onboarding plans: the company's own plan three weeks in, and customer plans at different stages.
+ */
 export async function seedOnboarding(q: Q, o: { orgId: string; ids: Record<string, string>; locale: Locale; accounts: Record<string, string> }) {
   const T = (k: string, v?: Record<string, string | number>) => translate(o.locale, k as MessageKey, v);
   const [quill, , , velto] = Object.values(o.accounts);

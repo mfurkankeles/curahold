@@ -62,6 +62,10 @@ function hostOf(c: C) {
   return { rpID: host.split(':')[0], host };
 }
 
+/**
+ * Adds the portal's sign-in routes: email link, password and Google/Microsoft, each only when the company turned it on
+ * ('portal_method_off' otherwise).
+ */
 export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
   const cfg = deps.config;
   const options = (c: C) => signInOptions(c.get('org'), deps);

@@ -55,6 +55,10 @@ export interface CompanyAssistSettings {
 
 export const RETENTION_CHOICES = [0, 7, 30, 90, 365] as const;
 
+/**
+ * A company's assistant settings within the installation's limits. Only an explicit `true` turns it on: a company that
+ * never chose stays off, as the legal texts promise.
+ */
 export function settingsOf(raw: unknown, cfg: AssistantConfig): CompanyAssistSettings {
   const s = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const cap = Number(s.monthlyCapUsd);

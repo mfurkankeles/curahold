@@ -50,6 +50,7 @@ export type FilterOp = (typeof FILTER_OPS)[keyof typeof FILTER_OPS][number];
 export const PERIODS = ['week', 'month', 'quarter', 'year'] as const;
 export type Period = (typeof PERIODS)[number];
 
+/** The filter operators a report field type allows. */
 export const opsFor = (type: ReportFieldType): readonly FilterOp[] =>
   type === 'text' ? FILTER_OPS.text : type === 'date' ? FILTER_OPS.date : type === 'bool' ? FILTER_OPS.bool : type === 'choice' || type === 'person' || type === 'ref' ? FILTER_OPS.choice : FILTER_OPS.number;
 
@@ -170,6 +171,7 @@ export function defProblem(def: ReportDef, source: ReportSourceInfo | undefined)
   return null;
 }
 
+/** An empty report definition for a source (count, as a table). */
 export const blankDef = (source: ReportSource = 'tasks'): ReportDef => ({ source, filters: [], groups: [], measure: { fn: 'count' }, chart: 'table' });
 
 /** The chart that suits a shape, when the person has not chosen one that does. */
@@ -289,6 +291,7 @@ export function loadLevel(n: number, usual: number): 0 | 1 | 2 | 3 | 4 {
   return n <= base * 0.75 ? 1 : n <= base * 1.25 ? 2 : n <= base * 1.75 ? 3 : 4;
 }
 
+/** A ready-made report from the library by key. */
 export const libraryReport = (key: string) => REPORT_LIBRARY.find((x) => x.key === key);
 
 // ------------------------------------------------------- ready dashboards

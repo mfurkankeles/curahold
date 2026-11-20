@@ -36,6 +36,11 @@ const DB_ERRORS: Record<string, 'unauthenticated' | 'not_found' | 'too_many_requ
   portal_rate: 'too_many_requests',
 };
 
+/**
+ * Builds the customer portal's API (separate host and app): robot guard, the portal's own sign-in, and the routes a
+ * customer contact may use. Queries run through db.portal() (the curahold_portal role), so row security limits a
+ * contact to their own customer.
+ */
 export function createPortalApp(deps: Deps) {
   const app = new Hono<PortalEnv>();
   const cfg = deps.config;

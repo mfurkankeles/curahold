@@ -6,6 +6,7 @@ import type { AccountField, Localized } from './model';
 
 export type FieldValue = string | number | null;
 
+/** A number typed in the reader's locale (thousands and decimal marks, spaces); null when it is not a number. */
 export function parseNumber(raw: string, locale: Locale): number | null {
   let s = raw.trim().replace(/[\s '’]/g, '').replace(/[^\d.,\-]/g, '');
   if (!s || !/\d/.test(s)) return null;
@@ -37,6 +38,7 @@ function validYmd(y: number, m: number, d: number): string | null {
   return `${y}-${pad(m)}-${pad(d)}`;
 }
 
+/** A date typed in the reader's locale order, as YYYY-MM-DD; null when it is not a date. */
 export function parseDate(raw: string, locale: Locale): string | null {
   const s = raw.trim();
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
@@ -65,10 +67,12 @@ const fold = (s: string) =>
     .replace(/ı/g, 'i')
     .trim();
 
+/** A field's label in the reader's language. */
 export function labelOf(l: Localized | undefined, locale: Locale): string {
   return phraseIn(l, locale);
 }
 
+/** A stable key for a select option from its label (folded, underscores, at most 40 characters). */
 export function optionKey(label: string): string {
   return fold(label).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'option';
 }

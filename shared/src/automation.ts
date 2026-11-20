@@ -134,6 +134,7 @@ export interface AutomationPreset {
     | { type: 'notify'; to: Recipient[]; message: Localized };
 }
 
+/** An automation's task title with `{account_name}` filled in, capped at 300 characters. */
 export function fillTitle(title: string, vars: { account_name?: string | null }) {
   return title.replace(/\{account_name\}/g, vars.account_name ?? '—').slice(0, 300);
 }

@@ -83,6 +83,9 @@ export const DEFAULT_FLAGS: ConsentFlags = {
 const EEA_UK = 'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH'.split(' ');
 const DIRECT: Record<string, RuleSet> = { TR: 'TR', AE: 'AE', SA: 'SA', EG: 'EG', QA: 'QA', IL: 'IL', JP: 'JP', KR: 'KR', CN: 'CN', TW: 'TW', HK: 'HK', SG: 'SG' };
 
+/**
+ * Which consent rule set applies for a country: 'EU' for the EEA and UK, a country's own where it has one, else 'ROW'.
+ */
 export function ruleSetOf(country: string | null | undefined): RuleSet {
   const c = (country ?? '').toUpperCase();
   if (EEA_UK.includes(c)) return 'EU';
@@ -625,6 +628,7 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
 
 export type Placeholders = Record<'company' | 'company_country' | 'contact' | 'storage_countries' | 'processors' | 'retention' | 'eu_rep' | 'uk_rep' | 'cn_rep', string>;
 
+/** A consent text with its {placeholders} filled; unknown ones are left as written. */
 export const fillText = (text: string, vars: Placeholders) => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k as keyof Placeholders] : m));
 
 export interface ShownText {

@@ -275,6 +275,7 @@ export function setupHealthTool(d: Pick<AssistantDeps, 'api'>, trace: Trace): To
   };
 }
 
+/** An empty record of what the assistant looked at for an answer (docs, data, what it opened, what it proposed). */
 export const emptyTrace = (): Trace => ({ docs: [], data: [], opened: null, proposal: null });
 
 /**

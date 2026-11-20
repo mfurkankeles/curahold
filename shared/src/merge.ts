@@ -14,6 +14,9 @@ export type EditableField = 'title' | 'description' | 'status' | 'assigneeIds' |
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
+/**
+ * Merges a person's edit with a newer version of the task: their changed fields win, everything else stays current.
+ */
 export function mergeTaskEdit(base: Task, mine: Partial<Pick<Task, EditableField>>, current: Task) {
   const reapply: Partial<Pick<Task, EditableField>> = {};
   const conflicts: EditableField[] = [];

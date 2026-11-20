@@ -103,6 +103,10 @@ export async function purgeAssistantLogs(db: Db) {
 /** Docs sections by language, prepared once per process (or isolate) and version. */
 export type DocsLoader = (lang: HelpLanguage) => Promise<DocSection[]>;
 const prepared = new Map<string, { at: number; index: Promise<AnswerIndex>; version: Promise<string> }>();
+/**
+ * The search index of the help docs in one language, cached for `maxAgeMs` and rebuilt when the docs change
+ * (checked with a cheap fingerprint).
+ */
 export function docsIndex(load: DocsLoader, lang: HelpLanguage, maxAgeMs = 10 * 60_000): { index: Promise<AnswerIndex>; version: Promise<string> } {
   const hit = prepared.get(lang);
   if (hit && Date.now() - hit.at < maxAgeMs) return hit;

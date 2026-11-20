@@ -32,6 +32,7 @@ function where(codes: string[], locale: Locale): string {
   return new Intl.ListFormat([locale], { type: 'conjunction' }).format(codes.map((c) => (c.startsWith('[') ? c : (names.of(c) ?? c))));
 }
 
+/** The sub-processor list page in one language, from the processing registry. */
 export function subprocessorPage(locale: Locale): string {
   const t = SUB_PAGE[locale];
   const rows = SUBPROCESSORS.map((s) => [s.company, s.purpose[locale], where(s.countries, locale), t.when[s.when]]);
@@ -91,6 +92,7 @@ function withTable(path: string, content: string): string {
   return text.replace(re, content);
 }
 
+/** The records of processing activities (GDPR Art. 30) as Markdown, from the processing registry. */
 export function recordsOfProcessing(): string {
   const lines = [
     '# Records of processing (data inventory)',
@@ -144,6 +146,7 @@ function abroad(ids: string[]): string {
   return `Evet — KVKK m. 9 standart sözleşme (${processors}${own.map((s) => s.company).join(', ')}: ayrı veri sorumlusuna aktarım, veri sorumlusundan veri sorumlusuna sözleşme)`;
 }
 
+/** The VERBIS (Turkish data controllers' registry) sheet: data categories per processing activity. */
 export function verbisSheet(): string {
   const cats = [...new Set(ACTIVITIES.flatMap((a) => a.verbis))];
   return [
@@ -205,6 +208,7 @@ export function legalHashes(pages: Map<string, string>): string {
   return `${JSON.stringify({ versions, sha256: docs }, null, 2)}\n`;
 }
 
+/** Every legal-pack file this script writes, by path. */
 export function outputs(): Map<string, string> {
   const out = new Map<string, string>();
   for (const l of LOCALES) out.set(join(DOCS, l, 'legal-subprocessors.md'), subprocessorPage(l));

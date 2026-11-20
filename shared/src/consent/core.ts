@@ -48,6 +48,7 @@ export interface ConsentChoice {
   marketing: boolean;
 }
 
+/** No choice yet: nothing optional allowed. */
 export const defaultConsent = (): ConsentState => ({ analytics: false, marketing: false, decided: false, at: '', policy: '', id: '' });
 
 /** Whether a category may run. Necessary always; the others need a recorded grant under the current policy. */
@@ -76,8 +77,11 @@ export function decide(choice: ConsentChoice, opts: { at?: string; previous?: Co
     id: opts.id ?? (opts.previous?.id || randomId()),
   };
 }
+/** A consent state that allows analytics and marketing. */
 export const acceptAll = (at?: string, previous?: ConsentState) => decide({ analytics: true, marketing: true }, { at, previous });
+/** A consent state that allows only what is strictly necessary. */
 export const rejectAll = (at?: string, previous?: ConsentState) => decide({ analytics: false, marketing: false }, { at, previous });
+/** A consent state from the visitor's own choice per category. */
 export const chooseConsent = (choice: ConsentChoice, at?: string, previous?: ConsentState) => decide(choice, { at, previous });
 
 /**
@@ -101,6 +105,7 @@ export function parseConsent(raw: string | null | undefined, now: number = Date.
   return { analytics: v.analytics === true, marketing: v.marketing === true, decided: true, at, policy: CONSENT_POLICY_VERSION, id };
 }
 
+/** A consent state as the stored text. */
 export const serializeConsent = (state: ConsentState): string => JSON.stringify(state);
 
 // ------------------------------------------------------------------ what may load
@@ -178,6 +183,7 @@ export function consentModeFor(state: ConsentState): ConsentModeSignals {
     security_storage: 'granted',
   };
 }
+/** Consent mode v2 signals before any choice: every optional category denied. */
 export const consentModeDefault = (): ConsentModeSignals => consentModeFor(defaultConsent());
 
 // ------------------------------------------------------------------ the record
@@ -202,6 +208,10 @@ export interface ConsentEventBody {
   surface: Surface;
 }
 
+/**
+ * The consent record sent to /api/consent-event: the choice, what was in use, the text's hash, language and surface,
+ * so the proof names the exact text shown (ADR 0014).
+ */
 export function consentEvent(state: ConsentState, ctx: { inUse: Record<OptionalCategory, boolean>; textHash: string; locale: string; surface: Surface }): ConsentEventBody {
   return {
     consentId: state.id,

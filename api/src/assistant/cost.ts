@@ -25,6 +25,10 @@ export const PRICES: Record<string, Price> = {
 };
 const DEAREST: Price = { input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25 };
 
+/**
+ * The price per token of a model. An unknown model is priced as the dearest one, so a new or misspelled model can
+ * only make the cost caps stricter, never looser (ADR 0010).
+ */
 export const priceOf = (model: string): Price => PRICES[model] ?? PRICES[model.replace(/-\d{8}$/, '')] ?? DEAREST;
 
 /** Cost in millionths of a dollar (whole numbers add up exactly in the database). */

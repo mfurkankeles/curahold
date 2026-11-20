@@ -38,6 +38,7 @@ export interface TemplateRule {
 export const ASK_TEMPLATE = 'ask';
 export const MAX_TEMPLATE_RULES = 20;
 
+/** The company's onboarding settings with defaults for anything not set. */
 export function onboardingSettings(settings: unknown): OnboardingSettings {
   const o = ((settings as Record<string, any> | null)?.onboarding ?? {}) as Record<string, unknown>;
   const rules = (Array.isArray(o.rules) ? o.rules : [])
@@ -60,6 +61,7 @@ export type BuiltInPhase = (typeof PHASES)[number];
 /** A phase's key: one of the built-in ones, or one a plan made for itself (`ph1`, `ph2`…). */
 export type Phase = string;
 export const PHASE_KEY = /^[a-z][a-z0-9_-]{0,40}$/;
+/** Whether a phase name is one of the built-in phases. */
 export const isBuiltInPhase = (p: string): p is BuiltInPhase => (PHASES as readonly string[]).includes(p);
 /** A phase's name for the reader: the plan's own, else the built-in one in their language. */
 export function phaseLabel(key: string, phases: readonly PlanPhase[] | null | undefined, say: (k: string) => string): string {
@@ -171,6 +173,7 @@ export const SIGNALS = {
 } as const satisfies Record<string, SignalDef>;
 export type SignalId = keyof typeof SIGNALS;
 export const SIGNAL_IDS = Object.keys(SIGNALS) as SignalId[];
+/** Whether a value names a product signal an onboarding step can wait for. */
 export const isSignal = (s: unknown): s is SignalId => typeof s === 'string' && s in SIGNALS;
 
 /** The facts a plan's signals are read from (one cheap query each side, no model, no cost). */
@@ -334,6 +337,7 @@ export const BUILT_IN_TEMPLATES: BuiltInTemplate[] = [
   { key: 'standard', kind: 'client', blueprint: CLIENT },
   { key: 'multisite', kind: 'client', blueprint: MULTISITE },
 ];
+/** A built-in plan template by key, or null. */
 export const builtInTemplate = (key: string) => BUILT_IN_TEMPLATES.find((t) => t.key === key) ?? null;
 
 // ------------------------------------------------------------------ the plan, as the API returns it
@@ -539,6 +543,7 @@ type StepLike = Pick<PlanStep, 'id' | 'key' | 'phase' | 'position' | 'status' | 
 type IssueLike = Pick<PlanIssue, 'status' | 'side' | 'openedOn' | 'dueOn'>;
 
 const closed = (st: StepStatus) => st === 'done' || st === 'skipped';
+/** Whole days from one ISO date to another. */
 export const dayDiff = (from: string, to: string) => Math.round((Date.parse(`${to.slice(0, 10)}T00:00:00Z`) - Date.parse(`${from.slice(0, 10)}T00:00:00Z`)) / 86400_000);
 const weight = (x: Pick<StepLike, 'required'>) => (x.required === false ? 0.5 : 1);
 
@@ -570,6 +575,7 @@ export interface StepTurn {
   since: string;
   days: number;
 }
+/** Whose turn a step is (ours, the customer's, or waiting on another step) and whether it is late. */
 export function turnOf(step: StepLike, steps: StepLike[], startedOn: string, today: string): StepTurn {
   const open = step.dependsOn.map((k) => steps.find((x) => x.key === k)).filter((d): d is StepLike => !!d && !closed(d.status));
   if (open.length) {
@@ -604,6 +610,7 @@ export function nextStep<T extends StepLike>(steps: T[]): T | null {
   return open.find((x) => x.status === 'doing') ?? open[0] ?? null;
 }
 
+/** A plan's progress: weighted share done (optional steps count half), late steps, open blockers, and its state. */
 export function progressOf(steps: StepLike[], issues: IssueLike[], today: string, status: PlanStatus = 'active', startedOn = today): Progress {
   const counted = steps.filter((x) => x.status !== 'skipped');
   const all = counted.reduce((n, x) => n + weight(x), 0);
@@ -693,6 +700,7 @@ export function fixOf(step: Pick<PlanStep, 'fix' | 'signal'>, accountId: string 
   if (raw.includes('{account}')) return accountId ? raw.replace('{account}', accountId) : null;
   return raw;
 }
+/** The help page for a step: its own guide, else its signal's, else the onboarding hub page. */
 export const guideOf = (step: Pick<PlanStep, 'guide' | 'signal'>): string => step.guide ?? (step.signal ? SIGNALS[step.signal].guide : 'onboarding-hub');
 
 // ------------------------------------------------------------------ data mapping rules
@@ -737,6 +745,7 @@ export function checkField(f: Pick<PlanField, 'type' | 'required' | 'received'>)
 
 /** A row's state in the table: waiting for data, fine, failing (with the rules), or fixed since. */
 export type FieldState = 'waiting' | 'ok' | 'failing' | 'fixed';
+/** Where a mapped data field stands: waiting, received, failing or fixed. */
 export function fieldState(f: Pick<PlanField, 'type' | 'required' | 'received' | 'fixedAt' | 'autoOk'>): FieldState {
   if (f.received == null && f.autoOk == null) return 'waiting';
   if (checkField(f).length || f.autoOk === false) return 'failing';
@@ -786,6 +795,9 @@ export interface HealthSignal {
   /** Where to see it: an address in the app, or #section of the plan. */
   source: string;
 }
+/**
+ * An onboarding plan's health signals (progress, setup, portal use, tickets, score) for the customer's health view.
+ */
 export function healthSignals(p: { progress: Progress; setup?: SetupState | null; portalActive?: boolean | null; tickets?: number | null; score?: number | null; accountId?: string | null }): HealthSignal[] {
   const pr = p.progress;
   const out: HealthSignal[] = [];

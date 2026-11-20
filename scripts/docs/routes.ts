@@ -163,6 +163,9 @@ function reader(src: string) {
   return { text, fieldsOf };
 }
 
+/**
+ * Reads every route from the route files and app.ts mounts (method, full path, file, doc comment) without running the app.
+ */
 export function readRoutes(): RouteDoc[] {
   const out: RouteDoc[] = [];
   // Where each router is mounted: app.route('/api/admin', adminRoutes).

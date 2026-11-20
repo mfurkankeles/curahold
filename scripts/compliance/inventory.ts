@@ -124,6 +124,10 @@ export function lineFor(f: Found, registry: StorageItem[] = STORAGE): StorageIte
   return registry.find((r) => r.type === f.type && (nameMatches(r.name, f.name) || nameMatches(f.name, r.name)));
 }
 
+/**
+ * Compares the cookies and storage found in the code with the registry: `unknown` (used but not declared) and `stale`
+ * (declared but no longer used). The compliance test fails on either, so the cookie policy stays true (privacy).
+ */
 export function compare(found: Found[], registry: StorageItem[] = STORAGE) {
   const unknown = found.filter((f) => !lineFor(f, registry));
   const stale = registry.filter((r) => !r.planned && !found.some((f) => lineFor(f, [r])));
@@ -168,6 +172,7 @@ function rows(locale: Locale): string[][] {
   });
 }
 
+/** The cookie policy page in one language, generated from the storage registry. */
 export function cookiePage(locale: Locale): string {
   const t = COOKIE_PAGE[locale];
   const h = t.head;
@@ -218,6 +223,7 @@ export function cookiePage(locale: Locale): string {
   ].join('\n');
 }
 
+/** The storage inventory as JSON (each item, its category and whether it was found), for the trust page. */
 export function inventoryJson(found: Found[]): string {
   const items = STORAGE.map((it) => ({
     name: it.label ?? it.name,

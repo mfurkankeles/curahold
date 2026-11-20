@@ -15,9 +15,11 @@ const registry: Partial<Record<Locale, Dictionary>> = {};
 
 /** The registered dictionaries (all nine through `./index`; only loaded ones in the browser). */
 export const dictionaries = registry as Record<Locale, Dictionary>;
+/** Registers a language's dictionary (each dictionary file calls it), so translate() can find it. */
 export function registerDictionary(locale: Locale, dict: Dictionary) {
   registry[locale] = dict;
 }
+/** Whether a language's dictionary is loaded yet (the browser loads them lazily). */
 export const hasDictionary = (locale: Locale) => registry[locale] !== undefined;
 export type { MessageKey };
 
@@ -52,7 +54,9 @@ export const LOCALE_INFO: Record<Locale, LocaleInfo> = {
 };
 
 export const LOCALES = Object.keys(LOCALE_INFO) as Locale[];
+/** Whether a language is written right to left (Arabic, Persian, Hebrew). */
 export const isRtl = (locale: Locale) => LOCALE_INFO[locale].dir === 'rtl';
+/** A language's BCP 47 tag, for Intl formatting and the `lang` attribute. */
 export const bcp47Of = (locale: Locale) => LOCALE_INFO[locale].bcp47;
 
 // The company's own words for the things it manages. Stored on the org as
@@ -73,6 +77,7 @@ const DEFAULT_TERMS: Record<Locale, { one: string; other: string }> = {
   ko: { one: '고객', other: '고객' },
 };
 
+/** The company's own words for "customer" in a language (its terms), else the dictionary's. */
 export function accountWords(locale: Locale, terms?: Terms | null) {
   const custom = terms?.account?.[locale];
   const base = DEFAULT_TERMS[locale] ?? DEFAULT_TERMS.en;
@@ -82,6 +87,7 @@ export function accountWords(locale: Locale, terms?: Terms | null) {
   };
 }
 
+/** A supported language from any value, else `fallback`. */
 export function normalizeLocale(value: unknown, fallback: Locale = 'en'): Locale {
   return typeof value === 'string' && (LOCALES as string[]).includes(value) ? (value as Locale) : fallback;
 }
@@ -238,6 +244,7 @@ export function dayFirst(locale: Locale): boolean {
  */
 export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const satisfies readonly Locale[];
 export type HelpLanguage = (typeof HELP_LANGUAGES)[number];
+/** The help docs' language for a locale: the same when docs exist in it, else English. */
 export const helpLanguageOf = (locale: Locale): HelpLanguage => ((HELP_LANGUAGES as readonly Locale[]).includes(locale) ? (locale as HelpLanguage) : 'en');
 
 /** A language's name as the reader says it ("Japanese" for an English reader, "Japonca" for a Turkish one). */
@@ -249,4 +256,5 @@ export function languageName(of: Locale, reader: Locale): string {
   }
 }
 
+/** The CSV column separator a spreadsheet expects in a locale: ";" where the decimal mark is a comma. */
 export const csvSeparator = (locale: Locale | string) => (numberMarks(locale).decimal === ',' ? ';' : ',');

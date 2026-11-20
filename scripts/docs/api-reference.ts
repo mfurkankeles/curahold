@@ -72,6 +72,9 @@ export interface Check {
   stale: string[];
 }
 
+/**
+ * Checks that every API route is in the reference catalogue (scripts/docs/catalogue.ts); the docs-reference test runs it.
+ */
 export function check(all = readRoutes()): Check {
   const routes = all.filter((r) => r.api);
   const known = new Set(routes.map(keyOf));
@@ -99,6 +102,7 @@ function routeBlock(r: RouteDoc, what: string, lang: Lang): string {
   return out.join('\n');
 }
 
+/** The API reference pages, one per language, from the routes and the catalogue. */
 export function pages(all = readRoutes()): { file: string; lang: Lang; content: string }[] {
   const routes = all.filter((r) => r.api);
   const byKey = new Map(routes.map((r) => [keyOf(r), r]));

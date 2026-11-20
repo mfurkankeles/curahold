@@ -171,6 +171,11 @@ function crmClients(env: Env) {
   return out;
 }
 
+/**
+ * The installation's Config from Worker environment variables and secrets (every key in docs/ENVIRONMENT.md), with
+ * safe defaults and caps. Throws at start for a short AUTH_SECRET, incomplete Paddle prices, or no platform owner on a
+ * multi-company install (fail closed).
+ */
 export function configFromEnv(env: Env): Config {
   const portalDomain = env.PORTAL_DOMAIN || undefined;
   if (!env.AUTH_SECRET || env.AUTH_SECRET.length < 32) throw new Error('AUTH_SECRET must be at least 32 characters');
@@ -259,6 +264,10 @@ export function configFromEnv(env: Env): Config {
 
 export type Ctx = { waitUntil(p: Promise<unknown>): void };
 
+/**
+ * The request's dependencies on Workers: database through Hyperdrive (one client per request, as recommended),
+ * storage on R2, mail, live rooms, help docs and the clock.
+ */
 export function depsFor(env: Env, ctx: Ctx) {
   // Hyperdrive pools connections; a client per request is the recommended use.
   const db = postgresDb(env.HYPERDRIVE.connectionString, { max: 1 });
