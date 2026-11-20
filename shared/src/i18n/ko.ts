@@ -646,6 +646,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': '이 회사는 싱글 사인온(SSO)으로만 로그인할 수 있습니다. 조직의 SSO로 로그인하세요.',
   'errors.no_account': '이 워크스페이스에 {email}의 계정이 없습니다. 관리자에게 초대를 요청하세요.',
   'errors.server': '저희 쪽에서 문제가 발생했습니다. 다시 시도하세요.',
+  "errors.mail_unavailable": "지금은 이메일을 보낼 수 없습니다. 몇 분 뒤에 다시 시도하세요. 계속되면 관리자에게 알리세요.",
   'errors.network': 'Curahold에 연결할 수 없습니다. 연결을 확인하세요.',
   'errors.slug_taken': '이 주소는 사용 중입니다. 다른 것을 시도하세요.',
   'errors.domain_public': '{domain}은(는) 공용 이메일 서비스이므로 한 회사에 속할 수 없습니다.',

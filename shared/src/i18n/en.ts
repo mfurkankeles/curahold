@@ -389,6 +389,7 @@ export const en = {
   'errors.sso_required': 'This company requires single sign-on. Use your organization\'s SSO to sign in.',
   'errors.no_account': 'There is no account for {email} in this workspace. Ask your administrator to invite you.',
   'errors.server': 'Something went wrong on our side. Please try again.',
+  "errors.mail_unavailable": "We could not send the email just now. Please try again in a few minutes; if it keeps happening, tell your administrator.",
   'errors.network': 'Cannot reach Curahold. Check your connection.',
 
   // ------------------------------------------------------------------ shell

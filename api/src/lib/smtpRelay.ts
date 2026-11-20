@@ -18,11 +18,17 @@
 //   SMTP_RELAY_PASSWORD that user's app password
 //   EMAIL_FROM          Curahold <no-reply@<domain>>
 //
+// Failures: every refusal becomes a MailError (lib/services.ts), so the person gets one plain sentence and the
+// operator's error log gets the relay's reply. A temporary reply (4xx: "421 4.7.0 Try again later", a dropped
+// connection) is tried once more on a new connection after a short pause; a permanent one (5xx: a wrong app
+// password, the daily limit, an unknown recipient) is not, since repeating it cannot help and may count against
+// the sender's reputation.
+//
 // Limits to watch: the relay accepts up to 10,000 recipients per user per day
 // (Google's published limit as known 19 Nov 2026 — check the admin help page).
 // When daily sending nears it, or deliverability drops, a dedicated sending
 // service becomes necessary (owner decision; Resend is already wired).
-import type { EmailMessage, EmailSender } from './services';
+import { MailError, type EmailMessage, type EmailSender } from './services';
 
 export interface SmtpSocket {
   /** Next chunk of text from the server; null when closed. */
@@ -106,7 +112,7 @@ class Reader {
         }
       }
       const chunk = await this.s.read();
-      if (chunk == null) throw new Error('smtp: connection closed');
+      if (chunk == null) throw new MailError('smtp: connection closed', true);
       this.buf += chunk;
     }
   }
@@ -121,14 +127,33 @@ export class SmtpRelayEmail implements EmailSender {
   constructor(
     private o: RelayOptions,
     private open: SocketOpener,
+    /** pauseMs: the wait before the one retry of a temporary refusal. */
+    private opts: { pauseMs?: number } = {},
   ) {}
 
+  /** Sends one message; a temporary refusal is tried once more on a new connection. Throws MailError. */
   async send(msg: EmailMessage): Promise<void> {
-    let sock = await this.open(this.o.host, this.o.port);
+    try {
+      await this.once(msg);
+    } catch (e) {
+      const err = e instanceof MailError ? e : new MailError(`smtp: ${e instanceof Error ? e.message : String(e)}`, true);
+      if (!err.transient) throw err;
+      await new Promise((r) => setTimeout(r, this.opts.pauseMs ?? 1500));
+      await this.once(msg);
+    }
+  }
+
+  private async once(msg: EmailMessage): Promise<void> {
+    let sock: SmtpSocket;
+    try {
+      sock = await this.open(this.o.host, this.o.port);
+    } catch (e) {
+      throw new MailError(`smtp: cannot reach ${this.o.host}:${this.o.port}: ${e instanceof Error ? e.message : String(e)}`, true);
+    }
     const r = new Reader(sock);
     const expect = async (ok: number[], step: string) => {
       const res = await r.reply();
-      if (!ok.includes(res.code)) throw new Error(`smtp ${step}: ${res.text.slice(0, 200)}`);
+      if (!ok.includes(res.code)) throw new MailError(`smtp ${step}: ${res.text.slice(0, 200)}`, res.code >= 400 && res.code < 500);
       return res;
     };
     const say = (line: string) => sock.write(line + CRLF);
@@ -136,7 +161,7 @@ export class SmtpRelayEmail implements EmailSender {
       await expect([220], 'greeting');
       await say(`EHLO ${this.o.helo}`);
       const ehlo = await expect([250], 'ehlo');
-      if (!/STARTTLS/i.test(ehlo.text)) throw new Error('smtp: the server does not offer STARTTLS');
+      if (!/STARTTLS/i.test(ehlo.text)) throw new MailError('smtp: the server does not offer STARTTLS');
       await say('STARTTLS');
       await expect([220], 'starttls');
       sock = await sock.startTls();

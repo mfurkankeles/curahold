@@ -646,6 +646,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': '该公司要求使用单点登录。请通过你所在组织的 SSO 登录。',
   'errors.no_account': '此工作区中没有 {email} 的账户。请让管理员邀请你。',
   'errors.server': '我们这边出了点问题。请重试。',
+  "errors.mail_unavailable": "暂时无法发送邮件。请几分钟后再试；如果一直这样，请告诉你的管理员。",
   'errors.network': '无法连接 Curahold。请检查你的网络。',
   'errors.slug_taken': '该地址已被占用。请换一个。',
   'errors.domain_public': '{domain} 是公共邮箱服务，因此不能归属于一家公司。',

@@ -381,6 +381,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': "Syarikat ini memerlukan log masuk tunggal. Gunakan SSO organisasi anda untuk log masuk.",
   'errors.no_account': "Tiada akaun untuk {email} dalam ruang kerja ini. Minta pentadbir anda menjemput anda.",
   'errors.server': "Ada masalah di pihak kami. Sila cuba lagi.",
+  "errors.mail_unavailable": "Kami tidak dapat menghantar e-mel sekarang. Sila cuba lagi dalam beberapa minit; jika berulang, maklumkan kepada pentadbir anda.",
   'errors.network': "Tidak dapat menghubungi Curahold. Semak sambungan anda.",
   'nav.boards': "Papan",
   'nav.myTasks': "Tugasan saya",

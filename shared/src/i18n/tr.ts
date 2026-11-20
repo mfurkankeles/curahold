@@ -385,6 +385,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.sso_required': 'Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO\'sunu kullanın.',
   'errors.no_account': 'Bu çalışma alanında {email} için hesap yok. Yöneticinizden sizi davet etmesini isteyin.',
   'errors.server': 'Bizim tarafta bir sorun oldu. Lütfen tekrar deneyin.',
+  "errors.mail_unavailable": "E-postayı şu anda gönderemedik. Lütfen birkaç dakika sonra yeniden deneyin; sorun sürerse yöneticinize haber verin.",
   'errors.network': 'Curahold\'a ulaşılamıyor. Bağlantınızı kontrol edin.',
 
   'nav.boards': 'Panolar',

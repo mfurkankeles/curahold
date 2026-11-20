@@ -646,6 +646,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': '這間公司規定使用單一登入。請透過你所屬組織的 SSO 登入。',
   'errors.no_account': '此工作區中沒有 {email} 的帳戶。請讓管理員邀請你。',
   'errors.server': '我們這邊出了點問題。請重試。',
+  "errors.mail_unavailable": "目前無法寄出電子郵件。請幾分鐘後再試；如果一直這樣，請告訴你的管理員。",
   'errors.network': '無法連接 Curahold。請檢查你的網路。',
   'errors.slug_taken': '該網址已被占用。請換一個。',
   'errors.domain_public': '{domain} 是公用電子郵件服務，因此不能歸屬於一家公司。',

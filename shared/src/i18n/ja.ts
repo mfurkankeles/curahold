@@ -646,6 +646,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': 'この会社ではシングルサインオンが必須です。組織の SSO でログインしてください。',
   'errors.no_account': 'このワークスペースに {email} のアカウントはありません。管理者に招待を依頼してください。',
   'errors.server': 'こちら側で問題が発生しました。もう一度お試しください。',
+  "errors.mail_unavailable": "現在メールを送信できません。数分後にもう一度お試しください。続く場合は管理者にお知らせください。",
   'errors.network': 'Curahold に接続できません。接続を確認してください。',
   'errors.slug_taken': 'このアドレスは使用されています。別のものをお試しください。',
   'errors.domain_public': '{domain} は公開メールサービスのため、1社に属することはできません。',

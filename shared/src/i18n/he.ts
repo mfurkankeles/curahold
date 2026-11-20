@@ -646,6 +646,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': 'החברה הזו מחייבת כניסה יחידה (SSO). התחבר דרך ה-SSO של הארגון שלך.',
   'errors.no_account': 'אין חשבון עבור {email} בסביבת העבודה הזו. בקש ממנהל להזמין אותך.',
   'errors.server': 'משהו השתבש אצלנו. אנא נסה שוב.',
+  "errors.mail_unavailable": "לא הצלחנו לשלוח את האימייל כרגע. נסו שוב בעוד כמה דקות; אם זה חוזר, פנו למנהל המערכת.",
   'errors.network': 'לא ניתן להגיע ל-Curahold. בדוק את החיבור שלך.',
   'errors.slug_taken': 'הכתובת הזו תפוסה. נסה אחרת.',
   'errors.domain_public': '{domain} הוא שירות דוא״ל ציבורי, ולכן אינו יכול להשתייך לחברה אחת.',

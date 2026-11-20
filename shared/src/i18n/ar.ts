@@ -646,6 +646,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'errors.sso_required': 'تشترط هذه الشركة الدخول الموحّد. سجّل الدخول عبر SSO الخاص بمؤسستك.',
   'errors.no_account': 'لا حساب لـ {email} في مساحة العمل هذه. اطلب من المسؤول دعوتك.',
   'errors.server': 'حدث خطأ من جانبنا. يرجى المحاولة من جديد.',
+  "errors.mail_unavailable": "تعذّر إرسال البريد الإلكتروني الآن. يرجى المحاولة بعد بضع دقائق، وإن تكرّر ذلك فأبلغ المسؤول.",
   'errors.network': 'تعذّر الوصول إلى Curahold. تحقق من اتصالك.',
   'errors.slug_taken': 'هذا العنوان مأخوذ. جرّب عنوانًا آخر.',
   'errors.domain_public': '{domain} خدمة بريد عامة، لذا لا يمكن أن تخص شركة واحدة.',
