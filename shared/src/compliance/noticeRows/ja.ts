@@ -29,7 +29,7 @@ const text: NoticeText = {
       subjects: '顧客自身の顧客、連絡先、従業員',
       basis: 'EU/英国：GDPR 第 28 条（顧客の法的根拠による）。トルコ：顧客が管理者、Curahold が受託者（KVKK 第 12 条）。湾岸地域：管理者の指示に基づく受託者。その他の地域：委託（JP 第 27 条 5 項、KR 第 26 条）。',
       retention: '契約期間中。いつでもエクスポート可能。会社が削除を依頼してから 30 日後に削除（ファイル、接続キー、キャッシュを含む）、バックアップは 35 日以内。請求書は税法に従い保存',
-      others: '顧客が自ら、その指示により接続するツール：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、ヘルプデスク（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、会計（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、メールボックス（Gmail、Outlook）、データ（Segment、BigQuery、Snowflake、Google Sheets、Excel）、チャット（Slack、Teams、Google Chat）、Jira、Webhook',
+      others: '顧客が自ら、その指示により接続するツール：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、ヘルプデスク（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、会計（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、メールボックス（Gmail、Outlook）、データ（Segment、BigQuery、Snowflake、Google Sheets、Excel）、チャット（Slack、Teams、Google Chat）、Jira、Webhook、ユーザーが Curahold のコネクタ（MCP）で接続する AI アシスタント（ユーザーまたは会社とその AI 企業との契約による）',
     },
     trialLeads: {
       purpose: 'トライアル申し込みの審査、申込者への連絡、トライアルの開始',
@@ -76,7 +76,7 @@ const text: NoticeText = {
       data: '質問と、回答に必要な最小限の文脈',
       subjects: 'AI アシスタントに質問するユーザー、質問の中で言及される人',
       basis: 'EU/英国：第 28 条（顧客の法的根拠による）。トルコ：顧客のために（受託者として）。国外の AI 提供者への移転は KVKK 第 9 条の対象。湾岸地域：受託者。その他の地域：委託。',
-      retention: '会話ログは会社の選択による（既定 30 日、0〜365 日）。本人の削除とともに削除。提供者側は [30 日・要確認]、学習には使用しない',
+      retention: '質問は会社の選択による（保存しない、7 日、30 日（既定）、90 日、365 日）。回答は保存しない（ドキュメントのみに基づく回答は 7 日間再利用されることがある）。本人の削除とともに削除。提供者側は [30 日・要確認]、学習には使用しない',
     },
     aiDrafts: {
       purpose: '本人が読んで修正するための返信、フォローアップ、要約の下書き作成。本人が確定するまで何も保存・送信しない（管理者が AI をオンにするまでオフ）。モデルの学習には一切使用しない',
@@ -84,6 +84,14 @@ const text: NoticeText = {
       subjects: '下書きを依頼するユーザー、元のレコードに記載された顧客の担当者と同僚',
       basis: 'EU/英国：第 28 条（顧客の法的根拠による）。トルコ：顧客のために（受託者として）。国外の AI 提供者への移転は KVKK 第 9 条の対象。湾岸地域：受託者。その他の地域：委託。',
       retention: 'アシスタントは下書きを保持しない。確定した下書きは保存先のレコードに残り、そのレコードの保存期間に従う。提供者側は [30 日・要確認]、学習には使用しない',
+    },
+    publicAsk: {
+      purpose: '当社のウェブサイトやドキュメントで訪問者が尋ねた質問に AI で回答（訪問者が通知に同意した後のみ）。モデルの学習には一切使用しない',
+      data: '質問と会話の直近数件のメッセージ、言語とページ。ランダムな ID で記録する AI 通知への訪問者の回答。リクエスト制限のためにメモリーに短時間だけ保持し、保存しない IP アドレス',
+      subjects: '当社のウェブサイトやドキュメントでアシスタントに質問する訪問者',
+      basis: 'EU/英国：GDPR 第 6 条 1 項 (a)（同意）。IP アドレスによるリクエスト制限：第 6 条 1 項 (f)（セキュリティ）。トルコ：KVKK 第 5/1 条（明示的同意）、リクエスト制限のための IP アドレスは第 5/2-f 条、国外の AI 提供者への移転は第 9 条。湾岸地域：同意。その他の地域：通知のうえ、最初の質問の前に得る同意。',
+      kvkk: 'KVKK 第 5/1 条（明示的同意）、リクエスト制限のための IP アドレスは第 5/2-f 条、国外の AI 提供者への移転は第 9 条',
+      retention: 'Curahold は質問を保存しない。ドキュメントに基づく回答は、質問の一方向のフィンガープリントのもとで 7 日間再利用されることがある。通知への回答は同意の記録として保存。提供者側は [30 日・要確認]、学習には使用しない',
     },
     humanCheck: {
       purpose: '公開フォームからボットを排除（Cloudflare Turnstile。パズルなし、トラッキング Cookie なし）',

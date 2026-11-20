@@ -29,7 +29,7 @@ const text: NoticeText = {
       subjects: '客户自己的客户、联系人和员工',
       basis: '欧盟/英国：GDPR 第 28 条——以客户的依据为准。土耳其：客户是数据控制者，Curahold 是受托处理者（KVKK 第 12 条）。海湾地区：按控制者指示处理的受托处理者。其他地区：委托处理（JP 第 27(5) 条、KR 第 26 条）。',
       retention: '合同期间；可随时导出；公司申请删除 30 天后删除（包括文件、连接密钥和缓存），备份在 35 天内删除；发票依税法保存',
-      others: '客户自行并按其指示连接的工具：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、帮助台（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、财务（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、邮箱（Gmail、Outlook）、数据（Segment、BigQuery、Snowflake、Google Sheets、Excel）、聊天（Slack、Teams、Google Chat）、Jira、Webhook',
+      others: '客户自行并按其指示连接的工具：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、帮助台（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、财务（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、邮箱（Gmail、Outlook）、数据（Segment、BigQuery、Snowflake、Google Sheets、Excel）、聊天（Slack、Teams、Google Chat）、Jira、Webhook；用户通过 Curahold 连接器（MCP）连接的 AI 助手（依用户或公司与该 AI 公司的协议）',
     },
     trialLeads: {
       purpose: '评估试用申请、联系申请人、开通试用',
@@ -76,7 +76,7 @@ const text: NoticeText = {
       data: '问题以及作答所需的最少上下文',
       subjects: '向 AI 助手提问的用户；问题中提及的人',
       basis: '欧盟/英国：第 28 条——以客户的依据为准。土耳其：代表客户（受托处理者）；向境外 AI 提供商的传输适用 KVKK 第 9 条。海湾地区：受托处理者。其他地区：委托处理。',
-      retention: '会话日志按公司的选择保存（默认 30 天，可设为不保存至 365 天）；随本人一并删除；提供商处 [30 天——待确认]，不用于训练',
+      retention: '问题按公司的选择保存：不保存、7 天、30 天（默认）、90 天或 365 天；不保存回答（仅基于文档的回答可重复使用 7 天）；随本人一并删除；提供商处 [30 天——待确认]，不用于训练',
     },
     aiDrafts: {
       purpose: '起草回复、跟进或摘要，供本人阅读和修改；本人确认前不保存、不发送任何内容（在管理员开启 AI 之前关闭）；绝不用于训练模型',
@@ -84,6 +84,14 @@ const text: NoticeText = {
       subjects: '请求草稿的用户；所依据记录中提及的客户联系人和同事',
       basis: '欧盟/英国：第 28 条——以客户的依据为准。土耳其：代表客户（受托处理者）；向境外 AI 提供商的传输适用 KVKK 第 9 条。海湾地区：受托处理者。其他地区：委托处理。',
       retention: '助手不保留草稿：确认后的草稿保存在其所存入的记录中，按该记录的保存期限处理；提供商处 [30 天——待确认]，不用于训练',
+    },
+    publicAsk: {
+      purpose: '用 AI 回答访问者在我们网站或文档中提出的问题（仅在访问者接受告知后）；绝不用于训练模型',
+      data: '问题和对话中最近几条消息、语言和页面；访问者对 AI 告知的答复（以随机 ID 记录）；IP 地址，为限制请求在内存中短暂保留，不予存储',
+      subjects: '在我们网站或文档中向助手提问的访问者',
+      basis: '欧盟/英国：GDPR 第 6(1)(a) 条（同意）；按 IP 地址限制请求：第 6(1)(f) 条（安全）。土耳其：KVKK 第 5/1 条（明示同意）；用于限制请求的 IP 地址适用第 5/2-f 条；向境外 AI 提供商传输适用第 9 条。海湾地区：同意。其他地区：告知后、首个问题前取得同意。',
+      kvkk: 'KVKK 第 5/1 条（明示同意）；用于限制请求的 IP 地址适用第 5/2-f 条；向境外 AI 提供商传输适用第 9 条',
+      retention: 'Curahold 不存储问题；基于文档的回答可按问题的单向指纹重复使用 7 天；对告知的答复作为同意记录保存；提供商处 [30 天——待确认]，不用于训练',
     },
     humanCheck: {
       purpose: '阻止机器人提交公开表单（Cloudflare Turnstile，无需解谜，无跟踪 Cookie）',

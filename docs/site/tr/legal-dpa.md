@@ -6,7 +6,7 @@ summary: Curahold'un kişisel verileri müşteri adına nasıl işlediği — ro
 ---
 # Veri işleme sözleşmesi (VİS)
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-19.draft2. Kullanım koşullarının parçasıdır; istenirse imzalanabilir bir kopyası verilir. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft3. Kullanım koşullarının parçasıdır; istenirse imzalanabilir bir kopyası verilir. Hukuki görüş değildir.
 
 Müşteri ile **[Şirket unvanı]** ("Curahold") arasındaki bu sözleşme, Curahold'un Müşteri adına kişisel veri işlediği her durumda uygulanır. GDPR / UK GDPR m. 28, KVKK m. 12 ve Ek 4'teki diğer kanunların veri işleyen hükümlerini karşılar. Kişisel veriler konusunda Kullanım koşullarına göre önceliklidir.
 
@@ -58,7 +58,9 @@ Kişisel veri, Müşteri'nin ülkesi dışına yalnızca o ülke için **Ek 4**'
 
 ## 11. Yapay zekâ özellikleri
 
-Yapay zekâ özellikleri veriyi yalnızca bir yönetici açtığında işler, yalnızca gereken en az veriyi gönderir ve konuşma kayıtlarını 30 gün tutar. Hiçbir Müşteri verisi, soru ya da yanıt model eğitiminde kullanılmaz. KVKK bakımından yurt dışındaki bir yapay zekâ sağlayıcısı, yalnızca açık rızayla değil Ek 4 ile karşılanan bir aktarımdır.
+Yapay zekâ özellikleri veriyi yalnızca bir yönetici açtığında işler ve yalnızca gereken en az veriyi gönderir. Sorular, Müşteri'nin yöneticisinin seçtiği süre kadar saklanır (hiç, 7, varsayılan 30, 90 ya da 365 gün); yanıtlar saklanmaz, yalnızca belgelerden derlenen bir yanıt 7 gün yeniden kullanılabilir. Hiçbir Müşteri verisi, soru ya da yanıt ne Curahold ne de yapay zekâ alt işleyeni tarafından model eğitiminde kullanılmaz. KVKK bakımından yurt dışındaki bir yapay zekâ sağlayıcısı, yalnızca açık rızayla değil Ek 4 ile karşılanan bir aktarımdır.
+
+**Müşterinin kullanıcılarının bağladığı yapay zekâ asistanları.** Bir kullanıcı kendi yapay zekâ asistanını Curahold'un bağlayıcısı (MCP) üzerinden Hizmet'e bağlayabilir. Asistan o kullanıcı olarak, onun yetkileriyle çalışır ve veriyi yalnızca kullanıcı bağlarken değişikliğe izin verdiyse değiştirir. Asistanın okuduğu veri, Müşteri'nin talimatıyla (Kullanım koşulları, 10. madde) Hizmet'ten çıkar ve kullanıcının seçtiği yapay zekâ şirketine gider; o şirket Curahold'un alt işleyeni değildir, verinin orada saklanması ve eğitimde kullanılıp kullanılmaması Müşteri'nin ya da kullanıcının o şirketle yaptığı kendi sözleşmesine tabidir. Yöneticiler bağlı uygulamaları geliştirici ayarlarından görebilir ve bağlantılarını kesebilir.
 
 ## 12. Sorumluluk, süre
 
@@ -100,7 +102,7 @@ Güncel liste, Curahold'un veri envanterinden üretilen **Alt işleyenler** sayf
 
 ## Ek 4 — Aktarım ekleri
 
-Müşteri'nin ülkesine ait ek eklenir (araştırma §2.3; avukat tamamlayacak):
+Müşteri'nin ülkesine ait ek eklenir avukat tamamlayacak):
 
 | Müşteri nerede | Ek |
 | --- | --- |

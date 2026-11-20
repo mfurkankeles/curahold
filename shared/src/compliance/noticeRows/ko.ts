@@ -29,7 +29,7 @@ const text: NoticeText = {
       subjects: '고객의 고객, 연락처, 직원',
       basis: 'EU/영국: GDPR 제28조 — 고객의 근거에 따름. 튀르키예: 고객이 개인정보처리자, Curahold는 수탁자(KVKK 제12조). 걸프 지역: 처리자의 지시에 따르는 수탁자. 기타 지역: 위탁(JP 제27조 제5항, KR 제26조).',
       retention: '계약 기간 동안. 언제든지 내보내기 가능. 회사가 삭제를 요청한 지 30일 후 삭제(파일, 연결 키, 캐시 포함), 백업은 35일 이내. 세금계산서·인보이스는 세법에 따라 보존',
-      others: '고객이 직접, 고객의 지시로 연결하는 도구: CRM(Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), 헬프데스크(Zendesk, Freshdesk, Intercom, Jira Service Management, Front), 회계(Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), 메일함(Gmail, Outlook), 데이터(Segment, BigQuery, Snowflake, Google Sheets, Excel), 채팅(Slack, Teams, Google Chat), Jira, Webhook',
+      others: '고객이 직접, 고객의 지시로 연결하는 도구: CRM(Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), 헬프데스크(Zendesk, Freshdesk, Intercom, Jira Service Management, Front), 회계(Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), 메일함(Gmail, Outlook), 데이터(Segment, BigQuery, Snowflake, Google Sheets, Excel), 채팅(Slack, Teams, Google Chat), Jira, Webhook, 사용자가 Curahold 커넥터(MCP)로 연결하는 AI 어시스턴트(사용자 또는 회사가 해당 AI 회사와 맺은 계약에 따름)',
     },
     trialLeads: {
       purpose: '체험 신청 검토, 신청자 연락, 체험 개설',
@@ -76,7 +76,7 @@ const text: NoticeText = {
       data: '질문과 답변에 필요한 최소한의 맥락',
       subjects: 'AI 어시스턴트에게 질문하는 사용자, 질문에 언급된 사람',
       basis: 'EU/영국: 제28조 — 고객의 근거에 따름. 튀르키예: 고객을 위해(수탁자로서), 해외 AI 제공자로의 이전은 KVKK 제9조 적용. 걸프 지역: 수탁자. 기타 지역: 위탁.',
-      retention: '대화 기록은 회사가 정한 대로(기본 30일, 0~365일), 본인 삭제 시 함께 삭제, 제공자 측 [30일 — 확인 필요], 학습 없음',
+      retention: '질문은 회사가 정한 대로(저장 안 함, 7일, 30일(기본), 90일, 365일), 답변은 저장하지 않음(문서만으로 만든 답변은 7일간 재사용될 수 있음), 본인 삭제 시 함께 삭제, 제공자 측 [30일 — 확인 필요], 학습 없음',
     },
     aiDrafts: {
       purpose: '본인이 읽고 고칠 답장, 후속 연락, 요약의 초안 작성. 본인이 확정하기 전에는 아무것도 저장하거나 보내지 않음(관리자가 AI를 켜기 전에는 꺼져 있음). 모델 학습에는 절대 사용하지 않음',
@@ -84,6 +84,14 @@ const text: NoticeText = {
       subjects: '초안을 요청하는 사용자, 바탕 레코드에 언급된 고객 담당자와 동료',
       basis: 'EU/영국: 제28조 — 고객의 근거에 따름. 튀르키예: 고객을 위해(수탁자로서), 해외 AI 제공자로의 이전은 KVKK 제9조 적용. 걸프 지역: 수탁자. 기타 지역: 위탁.',
       retention: '어시스턴트는 초안을 보관하지 않음. 확정된 초안은 저장된 레코드에 남아 그 레코드의 보관 기간을 따름. 제공자 측 [30일 — 확인 필요], 학습 없음',
+    },
+    publicAsk: {
+      purpose: '웹사이트나 문서에서 방문자의 질문에 AI로 답변(방문자가 고지에 동의한 뒤에만), 모델 학습에는 절대 사용하지 않음',
+      data: '질문과 대화의 최근 몇 개 메시지, 언어와 페이지, 무작위 ID로 저장되는 AI 고지에 대한 방문자의 응답, 요청 제한을 위해 메모리에 잠시 두고 저장하지 않는 IP 주소',
+      subjects: '웹사이트나 문서에서 도우미에게 질문하는 방문자',
+      basis: 'EU/영국: GDPR 제6조 제1항 (a)(동의), IP 주소에 따른 요청 제한: 제6조 제1항 (f)(보안). 튀르키예: KVKK 제5/1조(명시적 동의), 요청 제한을 위한 IP 주소는 제5/2-f조, 국외 AI 제공자로의 이전은 제9조. 걸프 지역: 동의. 기타 지역: 고지 후 첫 질문 전에 받는 동의.',
+      kvkk: 'KVKK 제5/1조(명시적 동의), 요청 제한을 위한 IP 주소는 제5/2-f조, 국외 AI 제공자로의 이전은 제9조',
+      retention: 'Curahold는 질문을 저장하지 않음, 문서에서 나온 답변은 질문의 단방향 지문으로 7일간 재사용될 수 있음, 고지에 대한 응답은 동의 기록으로 보관, 제공자 측 [30일 — 확인 필요], 학습 없음',
     },
     humanCheck: {
       purpose: '공개 양식에서 봇 차단(Cloudflare Turnstile, 퍼즐 없음, 추적 쿠키 없음)',

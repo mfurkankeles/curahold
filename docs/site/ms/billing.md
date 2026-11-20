@@ -38,6 +38,10 @@ Pentadbir membuka Tetapan → **Pengebilan**, memilih bulanan atau tahunan dan m
 
 Bil mengikut orang yang telah **menyertai** dengan tempat duduk penuh: jemputan yang belum diterima tidak dibilkan. Tambah seseorang dan tempat duduk tambahan dibilkan untuk baki tempoh; buang seseorang dan bil seterusnya lebih rendah. Tiada sesiapa perlu mengubah bilangan tempat duduk secara manual. Setiap pelan dibilkan untuk sekurang-kurangnya beberapa tempat duduk penuh (biasanya 3; lebih di sesetengah rantau dan untuk bil tahunan): Tetapan → **Pengebilan** menunjukkan jumlah bagi rantau anda, dan orang sehingga jumlah itu tidak dikenakan kos tambahan.
 
+## Pelan tahunan: notis pembaharuan
+
+Pelan tahunan diperbaharui sendiri untuk setahun lagi. **30 hari sebelum** itu, setiap pentadbir menerima e-mel dengan tarikh, pelan dan bilangan tempat duduk, serta pautan ke Tetapan → **Pengebilan**. E-mel ini tetap sampai walaupun anda mematikan pemberitahuan lain, kerana ia notis di bawah terma. Untuk menukar pelan atau bilangan tempat duduk, atau menghentikan pembaharuan, lakukannya di halaman Pengebilan sebelum tarikh itu: membatalkan menghentikan pembaharuan, dan pelan terus berfungsi hingga akhir tahun yang telah dibayar. Apa yang dibayar balik dan bila, ada dalam [dasar bayaran balik](/docs/ms/legal-refunds/).
+
 ## Invois, kaedah pembayaran, pembatalan
 
 **Invois, pembayaran dan pembatalan** pada halaman Pengebilan membuka portal pelanggan Paddle, sudah log masuk: muat turun invois, tukar kad, batalkan. Pelan yang dibatalkan terus berfungsi sehingga akhir tempoh yang telah dibayar.

@@ -189,6 +189,11 @@ export const BASE: BaseCase[] = [
     q: { en: 'How long is the free trial and how many seats does it include?', tr: 'Ücretsiz deneme ne kadar sürüyor ve kaç koltuk içeriyor?', ar: 'كم مدة التجربة المجانية وكم مقعدًا تشمل؟', he: 'כמה זמן נמשך הניסיון החינמי וכמה מושבים כלולים בו?', fa: 'دورهٔ آزمایشی رایگان چقدر است و چند صندلی دارد؟', 'zh-Hans': '免费试用多长时间，包含多少席位？', 'zh-Hant': '免費試用多長時間，包含多少席位？', ja: '無料トライアルの期間と含まれるシート数は？', ko: '무료 체험은 얼마 동안이고 좌석은 몇 개인가요?', hi: "मुफ़्त ट्रायल कितने समय का है और इसमें कितनी सीटें हैं?", ms: "Berapa lama percubaan percuma dan berapa tempat duduk yang disertakan?" },
   },
   {
+    id: 'howto-renewal-notice', category: 'how_to', kinds: ['answer'], cite: 'billing',
+    rubric: 'Says a yearly plan renews by itself, every administrator gets an e-mail 30 days before with the date, and the plan can be changed or the renewal stopped on the Billing page before then; refunds follow the refund policy.',
+    q: { en: 'Will we be told before our yearly plan renews?', tr: 'Yıllık planımız yenilenmeden önce bize haber verilecek mi?', ar: 'هل سنُبلَّغ قبل أن تتجدد خطتنا السنوية؟', he: 'האם נקבל הודעה לפני שהתוכנית השנתית שלנו מתחדשת?', fa: 'آیا پیش از تمدید طرح سالانه‌مان به ما خبر داده می‌شود؟', 'zh-Hans': '年度套餐续约前会通知我们吗？', 'zh-Hant': '年繳方案續約前會通知我們嗎？', ja: '年払いのプランが更新される前に知らせてもらえますか？', ko: '연간 요금제가 갱신되기 전에 알려 주나요?', hi: "क्या हमारा वार्षिक प्लान रिन्यू होने से पहले हमें बताया जाएगा?", ms: "Adakah kami akan dimaklumkan sebelum pelan tahunan kami diperbaharui?" },
+  },
+  {
     id: 'howto-digest', category: 'how_to', kinds: ['answer'], cite: 'notifications',
     rubric: 'Explains that comments, followed work and nudges can wait for the morning summary, set in Profile → Notifications.',
     q: { en: 'How do I get comments in the morning summary instead of one by one?', tr: 'Yorumları tek tek değil sabah özetinde nasıl alırım?', ar: 'كيف أتلقى التعليقات في ملخص الصباح بدل أن تصل واحدًا واحدًا؟', he: 'איך מקבלים תגובות בסיכום הבוקר במקום אחת אחת?', fa: 'چطور نظرها را به جای تک‌تک، در خلاصهٔ صبح بگیرم؟', 'zh-Hans': '如何把评论汇总到早间摘要而不是逐条收到？', 'zh-Hant': '如何把留言彙整到早晨摘要而不是逐則收到？', ja: 'コメントを 1 件ずつではなく朝のまとめで受け取るには？', ko: '댓글을 하나씩 말고 아침 요약으로 받으려면 어떻게 하나요?', hi: "टिप्पणियां एक-एक करके नहीं, सुबह के सारांश में कैसे पाऊं?", ms: "Bagaimana saya menerima ulasan dalam ringkasan pagi dan bukan satu demi satu?" },

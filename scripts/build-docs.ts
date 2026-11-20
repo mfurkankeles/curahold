@@ -134,7 +134,7 @@ function uiOf(lang: Lang) {
     askConsent: {
       version: ASSIST_CONSENT_VERSION,
       ...Object.fromEntries(
-        ['title', 'what', 'why', 'keep', 'withdraw', 'privacy', 'accept', 'decline', 'close', 'withdrawAction', 'withdrawn', 'declined'].map((k) => [k, translate(lang, `assistConsent.${k}` as MessageKey)]),
+        ['title', 'noticeTitle', 'what', 'why', 'keep', 'withdraw', 'privacy', 'consentTitle', 'consentText', 'accept', 'decline', 'close', 'withdrawAction', 'withdrawn', 'declined'].map((k) => [k, translate(lang, `assistConsent.${k}` as MessageKey)]),
       ),
     },
     /** The question back and its choices for a question that means several things: the app's own words (assist.*). */

@@ -33,7 +33,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Personal data:** Whatever the customer enters: contacts, accounts, tasks, notes, files, portal users
 - **Legal basis:** Türkiye — The customer is the controller; Curahold is the processor (KVKK art. 12); EU/UK — Art. 28 GDPR — the customer's basis; Gulf — Processor on the controller's instructions; elsewhere — Entrustment / outsourcing (JP art. 27(5), KR art. 26)
 - **Retention:** For the contract; exportable at any time; deleted 30 days after the company asks for deletion (files, connection keys and caches included), backups within 35 days; invoices kept for tax law
-- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace), Anthropic PBC; Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks
+- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace), Anthropic PBC; Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks; AI assistants a user connects through Curahold’s connector (MCP), under the user’s or the company’s own agreement with that AI company
 - **VERBİS categories:** Kimlik, İletişim, Müşteri işlem
 
 ### trialLeads — Assessing the trial request, contacting the person, opening the trial
@@ -92,7 +92,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Data subjects:** Users who ask the AI assistant; people named in what is asked
 - **Personal data:** The question and the minimum context needed for the answer
 - **Legal basis:** Türkiye — On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9; EU/UK — Art. 28 — the customer's basis; Gulf — Processor; elsewhere — Entrustment
-- **Retention:** Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training
+- **Retention:** Questions as the company chose: none, 7, 30 (default), 90 or 365 days; answers are not kept (an answer drawn only from the documentation may be reused for 7 days); erased with the person; at the provider [30 days — confirm], no training
 - **Stored with / received by:** Anthropic PBC, Supabase, Inc.
 - **VERBİS categories:** Kimlik, Müşteri işlem
 
@@ -105,6 +105,16 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Retention:** The assistant keeps no draft: a confirmed draft lives in the record it was saved to, under that record’s retention; at the provider [30 days — confirm], no training
 - **Stored with / received by:** Anthropic PBC, Supabase, Inc.
 - **VERBİS categories:** Kimlik, İletişim, Müşteri işlem
+
+### publicAsk — Answering a visitor’s question on our website or documentation with AI (only after the visitor accepts the notice); never used to train models
+
+- **Role:** Curahold is the controller
+- **Data subjects:** Visitors who ask the assistant on our website or documentation
+- **Personal data:** The question and the last few messages of the chat, the language and the page; the visitor’s answer to the AI notice under a random id; the IP address, held briefly in memory to limit requests and not stored
+- **Legal basis:** Türkiye — KVKK art. 5/1 (explicit consent); the IP address for limiting requests art. 5/2-f; transfer to the AI provider abroad art. 9; EU/UK — Art. 6(1)(a) GDPR (consent); limiting requests by IP address: Art. 6(1)(f) (security); Gulf — Consent; elsewhere — Consent after a notice, before the first question
+- **Retention:** The question is not stored by Curahold; an answer drawn from the documentation may be reused for 7 days under a one-way fingerprint of the question; the answer to the notice is kept as a consent record; at the provider [30 days — confirm], no training
+- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Anthropic PBC
+- **VERBİS categories:** İşlem güvenliği, Diğer
 
 ### humanCheck — Keeping robots out of public forms (Cloudflare Turnstile, no puzzle, no tracking cookie)
 

@@ -32,7 +32,7 @@ export interface SiteCopy {
   cta: { title: string; text: string };
   /** `placeholder` is an example address: lower-case Latin letters, as an address has to be. */
   signIn: { title: string; text: string; label: string; placeholder: string; go: string; close: string; none: string };
-  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string; accessibility: string; sla: string; aup: string; orderForm: string; disclosure: string }; company: string };
+  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string; refunds: string; accessibility: string; sla: string; aup: string; orderForm: string; disclosure: string }; company: string };
   consent: SiteConsentCopy;
 }
 
@@ -149,7 +149,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'Every renewal, every promise, every task, on time.',
       lead: 'See each customer’s health and the reasons behind it, turn a meeting’s next steps into tasks, and let renewals open themselves ninety days ahead.',
       note: '3 months free once approved, no card needed.',
-      works: 'Start beside the tools you have today, move over at your pace',
+      works: 'Works beside the tools you have today',
       pause: 'Pause',
       play: 'Play',
     },
@@ -192,10 +192,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: 'Ask your assistant about your accounts', p: 'Connect Claude or ChatGPT. It works as you: it sees and changes only what you can.' },
         { h: 'A portal for your customers', p: 'They sign in with a link in their email and see only what you share: their tasks, their requests, your replies.' },
-        { h: 'In step with the tools you have', p: 'Your CRM, Jira, spreadsheets and chat. A change on either side shows up on the other.' },
+        { h: 'In step with the tools you have', p: 'Your CRM, spreadsheets and chat. A change on either side shows up on the other.' },
         { h: 'The quarter on one screen', p: 'Targets, the weighted pipeline and the health of the whole portfolio, in reports and dashboards you can build yourself.' },
         { h: 'Eleven languages, right\u2011to\u2011left included', p: 'Each person picks their own. The whole interface follows, mirrored where it should be.' },
-        { h: 'Your data stays yours', p: 'Every company is kept apart in the database itself, so no mistake in a screen can show one company another’s data.' },
+        { h: 'Your data stays yours', p: 'Every company is kept apart by row-level rules in the database itself, and tests check that separation on every change.' },
       ],
       ask: { q: 'Which accounts need me this week?', a: 'Three need your attention:', did: 'I’ve opened a task for Zeynep: book the Marevo review.' },
       portal: { plan: 'Onboarding' },
@@ -218,7 +218,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'Questions',
       items: [
-        { q: '⟦eu|Where is our data kept?|How is our data kept apart?⟧', a: '⟦eu|The database is in the European Union. |⟧Every company is kept apart at the database itself, so no mistake in a screen can show one company another’s data. The data processing agreement covers GDPR and Türkiye’s KVKK.' },
+        { q: '⟦eu|Where is our data kept?|How is our data kept apart?⟧', a: '⟦eu|The database is in the European Union. |⟧Every company is kept apart by row-level rules in the database itself, and tests check that separation on every change. A data processing agreement is available (a draft under legal review).' },
         { q: 'Can we run it on our own servers?', a: 'Yes. A single-company package runs on your own server or cloud with its own database; it has no billing.' },
         { q: 'Do we need a CRM?', a: 'No. Customers can come from a spreadsheet, or be added by hand. If you have a CRM, Curahold keeps in step with it both ways.' },
         { q: 'Can we cancel at any time?', a: 'Yes. A cancelled plan works until the end of the period paid for, and everything can be exported.' },
@@ -240,7 +240,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'The name comes from the Latin cura, care, and the English hold.',
       help: 'Help center',
       legal: 'Legal',
-      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies', accessibility: 'Accessibility', sla: "Service levels", aup: "Acceptable use", orderForm: "Order form", disclosure: "Report a security issue" },
+      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies', refunds: 'Refund policy', accessibility: 'Accessibility', sla: "Service levels", aup: "Acceptable use", orderForm: "Order form", disclosure: "Report a security issue" },
       company: '[Company legal name]',
     },
     consent: {
@@ -271,7 +271,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'Her yenileme, her söz, her görev zamanında.',
       lead: 'Her müşterinin sağlığını nedenleriyle görün, toplantıdaki sonraki adımları göreve dönüştürün; yenilemeler doksan gün önceden kendiliğinden açılsın.',
       note: 'Onaydan sonra 3 ay ücretsiz, kart gerekmez.',
-      works: 'Bugünkü araçlarınızın yanında başlayın, kendi hızınızda geçin',
+      works: 'Bugünkü araçlarınızın yanında çalışır',
       pause: 'Durdur',
       play: 'Oynat',
     },
@@ -314,10 +314,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: 'Müşterilerinizi asistanınıza sorun', p: 'Claude ya da ChatGPT’yi bağlayın. Sizin adınıza çalışır: yalnızca sizin görebildiğinizi görür, değiştirebildiğinizi değiştirir.' },
         { h: 'Müşterilerine özel portal', p: 'E-postalarına gelen bağlantıyla girerler ve yalnızca paylaştığınızı görürler: görevlerini, taleplerini, yanıtlarınızı.' },
-        { h: 'Kullandığınız araçlarla aynı adımda', p: 'CRM’iniz, Jira, tablolarınız ve sohbet uygulamanız. Bir taraftaki değişiklik diğerinde de görünür.' },
+        { h: 'Kullandığınız araçlarla aynı adımda', p: 'CRM’iniz, tablolarınız ve sohbet uygulamanız. Bir taraftaki değişiklik diğerinde de görünür.' },
         { h: 'Çeyrek tek ekranda', p: 'Hedefler, ağırlıklı fırsat tahmini ve bütün portföyün sağlığı; kendiniz kurabileceğiniz rapor ve gösterge panolarında.' },
         { h: 'On bir dil, sağdan sola yazılanlar dahil', p: 'Herkes kendi dilini seçer. Bütün arayüz ona uyar; gereken yerde ayna gibi döner.' },
-        { h: 'Verileriniz sizin kalır', p: 'Her şirket veritabanının kendisinde ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez.' },
+        { h: 'Verileriniz sizin kalır', p: 'Her şirket, veritabanının kendi içindeki satır kurallarıyla ayrılır; bu ayrım her değişiklikte testlerle denetlenir.' },
       ],
       ask: { q: 'Bu hafta hangi müşteriler beni bekliyor?', a: 'Üç müşteri ilgi bekliyor:', did: 'Zeynep’e bir görev açtım: Marevo değerlendirmesini planlamak.' },
       portal: { plan: 'Başlangıç' },
@@ -340,7 +340,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'Sorular',
       items: [
-        { q: '⟦eu|Verilerimiz nerede tutuluyor?|Verilerimiz nasıl ayrı tutuluyor?⟧', a: '⟦eu|Veritabanı Avrupa Birliği’nde. |⟧Her şirket veritabanının kendisinde birbirinden ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.' },
+        { q: '⟦eu|Verilerimiz nerede tutuluyor?|Verilerimiz nasıl ayrı tutuluyor?⟧', a: '⟦eu|Veritabanı Avrupa Birliği’nde. |⟧Her şirket, veritabanının kendi içindeki satır kurallarıyla ayrılır; bu ayrım her değişiklikte testlerle denetlenir. Bir veri işleme sözleşmesi mevcuttur (hukuki incelemedeki taslak).' },
         { q: 'Kendi sunucularımızda çalıştırabilir miyiz?', a: 'Evet. Tek şirketlik paket, kendi veritabanıyla kendi sunucunuzda ya da bulutunuzda çalışır; aboneliği yoktur.' },
         { q: 'CRM’imiz olması gerekiyor mu?', a: 'Hayır. Müşteriler bir tablodan gelebilir ya da elle eklenebilir. CRM’iniz varsa Curahold onunla iki yönlü uyumlu kalır.' },
         { q: 'İstediğimiz zaman iptal edebilir miyiz?', a: 'Evet. İptal edilen plan ödenmiş dönemin sonuna kadar çalışır ve her şey dışa aktarılabilir.' },
@@ -362,7 +362,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'Adı Latince cura (özen) ile İngilizce hold (tutmak) sözcüklerinden gelir.',
       help: 'Yardım merkezi',
       legal: 'Yasal',
-      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler', accessibility: 'Erişilebilirlik', sla: "Hizmet düzeyi sözleşmesi", aup: "Kabul edilebilir kullanım", orderForm: "Sipariş formu", disclosure: "Güvenlik sorunu bildirin" },
+      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler', refunds: 'İade politikası', accessibility: 'Erişilebilirlik', sla: "Hizmet düzeyi sözleşmesi", aup: "Kabul edilebilir kullanım", orderForm: "Sipariş formu", disclosure: "Güvenlik sorunu bildirin" },
       company: '[Şirket unvanı]',
     },
     consent: {
@@ -393,7 +393,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'كل تجديد وكل وعد وكل مهمة في موعدها.',
       lead: 'اعرف صحة كل عميل وأسبابها، وحوّل الخطوات التالية في كل اجتماع إلى مهام، ودع التجديدات تبدأ وحدها قبل موعدها بتسعين يومًا.',
       note: '3 أشهر مجانًا بعد الموافقة، دون بطاقة دفع.',
-      works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
+      works: 'يعمل بجانب أدواتك الحالية',
       pause: 'إيقاف مؤقت',
       play: 'تشغيل',
     },
@@ -436,10 +436,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: 'اسأل مساعدك عن عملائك', p: 'اربط Claude أو ChatGPT. يعمل بصفتك: لا يرى ولا يغيّر إلا ما تستطيع أنت.' },
         { h: 'بوابة لعملائك', p: 'يدخلون برابط يصلهم بالبريد ويرون ما تشاركه فقط: مهامهم وطلباتهم وردودك.' },
-        { h: 'على إيقاع أدواتك', p: 'نظام إدارة العملاء وJira والجداول وتطبيق المحادثة. أي تغيير في طرف يظهر في الآخر.' },
+        { h: 'على إيقاع أدواتك', p: 'نظام إدارة العملاء والجداول وتطبيق المحادثة. أي تغيير في طرف يظهر في الآخر.' },
         { h: 'الربع كله على شاشة واحدة', p: 'الأهداف والفرص المرجّحة وصحة المحفظة كلها، في تقارير ولوحات معلومات تبنيها بنفسك.' },
         { h: 'إحدى عشرة لغة، ومنها ما يُكتب من اليمين', p: 'كلٌّ يختار لغته، فتتبعه الواجهة كلها وتنعكس حيث يلزم.' },
-        { h: 'بياناتك تبقى لك', p: 'تُفصل كل شركة عن غيرها في قاعدة البيانات نفسها، فلا يمكن لخطأ في شاشة أن يُظهر لشركة بيانات أخرى.' },
+        { h: 'بياناتك تبقى لك', p: 'تُفصل كل شركة بقواعد على مستوى الصفوف في قاعدة البيانات نفسها، وتتحقق الاختبارات من هذا الفصل مع كل تغيير.' },
       ],
       ask: { q: 'أي العملاء يحتاجون إليّ هذا الأسبوع؟', a: 'ثلاثة يحتاجون إلى اهتمامك:', did: 'فتحتُ مهمة لـ Zeynep: حجز مراجعة Marevo.' },
       portal: { plan: 'الاستقبال' },
@@ -462,7 +462,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'أسئلة',
       items: [
-        { q: '⟦eu|أين تُحفظ بياناتنا؟|كيف تُفصل بياناتنا عن غيرها؟⟧', a: '⟦eu|قاعدة البيانات في الاتحاد الأوروبي. |⟧تُفصل كل شركة عن غيرها في قاعدة البيانات نفسها، فلا يمكن لأي خطأ في شاشة أن يُظهر لشركة بيانات شركة أخرى. تغطي اتفاقية معالجة البيانات لائحة GDPR وقانون KVKK التركي.' },
+        { q: '⟦eu|أين تُحفظ بياناتنا؟|كيف تُفصل بياناتنا عن غيرها؟⟧', a: '⟦eu|قاعدة البيانات في الاتحاد الأوروبي. |⟧تُفصل كل شركة بقواعد على مستوى الصفوف في قاعدة البيانات نفسها، وتتحقق الاختبارات من هذا الفصل مع كل تغيير. وتتوفر اتفاقية لمعالجة البيانات (مسودة قيد المراجعة القانونية).' },
         { q: 'هل يمكننا تشغيله على خوادمنا الخاصة؟', a: 'نعم. تعمل حزمة الشركة الواحدة على خادمك أو سحابتك بقاعدة بياناتها الخاصة؛ وليست لها اشتراكات.' },
         { q: 'هل نحتاج إلى نظام إدارة عملاء؟', a: 'لا. يمكن أن يأتي العملاء من جدول بيانات أو يُضافوا يدويًا. وإن كان لديك نظام إدارة عملاء، يبقى Curahold متوافقًا معه في الاتجاهين.' },
         { q: 'هل يمكننا الإلغاء في أي وقت؟', a: 'نعم. تعمل الخطة الملغاة حتى نهاية المدة المدفوعة، ويمكن تصدير كل شيء.' },
@@ -484,7 +484,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'يأتي الاسم من اللاتينية cura (العناية) والإنجليزية hold (الإمساك).',
       help: 'مركز المساعدة',
       legal: 'الشؤون القانونية',
-      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط', accessibility: 'إمكانية الوصول', sla: "اتفاقية مستوى الخدمة", aup: "الاستخدام المقبول", orderForm: "نموذج الطلب", disclosure: "الإبلاغ عن مشكلة أمنية" },
+      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط', refunds: 'سياسة الاسترداد', accessibility: 'إمكانية الوصول', sla: "اتفاقية مستوى الخدمة", aup: "الاستخدام المقبول", orderForm: "نموذج الطلب", disclosure: "الإبلاغ عن مشكلة أمنية" },
       company: '[الاسم القانوني للشركة]',
     },
     consent: {
@@ -515,7 +515,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'כל חידוש, כל הבטחה וכל משימה, בזמן.',
       lead: 'ראו את הבריאות של כל לקוח ואת הסיבות לה, הפכו את הצעדים הבאים מכל פגישה למשימות, ותנו לחידושים להיפתח מעצמם תשעים יום מראש.',
       note: '3 חודשים בחינם לאחר אישור, בלי כרטיס אשראי.',
-      works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
+      works: 'עובד לצד הכלים של היום',
       pause: 'השהיה',
       play: 'הפעלה',
     },
@@ -552,10 +552,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: 'שאל את העוזר שלך על הלקוחות', p: 'חבר את Claude או את ChatGPT. הוא פועל בשמך: רואה ומשנה רק מה שאתה יכול.' },
         { h: 'פורטל ללקוחות שלך', p: 'הם נכנסים עם קישור שמגיע לדוא״ל ורואים רק את מה ששיתפת: המשימות שלהם, הבקשות שלהם, התשובות שלך.' },
-        { h: 'בקצב אחד עם הכלים שלך', p: 'ה-CRM, Jira, הגיליונות והצ׳אט. שינוי בצד אחד מופיע גם בצד השני.' },
+        { h: 'בקצב אחד עם הכלים שלך', p: 'ה-CRM, הגיליונות והצ׳אט. שינוי בצד אחד מופיע גם בצד השני.' },
         { h: 'הרבעון על מסך אחד', p: 'יעדים, צבר הזדמנויות משוקלל ובריאות כל התיק, בדוחות ובלוחות מחוונים שאתה בונה בעצמך.' },
         { h: 'אחת עשרה שפות, כולל מימין לשמאל', p: 'כל אחד בוחר את השפה שלו. כל הממשק מתאים את עצמו, ומתהפך היכן שצריך.' },
-        { h: 'הנתונים שלך נשארים שלך', p: 'כל חברה מופרדת במסד הנתונים עצמו, כך ששום תקלה במסך לא תציג לחברה אחת נתונים של אחרת.' },
+        { h: 'הנתונים שלך נשארים שלך', p: 'כל חברה מופרדת בכללים ברמת השורה במסד הנתונים עצמו, ובדיקות מוודאות את ההפרדה הזו בכל שינוי.' },
       ],
       ask: { q: 'אילו לקוחות צריכים אותי השבוע?', a: 'שלושה זקוקים לתשומת לב:', did: 'פתחתי משימה ל-Zeynep: לקבוע את הסקירה של Marevo.' },
       portal: { plan: 'קליטה' },
@@ -578,7 +578,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'שאלות',
       items: [
-        { q: '⟦eu|היכן נשמרים הנתונים שלנו?|איך הנתונים שלנו מופרדים?⟧', a: '⟦eu|מסד הנתונים נמצא באיחוד האירופי. |⟧כל חברה מופרדת מהאחרות במסד הנתונים עצמו, כך ששום תקלה במסך לא תציג לחברה את נתוני חברה אחרת. הסכם עיבוד הנתונים מכסה את GDPR ואת KVKK הטורקי.' },
+        { q: '⟦eu|היכן נשמרים הנתונים שלנו?|איך הנתונים שלנו מופרדים?⟧', a: '⟦eu|מסד הנתונים נמצא באיחוד האירופי. |⟧כל חברה מופרדת בכללים ברמת השורה במסד הנתונים עצמו, ובדיקות מוודאות את ההפרדה הזו בכל שינוי. יש הסכם עיבוד נתונים (טיוטה בבדיקה משפטית).' },
         { q: 'אפשר להריץ על שרתים שלנו?', a: 'כן. חבילת החברה היחידה רצה על השרת או הענן שלך עם מסד נתונים משלה; אין לה חיוב.' },
         { q: 'צריך CRM?', a: 'לא. לקוחות יכולים להגיע מגיליון או להתווסף ידנית. אם יש לך CRM, Curahold נשאר מסונכרן איתו בשני הכיוונים.' },
         { q: 'אפשר לבטל בכל עת?', a: 'כן. תוכנית שבוטלה עובדת עד סוף התקופה ששולמה, והכול ניתן לייצוא.' },
@@ -600,7 +600,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'השם מגיע מהלטינית cura (טיפול) ומהאנגלית hold (להחזיק).',
       help: 'מרכז עזרה',
       legal: 'משפטי',
-      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות', accessibility: 'נגישות', sla: "הסכם רמת שירות", aup: "שימוש מקובל", orderForm: "טופס הזמנה", disclosure: "דיווח על בעיית אבטחה" },
+      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות', refunds: 'מדיניות החזרים', accessibility: 'נגישות', sla: "הסכם רמת שירות", aup: "שימוש מקובל", orderForm: "טופס הזמנה", disclosure: "דיווח על בעיית אבטחה" },
       company: '[שם חברה רשמי]',
     },
     consent: {
@@ -631,7 +631,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: 'هر تمدید، هر قول و هر وظیفه، سرِ وقت.',
       lead: 'سلامت هر مشتری را همراه با دلایلش ببینید، گام‌های بعدی هر جلسه را به وظیفه تبدیل کنید و بگذارید تمدیدها نود روز زودتر خودشان شروع شوند.',
       note: '۳ ماه رایگان پس از تأیید، بدون نیاز به کارت.',
-      works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
+      works: 'کنار ابزارهای امروزتان کار می‌کند',
       pause: 'توقف',
       play: 'پخش',
     },
@@ -674,10 +674,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: 'از دستیارتان دربارهٔ مشتریان بپرسید', p: 'Claude یا ChatGPT را وصل کنید. به‌جای شما کار می‌کند: فقط همان را می‌بیند و تغییر می‌دهد که شما می‌توانید.' },
         { h: 'پورتالی برای مشتریانتان', p: 'با لینکی که به ایمیلشان می‌رسد وارد می‌شوند و فقط آنچه را به اشتراک گذاشته‌اید می‌بینند: وظایفشان، درخواست‌هایشان، پاسخ‌های شما.' },
-        { h: 'هم‌گام با ابزارهایتان', p: 'CRM، Jira، صفحه‌گسترده‌ها و گفت‌وگوی تیمی. تغییر در هر طرف، در طرف دیگر هم دیده می‌شود.' },
+        { h: 'هم‌گام با ابزارهایتان', p: 'CRM، صفحه‌گسترده‌ها و گفت‌وگوی تیمی. تغییر در هر طرف، در طرف دیگر هم دیده می‌شود.' },
         { h: 'کل فصل روی یک صفحه', p: 'هدف‌ها، فرصت‌های وزن‌دار و سلامت کل پرتفوی؛ در گزارش‌ها و داشبوردهایی که خودتان می‌سازید.' },
         { h: 'یازده زبان، با راست‌به‌چپ', p: 'هر کس زبان خودش را برمی‌گزیند. کل رابط با آن هماهنگ می‌شود و هرجا لازم باشد آینه‌ای می‌شود.' },
-        { h: 'داده‌هایتان از آنِ شما می‌ماند', p: 'هر شرکت در خودِ پایگاه داده از دیگران جداست؛ پس هیچ خطایی در یک صفحه نمی‌تواند دادهٔ یک شرکت را به شرکت دیگر نشان دهد.' },
+        { h: 'داده‌هایتان از آنِ شما می‌ماند', p: 'هر شرکت با قاعده‌هایی در سطح سطر در خودِ پایگاه داده جدا می‌شود و آزمون‌ها این جداسازی را در هر تغییر بررسی می‌کنند.' },
       ],
       ask: { q: 'این هفته کدام مشتریان به من نیاز دارند؟', a: 'سه مشتری به توجه نیاز دارند:', did: 'برای Zeynep یک وظیفه باز کردم: تنظیم بازبینی Marevo.' },
       portal: { plan: 'آنبوردینگ' },
@@ -700,7 +700,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'پرسش‌ها',
       items: [
-        { q: '⟦eu|داده‌های ما کجا نگهداری می‌شود؟|داده‌های ما چگونه جدا نگه داشته می‌شود؟⟧', a: '⟦eu|پایگاه داده در اتحادیهٔ اروپا است. |⟧هر شرکت در خودِ پایگاه داده از دیگران جدا می‌شود؛ پس هیچ خطایی در یک صفحه نمی‌تواند دادهٔ یک شرکت را به شرکت دیگر نشان دهد. قرارداد پردازش داده، GDPR و KVKK ترکیه را پوشش می‌دهد.' },
+        { q: '⟦eu|داده‌های ما کجا نگهداری می‌شود؟|داده‌های ما چگونه جدا نگه داشته می‌شود؟⟧', a: '⟦eu|پایگاه داده در اتحادیهٔ اروپا است. |⟧هر شرکت با قاعده‌هایی در سطح سطر در خودِ پایگاه داده جدا می‌شود و آزمون‌ها این جداسازی را در هر تغییر بررسی می‌کنند. قرارداد پردازش داده در دسترس است (پیش‌نویسی که در حال بررسی حقوقی است).' },
         { q: 'می‌توانیم روی سرورهای خودمان اجرا کنیم؟', a: 'بله. بستهٔ تک‌شرکتی با پایگاه دادهٔ خودش روی سرور یا ابر شما اجرا می‌شود و صورتحساب اشتراک ندارد.' },
         { q: 'به CRM نیاز داریم؟', a: 'خیر. مشتریان می‌توانند از یک صفحه‌گسترده بیایند یا دستی افزوده شوند. اگر CRM دارید، Curahold دوطرفه با آن هماهنگ می‌ماند.' },
         { q: 'هر وقت بخواهیم می‌توانیم لغو کنیم؟', a: 'بله. طرح لغوشده تا پایان دورهٔ پرداخت‌شده کار می‌کند و از همه چیز می‌توان خروجی گرفت.' },
@@ -722,7 +722,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'نام از cura لاتین (مراقبت) و hold انگلیسی (نگه داشتن) می‌آید.',
       help: 'مرکز راهنما',
       legal: 'حقوقی',
-      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها', accessibility: 'دسترس‌پذیری', sla: "توافق‌نامهٔ سطح خدمات", aup: "استفادهٔ قابل قبول", orderForm: "فرم سفارش", disclosure: "گزارش یک مشکل امنیتی" },
+      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها', refunds: 'سیاست بازپرداخت', accessibility: 'دسترس‌پذیری', sla: "توافق‌نامهٔ سطح خدمات", aup: "استفادهٔ قابل قبول", orderForm: "فرم سفارش", disclosure: "گزارش یک مشکل امنیتی" },
       company: '[نام حقوقی شرکت]',
     },
     consent: {
@@ -748,7 +748,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hans': {
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '申请通过后 3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移', pause: '暂停', play: '播放' },
+    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '申请通过后 3 个月免费，无需信用卡。', works: '与你现有的工具并行工作', pause: '暂停', play: '播放' },
     tour: {
       label: '产品导览',
       steps: [
@@ -782,10 +782,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: '向助手询问你的客户', p: '连接 Claude 或 ChatGPT。它以你的身份工作：只能查看和修改你有权限的内容。' },
         { h: '给客户的专属门户', p: '客户通过邮件里的链接登录，只看到你共享的内容：他们的任务、他们的请求、你的回复。' },
-        { h: '与现有工具保持同步', p: '你的 CRM、Jira、电子表格和聊天工具。任何一边的变更，都会出现在另一边。' },
+        { h: '与现有工具保持同步', p: '你的 CRM、电子表格和聊天工具。任何一边的变更，都会出现在另一边。' },
         { h: '整个季度，一屏看清', p: '目标、加权商机和整个客户组合的健康度，都在你可以自己搭建的报表和仪表板里。' },
         { h: '十一种语言，支持从右到左', p: '每个人选择自己的语言，整个界面随之切换，需要时还会镜像排版。' },
-        { h: '你的数据始终属于你', p: '每家公司在数据库层面彼此隔离，任何界面上的差错都无法让一家公司看到另一家的数据。' },
+        { h: '你的数据始终属于你', p: '每家公司由数据库本身的行级规则彼此隔离，每次变更都有测试检查这种隔离。' },
       ],
       ask: { q: '这周哪些客户需要我？', a: '有三个客户需要你关注：', did: '我已为 Zeynep 创建任务：安排 Marevo 的业务回顾。' },
       portal: { plan: '入门引导' },
@@ -808,7 +808,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: '常见问题',
       items: [
-        { q: '⟦eu|我们的数据保存在哪里？|我们的数据如何隔离？⟧', a: '⟦eu|数据库位于欧盟。|⟧每家公司在数据库层面彼此隔离，因此任何界面上的差错都无法把一家公司的数据显示给另一家。数据处理协议涵盖 GDPR 与土耳其的 KVKK。' },
+        { q: '⟦eu|我们的数据保存在哪里？|我们的数据如何隔离？⟧', a: '⟦eu|数据库位于欧盟。|⟧每家公司由数据库本身的行级规则彼此隔离，每次变更都有测试检查这种隔离。我们提供数据处理协议（草稿，正在法律审查中）。' },
         { q: '可以在我们自己的服务器上运行吗？', a: '可以。单公司版在你自己的服务器或云上运行，拥有独立数据库；没有订阅计费。' },
         { q: '需要 CRM 吗？', a: '不需要。客户可以从电子表格导入，或手动添加。如果你有 CRM，Curahold 会与它双向保持同步。' },
         { q: '可以随时取消吗？', a: '可以。取消的套餐会运行到已付费周期结束，且一切都可导出。' },
@@ -822,7 +822,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名字来自拉丁语 cura（关怀）与英语 hold（守护）。',
       help: '帮助中心',
       legal: '法律',
-      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie', accessibility: '无障碍', sla: "服务等级协议", aup: "可接受使用", orderForm: "订单表", disclosure: "报告安全问题" },
+      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie', refunds: '退款政策', accessibility: '无障碍', sla: "服务等级协议", aup: "可接受使用", orderForm: "订单表", disclosure: "报告安全问题" },
       company: '[公司法定名称]',
     },
     consent: {
@@ -848,7 +848,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   'zh-Hant': {
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '申請核准後 3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換', pause: '暫停', play: '播放' },
+    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '申請核准後 3 個月免費，不需信用卡。', works: '與你現有的工具並行運作', pause: '暫停', play: '播放' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -882,10 +882,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: '向助理詢問你的客戶', p: '連結 Claude 或 ChatGPT。它以你的身分工作：只能檢視與修改你有權限的內容。' },
         { h: '給客戶的專屬入口網站', p: '客戶透過電子郵件裡的連結登入，只看到你分享的內容：他們的任務、他們的請求、你的回覆。' },
-        { h: '與現有工具保持同步', p: '你的 CRM、Jira、試算表與聊天工具。任何一邊的變更，都會出現在另一邊。' },
+        { h: '與現有工具保持同步', p: '你的 CRM、試算表與聊天工具。任何一邊的變更，都會出現在另一邊。' },
         { h: '整個季度，一個畫面看清', p: '目標、加權交易與整個客戶組合的健康度，都在你可以自行建立的報表與儀表板裡。' },
         { h: '十一種語言，支援由右至左', p: '每個人選擇自己的語言，整個介面隨之切換，需要時還會鏡像排版。' },
-        { h: '你的資料始終屬於你', p: '每家公司在資料庫層面彼此隔離，任何畫面上的差錯都無法讓一家公司看到另一家的資料。' },
+        { h: '你的資料始終屬於你', p: '每家公司由資料庫本身的列級規則彼此隔離，每次變更都有測試檢查這種隔離。' },
       ],
       ask: { q: '這週哪些客戶需要我？', a: '有三位客戶需要你關注：', did: '我已為 Zeynep 建立任務：安排 Marevo 的業務檢視。' },
       portal: { plan: '客戶導入' },
@@ -908,7 +908,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: '常見問題',
       items: [
-        { q: '⟦eu|我們的資料儲存在哪裡？|我們的資料如何隔離？⟧', a: '⟦eu|資料庫位於歐盟。|⟧每家公司在資料庫層級彼此隔離，因此任何介面上的差錯都無法把一家公司的資料顯示給另一家。資料處理合約涵蓋 GDPR 與土耳其的 KVKK。' },
+        { q: '⟦eu|我們的資料儲存在哪裡？|我們的資料如何隔離？⟧', a: '⟦eu|資料庫位於歐盟。|⟧每家公司由資料庫本身的列級規則彼此隔離，每次變更都有測試檢查這種隔離。我們提供資料處理合約（草稿，正在法律審查中）。' },
         { q: '可以在我們自己的伺服器上執行嗎？', a: '可以。單公司版在你自己的伺服器或雲端上執行，擁有獨立資料庫；沒有訂閱計費。' },
         { q: '需要 CRM 嗎？', a: '不需要。客戶可以從試算表匯入，或手動新增。如果你有 CRM，Curahold 會與它雙向保持同步。' },
         { q: '可以隨時取消嗎？', a: '可以。取消的方案會運作到已付費週期結束，且一切都可匯出。' },
@@ -922,7 +922,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名字來自拉丁語 cura（關懷）與英語 hold（守護）。',
       help: '說明中心',
       legal: '法律',
-      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie', accessibility: '無障礙', sla: "服務水準協議", aup: "可接受使用", orderForm: "訂購單", disclosure: "回報安全問題" },
+      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie', refunds: '退款政策', accessibility: '無障礙', sla: "服務水準協議", aup: "可接受使用", orderForm: "訂購單", disclosure: "回報安全問題" },
       company: '[公司法定名稱]',
     },
     consent: {
@@ -948,7 +948,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ja: {
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '承認後3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます', pause: '一時停止', play: '再生' },
+    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '承認後3か月無料、カード登録は不要です。', works: '今のツールの横で動きます', pause: '一時停止', play: '再生' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -982,10 +982,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: '顧客のことを\u200bアシスタントに\u200b聞く', p: 'Claude や ChatGPT を接続。あなたとして動作し、あなたに見えるものだけを見て、変更できるものだけを変更します。' },
         { h: '顧客のための\u200bポータル', p: '顧客はメールで届くリンクからログインし、共有された内容だけを確認できます。自分のタスク、リクエスト、そしてあなたからの返信です。' },
-        { h: 'お使いの\u200bツールと\u200b足並みを\u200bそろえる', p: 'CRM、Jira、スプレッドシート、チャット。どちらかで変更すれば、もう一方にも反映されます。' },
+        { h: 'お使いの\u200bツールと\u200b足並みを\u200bそろえる', p: 'CRM、スプレッドシート、チャット。どちらかで変更すれば、もう一方にも反映されます。' },
         { h: '四半期を\u200b1画面で', p: '目標、加重パイプライン、ポートフォリオ全体のヘルスを、自分で組み立てられるレポートとダッシュボードで。' },
         { h: '11言語、\u200b右から左の\u200b言語にも\u200b対応', p: '各自が自分の言語を選ぶと、インターフェース全体が切り替わり、必要に応じて左右も反転します。' },
-        { h: 'データは\u200bあなたのもの', p: '会社ごとにデータベース自体で分離されるため、画面側のどんな不具合でも、他社のデータが表示されることはありません。' },
+        { h: 'データは\u200bあなたのもの', p: '会社ごとにデータベース自体の行単位のルールで分離し、変更のたびにテストでその分離を確認しています。' },
       ],
       ask: { q: '今週、対応が必要な顧客は？', a: '対応が必要な顧客は3社です：', did: 'Zeynep にタスクを作成しました：Marevo のレビューを設定。' },
       portal: { plan: 'オンボーディング' },
@@ -1008,7 +1008,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: 'よくある質問',
       items: [
-        { q: '⟦eu|データは\u200bどこに\u200b保管されますか？|データは\u200bどのように\u200b分離されますか？⟧', a: '⟦eu|データベースは欧州連合にあります。|⟧各社はデータベース自体で互いに分離されるため、画面上のどんな誤りでも、ある会社に別の会社のデータが表示されることはありません。データ処理契約は GDPR とトルコの KVKK をカバーします。' },
+        { q: '⟦eu|データは\u200bどこに\u200b保管されますか？|データは\u200bどのように\u200b分離されますか？⟧', a: '⟦eu|データベースは欧州連合にあります。|⟧各社はデータベース自体の行単位のルールで互いに分離し、変更のたびにテストでその分離を確認しています。データ処理契約をご用意しています（法務レビュー中の草案）。' },
         { q: '自社サーバーで\u200b運用できますか？', a: 'はい。シングルカンパニー版は、専用のデータベースとともに自社のサーバーまたはクラウドで動作します。課金はありません。' },
         { q: 'CRM は\u200b必要ですか？', a: 'いいえ。顧客はスプレッドシートから取り込むことも、手動で追加することもできます。CRM があれば、Curahold はそれと双方向で同期を保ちます。' },
         { q: 'いつでも\u200b解約できますか？', a: 'はい。解約したプランは支払い済み期間の終わりまで動作し、すべてをエクスポートできます。' },
@@ -1022,7 +1022,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名前はラテン語の cura（ケア）と英語の hold（抱える）に由来します。',
       help: 'ヘルプセンター',
       legal: '法的情報',
-      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie', accessibility: 'アクセシビリティ', sla: "サービスレベル契約", aup: "利用ポリシー", orderForm: "注文書", disclosure: "セキュリティの問題を報告" },
+      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie', refunds: '返金ポリシー', accessibility: 'アクセシビリティ', sla: "サービスレベル契約", aup: "利用ポリシー", orderForm: "注文書", disclosure: "セキュリティの問題を報告" },
       company: '[会社正式名称]',
     },
     consent: {
@@ -1048,7 +1048,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   },
   ko: {
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '승인 후 3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요', pause: '일시 정지', play: '재생' },
+    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '승인 후 3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 함께 일합니다', pause: '일시 정지', play: '재생' },
     tour: {
       label: '제품 둘러보기',
       steps: [
@@ -1082,10 +1082,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       tiles: [
         { h: '어시스턴트에게 고객에 대해 물어보세요', p: 'Claude나 ChatGPT를 연결하세요. 사용자 본인으로서 동작해, 볼 수 있는 것만 보고 바꿀 수 있는 것만 바꿉니다.' },
         { h: '고객을 위한 포털', p: '고객은 이메일로 받은 링크로 로그인해 공유된 내용만 봅니다. 자신의 작업, 요청, 그리고 여러분의 답변입니다.' },
-        { h: '쓰던 도구와 발맞춰', p: 'CRM, Jira, 스프레드시트, 메신저. 한쪽에서 바뀌면 다른 쪽에도 반영됩니다.' },
+        { h: '쓰던 도구와 발맞춰', p: 'CRM, 스프레드시트, 메신저. 한쪽에서 바뀌면 다른 쪽에도 반영됩니다.' },
         { h: '분기를 한 화면에', p: '목표, 가중 파이프라인, 전체 포트폴리오의 헬스를 직접 구성하는 보고서와 대시보드에서 확인하세요.' },
         { h: '11개 언어, 오른쪽에서 왼쪽으로 쓰는 언어까지', p: '각자 자신의 언어를 고르면 인터페이스 전체가 따라 바뀌고, 필요한 곳은 좌우가 반전됩니다.' },
-        { h: '데이터는 여러분의 것입니다', p: '회사마다 데이터베이스 자체에서 분리되므로, 화면의 어떤 오류도 다른 회사의 데이터를 보여줄 수 없습니다.' },
+        { h: '데이터는 여러분의 것입니다', p: '회사마다 데이터베이스 자체의 행 단위 규칙으로 분리되며, 변경할 때마다 테스트로 이 분리를 확인합니다.' },
       ],
       ask: { q: '이번 주에 내가 챙겨야 할 고객은?', a: '세 곳에 관심이 필요합니다:', did: 'Zeynep에게 작업을 만들었습니다: Marevo 리뷰 예약.' },
       portal: { plan: '온보딩' },
@@ -1108,7 +1108,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     faq: {
       title: '자주 묻는 질문',
       items: [
-        { q: '⟦eu|데이터는 어디에 보관되나요?|데이터는 어떻게 분리되나요?⟧', a: '⟦eu|데이터베이스는 유럽 연합에 있습니다. |⟧각 회사는 데이터베이스 자체에서 서로 분리되므로, 화면의 어떤 오류도 한 회사에 다른 회사의 데이터를 보여줄 수 없습니다. 데이터 처리 계약은 GDPR과 튀르키예의 KVKK를 포함합니다.' },
+        { q: '⟦eu|데이터는 어디에 보관되나요?|데이터는 어떻게 분리되나요?⟧', a: '⟦eu|데이터베이스는 유럽 연합에 있습니다. |⟧각 회사는 데이터베이스 자체의 행 단위 규칙으로 서로 분리되며, 변경할 때마다 테스트로 이 분리를 확인합니다. 데이터 처리 계약을 제공합니다(법률 검토 중인 초안).' },
         { q: '자체 서버에서 실행할 수 있나요?', a: '네. 단일 회사 패키지는 전용 데이터베이스와 함께 자체 서버나 클라우드에서 실행되며, 구독 요금이 없습니다.' },
         { q: 'CRM이 필요한가요?', a: '아니요. 고객은 스프레드시트에서 가져오거나 직접 추가할 수 있습니다. CRM이 있다면 Curahold가 양방향으로 동기화를 유지합니다.' },
         { q: '언제든 해지할 수 있나요?', a: '네. 해지한 플랜은 결제한 기간이 끝날 때까지 작동하며, 모든 것을 내보낼 수 있습니다.' },
@@ -1122,7 +1122,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '이름은 라틴어 cura(돌봄)와 영어 hold(지키다)에서 왔습니다.',
       help: '도움말 센터',
       legal: '법적 고지',
-      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키', accessibility: '접근성', sla: "서비스 수준 계약", aup: "이용 정책", orderForm: "주문서", disclosure: "보안 문제 신고" },
+      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키', refunds: '환불 정책', accessibility: '접근성', sla: "서비스 수준 계약", aup: "이용 정책", orderForm: "주문서", disclosure: "보안 문제 신고" },
       company: '[회사 법인명]',
     },
     consent: {
@@ -1162,7 +1162,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "हर रिन्यूअल, हर वादा, हर टास्क, समय पर।",
       lead: "हर ग्राहक की हेल्थ और उसकी वजहें देखें, मीटिंग के अगले स्टेप को टास्क में बदलें, और रिन्यूअल को नब्बे दिन पहले अपने आप खुलने दें।",
       note: "मंज़ूरी के बाद 3 महीने मुफ़्त, कार्ड की ज़रूरत नहीं।",
-      works: "आज के अपने टूल के साथ शुरू करें, अपनी रफ़्तार से आगे बढ़ें",
+      works: "आज के आपके टूल के साथ-साथ काम करता है",
       pause: "रोकें",
       play: "चलाएं",
     },
@@ -1224,7 +1224,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           p: "वे अपने ईमेल के लिंक से साइन इन करते हैं और सिर्फ़ वही देखते हैं जो आप शेयर करते हैं: उनके टास्क, उनके अनुरोध, आपके जवाब।",
         }, {
           h: "आपके मौजूदा टूल के साथ तालमेल में",
-          p: "आपका CRM, Jira, स्प्रेडशीट और चैट। किसी भी तरफ़ का बदलाव दूसरी तरफ़ दिखता है।",
+          p: "आपका CRM, स्प्रेडशीट और चैट। किसी भी तरफ़ का बदलाव दूसरी तरफ़ दिखता है।",
         }, {
           h: "पूरी तिमाही एक स्क्रीन पर",
           p: "लक्ष्य, वेटेड पाइपलाइन और पूरे पोर्टफ़ोलियो की हेल्थ, उन रिपोर्ट और डैशबोर्ड में जिन्हें आप खुद बना सकते हैं।",
@@ -1233,7 +1233,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           p: "हर व्यक्ति अपनी भाषा चुनता है। पूरा इंटरफ़ेस उसके साथ चलता है, जहां ज़रूरी हो वहां उलटा भी।",
         }, {
           h: "आपका डेटा आपका ही रहता है",
-          p: "हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके।",
+          p: "हर कंपनी डेटाबेस के अपने ही पंक्ति-स्तर के नियमों से अलग रखी जाती है, और हर बदलाव पर टेस्ट इस अलगाव की जांच करते हैं।",
         }],
       ask: {
         q: "इस हफ़्ते किन अकाउंट को मेरी ज़रूरत है?",
@@ -1263,7 +1263,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "सवाल",
       items: [{
           q: "⟦eu|हमारा डेटा कहां रखा जाता है?|हमारा डेटा अलग कैसे रखा जाता है?⟧",
-          a: "⟦eu|डेटाबेस यूरोपीय संघ में है। |⟧हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके। डेटा प्रोसेसिंग एग्रीमेंट GDPR और तुर्किये के KVKK को कवर करता है।",
+          a: "⟦eu|डेटाबेस यूरोपीय संघ में है। |⟧हर कंपनी डेटाबेस के अपने ही पंक्ति-स्तर के नियमों से अलग रखी जाती है, और हर बदलाव पर टेस्ट इस अलगाव की जांच करते हैं। डेटा प्रोसेसिंग एग्रीमेंट उपलब्ध है (कानूनी समीक्षा में चल रहा ड्राफ़्ट)।",
         }, {
           q: "क्या हम इसे अपने सर्वर पर चला सकते हैं?",
           a: "हां। एक-कंपनी पैकेज आपके अपने सर्वर या क्लाउड पर, अपने डेटाबेस के साथ चलता है; इसमें बिलिंग नहीं होती।",
@@ -1305,6 +1305,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         dpa: "डेटा प्रोसेसिंग",
         subprocessors: "सब-प्रोसेसर",
         cookies: "कुकी",
+        refunds: "रिफ़ंड नीति",
         accessibility: "एक्सेसिबिलिटी",
         sla: "सर्विस लेवल एग्रीमेंट",
         aup: "स्वीकार्य उपयोग",
@@ -1350,7 +1351,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "Setiap pembaharuan, janji dan tugasan, tepat pada masa.",
       lead: "Lihat kesihatan setiap pelanggan dan sebab di sebaliknya, jadikan langkah seterusnya daripada mesyuarat sebagai tugasan, dan biarkan pembaharuan dibuka sendiri sembilan puluh hari lebih awal.",
       note: "3 bulan percuma selepas diluluskan, tiada kad diperlukan.",
-      works: "Mulakan bersama alat yang anda ada hari ini, beralih mengikut rentak anda",
+      works: "Bekerja di sebelah alat yang anda ada hari ini",
       pause: "Jeda",
       play: "Main",
     },
@@ -1412,7 +1413,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           p: "Mereka log masuk dengan pautan dalam e-mel mereka dan hanya melihat apa yang anda kongsi: tugasan mereka, permintaan mereka, balasan anda.",
         }, {
           h: "Selaras dengan alat yang anda ada",
-          p: "CRM, Jira, hamparan dan sembang anda. Perubahan di mana-mana pihak dipaparkan di pihak yang satu lagi.",
+          p: "CRM, hamparan dan sembang anda. Perubahan di mana-mana pihak dipaparkan di pihak yang satu lagi.",
         }, {
           h: "Suku tahun pada satu skrin",
           p: "Sasaran, saluran jualan berwajaran dan kesihatan seluruh portfolio, dalam laporan dan papan pemuka yang boleh anda bina sendiri.",
@@ -1421,7 +1422,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           p: "Setiap orang memilih bahasanya sendiri. Seluruh antara muka mengikut, dicerminkan di mana perlu.",
         }, {
           h: "Data anda kekal milik anda",
-          p: "Setiap syarikat diasingkan dalam pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat.",
+          p: "Setiap syarikat diasingkan oleh peraturan peringkat baris dalam pangkalan data itu sendiri, dan ujian menyemak pengasingan ini pada setiap perubahan.",
         }],
       ask: {
         q: "Akaun mana yang memerlukan saya minggu ini?",
@@ -1451,7 +1452,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       title: "Soalan",
       items: [{
           q: "⟦eu|Di mana data kami disimpan?|Bagaimana data kami diasingkan?⟧",
-          a: "⟦eu|Pangkalan data berada di Kesatuan Eropah. |⟧Setiap syarikat diasingkan pada pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat. Perjanjian pemprosesan data merangkumi GDPR dan KVKK Türkiye.",
+          a: "⟦eu|Pangkalan data berada di Kesatuan Eropah. |⟧Setiap syarikat diasingkan oleh peraturan peringkat baris dalam pangkalan data itu sendiri, dan ujian menyemak pengasingan ini pada setiap perubahan. Perjanjian pemprosesan data tersedia (draf dalam semakan undang-undang).",
         }, {
           q: "Bolehkah kami menjalankannya pada pelayan kami sendiri?",
           a: "Ya. Pakej satu syarikat berjalan pada pelayan atau awan anda sendiri dengan pangkalan datanya sendiri; ia tiada pengebilan.",
@@ -1493,6 +1494,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         dpa: "Pemprosesan data",
         subprocessors: "Subpemproses",
         cookies: "Kuki",
+        refunds: "Dasar bayaran balik",
         accessibility: "Kebolehcapaian",
         sla: "Perjanjian tahap perkhidmatan",
         aup: "Penggunaan yang boleh diterima",

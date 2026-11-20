@@ -2,6 +2,7 @@
 // Workers assets binding; /api/* runs the Hono app. The database is Supabase
 // Postgres (EU) reached through Hyperdrive; files go to an R2 bucket.
 import { createApp } from './app';
+import { renewalNoticeDaysOf } from './billing/renewalNotice';
 import { readRawMail, takeMail } from './lib/helpThread';
 import { assertOwnerConfigured, type BillingConfig, type Config } from './context';
 import { postgresDb } from './db/postgres';
@@ -113,6 +114,8 @@ export interface Env {
   PADDLE_PRICES?: string;
   /** The fewest seats a subscription is billed for, JSON by plan, interval and price region (shared/src/billing.ts MIN_SEATS_DEFAULT). */
   BILLING_MIN_SEATS?: string;
+  /** Days before a yearly plan renews that administrators are told (billing/renewalNotice.ts; 7–90, default 30). */
+  RENEWAL_NOTICE_DAYS?: string;
   /** The assistant (api/src/assistant/cost.ts): the model's key (a secret), the model, the monthly caps in USD. Without a key the docs search answers. */
   ANTHROPIC_API_KEY?: string;
   ASSISTANT_PROVIDER?: string;
@@ -162,13 +165,13 @@ export interface Env {
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
-export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 'PADDLE_WEBHOOK_SECRET' | 'PADDLE_CLIENT_TOKEN' | 'PADDLE_PRICES' | 'BILLING_MIN_SEATS'>): BillingConfig | undefined {
+export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 'PADDLE_WEBHOOK_SECRET' | 'PADDLE_CLIENT_TOKEN' | 'PADDLE_PRICES' | 'BILLING_MIN_SEATS' | 'RENEWAL_NOTICE_DAYS'>): BillingConfig | undefined {
   if (!env.PADDLE_API_KEY || !env.PADDLE_WEBHOOK_SECRET || !env.PADDLE_CLIENT_TOKEN || !env.PADDLE_PRICES) return undefined;
   const prices = JSON.parse(env.PADDLE_PRICES) as BillingConfig['prices'];
   for (const plan of ['team', 'business'] as const) {
     if (!prices[plan]?.month || !prices[plan]?.year) throw new Error(`PADDLE_PRICES needs ${plan}.month and ${plan}.year`);
   }
-  return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices, minSeats: minSeatRulesFrom(env.BILLING_MIN_SEATS) };
+  return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices, minSeats: minSeatRulesFrom(env.BILLING_MIN_SEATS), renewalNoticeDays: renewalNoticeDaysOf(env.RENEWAL_NOTICE_DAYS) };
 }
 
 const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO', 'JIRA', 'XERO', 'FREEE', 'QUICKBOOKS'] as const;

@@ -201,6 +201,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     [s.footer.links.cookies, urls.legal('cookies')],
     [s.footer.links.accessibility, urls.legal('accessibility')],
     [s.footer.links.terms, urls.legal('terms')],
+    [s.footer.links.refunds, urls.legal('refunds')],
     [s.footer.links.sla, urls.legal('sla')],
     [s.footer.links.aup, urls.legal('aup')],
     [s.footer.links.orderForm, urls.legal('order-form')],

@@ -355,6 +355,9 @@ html, body { margin: 0; }
 .p-consent h3 { margin: 0; font-size: var(--fs-m); }
 .p-consent ul { margin: 0; padding-inline-start: 16px; display: grid; gap: 4px; }
 .p-consent p { margin: 0; }
+.p-consent__part { display: grid; gap: 4px; }
+.p-consent__part h4 { margin: 0; font-size: var(--fs-s); }
+.p-consent__part--give { padding-block-start: 8px; border-block-start: 1px solid var(--line-strong); }
 .p-consent__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* "Skip to content": the keyboard's first stop, out of sight until it has focus (WCAG 2.4.1). */
 .p-root .skip-link { position: fixed; top: 8px; inset-inline-start: 8px; z-index: 1001; padding: 8px 16px; border-radius: var(--r-s); background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-2); transform: translateY(-200%); }

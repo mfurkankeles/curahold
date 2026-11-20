@@ -108,6 +108,7 @@ customer is the controller of where it is.
 | `BILLING_MIN_SEATS` | The fewest seats a subscription is billed for, JSON by plan (or `*`), interval and price region key (or `*`): `{"*":{"month":{"*":3,"in":5},"year":{"*":3,"my":4,"in":6}}}`. Checkout, plan changes and the hourly seat sync never send fewer (`billedSeats`, api/src/billing/service.ts); the Billing screen counts the total with it | No | The JSON shown (pricing audit, option B; owner decision open, ADR 0022). Unreadable JSON keeps the defaults. |
 | Trial width | Not an environment key: the owner console's **trial.seatCap** (default `trial.autoApproveSeats` in shared/src/plans.json, now 10) and `trial.caps.storageGbPerSeat` in plans.json (1 GB a seat) | — | 10 seats, 1 GB a seat (was 25 seats and the Business plan's 10 GB; ADR 0022). |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |
+| `RENEWAL_NOTICE_DAYS` | Days before a yearly plan renews that every administrator gets the renewal notice e-mail (`api/src/billing/renewalNotice.ts`; the terms §5 and the refund policy promise it) | No | `30`. Whole days, kept within 7–90; anything else means 30. Keep it in step with the number in the terms and the refund policy. |
 
 ## 3b. The assistant and the AI team (all optional; without a key nothing calls a model)
 

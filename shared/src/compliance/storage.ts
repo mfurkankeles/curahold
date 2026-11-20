@@ -49,7 +49,7 @@ export interface StorageItem {
   identifier?: boolean;
   third?: ThirdParty;
   /** Only when a setting is on (an id configured, the A/B test enabled). */
-  conditional?: 'ga4' | 'meta' | 'tiktok' | 'ab' | 'checkout';
+  conditional?: 'ga4' | 'meta' | 'tiktok' | 'ab' | 'checkout' | 'turnstile';
   /**
    * Added by work on another branch that is not merged yet: the scan does not
    * fail when the code does not have it. Remove the flag once it is in the code.
@@ -78,7 +78,8 @@ export type PurposeId =
   | 'ga4'
   | 'meta'
   | 'tiktok'
-  | 'paddle';
+  | 'paddle'
+  | 'turnstile';
 
 type Words = Record<Locale, string>;
 
@@ -357,6 +358,21 @@ export const PURPOSES: Record<PurposeId, Words> = {
     hi: "Paddle चेकआउट: हमारा रीसेलर (merchant of record) भुगतान सुरक्षित रूप से प्रोसेस करता है। सिर्फ़ बिलिंग स्क्रीन पर लोड होता है, जहां यह अपनी नीति के तहत अपनी कुकी सेट करता है।",
     ms: "Pembayaran Paddle: penjual semula kami (merchant of record) memproses pembayaran dengan selamat. Dimuatkan hanya pada skrin pengebilan, di mana ia menetapkan kukinya sendiri di bawah dasarnya sendiri.",
   },
+  // The public forms' human check (web/src/lib/humanCheck.tsx): strictly necessary for the form the person is sending,
+  // so no consent; listed because it loads from another company before any choice (legal audit, 21 Nov 2026).
+  turnstile: {
+    en: "Cloudflare Turnstile: checks that a person, not a robot, is filling in a public form (trial request, sign-up, portal sign-in). Loaded only on those forms and only when the check is switched on; Cloudflare sees the IP address and browser signals under its own privacy policy.",
+    tr: "Cloudflare Turnstile: herkese açık bir formu (deneme talebi, kayıt, portal girişi) bir robotun değil bir insanın doldurduğunu kontrol eder. Yalnızca bu formlarda ve kontrol açıksa yüklenir; Cloudflare IP adresini ve tarayıcı sinyallerini kendi gizlilik politikasına göre görür.",
+    ar: "Cloudflare Turnstile: يتحقق من أن من يملأ نموذجًا عامًا (طلب التجربة، التسجيل، تسجيل الدخول إلى البوابة) شخص لا برنامج آلي. لا يُحمَّل إلا في تلك النماذج وحين يكون التحقق مفعّلًا؛ وترى Cloudflare عنوان IP وإشارات المتصفح وفق سياسة الخصوصية الخاصة بها.",
+    he: "Cloudflare Turnstile: בודק שאדם, ולא רובוט, ממלא טופס ציבורי (בקשת ניסיון, הרשמה, התחברות לפורטל). נטען רק בטפסים האלה ורק כשהבדיקה מופעלת; Cloudflare רואה את כתובת ה-IP ואותות מהדפדפן לפי מדיניות הפרטיות שלה.",
+    fa: "Cloudflare Turnstile: بررسی می‌کند که یک انسان، نه ربات، فرم عمومی (درخواست دورهٔ آزمایشی، ثبت‌نام، ورود به پورتال) را پر می‌کند. فقط در همین فرم‌ها و فقط وقتی بررسی روشن باشد بارگذاری می‌شود؛ Cloudflare نشانی IP و نشانه‌های مرورگر را طبق سیاست حریم خصوصی خودش می‌بیند.",
+    'zh-Hans': "Cloudflare Turnstile：确认填写公开表单（试用申请、注册、门户登录）的是人而不是机器人。仅在这些表单上且检查已开启时加载；Cloudflare 会按其隐私政策看到 IP 地址和浏览器信号。",
+    'zh-Hant': "Cloudflare Turnstile：確認填寫公開表單（試用申請、註冊、入口網站登入）的是人而不是機器人。僅在這些表單上且檢查已開啟時載入；Cloudflare 會依其隱私權政策看到 IP 位址和瀏覽器訊號。",
+    ja: "Cloudflare Turnstile：公開フォーム（トライアル申し込み、新規登録、ポータルへのログイン）に入力しているのがボットではなく人であることを確認します。これらのフォームで、チェックがオンのときだけ読み込みます。Cloudflare は自社のプライバシーポリシーに基づき IP アドレスとブラウザーの信号を確認します。",
+    ko: "Cloudflare Turnstile: 공개 양식(체험 신청, 가입, 포털 로그인)을 작성하는 것이 봇이 아니라 사람인지 확인합니다. 이 양식에서, 확인 기능이 켜져 있을 때만 불러옵니다. Cloudflare는 자체 개인정보 처리방침에 따라 IP 주소와 브라우저 신호를 봅니다.",
+    hi: "Cloudflare Turnstile: जांचता है कि सार्वजनिक फ़ॉर्म (ट्रायल अनुरोध, साइन अप, पोर्टल साइन इन) कोई इंसान भर रहा है, बॉट नहीं। सिर्फ़ इन्हीं फ़ॉर्म पर और जांच चालू होने पर ही लोड होता है; Cloudflare अपनी प्राइवेसी नीति के तहत IP पता और ब्राउज़र के संकेत देखता है।",
+    ms: "Cloudflare Turnstile: memeriksa bahawa orang, bukan robot, yang mengisi borang awam (permintaan percubaan, pendaftaran, log masuk portal). Dimuatkan hanya pada borang tersebut dan hanya apabila semakan dihidupkan; Cloudflare melihat alamat IP dan isyarat pelayar di bawah dasar privasinya sendiri.",
+  },
 };
 
 const ALL_APP: Surface[] = ['app', 'demo'];
@@ -475,6 +491,17 @@ export const STORAGE: StorageItem[] = [
     surfaces: ['app'],
     conditional: 'checkout',
     third: { company: 'Paddle.com Market Ltd', countries: ['GB'], host: 'cdn.paddle.com' },
+  },
+  // ---- the human check on public forms (strictly necessary; only when a Turnstile site key is configured)
+  {
+    name: 'Cloudflare Turnstile',
+    type: 'script',
+    category: 'necessary',
+    purpose: 'turnstile',
+    duration: { kind: 'provider' },
+    surfaces: ['app', 'portal'],
+    conditional: 'turnstile',
+    third: { company: 'Cloudflare, Inc.', countries: ['US'], host: 'challenges.cloudflare.com' },
   },
 ];
 

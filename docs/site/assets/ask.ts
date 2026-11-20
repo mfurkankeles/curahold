@@ -256,7 +256,7 @@ async function decide(granted: boolean) {
   }
   consentFoot();
 }
-/** The notice in the chat, once per page load while there is no answer for this version. */
+/** The notice in the chat, once per page load while there is no answer for this version: information first, then the consent as its own part (KVKK keeps the two apart). */
 function consentNotice() {
   if (!cw || !serverAnswers || kept() || notNow || log.querySelector('.ask__consent')) return;
   const box = el('section', 'ask__consent');
@@ -264,9 +264,11 @@ function consentNotice() {
   box.setAttribute('aria-label', cw.title);
   box.tabIndex = -1;
   box.innerHTML = `<div class="ask__consent-head"><strong>${esc(cw.title)}</strong><button type="button" class="ask__consent-btn" data-c="later" aria-label="${esc(cw.close)}"><span aria-hidden="true">×</span> ${esc(cw.close)}</button></div>
+<div class="ask__consent-part" role="group" aria-label="${esc(cw.noticeTitle ?? '')}"><strong>${esc(cw.noticeTitle ?? '')}</strong>
 <ul>${['what', 'why', 'keep', 'withdraw'].map((k) => `<li>${esc(cw[k] ?? '')}</li>`).join('')}</ul>
-<p><a href="${base}${cfg.lang}/legal-privacy/${tail}" target="_blank" rel="noreferrer">${esc(cw.privacy)}</a></p>
-<div class="ask__consent-actions"><button type="button" class="ask__consent-btn" data-c="no"><span aria-hidden="true">✕</span> ${esc(cw.decline)}</button><button type="button" class="ask__consent-btn" data-c="yes"><span aria-hidden="true">✓</span> ${esc(cw.accept)}</button></div>`;
+<p><a href="${base}${cfg.lang}/legal-privacy/${tail}" target="_blank" rel="noreferrer">${esc(cw.privacy)}</a></p></div>
+<div class="ask__consent-part ask__consent-part--give" role="group" aria-label="${esc(cw.consentTitle ?? '')}"><strong>${esc(cw.consentTitle ?? '')}</strong><p>${esc(cw.consentText ?? '')}</p>
+<div class="ask__consent-actions"><button type="button" class="ask__consent-btn" data-c="no"><span aria-hidden="true">✕</span> ${esc(cw.decline)}</button><button type="button" class="ask__consent-btn" data-c="yes"><span aria-hidden="true">✓</span> ${esc(cw.accept)}</button></div></div>`;
   const done = (fn: () => void) => () => {
     box.remove();
     fn();

@@ -117,6 +117,8 @@ export interface BillingConfig {
   prices: Record<PlanKey, Record<Interval, string>>;
   /** The fewest seats a subscription is billed for (BILLING_MIN_SEATS; absent: MIN_SEATS_DEFAULT). */
   minSeats?: MinSeatRules;
+  /** Days before a yearly plan renews that its administrators get the renewal notice (RENEWAL_NOTICE_DAYS; 7–90, default 30). */
+  renewalNoticeDays?: number;
 }
 
 /** Curahold's own app registrations with the messaging services. */

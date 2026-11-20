@@ -41,7 +41,7 @@ export const tr: InfoCopy = {
     inside: {
       name: 'İç satış', short: 'Aramalar, takipler ve erken fırsatlar; hiçbiri yarım kalmaz.',
       title: 'Her ilk aramanın bir takibi var',
-      lead: 'İç satış, kendinden sonraki her ekiple aynı müşteri kayıtlarında çalışır: aramalar ve e-postalar zaman çizelgesinde, takipler görev olarak, erken fırsatlar satış hunisinde.',
+      lead: 'İç satış, kendinden sonraki her ekiple aynı müşteri kayıtlarında çalışır: aramalar ve notlar zaman çizelgesinde, takipler görev olarak, erken fırsatlar satış hunisinde.',
       points: [
         ['Kaçmayan takipler', 'Her arama bir sonraki adım ve tarihle biter: yapışkan not değil, müşteriye bağlı bir görev.'],
         ['Hızlı not', '“cuma @Ayşe #Acme !yüksek” yazın; görev kendi alanlarını kendisi doldurur.'],
@@ -93,13 +93,13 @@ export const tr: InfoCopy = {
       points: [
         ['Gerçek burndown’lı sprint’ler', 'Kapasiteye göre planlayın, puanları gün gün izleyin, sprint ortasında değişen kapsamı görün.'],
         ['Söz kartın üstünde', 'Müşteriye verilen sözden açılan kart iki yönlü bağlıdır; müşteri ekibi ilerlediğini görür.'],
-        ['Jira’dan mı geliyorsunuz? Kendi hızınızda geçin', 'Ekip geçerken kartlar ve durumlar aynı adımda kalır; backlog ve sprint’ler burada zaten hazır.'],
+        ['Mühendislik aracınız yerinde kalır', 'Kartlar ve durumlar iki yönde de aynı adımda kalır; ürün ekibi ile müşteri ekibi aynı durumu görür.'],
       ],
       forWho: 'Ürün yöneticileri, mühendislik liderleri ve geliştiren ekipler.',
       next: ['Her story’nin arkasındaki gelir', 'Planlamadan önce bir story’yi kaç müşterinin istediğini ve bu müşterilerin değerini görün.'],
     },
     finance: {
-      name: 'Finans', short: 'Muhasebe programından sözleşme değeri ve yenilemeler.',
+      name: 'Finans', short: 'Sözleşme değeri ve yenilemeler; muhasebe bağlantıları yakında.',
       title: 'Yenileme ve fatura aynı kayıtta',
       lead: 'Muhasebe programlarıyla bağlantılar geliştiriliyor: faturalar, ödemeler ve açık bakiye müşteri sayfasında.',
       points: [
@@ -126,7 +126,7 @@ export const tr: InfoCopy = {
       title: 'Toplantıda konuşulan, iş olarak kalır',
       lead: 'Toplantıyı katılanlarıyla kaydedin, sonraki adımları yazın ve kaydedin: her adım artık sorumlusu ve tarihi olan bir görev.',
       points: [
-        ['Müşterinin zaman çizelgesinde', 'Notlar, aramalar, toplantılar ve e-postalar kayıtta kalır; üzerinde çalışan herkes görür.'],
+        ['Müşterinin zaman çizelgesinde', 'Notlar, aramalar ve toplantılar kayıtta kalır; üzerinde çalışan herkes görür.'],
         ['Yeniden yazmadan görev', 'Sonraki adımlar kaydedince göreve dönüşür ve geldiği toplantıya bağlı kalır.'],
         ['İstediğinizde paylaşılır', 'Bir kutuyu işaretleyin, görev müşterinin portalında görünsün.'],
       ],
@@ -164,10 +164,10 @@ export const tr: InfoCopy = {
     assistant: {
       name: 'AI bağlayıcısı', short: 'Claude ya da ChatGPT’ye kendi müşterilerinizi sorun.',
       title: 'Müşterilerinizi düz cümlelerle sorun',
-      lead: 'Claude ya da ChatGPT’yi çalışma alanınıza bağlayın. Kendi verilerinizden cevap verir ve sizin adınıza çalışır: yalnızca sizin görebildiğinizi görür, değiştirebildiğinizi değiştirir.',
+      lead: 'Claude ya da ChatGPT’yi çalışma alanınıza bağlayın. Kendi verilerinizden cevap verir ve sizin adınıza çalışır: yalnızca sizin görebildiğinizi görür; değişikliği ancak bağlarken izin verdiyseniz yapar.',
       points: [
         ['Sizin yetkiniz, fazlası değil', 'Asistan sizin adınızla girer; roller ve alan erişimi her cevapta geçerlidir.'],
-        ['İş de yapar', 'Görev açmasını ya da not düşmesini isteyin; söylediğiniz kayıtta yapar.'],
+        ['Değişiklik yalnızca izninizle', 'Bağlarken salt okuma mı, değişiklik de mi seçersiniz. Değişikliğe izin verdiyseniz görev açmasını ya da not düşmesini isteyin; söylediğiniz kayıtta yapar. Kendi asistan hesabınızda, o sağlayıcının koşullarıyla çalışır.'],
         ['Kontrol sizde', 'Bağlantıyı istediğiniz an ayarlarınızdan kapatabilirsiniz.'],
       ],
     },
@@ -184,7 +184,7 @@ export const tr: InfoCopy = {
     sync: {
       name: 'İki yönlü eşitleme', short: 'CRM’iniz, tablolarınız ve destek araçlarınız aynı adımda.',
       title: 'Bugünkü araçlarınızdan bir köprü',
-      lead: 'CRM’inizi, tablolarınızı ve destek aracınızı bağlayın; ekipler tek tek geçsin. Bu arada değişiklikler iki yöne de gider; herkes Curahold’da çalışmaya başlayınca eski araç isteğe bağlı olur.',
+      lead: 'CRM’inizi, tablolarınızı ve destek aracınızı bağlayın; Curahold onların yanında çalışır. Değişiklikler iki yöne de gider, böylece her ekip aynı müşteriyi görür.',
       points: [
         ['Alan alan', 'Her alanı bir kez eşleyin. Kendi alanlarınız ve nesneleriniz de gelir.'],
         ['İki yönde', 'Curahold’da yapılan değişiklik hemen yazılır; karşı taraf saatte bir okunur.'],
@@ -215,17 +215,17 @@ export const tr: InfoCopy = {
       ['Türkiye', 'Ürünün her yerinde Türkçe; kişisel veri talepleri için KVKK araçları.'],
       ['Orta Doğu', 'Arapça, İbranice ve Farsça; tüm arayüz sağdan sola aynalanır.'],
       ['Asya', 'Hintçe, Malayca, Japonca, Korece ve iki Çince yazı; her biri kendi dilinde yazılmış.'],
-      ['Avrupa', '⟦eu|Veritabanı Avrupa Birliği’nde çalışır; veri işleme sözleşmesi GDPR’ı kapsar.|Kişisel veri talepleri için GDPR araçları; veri işleme sözleşmesi GDPR’ı kapsar.⟧'],
+      ['Avrupa', '⟦eu|Veritabanı Avrupa Birliği’nde çalışır; bir veri işleme sözleşmesi mevcuttur.|Kişisel veri talepleri için GDPR araçları; bir veri işleme sözleşmesi mevcuttur.⟧'],
     ],
   },
   integrations: {
-    title: 'Araçlarınızın yanında başlayın, kendi hızınızda geçin',
-    lead: 'Bağlantılar Curahold’u ekiplerinizin bugün kullandığı araçlarla aynı adımda tutar; kimse aynı gün geçmek zorunda kalmaz. Curahold’un kendi satış hunisi, müşteri sayfaları, backlog’u ve sprint’leri var; köprüyü hazır olduğunuzda kaldırırsınız.',
+    title: 'Araçlarınızın yerine değil, yanında',
+    lead: 'Bağlantılar Curahold’u ekiplerinizin bugün kullandığı araçlarla aynı adımda tutar. Curahold onların yanında çalışır ve her müşterinin etrafındaki işi tek bir yerde toplar.',
     groups: {
       crm: { name: 'CRM', text: 'Kendi alanlarınız ve nesneleriniz dahil, alan alan iki yönlü eşitleme.' },
       chat: { name: 'Sohbet', text: 'Atamalar, bahsetmeler ve haftalık özet, ekibinizin konuştuğu yerde.' },
       support: { name: 'Destek masaları', text: 'Açık destek talepleri müşterinin sağlığında sayılır.' },
-      mail: { name: 'E-posta', text: 'Müşterilerinizle yazışmalar onların zaman çizelgesinde.' },
+      mail: { name: 'E-posta', text: 'Bildirimlerin günlük özeti e-postanıza gelir. Curahold bir gelen kutusu değildir: e-posta dizisi bilerek yok.' },
       sheets: { name: 'Tablolar', text: 'Müşterileri bir tablodan aktarın, tablo da güncel kalsın.' },
       data: { name: 'Veri ve BI', text: 'Verileriniz kendi ambarınızda, kendi raporlarınız için.' },
       dev: { name: 'Geliştirme', text: 'Kartlar ve durumlar mühendislik aracınızla aynı adımda.' },
@@ -233,7 +233,7 @@ export const tr: InfoCopy = {
       signin: { name: 'Giriş ve kullanıcılar', text: 'Tek oturum açma ve kullanıcıların otomatik eklenmesi.' },
       api: { name: 'API ve webhook’lar', text: 'Görevler, müşteriler ve kayıtlar için kişisel API anahtarları ve webhook’lar.' },
       automation: { name: 'Otomasyon platformları', text: 'Kodsuz otomasyon araçları için tetikleyiciler ve işlemler.' },
-      accounting: { name: 'Muhasebe', text: 'Faturalar, ödemeler ve açık bakiye müşteri sayfasında.' },
+      accounting: { name: 'Muhasebe', text: 'Yakında: faturalar, ödemeler ve açık bakiye müşteri sayfasında.' },
     },
     missing: ['Listede yok mu?', 'API’si olan her araç, açık API ve webhook’larla Curahold’la konuşabilir.'],
   },
@@ -244,7 +244,7 @@ export const tr: InfoCopy = {
     priceRow: 'Kullanıcı başına aylık, yıllık / aylık ödemede', viewers: 'Görüntüleyen kullanıcılar', free: 'Ücretsiz',
     faqTitle: 'Fiyatlarla ilgili sorular',
     faq: [
-      { q: 'Ücretsiz deneme nasıl işliyor?', a: '“Ücretsiz deneyin” düğmesinden kısa bir başvuru gönderin; genellikle bir iş günü içinde yanıt veririz. Deneme üç ay sürer; her şey açıktır ve kart gerekmez. Bitmeden 14, 7 ve 1 gün önce yöneticilere hatırlatma gelir.' },
+      { q: 'Ücretsiz deneme nasıl işliyor?', a: '“Ücretsiz deneyin” düğmesinden kısa bir başvuru gönderin; bir kişi inceler ve e-postayla yanıt verir. Deneme üç ay sürer; her şey açıktır ve kart gerekmez. Bitmeden 14, 7 ve 1 gün önce yöneticilere hatırlatma gelir.' },
       { q: 'Kimler kullanıcı olarak sayılır?', a: 'Tam kullanıcı olarak katılmış kişiler. Henüz kabul edilmemiş davetler, yalnızca görüntüleyen kullanıcılar ve portaldaki müşterileriniz ücretsizdir. Birini eklediğinizde ek kullanıcı dönemin geri kalanı için faturalanır; birini çıkardığınızda bir sonraki fatura düşer.' },
       { q: 'Planı değiştirebilir ya da aylık ve yıllık ödeme arasında geçiş yapabilir miyiz?', a: 'Evet, istediğiniz zaman Ayarlar → Abonelik sayfasından. Aradaki fark, dönemin geri kalanı için faturalanır ya da alacak olarak yansıtılır.' },
       { q: 'Deneme bir plan seçilmeden biterse ne olur?', a: 'Hiçbir şey silinmez. Herkes her şeyi okumaya ve dışa aktarmaya devam eder; bir yönetici plan seçene kadar değişiklik yapılamaz, sonra iş kaldığı yerden sürer.' },
@@ -265,8 +265,8 @@ export const tr: InfoCopy = {
     lead: 'Verileriniz nasıl saklanıyor, kim görebiliyor, onlarla neler yapabilirsiniz? Düz bir dille; belgeler aşağıda.',
     pack: "Standart güvenlik anketlerini yanıtlıyor, güvenlik politikalarımızı talep eden müşteri ve adaylarla paylaşıyoruz — yardım merkezi üzerinden bize yazın.",
     points: [
-      ['Her şirket ayrı tutulur', 'Her satır kendi şirketini taşır ve kimin göreceğine veritabanının kendisi karar verir; bir ekrandaki hata bile bir şirkete başka şirketin verisini gösteremez.'],
-      ['⟦eu|Veri Avrupa Birliği’nde|⟧', 'Veritabanı AB’de çalışır. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.'],
+      ['Her şirket ayrı tutulur', 'Her satır kendi şirketini taşır ve kimin göreceğine yalnızca ekranlar değil, veritabanının kendi kuralları karar verir; bu ayrım her değişiklikte testlerle denetlenir.'],
+      ['⟦eu|Veri Avrupa Birliği’nde|⟧', 'Veritabanı AB’de çalışır. Bir veri işleme sözleşmesi mevcuttur (hukuki incelemedeki taslak).'],
       ['Parolasız giriş', 'E-posta bağlantısı, Google ya da Microsoft ve tek oturum açma. Yeni bir cihaz ayrıca e-postayla gelen bir kodu girer.'],
       ['Kim neyi görür', 'Roller herkesin hangi müşterileri göreceğini, alan erişimi her alanı kimin okuyup kimin değiştireceğini belirler.'],
       ['Destek yalnızca izninizle', 'Destek ekibimiz çalışma alanınıza yalnızca siz izin verince, sınırlı bir süre için bakabilir; her ziyaret kayda geçer.'],
@@ -282,7 +282,7 @@ export const tr: InfoCopy = {
       ['Ne olduğunu değil, nedenini bilirsiniz', 'Sağlık skoru nedenlerini sıralar; yenileme riske girmeden sonraki adım belli olur.', 'Sağlık skoru'],
       ['On bir dil, sağdan sola dahil', 'Herkes kendi dilini seçer; tüm arayüz takip eder, gereken yerde aynalanır.', 'Hizmet verdiğimiz bölgeler'],
       ['Verileriniz sizin kalır', 'Şirketler veritabanının kendisinde ayrı tutulur; destek ekibi çalışma alanınızı yalnızca izninizle görür.', 'Güvenlik ve gizlilik'],
-      ['Araçlarınızın yanında başlayın, kendi hızınızda geçin', 'CRM’inize ve mühendislik aracınıza bağlantılar, ekipler geçerken iki tarafı aynı adımda tutar. Satış hunisi de sprint’ler de Curahold’da zaten var; eski araçları tutmak bir zorunluluk değil, tercih.', 'Entegrasyonlar'],
+      ['Araçlarınızın yerine değil, yanında', 'CRM’inize ve mühendislik aracınıza bağlantılar iki tarafı aynı adımda tutar; böylece her ekip aynı müşteri kaydından çalışır.', 'Entegrasyonlar'],
     ],
     contrastTitle: 'Dağınık araçlar mı, tek yer mi',
     before: ['Söz birinin e-postasında', 'Görev bir tabloda', 'Risk bir sohbet akışında', 'Yenileme ayrı bir CRM’de'],
@@ -296,7 +296,7 @@ export const tr: InfoCopy = {
       'Finans için: sözleşme değeri ve geciken ödemeler aynı kayıtta (yakında).',
     ],
     notForTitle: 'Kimler için değil', notForLead: 'Dürüst bir cevap, size bir deneme süresi kazandırır.',
-    notFor: [['Kişisel yapılacaklar listesi', 'Tek başınıza çalışıyorsanız daha basit bir uygulama işinizi daha iyi görür. Curahold, müşterileri paylaşan ekipler için yapıldı.'], ['Destek masası', 'Curahold destek aracınızdaki talepleri getirir ve her müşterinin sağlığında sayar; o aracın yerini almaz.'], ['Muhasebe ve faturalama', 'Curahold muhasebe programınızdaki rakamları okur; defter tutmaz, fatura kesmez.'], ['Kritik yol planı', 'Panolar, sprint’ler ve zaman çizelgesi müşteri işini ve ürün teslimini kapsar; büyük, tek seferlik bir projenin kritik yol planını değil.']],
+    notFor: [['Kişisel yapılacaklar listesi', 'Tek başınıza çalışıyorsanız daha basit bir uygulama işinizi daha iyi görür. Curahold, müşterileri paylaşan ekipler için yapıldı.'], ['Destek masası', 'Curahold destek aracınızdaki talepleri getirir ve her müşterinin sağlığında sayar; o aracın yerini almaz.'], ['Muhasebe ve faturalama', 'Curahold muhasebe programınızdaki rakamları okuyacak (yakında); defter tutmaz, fatura kesmez.'], ['Kritik yol planı', 'Panolar, sprint’ler ve zaman çizelgesi müşteri işini ve ürün teslimini kapsar; büyük, tek seferlik bir projenin kritik yol planını değil.']],
     more: 'Tüm nedenleri görün',
   },
   about: {
@@ -312,7 +312,7 @@ export const tr: InfoCopy = {
   },
   seo: {
     home: ['Curahold: müşteri başarısı ekipleri için iş yönetimi', 'Zamanında açılan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve nedenini söyleyen sağlık skoru. 3 ay ücretsiz, kart gerekmez.'],
-    inside: ['İç satış takip programı: hiçbir takip kaçmaz | Curahold', 'Aramalar ve e-postalar müşterinin zaman çizelgesinde, her takip sorumlusu ve tarihi olan bir görev, erken fırsatlar satışla aynı satış hunisinde.'],
+    inside: ['İç satış takip programı: hiçbir takip kaçmaz | Curahold', 'Aramalar ve notlar müşterinin zaman çizelgesinde, her takip sorumlusu ve tarihi olan bir görev, erken fırsatlar satışla aynı satış hunisinde.'],
     sales: ['Satış hunisi, yenilemeler ve hedefler | Curahold', 'Fırsatlar, yenilemeler ve çeyrek hedefleri müşterinin kendi kaydında; ağırlıklı tahmin ve doksan gün önceden başlayan yenileme playbook’ları.'],
     onboarding: ['Müşteri onboarding planı, tarihli adımlarla | Curahold', 'Sorumlusu ve tarihi belli adımlarla bir onboarding playbook’u; müşterinin portalında onunla paylaşılır, sağlık skoru da en baştan izler.'],
     success: ['Müşteri başarısı yazılımı ve sağlık skoru | Curahold', 'Yenilemeden önce sessizleşen müşteriyi görün: nedenlerini sıralayan sağlık skoru, göreve dönüşen toplantılar ve görünen destek talepleri.'],
@@ -323,11 +323,11 @@ export const tr: InfoCopy = {
     sprints: ['Görev yönetimi: panolar, sprint ve burndown | Curahold', 'Kendi sütunlarınızla ekip, şirket ve kişisel panolar; kapasite planlaması, hikâye puanları ve kendini çizen burndown grafiğiyle sprint’ler.'],
     portal: ['Görev ve talepler için müşteri portalı | Curahold', 'Müşteriler e-postalarındaki bağlantıyla girer ve yalnızca paylaştıklarınızı görür: kendi görevlerini, taleplerini ve sizin yanıtlarınızı.'],
     renewals: ['Yenileme takibi ve playbook otomasyonu | Curahold', 'Yenileme playbook’ları adımlarını tarihten doksan gün önce açar; cümle gibi yazılan kurallar görev açar, haber verir ve alanları günceller.'],
-    assistant: ['Müşterilerinizi Claude ya da ChatGPT’ye sorun | Curahold', 'Claude ya da ChatGPT’yi çalışma alanınıza bağlayın. Kendi verilerinizden, kendi yetkinizle cevap verir; görev açabilir, not düşebilir.'],
+    assistant: ['Müşterilerinizi Claude ya da ChatGPT’ye sorun | Curahold', 'Claude ya da ChatGPT’yi çalışma alanınıza bağlayın. Kendi verilerinizden, kendi yetkinizle cevap verir; değişikliğe izin verirseniz görev açar, not düşer.'],
     reports: ['Müşteri başarısı raporları ve panelleri | Curahold', 'Hedefler, ağırlıklı satış hunisi ve tüm portföyün sağlığı; kendi kurduğunuz raporlar ve paneller, dışa aktarım ve veri ambarı bağlantısı.'],
-    sync: ['CRM ve tablolarla iki yönlü eşitleme | Curahold', 'CRM’inizi, tablolarınızı ve destek aracınızı alan alan, iki yönlü eşitleyin; ekipler Curahold’a kendi hızlarında geçerken her şey güncel kalır.'],
+    sync: ['CRM ve tablolarla iki yönlü eşitleme | Curahold', 'CRM’inizi, tablolarınızı ve destek aracınızı alan alan, iki yönlü eşitleyin; her ekip aynı müşteri kaydından çalışsın.'],
     solutions: ['Çözümler: rol, şirket büyüklüğü ve bölge | Curahold', 'Curahold’un kuruculara, ekip liderlerine ve müşteriyle çalışanlara; küçük ekiplere ve büyük şirketlere; Türkiye’ye ve Orta Doğu’ya nasıl uyduğu.'],
-    integrations: ['Entegrasyonlar: CRM, sohbet, destek ve BI | Curahold', 'Salesforce, HubSpot, Slack, Microsoft Teams, Jira, tablolar, destek masaları ve veri ambarlarını bağlayın; gerisine açık API ile ulaşın.'],
+    integrations: ['Entegrasyonlar: CRM, sohbet, destek ve BI | Curahold', 'CRM’iniz, Slack, Microsoft Teams, mühendislik aracınız, tablolar, destek masaları ve veri ambarlarını bağlayın; gerisine açık API ile ulaşın.'],
     pricing: ['Curahold fiyatları: kullanıcı başına, 3 ay ücretsiz', '⟦price|Yıllık planda kullanıcı başına aylık Team {team}, Business {business}. Görüntüleyenler ücretsiz, kurulum ücreti yok, deneme için kart gerekmez.|Kullanıcı başına, plandaki her özellikle. Fiyatlar lansmanda açıklanacak; görüntüleyenler ücretsiz, kurulum ücreti yok, deneme için kart gerekmez.⟧'],
     faq: ['Sık sorulan sorular ve açık cevaplar | Curahold', 'Verilerin nerede tutulduğu, kendi sunucunuzda çalıştırma, CRM gerekip gerekmediği, iptal, diller ve kurulumun nasıl işlediği üzerine açık cevaplar.'],
     trust: ['Güvenlik ve gizlilik: verileriniz nasıl korunur | Curahold', '⟦eu|Her şirket veritabanında ayrı tutulur; veriler Avrupa Birliği’nde, parolasız giriş, roller ve alan erişimi, destek ise yalnızca izninizle.|Her şirket veritabanında ayrı tutulur; parolasız giriş, roller ve alan erişimi, destek ise yalnızca izninizle.⟧'],

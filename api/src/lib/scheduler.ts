@@ -17,6 +17,7 @@ import { syncSeats } from '../billing/service';
 import { emptyTrash } from './trash';
 import { snapshotActiveSprints } from './burndown';
 import { sendTrialReminders } from './trial';
+import { queueRenewalNotices } from '../billing/renewalNotice';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { purgeAssistantLogs } from '../assistant/store';
 import { dailySetupHealth } from './setupHealth';
@@ -173,6 +174,8 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   });
   // Onboarding plans move on from what the product sees, and whoever's turn it is hears it (in the app).
   await sweepOnboarding(deps, now).catch((e) => console.error('[curahold] onboarding sweep failed', e));
+  // Yearly plans renewing soon: the notice the terms promise, queued before this run delivers the outbox.
+  await queueRenewalNotices(deps, now).catch((e) => console.error('[curahold] renewal notices failed', e));
   let delivered = 0;
   for (let i = 0; i < 20; i++) {
     const n = await deliverPending(deps, 100);

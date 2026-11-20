@@ -70,10 +70,10 @@ const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
 // the same in every language, so they are not translated. These are the
 // integrations the product really has — nothing here is a customer.
-const INTEGRATIONS = [
-  'Slack', 'Microsoft Teams', 'Google Chat', 'Salesforce', 'HubSpot', 'Jira', 'Dynamics 365',
-  'Pipedrive', 'Zoho', 'Bitrix24', 'Freshsales', 'Zendesk Sell', 'Google Sheets', 'Excel', 'Google BigQuery', 'Claude', 'ChatGPT',
-];
+// Only tools that are not competitors (MASTER rule 9, legal audit #32): chat,
+// spreadsheets and the AI assistants the connector serves. CRMs, help desks and
+// trackers Curahold also syncs with are named by category, never by brand.
+const INTEGRATIONS = ['Slack', 'Microsoft Teams', 'Google Chat', 'Google Sheets', 'Excel', 'Claude', 'ChatGPT'];
 
 // Everything the page shows inside a product render is invented demo data: the
 // demo's own companies and people. Accounts come the way the app lists them,
@@ -559,6 +559,7 @@ function footerHtml(locale: SiteLocale): string {
           ${li(u.legal('dpa'), c.footer.links.dpa)}
           ${li(u.legal('subprocessors'), c.footer.links.subprocessors)}
           ${li(u.legal('cookies'), c.footer.links.cookies)}
+          ${li(u.legal('refunds'), c.footer.links.refunds)}
           ${li(u.legal('accessibility'), c.footer.links.accessibility)}
         </ul>
       </div>
@@ -1170,19 +1171,20 @@ export function page(locale: SiteLocale): string {
   // Tile 3 — sync: named tools on both sides of Curahold, changes travelling both ways.
   const beam = (name: string, i: number, side: 'a' | 'b') => `<li style="--i:${i}"><span>${esc(name)}</span><i class="sy__beam sy__beam--${side}"></i></li>`;
   // Under the hub, what "in step" means, one change at a time: a date arriving from the CRM,
-  // a sprint task closing on both sides, a new task announced in chat.
+  // a finished task announced in chat, a new task announced in another chat. Competing
+  // products are never named here (MASTER rule 9): the CRM is shown by its category.
   const ARROW = { in: 'M2 8h11M9 4l4 4-4 4', out: 'M14 8H3M7 4L3 8l4 4', both: 'M2 5.5h11M10 2.5l3 3-3 3M14 10.5H3M6 7.5l-3 3 3 3' };
   const syncEvent = (tool: string, dir: keyof typeof ARROW, what: string, state: string, i: number) =>
     `<p class="sy__ev${i === 0 ? ' is-own' : ''}" style="--i:${i}"><b>${esc(tool)}</b><svg viewBox="0 0 16 16"><path d="${ARROW[dir]}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${esc(what)} · <em>${esc(state)}</em></span></p>`;
   const tileSync = `<article class="tile tile--sync" data-live data-reveal style="--i:2">
           ${tile(2)}
           <div class="sy" aria-hidden="true">
-            <ul class="sy__col sy__col--a">${['Salesforce', 'HubSpot', 'Jira'].map((n, i) => beam(n, i, 'a')).join('')}</ul>
+            <ul class="sy__col sy__col--a">${['CRM', 'Google Sheets', 'Excel'].map((n, i) => beam(n, i, 'a')).join('')}</ul>
             <div class="sy__hub">${MARK}<em>${esc(t('sync.dir.both'))}</em></div>
-            <ul class="sy__col sy__col--b">${['Slack', 'Google Sheets', 'Microsoft Teams'].map((n, i) => beam(n, i, 'b')).join('')}</ul>
+            <ul class="sy__col sy__col--b">${['Slack', 'Microsoft Teams', 'Google Chat'].map((n, i) => beam(n, i, 'b')).join('')}</ul>
             <div class="sy__feed">
-              ${syncEvent('Salesforce', 'in', ACCOUNTS[1].name, `${t('targets.kind.renewal')} ${day(2, 14, 2027)}`, 0)}
-              ${syncEvent('Jira', 'both', ui.tasks[3], t('board.defaultColumns.done'), 1)}
+              ${syncEvent('CRM', 'in', ACCOUNTS[1].name, `${t('targets.kind.renewal')} ${day(2, 14, 2027)}`, 0)}
+              ${syncEvent('Microsoft Teams', 'out', ui.tasks[3], t('board.defaultColumns.done'), 1)}
               ${syncEvent('Slack', 'out', ui.playbookSteps[1], 'Zeynep', 2)}
             </div>
           </div>
@@ -1291,7 +1293,7 @@ ${chromeHeader(locale, '', 'classic')}
     <div class="strip" aria-label="${esc(c.hero.works)}">
       <p class="strip__label">${esc(c.hero.works)}</p>
       <button class="strip__toggle" type="button" aria-pressed="false" data-pause="${esc(c.hero.pause)}" data-play="${esc(c.hero.play)}">${PAUSE}<span>${esc(c.hero.pause)}</span></button>
-      <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}</div></div>
+      <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}${marquee}${marquee}</div></div>
     </div>
   </section>
   <!--fold-->

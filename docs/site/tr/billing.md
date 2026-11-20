@@ -38,6 +38,10 @@ Bir yönetici Ayarlar → **Abonelik**’i açar, aylık ya da yıllığı seçe
 
 Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir davet faturalanmaz. Birini eklerseniz ek kullanıcı dönemin kalanı için faturalanır; birini çıkarırsanız sonraki fatura düşer. Kimsenin kullanıcı sayısını elle değiştirmesi gerekmez. Her plan en az birkaç tam kullanıcı üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla): Ayarlar → **Abonelik** bölgenizdeki sayıyı gösterir; bu sayıya kadar eklediğiniz kişiler ek ücrete yol açmaz.
 
+## Yıllık planlar: yenileme bildirimi
+
+Yıllık plan kendiliğinden bir yıl daha yenilenir. Yenilenmeden **30 gün önce** her yöneticiye tarihi, planı ve koltuk sayısını yazan, Ayarlar → **Abonelik** bağlantılı bir e-posta gelir. Koşullar gereği verilen bir bildirim olduğu için diğer bildirimleri kapatmış olsanız da e-postayla gelir. Planı ya da koltuk sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Abonelik sayfasını kullanın: iptal yenilemeyi durdurur, plan ödenen yılın sonuna kadar çalışmaya devam eder. Neyin ne zaman iade edildiği [iade politikasında](/docs/tr/legal-refunds/) yazar.
+
 ## Faturalar, ödeme yöntemi, iptal
 
 Abonelik sayfasındaki **Faturalar, ödeme ve iptal** Paddle’ın müşteri portalını, oturum açılmış olarak açar: faturaları indirin, kartı değiştirin, iptal edin. İptal edilen plan, ödenmiş dönemin sonuna kadar çalışmaya devam eder.

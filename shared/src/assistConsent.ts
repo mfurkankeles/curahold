@@ -9,7 +9,7 @@
 // notice is no longer a "yes" to what happens now.
 
 /** The notice version a recorded "yes" must match. */
-export const ASSIST_CONSENT_VERSION = '2026-11-20.1';
+export const ASSIST_CONSENT_VERSION = '2026-11-21.1';
 
 /** Where a chat happens: in the app, in the customer portal, or on the public docs and sales site. */
 export type AssistConsentSurface = 'app' | 'portal' | 'docs' | 'site';

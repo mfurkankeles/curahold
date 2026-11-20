@@ -230,7 +230,7 @@ export function verbisSheet(): string {
 export function legalHashes(pages: Map<string, string>): string {
   const docs: Record<string, Record<string, string>> = {};
   const slugs = Object.values(AGREEMENT_PACK).map((d) => d.slug);
-  for (const extra of ['legal-privacy', 'legal-kvkk', 'legal-cookies', 'legal-subprocessors']) slugs.push(extra);
+  for (const extra of ['legal-privacy', 'legal-kvkk', 'legal-cookies', 'legal-subprocessors', 'legal-refunds']) slugs.push(extra);
   for (const lang of LOCALES)
     for (const slug of slugs) {
       const path = join(DOCS, lang, `${slug}.md`);
