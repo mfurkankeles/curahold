@@ -6959,4 +6959,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': '会員',
   'settings.vocab.company.one': '企業',
   'settings.vocab.company.other': '企業',
+  'settings.unused.title': 'このワークスペースでは{topic}を使っていません',
+  'settings.unused.body': 'ここで設定することはありません。この機能はあなただけでなく、ワークスペース全体でオフになっています。そのほかの設定は「設定」にあります。',
 };

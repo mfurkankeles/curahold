@@ -6959,4 +6959,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': 'חברים',
   'settings.vocab.company.one': 'חברה',
   'settings.vocab.company.other': 'חברות',
+  'settings.unused.title': '{topic} לא בשימוש בסביבת העבודה הזו',
+  'settings.unused.body': 'אין כאן מה להגדיר: החלק הזה כבוי לכל סביבת העבודה, לא רק לך. כל השאר נמצא בהגדרות.',
 };

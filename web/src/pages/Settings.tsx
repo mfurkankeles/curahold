@@ -55,10 +55,15 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
   const [q, setQ] = useState('');
   const allowed = SETTINGS_TOPICS.filter((x) => x.allowed(can, !!me.org.billingOn));
   // A topic that exists but is not this person's to open says so (and who can grant it) instead of showing another one.
+  // A topic this workspace does not use (billing switched off) is not a missing permission: an administrator
+  // must not be told to ask an administrator.
+  const unused = !!tab && SETTINGS_TOPICS.some((x) => x.key === tab && x.allowed(can, true) && !x.allowed(can, !!me.org.billingOn));
   const refused = !allowed.length || (SETTINGS_TOPICS.some((x) => x.key === tab) && !allowed.some((x) => x.key === tab));
   const listOnly = phone && !allowed.some((x) => x.key === tab) && !refused;
   const current: SettingsTab | null = allowed.find((x) => x.key === tab)?.key ?? (listOnly ? null : (allowed[0]?.key ?? null));
-  const currentLabel = current ? topicLabel(t, words, current) : '';
+  // A topic that cannot be shown keeps its own name on top, not the name of the one shown in its place.
+  const asked = refused && tab && SETTINGS_TOPICS.some((x) => x.key === tab) ? tab : current;
+  const currentLabel = asked ? topicLabel(t, words, asked) : '';
   // The way back to here says which settings, not just "Settings".
   useEffect(() => {
     if (current) nameIt(`/settings/${current}`, currentLabel);
@@ -126,7 +131,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   <a
                     href={`/settings/${key}`}
                     className="admin__link"
-                    aria-current={key === current ? 'page' : undefined}
+                    aria-current={key === current && !refused ? 'page' : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       go(key);
@@ -154,20 +159,9 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
   return (
     <>
       <header className="topbar">
+        {/* On a phone the topic's name is the title; the way back is the bar above it (BackBar: "← Settings"), one Back only. */}
         {phone && current ? (
           <h1 className="topbar__title admin__phonetitle">
-            <a
-              className="btn btn--icon btn--quiet admin__back"
-              href="/settings"
-              aria-label={t('settings.backTo')}
-              title={t('settings.backTo')}
-              onClick={(e) => {
-                e.preventDefault();
-                go(null);
-              }}
-            >
-              <Icon name="chevronLeft" size={20} />
-            </a>
             <span>{currentLabel}</span>
           </h1>
         ) : (
@@ -186,7 +180,14 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
           {(!phone || listOnly) && nav}
           {current && (
             <div className="admin__content">
-              {refused ? (
+              {unused ? (
+                <EmptyState icon="sliders" title={t('settings.unused.title', { topic: currentLabel })} body={t('settings.unused.body')}>
+                  <button type="button" className="btn" onClick={() => go(null)}>
+                    <Icon name="arrowLeft" size={16} />
+                    {t('settings.backTo')}
+                  </button>
+                </EmptyState>
+              ) : refused ? (
                 <NotAllowed />
               ) : (
                 <>

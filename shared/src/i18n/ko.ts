@@ -6959,4 +6959,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': '회원',
   'settings.vocab.company.one': '기업',
   'settings.vocab.company.other': '기업',
+  'settings.unused.title': '이 워크스페이스에서는 {topic}을(를) 사용하지 않습니다',
+  'settings.unused.body': '여기서 설정할 것은 없습니다. 이 기능은 본인만이 아니라 워크스페이스 전체에서 꺼져 있습니다. 나머지 설정은 모두 설정에 있습니다.',
 };

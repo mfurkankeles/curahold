@@ -6959,4 +6959,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': 'اعضا',
   'settings.vocab.company.one': 'شرکت',
   'settings.vocab.company.other': 'شرکت‌ها',
+  'settings.unused.title': '{topic} در این فضای کاری استفاده نمی‌شود',
+  'settings.unused.body': 'اینجا چیزی برای تنظیم نیست: این بخش برای کل فضای کاری خاموش است، نه فقط برای شما. بقیهٔ موارد در تنظیمات است.',
 };

@@ -6974,6 +6974,8 @@ export const en = {
   'settings.vocab.member.other': 'Members',
   'settings.vocab.company.one': 'Company',
   'settings.vocab.company.other': 'Companies',
+  'settings.unused.title': '{topic} is not used in this workspace',
+  'settings.unused.body': 'There is nothing to set here: this part is switched off for the whole workspace, not for you alone. Everything else is in Settings.',
 } as const;
 
 export type MessageKey = keyof typeof en;

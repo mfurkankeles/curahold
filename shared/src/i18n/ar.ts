@@ -6959,4 +6959,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': 'الأعضاء',
   'settings.vocab.company.one': 'شركة',
   'settings.vocab.company.other': 'الشركات',
+  'settings.unused.title': 'لا يُستخدم {topic} في مساحة العمل هذه',
+  'settings.unused.body': 'لا يوجد ما يُضبط هنا: هذا الجزء متوقف لمساحة العمل كلها، لا لك وحدك. كل ما عداه في الإعدادات.',
 };

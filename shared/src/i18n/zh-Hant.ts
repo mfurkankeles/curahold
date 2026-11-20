@@ -6959,4 +6959,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': '會員',
   'settings.vocab.company.one': '企業',
   'settings.vocab.company.other': '企業',
+  'settings.unused.title': '此工作區未使用{topic}',
+  'settings.unused.body': '這裡沒有需要設定的內容：這部分對整個工作區都已關閉，並非只對你。其他設定都在「設定」中。',
 };

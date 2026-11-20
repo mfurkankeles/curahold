@@ -6905,4 +6905,6 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'settings.vocab.member.other': 'Ahli',
   'settings.vocab.company.one': 'Syarikat',
   'settings.vocab.company.other': 'Syarikat',
+  'settings.unused.title': '{topic} tidak digunakan dalam ruang kerja ini',
+  'settings.unused.body': 'Tiada apa-apa untuk ditetapkan di sini: bahagian ini dimatikan untuk seluruh ruang kerja, bukan untuk anda sahaja. Semua yang lain ada dalam Tetapan.',
 };
