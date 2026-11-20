@@ -50,7 +50,11 @@
   --done-wash: #e3f0dc;
   --info-wash: #eef3fb;
   --info-ink: #2b4f7a;
-  --focus: #1f8fff;
+  /* Keyboard focus: at least 4:1 on every light surface (WCAG 2.4.13 asks 3:1). */
+  --focus: #2b6fe0;
+  /* Borders of fields (inputs, selects, pickers): 3:1 on cards and on the page (WCAG 1.4.11); hairlines stay --line. */
+  --field-line: #8b88a8;
+  --loader-dot: #2f8f78;
 
   --scrim: rgba(23, 21, 47, .36);
   --shadow-1: var(--shadow-0), 0 6px 18px rgba(25, 21, 65, .09);
@@ -111,6 +115,9 @@
   --loop-caret: 1s;
   --loop-pulse: 1.6s;
   --loop-twinkle: 5s;
+  --loop-loader: 1.2s;
+  --loop-route: 800ms;
+  --loop-spin: 700ms;
   /* How long a wait shows nothing at all before a skeleton appears (Empty.tsx, RouteFallback.tsx). */
   --wait: 300ms;
 
@@ -132,12 +139,15 @@
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'tnum' 0;
   --nav-on-ink: #2a2170;
-  --new-bg: linear-gradient(135deg, #8a7bff, #5b4de8);
+  /* White text on every stop of these gradients is at least 4.5:1 (the light end was 3.3:1). */
+  --new-bg: linear-gradient(135deg, #6f60f0, #5b4de8);
   --new-ink: #ffffff;
-  --new-hover: linear-gradient(135deg, #9b8eff, #6a5cf0);
+  --new-hover: linear-gradient(135deg, #6a5cf0, #5244dc);
   --toast-action: #cdc7ff;
   --toast-icon: #b5acff;
-  --grad: linear-gradient(135deg, #8a7bff 0%, #5b4de8 60%, #3f7dff 100%);
+  --grad: linear-gradient(135deg, #6f60f0 0%, #5b4de8 60%, #4a54e8 100%);
+  /* A primary button under the pointer: darker in light (white text keeps its contrast), lighter in dark. */
+  --hover-shift: brightness(.92);
   --mark-bg: #eceafe;
   --mark-ink: #191541;
   --mark-dot: #5b4de8;
@@ -238,7 +248,7 @@
   --sunk: #0b0a14;
   --ink: #e7e6f5;
   --ink-2: #b3b1cc;
-  --ink-3: #8f8dab;
+  --ink-3: #9d9bb8;
   --line: #2a2843;
   --line-strong: #3d3a5e;
   --on-ink: #0f0e1a;
@@ -273,6 +283,8 @@
   --info-wash: #17263a;
   --info-ink: #a3c6f0;
   --focus: #5aa9ff;
+  --field-line: #6f6b98;
+  --loader-dot: #67c2a8;
 
   --scrim: rgba(0, 0, 0, .55);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .35);
@@ -286,6 +298,7 @@
   --new-hover: linear-gradient(135deg, #b0a5ff, #8a7bff);
   --nav-on-ink: #efedff;
   --grad: linear-gradient(135deg, #a093ff 0%, #7a6af5 60%, #5c8dff 100%);
+  --hover-shift: brightness(1.08);
   --mark-bg: #25214f;
   --mark-ink: #e7e6f5;
   --mark-dot: #8c7dff;
@@ -337,6 +350,36 @@
   --shadow-panel-rtl: 18px 0 40px rgba(0, 0, 0, .45);
 }
 
+/* Type per script (docs/design/tokens.md "Type"). Figtree draws Latin (English, Turkish, Malay) and the
+   Latin words and digits inside other scripts; every other script uses the system font made for it,
+   named for Windows, Apple and Android in turn: no web font, 0 KB. Scripts with taller letters get a
+   larger body and more line height; text is never under 12 px outside Latin; scripts that join or hang
+   their letters (Arabic, Devanagari) and CJK headings get no letter-spacing; CJK never fakes bold or italic. */
+html:lang(ar), html:lang(fa) {
+  --font: 'Figtree', 'Segoe UI', 'SF Arabic', 'Geeza Pro', 'Noto Sans Arabic', Tahoma, sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.7; line-height: 1.7;
+}
+html:lang(he) {
+  --font: 'Figtree', 'Segoe UI', 'SF Hebrew', 'Arial Hebrew', 'Noto Sans Hebrew', sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.6; line-height: 1.6;
+}
+html:lang(hi) {
+  --font: 'Figtree', 'Nirmala UI', 'Kohinoor Devanagari', 'Noto Sans Devanagari', sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.75; --lh-snug: 1.4; line-height: 1.75;
+}
+html:lang(ja) { --font: 'Figtree', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'Noto Sans JP', sans-serif; }
+html:lang(ko) { --font: 'Figtree', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; word-break: keep-all; }
+html:lang(zh-Hans) { --font: 'Figtree', 'PingFang SC', 'Microsoft YaHei UI', 'Noto Sans SC', sans-serif; }
+html:lang(zh-Hant) { --font: 'Figtree', 'PingFang TC', 'Microsoft JhengHei UI', 'Noto Sans TC', sans-serif; }
+html:is(:lang(ja), :lang(ko), :lang(zh)) { --fs-2xs: 12px; --lh-body: 1.7; line-height: 1.7; font-synthesis: none; }
+html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(zh)) {
+  --font-display: var(--font);
+  font-family: var(--font);
+  font-size: var(--fs-m);
+}
+html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(zh)) * { letter-spacing: normal !important; }
+html:is(:lang(ja), :lang(ko), :lang(zh)) :is(em, i, cite) { font-style: normal; }
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -345,7 +388,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   input, select, textarea { font-size: var(--fs-l); }
 }
 a { color: var(--brand-ink); }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); }
 .num { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* "Skip to content": the keyboard's first stop, out of sight until it has focus (WCAG 2.4.1). Shared by the app and the console. */
@@ -382,7 +425,7 @@ main[tabindex='-1']:focus { outline: none; }
 .field__hint { font-size: var(--fs-xs); color: var(--ink-3); }
 .input, .select, .textarea {
   width: 100%; min-height: 36px; padding: 8px 8px; border-radius: var(--r-s);
-  border: 1px solid var(--line-strong); background: var(--surface);
+  border: 1px solid var(--field-line); background: var(--surface);
 }
 .input:focus, .select:focus, .textarea:focus { border-color: var(--brand); outline: 2px solid var(--brand-wash); outline-offset: 0; }
 .textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
@@ -725,7 +768,7 @@ tr.vspacer td { padding: 0; border: 0; }
 /* ---------------------------------------------------------- people picker */
 
 .picker { position: relative; }
-.picker__button { display: flex; align-items: center; gap: 8px; min-height: 34px; width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--r-s); padding: 4px 8px; cursor: pointer; text-align: start; }
+.picker__button { display: flex; align-items: center; gap: 8px; min-height: 34px; width: 100%; border: 1px solid var(--field-line); background: var(--surface); border-radius: var(--r-s); padding: 4px 8px; cursor: pointer; text-align: start; }
 .picker__pop { position: absolute; top: calc(100% + 4px); inset-inline-start: 0; inset-inline-end: 0; z-index: 6; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-s); box-shadow: var(--shadow-1); max-height: 280px; overflow-y: auto; padding: 4px; }
 .picker__opt { display: flex; align-items: center; gap: 8px; padding: 8px 8px; border-radius: var(--r-xs); cursor: pointer; }
 .picker__opt:hover { background: var(--brand-wash); }
