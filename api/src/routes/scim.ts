@@ -188,7 +188,8 @@ scimRoutes.put('/Users/:id', async (c) => {
     const [cur] = await q.query<UserRow>(`select ${COLS} from users where id = $1 and status <> 'deleted'`, [id]);
     if (!cur) return { missing: true as const };
     const name = nameOf(b, cur.email);
-    const status = b.active === false ? 'disabled' : cur.status === 'disabled' ? (b.active ? 'active' : 'disabled') : cur.status;
+    const off = b.active === false || String(b.active).toLowerCase() === 'false';
+    const status = off ? 'disabled' : cur.status === 'disabled' ? (b.active === true || String(b.active).toLowerCase() === 'true' ? 'active' : 'disabled') : cur.status;
     const [u] = await q.query<UserRow>(`update users set name = $2, status = $3 where id = $1 returning ${COLS}`, [id, name, status]);
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.updated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return { user: u };
@@ -222,18 +223,35 @@ scimRoutes.patch('/Users/:id', async (c) => {
     if (!cur) return { missing: true as const };
     let name = cur.name;
     let active = cur.status === 'active' || cur.status === 'invited';
+    // Identity providers rename a person by its parts (name.givenName / name.familyName, as a path or inside a value
+    // object) and send booleans as "True"/"False" strings: each is read, or a rename or a deactivation would be lost.
+    let given: string | null = null;
+    let family: string | null = null;
+    const truthy = (v: unknown) => v === true || String(v).toLowerCase() === 'true';
     for (const op of ops) {
       const kind = (op.op ?? '').toLowerCase();
       if (kind !== 'replace' && kind !== 'add') continue;
       const path = (op.path ?? '').toLowerCase();
-      if (path === 'active') active = op.value === true || op.value === 'true';
+      if (path === 'active') active = truthy(op.value);
       else if (path === 'displayname' || path === 'name.formatted') name = String(op.value ?? name);
+      else if (path === 'name.givenname') given = String(op.value ?? '');
+      else if (path === 'name.familyname') family = String(op.value ?? '');
       else if (!op.path && op.value && typeof op.value === 'object') {
         const v = op.value as Record<string, unknown>;
-        if ('active' in v) active = v.active === true || v.active === 'true';
+        if ('active' in v) active = truthy(v.active);
         if (typeof v.displayName === 'string') name = v.displayName;
-        if (v.name && typeof v.name === 'object' && typeof (v.name as any).formatted === 'string') name = (v.name as any).formatted;
+        const n = v.name && typeof v.name === 'object' ? (v.name as Record<string, unknown>) : {};
+        if (typeof n.formatted === 'string') name = n.formatted;
+        if (typeof v['name.givenName'] === 'string') given = v['name.givenName'] as string;
+        if (typeof v['name.familyName'] === 'string') family = v['name.familyName'] as string;
+        if (typeof n.givenName === 'string') given = n.givenName;
+        if (typeof n.familyName === 'string') family = n.familyName;
       }
+    }
+    if (given !== null || family !== null) {
+      // Only the parts that came: the other part is kept from the stored name (first word / the rest).
+      const [first = '', ...rest] = cur.name.split(' ');
+      name = [given ?? first, family ?? rest.join(' ')].filter(Boolean).join(' ').trim() || name;
     }
     const status = active ? (cur.status === 'invited' ? 'invited' : 'active') : 'disabled';
     const [u] = await q.query<UserRow>(`update users set name = $2, status = $3 where id = $1 returning ${COLS}`, [id, name, status]);
