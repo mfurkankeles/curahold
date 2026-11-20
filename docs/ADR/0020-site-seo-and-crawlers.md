@@ -43,7 +43,7 @@ paid SEO service, no runtime dependency) and make only true claims.
   inline (about 10 KB compressed on the landing page) instead of a cached file.
 - **AI crawlers:** training crawlers are always refused. Answer engines (the robots that fetch for an AI search answer)
   stay refused by default on both the site and the docs, as before; one build-time setting opens the site to them
-  (`SITE_AI_CRAWLERS=allow`) and one configuration flag opens the docs host (`crawlers.docsAiAnswers`). Changing the
+  (`SITE_AI_CRAWLERS=allow`) and one runtime setting opens the docs host (`CRAWLERS_DOCS_AI=allow`). Changing the
   default is the product owner's decision.
 
 ## Alternatives considered

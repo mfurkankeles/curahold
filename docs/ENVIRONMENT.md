@@ -214,7 +214,7 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | `SITE_ORIGIN`, `SITE_TRIAL_URL`, `SITE_SIGNUP_URL`, `SITE_DOCS_HOME`, `SITE_CONSENT_LOG_URL` | More addresses baked into the sales site and demo hub builds | Derived from `BASE_DOMAIN`. |
 | `SITE_GA4_ID`, `SITE_META_PIXEL_ID`, `SITE_TIKTOK_PIXEL_ID` | Analytics / advertising ids for the sales site (loaded only after consent) | Empty. |
 | `CURAHOLD_MARKETING_PIXELS` | `1` allows the advertising pixels at all (they stay off by configuration otherwise, ADR 0014) | Off. |
-| `SITE_AI_CRAWLERS` | Sales-site `robots.txt`: `allow` lets AI **answer** engines (OAI-SearchBot, Claude-SearchBot, PerplexityBot …) read the marketing pages so they can cite them; AI **training** crawlers stay refused either way. The docs host has its own flag (`crawlers.docsAiAnswers`). Owner decision, ADR 0020 | Blocked. |
+| `SITE_AI_CRAWLERS` | Sales-site `robots.txt`: `allow` lets AI **answer** engines (OAI-SearchBot, Claude-SearchBot, PerplexityBot …) read the marketing pages so they can cite them; AI **training** crawlers stay refused either way. The docs host has its own setting (`CRAWLERS_DOCS_AI`, §above). Owner decision, ADR 0020 | Blocked. |
 | `SITE_SEO_ROBOTS` | Sales-site `robots.txt`: `allow` lets site-analysis robots in | Blocked. |
 | `SITE_LASTMOD` | Sales-site sitemaps: the `<lastmod>` day (YYYY-MM-DD) for every page that is not a blog post | The last git commit touching the site's sources; left out without git. |
 | `DOCS_ORIGIN` | Help centre production build: the address the docs are published at, for canonical, hreflang, structured data and `docs/sitemap.xml` (ADR 0020) | `https://app.curahold.com`. |
