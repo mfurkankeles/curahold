@@ -325,8 +325,8 @@ moved. Without the room the console asks `GET /api/desk/pulse` every 5 s; with i
 
 ## 9a. Languages
 
-Nine languages (`shared/src/i18n/core.ts`, `LOCALE_INFO`), one dictionary file each; English defines the keys and
-`tests/i18n.test.ts` keeps all nine complete. The server registers every dictionary; the web app and the portal load
+Eleven languages (`shared/src/i18n/core.ts`, `LOCALE_INFO`), one dictionary file each; English defines the keys and
+`tests/i18n.test.ts` keeps all eleven complete. The server registers every dictionary; the web app and the portal load
 only the one in use (`vite-plugin.ts`; the portal ships only the keys its own code names). Adding a language is adding
 a dictionary file and its line in `LOCALE_INFO`. Nothing else in the code knows how many languages there are —
 `tests/i18n-no-pairs.test.ts` fails on an English/Turkish pair written in place or an "is it Turkish?" branch:
@@ -335,7 +335,7 @@ a dictionary file and its line in `LOCALE_INFO`. Nothing else in the code knows 
 - **Built-in content** (template boards, stages, fields and automations, built-in record types, the report library,
   ready dashboards and page cards) — `phrase('key')`, a `Localized` whose values are read from the dictionaries when
   asked. Shown with `labelOf` / `pick` in the reader's language. When something is created from it, its JSON is stored
-  as data: all nine languages when the server creates it (sign-up templates, built-in types, seeds), the creator's
+  as data: all eleven languages when the server creates it (sign-up templates, built-in types, seeds), the creator's
   language when a browser posts a preset. It is never translated again afterwards — a company's renamed stage stays
   renamed. Readers fall back to English, then to any stored language, never to an empty label.
 - **Dates, numbers, money** — `intlTag(locale)` for `Intl` (English keeps day-before-month; Arabic keeps the Western

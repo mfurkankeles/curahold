@@ -1,5 +1,5 @@
 // The words of the second animated version (concept C, "orbit": four teams circling
-// one customer record), in nine languages. Department names, "No promise forgotten",
+// one customer record), in eleven languages. Department names, "No promise forgotten",
 // "Coming soon" and the sprint name come from concept A's copy and the main site, so
 // the two versions never disagree. {n} and {date} are filled by the builder.
 import type { SiteLocale } from '../locales';

@@ -152,7 +152,7 @@ const t0 = Date.now();
     if (e.length) fail(`hub chooser: ${e.join(' | ')}`);
     await p.close();
   }
-  console.log(`hub: ${TOURS.length} tours, filters, nine languages, the language chooser — ${failures.length ? 'problems above' : 'fine'}`);
+  console.log(`hub: ${TOURS.length} tours, filters, eleven languages, the language chooser — ${failures.length ? 'problems above' : 'fine'}`);
 }
 
 // ----------------------------------------------------------------- the tours

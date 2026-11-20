@@ -3,7 +3,7 @@
 // dictionary itself; `translate` reads whatever has been registered.
 //
 // - The server, the sales-site build and the tests import `./index`, which
-//   registers all nine dictionaries synchronously (and re-exports this file).
+//   registers all eleven dictionaries synchronously (and re-exports this file).
 // - The web app and the portal are built with `index` swapped for this file
 //   (see ./vite-plugin.ts): they register only the language in use, fetched on
 //   demand, already filled with English wherever a phrase is not yet translated.
@@ -13,7 +13,7 @@ export type Dictionary = Partial<Record<MessageKey, string>>;
 
 const registry: Partial<Record<Locale, Dictionary>> = {};
 
-/** The registered dictionaries (all nine through `./index`; only loaded ones in the browser). */
+/** The registered dictionaries (all eleven through `./index`; only loaded ones in the browser). */
 export const dictionaries = registry as Record<Locale, Dictionary>;
 export function registerDictionary(locale: Locale, dict: Dictionary) {
   registry[locale] = dict;
@@ -189,7 +189,7 @@ function agreeNumbers(locale: Locale, template: string, vars: Vars): string {
  * form built-in content takes (template boards and fields, record types, ready
  * reports and pages). Show it with `labelOf`/`pick` in the reader's language;
  * when it is written into a company's data, JSON keeps the values present then:
- * all nine on the server (every dictionary registered), the active one in the
+ * all eleven on the server (every dictionary registered), the active one in the
  * browser. Stored data is never translated again afterwards.
  */
 export function phrase(key: MessageKey): Partial<Record<Locale, string>> {
@@ -234,7 +234,7 @@ export function dayFirst(locale: Locale): boolean {
 /** What separates the columns of a spreadsheet file here: ";" where the decimal mark is a comma. */
 /**
  * The languages the help centre is written in (scripts/build-docs.ts): all
- * nine. Help search, CuraAI answers and help links use the person's own
+ * eleven. Help search, CuraAI answers and help links use the person's own
  * language; a page a language has no translation of yet (developer pages,
  * legal texts outside English and Turkish) is built there as the English page
  * with a note, so every link resolves. tests/i18n-help.test.ts checks this

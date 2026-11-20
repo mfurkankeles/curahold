@@ -1,5 +1,5 @@
 // The words of the generated cookie policy page (docs/site/<lang>/legal-cookies.md),
-// in all nine languages. The rows themselves come from ./storage.ts.
+// in all eleven languages. The rows themselves come from ./storage.ts.
 // LEGAL STATUS: draft (taslak — avukat onayı gerekli).
 import type { Locale } from '../i18n/core';
 import type { Duration, StorageCategory, StorageType, Surface } from './storage';

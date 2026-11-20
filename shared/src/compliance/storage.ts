@@ -6,10 +6,10 @@
 // scans the code (site/, web/, the portal, docs assets, api cookies), compares
 // what it finds with this list and fails when either side has something the
 // other does not; then it writes docs/compliance/storage-inventory.json and the
-// cookie policy page in all nine languages (docs/site/<lang>/legal-cookies.md).
+// cookie policy page in all eleven languages (docs/site/<lang>/legal-cookies.md).
 //
 // Rule for every change: a pull request that adds a cookie, a storage key or a
-// script host adds its line here (with all nine purposes), or the test fails.
+// script host adds its line here (with all eleven purposes), or the test fails.
 //
 // LEGAL STATUS: draft wording, to be reviewed by a lawyer (taslak — avukat
 // onayı gerekli). Durations in the provider rows are the providers' published

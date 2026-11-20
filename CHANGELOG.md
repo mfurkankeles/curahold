@@ -26,7 +26,7 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
-- Sales site: a small content hub in all nine languages (/resources/): four templates (renewal playbook, business review (QBR)
+- Sales site: a small content hub in all eleven languages (/resources/): four templates (renewal playbook, business review (QBR)
   agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
   contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
   what Curahold does today. Linked from the Resources menu and the footer.
@@ -86,7 +86,7 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 - Sales site: the Turkish pages speak to visitors as "siz" everywhere (landing page, menus, inner pages, blog, animated versions, consent).
 - Sales site: the headline says what Curahold is and what it does ("Work management for customer teams" above "Every renewal, every
-  promise, every task, on time.") in all nine languages; every page uses the same two calls to action, "Try it free" and "Live demo",
+  promise, every task, on time.") in all eleven languages; every page uses the same two calls to action, "Try it free" and "Live demo",
   each with an icon; "3 months free, no card needed" sits under them.
 - Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
   to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.

@@ -71,7 +71,7 @@ The codebase predates the linter, so lint is set up to be **green with warnings 
    a code rollback stays possible. Both PGlite and Postgres must run it.
 3. **Every write is safe to repeat.** Mutations support `Idempotency-Key`; side effects (notifications, chat messages, emails, webhooks, CRM writes) go through
    the outbox in the same transaction. Deleted things go to the trash.
-4. **Every user-visible string exists in every dictionary** in `shared/src/i18n/` (`en.ts` defines the keys; all nine files, soon eleven, are
+4. **Every user-visible string exists in every dictionary** in `shared/src/i18n/` (`en.ts` defines the keys; all eleven files are
    complete — ADR 0008). `npm run strings` fills English and Turkish only; add the other languages by hand, as a native product writer would, using the
    words the file already uses and `shared/src/i18n/glossary.ts`. No hard-coded text in components. Company terminology is substituted at runtime;
    never write "customer" literally where a company can rename it.

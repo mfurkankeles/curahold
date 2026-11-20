@@ -211,7 +211,7 @@ export const tr: InfoCopy = {
     regions: [
       ['Türkiye', 'Ürünün her yerinde Türkçe; kişisel veri talepleri için KVKK araçları.'],
       ['Orta Doğu', 'Arapça, İbranice ve Farsça; tüm arayüz sağdan sola aynalanır.'],
-      ['Doğu Asya', 'Japonca, Korece ve iki Çince yazı; her biri kendi dilinde yazılmış.'],
+      ['Asya', 'Hintçe, Malayca, Japonca, Korece ve iki Çince yazı; her biri kendi dilinde yazılmış.'],
       ['Avrupa', 'Veritabanı Avrupa Birliği’nde çalışır; veri işleme sözleşmesi GDPR’ı kapsar.'],
     ],
   },
@@ -328,6 +328,6 @@ export const tr: InfoCopy = {
     faq: ['Sık sorulan sorular ve açık cevaplar | Curahold', 'Verilerin nerede tutulduğu, kendi sunucunuzda çalıştırma, CRM gerekip gerekmediği, iptal, diller ve kurulumun ne kadar sürdüğü üzerine açık cevaplar.'],
     trust: ['Güvenlik ve gizlilik: verileriniz nasıl korunur | Curahold', 'Her şirket veritabanında ayrı tutulur; veriler Avrupa Birliği’nde, parolasız giriş, roller ve alan erişimi, destek ise yalnızca izninizle.'],
     why: ['Neden Curahold: her müşteri ekibine tek kayıt | Curahold', 'İç satış, satış, onboarding, müşteri başarısı ve ürün aynı müşteri kaydında çalışır; hiçbir söz kaybolmaz. Kimler için uygun olmadığı da burada.'],
-    about: ['Curahold hakkında: müşteriyi tutmak için yazılım', 'Curahold nedir, adı nereden gelir, ne geliştiriyoruz ve nasıl: baştan dokuz dilde, her şirketin verisi veritabanının içinde ayrı tutularak.'],
+    about: ['Curahold hakkında: müşteriyi tutmak için yazılım', 'Curahold nedir, adı nereden gelir, ne geliştiriyoruz ve nasıl: baştan on bir dilde, her şirketin verisi veritabanının içinde ayrı tutularak.'],
   },
 };

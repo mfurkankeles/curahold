@@ -132,7 +132,7 @@ html:not(.js) .hx__item:is(:hover, :focus-within) > .hx__panel { display: block;
 
 /* Narrower desktops: drop the quieter words first, keep every way into the product. Where
    even that does not fit (a long language, a narrow window), chrome.js folds the bar into
-   the same sheet a phone uses (.is-compact) — measured, because nine languages have nine widths. */
+   the same sheet a phone uses (.is-compact) — measured, because eleven languages have eleven widths. */
 @media (max-width: 1499px) {
   .hx:not(.is-compact) .hx__top { padding: 0 7px; }
   .hx:not(.is-compact) .hx__list { margin-inline-start: 8px; }

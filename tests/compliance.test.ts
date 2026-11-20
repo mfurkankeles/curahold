@@ -62,7 +62,7 @@ describe('legal pack generated from the data inventory', () => {
     for (const [path, content] of legalOutputs()) expect(readFileSync(path, 'utf8'), path).toBe(content);
   });
 
-  it('lists the AI provider and the company mailbox provider, and every sub-processor purpose in nine languages', () => {
+  it('lists the AI provider and the company mailbox provider, and every sub-processor purpose in eleven languages', () => {
     const ids = SUBPROCESSORS.map((s) => s.id);
     expect(ids).toContain('anthropic');
     expect(ids).toContain('googleWorkspace');

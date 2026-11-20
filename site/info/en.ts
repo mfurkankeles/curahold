@@ -211,7 +211,7 @@ export const en: InfoCopy = {
     regions: [
       ['Türkiye', 'Turkish throughout the product, KVKK tools for personal data requests.'],
       ['Middle East', 'Arabic, Hebrew and Persian, with the whole interface mirrored right to left.'],
-      ['East Asia', 'Japanese, Korean and both Chinese scripts, written natively.'],
+      ['Asia', 'Hindi, Malay, Japanese, Korean and both Chinese scripts, written natively.'],
       ['Europe', 'The database runs in the European Union; the data processing agreement covers GDPR.'],
     ],
   },
@@ -328,6 +328,6 @@ export const en: InfoCopy = {
     faq: ['Questions about Curahold, answered plainly | Curahold', 'Where your data is kept, running Curahold on your own servers, whether you need a CRM, cancelling, languages and how long setting up takes.'],
     trust: ['Security and privacy: how your data is kept | Curahold', 'Each company kept apart in the database itself, data in the European Union, passwordless sign-in, roles and field access, and support only with consent.'],
     why: ['Why Curahold: one record for every customer team', 'Inside sales, sales, onboarding, customer success and product work on one customer record, so no promise is lost. And an honest word on who it is not for.'],
-    about: ['About Curahold: software for keeping customers', 'What Curahold is, where the name comes from, what we build and how: in nine languages from the start, with each company’s data kept apart.'],
+    about: ['About Curahold: software for keeping customers', 'What Curahold is, where the name comes from, what we build and how: in eleven languages from the start, with each company’s data kept apart.'],
   },
 };

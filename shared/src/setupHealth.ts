@@ -12,7 +12,7 @@
 // Adding a check (docs/DEVELOPER.md, "Setup health"):
 //   1. an entry in CHECKS below;
 //   2. its query in api/src/lib/setupHealth.ts (SQL_CHECKS or CONFIG_CHECKS);
-//   3. sh.<id>.problem / .why / .fix in all nine dictionaries;
+//   3. sh.<id>.problem / .why / .fix in all eleven dictionaries;
 //   4. `npx tsx scripts/docs/setup-health-page.ts` to write it into the help pages.
 // tests/setup-health.test.ts fails until all four are there.
 import type { DepartmentKey, Perm } from './model';

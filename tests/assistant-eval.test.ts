@@ -1,4 +1,4 @@
-// The evaluation set itself (tests/assistant-eval): big enough, in all nine
+// The evaluation set itself (tests/assistant-eval): big enough, in all eleven
 // languages, every kind of question, the owner's own case — and the part that
 // needs no model (the free rules) passes here on every run. The full run,
 // with the docs search or with a model and a judge, is tests/assistant-eval/run.ts.
@@ -13,7 +13,7 @@ import { gradeWithoutModel, judgePrompt, parseJudge } from './assistant-eval/gra
 const cases = allCases();
 
 describe('the evaluation set', () => {
-  it('has at least 300 cases, every base case in all nine languages, every category', () => {
+  it('has at least 300 cases, every base case in all eleven languages, every category', () => {
     expect(cases.length).toBeGreaterThanOrEqual(300);
     for (const b of BASE) expect(Object.keys(b.q).sort(), b.id).toEqual([...LOCALES].sort());
     expect(new Set(BASE.map((b) => b.category))).toEqual(new Set(['how_to', 'ambiguous', 'multi_step', 'live_data', 'off_topic', 'competitor', 'abusive', 'injection', 'out_of_docs']));
@@ -29,7 +29,7 @@ describe('the evaluation set', () => {
   });
 });
 
-describe('the free rules, without a model, in nine languages', () => {
+describe('the free rules, without a model, in eleven languages', () => {
   const cfg = { ...assistantConfigFrom({}), blockedNames: BLOCKED };
   const ruled = cases.filter((c) => c.rule || c.category === 'competitor' || c.category === 'injection');
   it.each(ruled.map((c) => [c.key, c] as const))('%s', async (_key, c) => {

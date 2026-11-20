@@ -64,7 +64,7 @@ describe('sales site copy', () => {
   }
 });
 
-// The scroll story after the hero ships in all nine languages. A language off this
+// The scroll story after the hero ships in all eleven languages. A language off this
 // list would leave the story out entirely — no English words on it, no empty section.
 const STORY_NOW = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'hi', 'ms'];
 

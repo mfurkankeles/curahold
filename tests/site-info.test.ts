@@ -12,9 +12,9 @@ const leaves = (v: unknown, path = ''): [string, string][] =>
   typeof v === 'string' ? [[path, v]] : Array.isArray(v) ? v.flatMap((x, i) => leaves(x, `${path}[${i}]`)) : v && typeof v === 'object' ? Object.entries(v).flatMap(([k, x]) => leaves(x, `${path}.${k}`)) : [];
 // Names and short labels that are the same in every language.
 const SAME = new Set(['CRM', 'Blog', 'Curahold', 'API', 'AI', 'Türkiye']);
-// Words one language writes as English does: Malay "menu" is standard Malay (DBP) and
+// Words one language writes as English does: Malay "menu" and "Asia" are standard Malay (DBP) and
 // "onboarding" stays English in Malay (shared/src/i18n/glossary.ts).
-const SAME_IN: Record<string, Set<string>> = { ms: new Set(['Menu', 'Onboarding']) };
+const SAME_IN: Record<string, Set<string>> = { ms: new Set(['Menu', 'Onboarding', 'Asia']) };
 
 describe('site/info', () => {
   const en = INFO.en;

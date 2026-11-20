@@ -114,7 +114,7 @@ const shortName = (email: string) => email.split('@')[0];
 /** A plan by its name; one this screen has no word for shows as it is stored. */
 const planName = (plan: string, t: (k: MessageKey) => string) => (plan === 'trial' ? t('desk.plan.trial') : plan === 'team' || plan === 'business' ? t(`billing.plan.${plan}`) : plan);
 
-/** Any of the nine languages; the choice is kept on this device like everywhere else. */
+/** Any of the eleven languages; the choice is kept on this device like everywhere else. */
 function Languages({ onLocale, only }: { onLocale: (l: Locale) => void; only?: Locale[] }) {
   const { locale, t } = useI18n();
   return (
