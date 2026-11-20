@@ -12,6 +12,20 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- CuraAI: the panel has a visible Close (and Esc), Minimize is easier to hit, and **My requests** sits in the footer with
+  its name. The round button steps aside while you type or scroll, on every screen size. A question typed in English in
+  another language's interface is answered from the same help section in that language; "How do I add a renewal?" is
+  answered in all eleven languages, and Hindi "नवीनीकरण" or Chinese "续订" find the same page as the help's own words.
+- Toolbar buttons show their names next to their icons (board Import and Settings, Saved views, Home and Inbox actions on
+  phones, the sidebar's **New**); **Choose a file** has its icon.
+- Settings: on a phone each topic has one way back. When billing is switched off for the workspace, its page says so
+  instead of telling an administrator to ask an administrator. The customer-word presets work in every language.
+- Connections: the service's own error message is folded under "What {app} said"; the plain sentence stays on top.
+- The in-app platform console and business metrics pages use the app's own frame and, when they cannot be shown, say why
+  and offer a way on.
+- Turkish speaks "siz" everywhere, including the owner console and the go-live guide.
+- The go-live guide sets backups to be deleted after 35 days, and the checklist has a matching item.
+
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
@@ -121,6 +135,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 
 ### Fixed
+
+- On phones the customer page's **Next promise** shows two whole lines, never part of a third.
+- The CuraAI answer list no longer moves the page around it when a new answer arrives (an embedded demo slid up).
+- Team load says "1 customer", not "1 customers"; Arabic and Persian counts read naturally.
+- Portal: the welcome card comes before the request list on a first visit, and the onboarding banner's arrow points forward.
 
 - Single sign-on: a test sign-in now says what is wrong (the client secret was refused, the signature no longer matches
   the stored certificate, the token was for another app or out of date, or the provider could not be reached) and which

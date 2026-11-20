@@ -225,10 +225,6 @@ export function CustomerDrawer({ orgId, load, onClose }: { orgId: string; load: 
 
 /** The in-product page: overview tiles, the list, and a way to Curahold's own console when there is one. */
 /**
- * On the hosted service the in-app console is off: Curahold's own team is pointed to its console,
- * on a host of its own with its own sign-in; anyone else is told the screen is not theirs.
- */
-/**
  * The frame every in-app console screen sits in, in every state (loading, refused, the numbers): the app's own
  * top bar with the page's icon and name, and the page under it, as on every other screen.
  */
@@ -269,6 +265,10 @@ export function SecondStepFirst() {
   );
 }
 
+/**
+ * On the hosted service the in-app console is off: Curahold's own team is pointed to its console,
+ * on a host of its own with its own sign-in; anyone else is told the screen is not theirs.
+ */
 export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | null; denied: string }) {
   const { t } = useI18n();
   if (!access) return <SkeletonRows rows={3} label={t('common.loading')} />;
