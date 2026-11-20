@@ -50,7 +50,7 @@ export const words: SeedWords = {
   // meetings: titles and next steps
   '3. çeyrek iş değerlendirmesi': 'Q3 business review',
   'Ek kullanıcı paketi teklifini gönder': 'Send the extra seats quote',
-  'Mobil kanal için örnek akış hazırla': 'Draft a sample journey for the mobile channel',
+  'İkinci ekip için yaygınlaştırma planını hazırla': 'Draft the rollout plan for the second team',
   'Yenileme ön görüşmesi': 'Renewal kick-off call',
   'Köprü sözleşme taslağını hazırla': 'Draft the bridge contract',
   'Onboarding başlangıç toplantısı': 'Onboarding kick-off',
@@ -109,7 +109,7 @@ export const words: SeedWords = {
   'Satın Alma Uzmanı': 'Procurement Specialist',
   'Pazarlama Direktörü': 'Marketing Director',
   // timeline
-  'Çeyrek değerlendirmesi. Selin yeni kampanya takvimini paylaştı; mobil kanalı genişletmek istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.': 'Quarterly review. Selin shared the new campaign calendar; they want to grow the mobile channel. They are waiting for a quote for the extra seats.',
+  'Çeyrek değerlendirmesi. Selin ikinci ekibin başlangıç tarihini paylaştı; kullanımı o ekibe de yaymak istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.': 'Quarterly review. Selin shared the second team’s start date; they want to roll out to that team too. They are waiting for a quote for the extra seats.',
   'Kullanım raporunu gönderdim. Tomas fiyatlandırma detaylarını sordu.': 'Sent the usage report. Tomas asked about the pricing details.',
   'Defne ile yenileme ön görüşmesi. Finans tarafı (Hakan) bütçeyi çeyrek sonuna kadar dondurmak istiyor. Ara çözüm: 3 aylık köprü sözleşme.': 'Renewal pre-call with Defne. Finance (Hakan) wants to freeze the budget until the end of the quarter. A way through: a three-month bridge contract.',
   'Hakan Ersoy rakip teklifi masaya koymuş olabilir. Yenileme görüşmesinde değer hikayesini rakamlarla anlatalım.': 'Hakan Ersoy may have put a competing offer on the table. Tell the value story with numbers in the renewal meeting.',

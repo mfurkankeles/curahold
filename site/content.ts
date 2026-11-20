@@ -165,7 +165,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: 'Q3 business review',
           ours: 'Our side: Zeynep Tunç, Ada Demir',
           theirs: 'Their side: Selin Aytaç',
-          steps: ['Send the extra seats quote', 'Draft a sample journey for the mobile channel'],
+          steps: ['Send the extra seats quote', 'Draft the rollout plan for the second team'],
         },
         todo: 'Share the usage report',
         tasksOpened: '2 tasks opened',
@@ -180,7 +180,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Actual',
         review: 'Code review',
         epics: ['Billing', 'Mobile', 'Onboarding'],
-        tasks: ['Sample journey for the mobile channel', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
+        tasks: ['Rollout plan for the second team', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
       },
     },
     bento: {
@@ -286,7 +286,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           name: '3. çeyrek iş değerlendirmesi',
           ours: 'Bizden: Zeynep Tunç, Ada Demir',
           theirs: 'Onlardan: Selin Aytaç',
-          steps: ['Ek kullanıcı teklifini gönder', 'Mobil kanal için örnek akış hazırla'],
+          steps: ['Ek kullanıcı teklifini gönder', 'İkinci ekip için yaygınlaştırma planını hazırla'],
         },
         todo: 'Kullanım raporunu paylaş',
         tasksOpened: '2 görev açıldı',
@@ -301,7 +301,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         actual: 'Gerçekleşen',
         review: 'Kod incelemesi',
         epics: ['Faturalama', 'Mobil', 'Kurulum'],
-        tasks: ['Mobil kanal için örnek akış', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
+        tasks: ['İkinci ekip için yaygınlaştırma planı', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
       },
     },
     bento: {
@@ -1544,7 +1544,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Follow Marevo through one quarter: a warning, a promise, the work that keeps it, and a renewal saved.',
     steps: [
       { title: 'The score drops, and says why', text: 'Marevo slips from 60 to 48 and turns at risk. Open Why? and the reasons are listed: no touch in 38 days, three overdue tasks, no champion.' },
-      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a sample journey for their mobile channel. Zeynep logs it as a next step before the call ends.' },
+      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a rollout plan for their second team. Zeynep logs it as a next step before the call ends.' },
       { title: 'It becomes a task by itself', text: 'Saving the meeting turns the next step into a task: it has an owner and a due date, it is linked to Marevo, and it is shared with them.' },
       { title: 'The sprint ships it', text: 'The product team builds it in Sprint 24, on a card linked to the promise. When the card reaches Done, the sprint’s points move with it.' },
       { title: 'Marevo sees it in their portal', text: 'Selin signs in with the link in her email. The task shows as done, with Zeynep’s reply under it. Nobody had to write a status email.' },
@@ -1554,7 +1554,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Task opened',
       from: 'From the meeting',
       board: 'Customer success',
-      reply: 'The sample journey is ready in your workspace.',
+      reply: 'The rollout plan is ready in your workspace.',
     },
   },
   tr: {
@@ -1563,7 +1563,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo’nun bir çeyreğini izleyin: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
     steps: [
       { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. “Neden?” bağlantısını açın; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
-      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
+      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, ikinci ekipleri için bir yaygınlaştırma planı ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
       { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
       { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
       { title: 'Marevo onu kendi portalında görür', text: 'Selin e-postasındaki bağlantıyla girer. Görev tamamlandı olarak görünür, altında Zeynep’in yanıtı durur. Kimsenin durum e-postası yazması gerekmez.' },
@@ -1573,7 +1573,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
       opened: 'Görev açıldı',
       from: 'Geldiği toplantı',
       board: 'Müşteri başarısı',
-      reply: 'Örnek akış çalışma alanında hazır.',
+      reply: 'Yaygınlaştırma planı çalışma alanında hazır.',
     },
   },
   ar: {
