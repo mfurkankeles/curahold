@@ -32,7 +32,7 @@ export interface SiteCopy {
   cta: { title: string; text: string };
   /** `placeholder` is an example address: lower-case Latin letters, as an address has to be. */
   signIn: { title: string; text: string; label: string; placeholder: string; go: string; close: string; none: string };
-  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string; accessibility: string }; company: string };
+  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string; accessibility: string; sla: string; aup: string; orderForm: string; disclosure: string }; company: string };
   consent: SiteConsentCopy;
 }
 
@@ -240,7 +240,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'The name comes from the Latin cura, care, and the English hold.',
       help: 'Help center',
       legal: 'Legal',
-      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies', accessibility: 'Accessibility' },
+      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies', accessibility: 'Accessibility', sla: "Service levels", aup: "Acceptable use", orderForm: "Order form", disclosure: "Report a security issue" },
       company: '[Company legal name]',
     },
     consent: {
@@ -362,7 +362,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'Adı Latince cura (özen) ile İngilizce hold (tutmak) sözcüklerinden gelir.',
       help: 'Yardım merkezi',
       legal: 'Yasal',
-      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler', accessibility: 'Erişilebilirlik' },
+      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler', accessibility: 'Erişilebilirlik', sla: "Hizmet düzeyi sözleşmesi", aup: "Kabul edilebilir kullanım", orderForm: "Sipariş formu", disclosure: "Güvenlik sorunu bildirin" },
       company: '[Şirket unvanı]',
     },
     consent: {
@@ -484,7 +484,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'يأتي الاسم من اللاتينية cura (العناية) والإنجليزية hold (الإمساك).',
       help: 'مركز المساعدة',
       legal: 'الشؤون القانونية',
-      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط', accessibility: 'إمكانية الوصول' },
+      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط', accessibility: 'إمكانية الوصول', sla: "اتفاقية مستوى الخدمة", aup: "الاستخدام المقبول", orderForm: "نموذج الطلب", disclosure: "الإبلاغ عن مشكلة أمنية" },
       company: '[الاسم القانوني للشركة]',
     },
     consent: {
@@ -600,7 +600,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'השם מגיע מהלטינית cura (טיפול) ומהאנגלית hold (להחזיק).',
       help: 'מרכז עזרה',
       legal: 'משפטי',
-      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות', accessibility: 'נגישות' },
+      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות', accessibility: 'נגישות', sla: "הסכם רמת שירות", aup: "שימוש מקובל", orderForm: "טופס הזמנה", disclosure: "דיווח על בעיית אבטחה" },
       company: '[שם חברה רשמי]',
     },
     consent: {
@@ -722,7 +722,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: 'نام از cura لاتین (مراقبت) و hold انگلیسی (نگه داشتن) می‌آید.',
       help: 'مرکز راهنما',
       legal: 'حقوقی',
-      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها', accessibility: 'دسترس‌پذیری' },
+      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها', accessibility: 'دسترس‌پذیری', sla: "توافق‌نامهٔ سطح خدمات", aup: "استفادهٔ قابل قبول", orderForm: "فرم سفارش", disclosure: "گزارش یک مشکل امنیتی" },
       company: '[نام حقوقی شرکت]',
     },
     consent: {
@@ -822,7 +822,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名字来自拉丁语 cura（关怀）与英语 hold（守护）。',
       help: '帮助中心',
       legal: '法律',
-      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie', accessibility: '无障碍' },
+      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie', accessibility: '无障碍', sla: "服务等级协议", aup: "可接受使用", orderForm: "订单表", disclosure: "报告安全问题" },
       company: '[公司法定名称]',
     },
     consent: {
@@ -922,7 +922,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名字來自拉丁語 cura（關懷）與英語 hold（守護）。',
       help: '說明中心',
       legal: '法律',
-      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie', accessibility: '無障礙' },
+      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie', accessibility: '無障礙', sla: "服務水準協議", aup: "可接受使用", orderForm: "訂購單", disclosure: "回報安全問題" },
       company: '[公司法定名稱]',
     },
     consent: {
@@ -1022,7 +1022,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '名前はラテン語の cura（ケア）と英語の hold（抱える）に由来します。',
       help: 'ヘルプセンター',
       legal: '法的情報',
-      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie', accessibility: 'アクセシビリティ' },
+      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie', accessibility: 'アクセシビリティ', sla: "サービスレベル契約", aup: "利用ポリシー", orderForm: "注文書", disclosure: "セキュリティの問題を報告" },
       company: '[会社正式名称]',
     },
     consent: {
@@ -1122,7 +1122,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       story: '이름은 라틴어 cura(돌봄)와 영어 hold(지키다)에서 왔습니다.',
       help: '도움말 센터',
       legal: '법적 고지',
-      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키', accessibility: '접근성' },
+      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키', accessibility: '접근성', sla: "서비스 수준 계약", aup: "이용 정책", orderForm: "주문서", disclosure: "보안 문제 신고" },
       company: '[회사 법인명]',
     },
     consent: {
@@ -1306,6 +1306,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         subprocessors: "सब-प्रोसेसर",
         cookies: "कुकी",
         accessibility: "एक्सेसिबिलिटी",
+        sla: "सर्विस लेवल एग्रीमेंट",
+        aup: "स्वीकार्य उपयोग",
+        orderForm: "ऑर्डर फ़ॉर्म",
+        disclosure: "सुरक्षा समस्या की रिपोर्ट करें",
       },
       company: "[कंपनी का कानूनी नाम]",
     },
@@ -1490,6 +1494,10 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         subprocessors: "Subpemproses",
         cookies: "Kuki",
         accessibility: "Kebolehcapaian",
+        sla: "Perjanjian tahap perkhidmatan",
+        aup: "Penggunaan yang boleh diterima",
+        orderForm: "Borang pesanan",
+        disclosure: "Laporkan masalah keselamatan",
       },
       company: "[Nama sah syarikat]",
     },

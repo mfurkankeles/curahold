@@ -135,7 +135,8 @@ export interface InfoCopy {
     enterprise: Point;
   };
   faqPage: { title: string; lead: string; more: { q: string; a: string }[] };
-  trust: { title: string; lead: string; points: Point[] };
+  /** pack: one line under the legal documents saying what the security pack offers on request (docs/security/). */
+  trust: { title: string; lead: string; pack: string; points: Point[] };
   why: {
     title: string;
     lead: string;

@@ -10,7 +10,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { API_HELP, NAV_HELP, NOT_FOR_HELP, SCREEN_HELP, SETTINGS_HELP, type HelpLink } from '../shared/src/helpLinks';
+import { API_HELP, LEGAL_PAGES, NAV_HELP, NOT_FOR_HELP, SCREEN_HELP, SETTINGS_HELP, type HelpLink } from '../shared/src/helpLinks';
 import { LOCALES } from '../shared/src/i18n';
 import { SETTINGS_TOPICS } from '../web/src/lib/settingsIndex';
 import { GROUPS, INTERNAL } from '../scripts/docs/catalogue';
@@ -92,6 +92,13 @@ describe('every place in the product has a help page and an assistant case', () 
     const missing = found.filter((a) => !API_HELP[a] && !INTERNAL[a]);
     expect(missing, 'add these to API_HELP in shared/src/helpLinks.ts').toEqual([]);
     expect(Object.entries(API_HELP).flatMap(([k, l]) => problems(`api /${k}`, l))).toEqual([]);
+  });
+
+  it('every legal page the product and the site link to, in every help language', () => {
+    const missing = LEGAL_PAGES.flatMap((slug) => LOCALES.filter((l) => !existsSync(page(l, slug))).map((l) => `${l}/${slug}`));
+    expect(missing).toEqual([]);
+    const all = readdirSync(join(DOCS, 'en')).filter((f) => f.startsWith('legal-')).map((f) => f.replace(/\.md$/, ''));
+    expect([...LEGAL_PAGES].sort(), 'LEGAL_PAGES lists every legal page of the docs').toEqual(all.sort());
   });
 
   it('keeps no stale entries, and every exception says why', () => {

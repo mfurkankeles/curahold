@@ -6,7 +6,7 @@ summary: Curahold'un, onu kullanan, deneme talep eden ya da web sitelerini ziyar
 ---
 # Gizlilik bildirimi
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-19.draft2. [Köşeli parantez] içindeki yerler doldurulacak. Aşağıdaki tablo Curahold'un veri envanterinden üretilir. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-20.draft3. [Köşeli parantez] içindeki yerler doldurulacak. Aşağıdaki tablo Curahold'un veri envanterinden üretilir. Hukuki görüş değildir.
 
 Bu bildirim, **[Şirket unvanı]**, [adres] ("Curahold", "biz") tarafından **veri sorumlusu** sıfatıyla işlenen kişisel verileri anlatır: Curahold'u kullanan, deneme talep eden, koşullarımızı kabul eden, bize yazan ya da web sitelerimizi ziyaret eden kişiler hakkında. Müşterilerimizin Curahold'a kendi müşterileri, iletişim kişileri ve çalışanları hakkında girdiği verilerde veri sorumlusu o müşteridir; biz bu verileri **Veri işleme sözleşmesi** uyarınca onun adına işleriz — bu konuda ilgili şirkete başvurun. KVKK kapsamındaki ayrıntılar **KVKK aydınlatma metnindedir**.
 
@@ -33,7 +33,7 @@ Bu bildirim, **[Şirket unvanı]**, [adres] ("Curahold", "biz") tarafından **ve
 | Ürün haberleri ve tekliflerin e-postayla gönderilmesi | Ad, e-posta, izin kaydı, ret sonrası gönderilmeyecekler listesi | Pazarlama e-postasına onay verenler | Açık rıza (m. 5/1) ve 6563 s. Kanun kapsamında ticari ileti onayı (İYS) | İzin geri alınana kadar; ret, gönderilmeyecekler listesinde tutulur | Google LLC / Google Ireland Ltd (Google Workspace); Supabase, Inc. |
 <!-- /inventory -->
 
-Kişisel verileri satmayız. Kimse hakkında yalnızca otomatik işlemeye dayanan, hukuki ya da benzeri önemli sonuç doğuran bir karar almayız. Curahold bir iş hizmetidir, çocuklara yönelik değildir; çocuklara ait veriyi bilerek toplamayız.
+Kişisel verileri satmayız. Kimse hakkında yalnızca otomatik işlemeye dayanan, hukuki ya da benzeri önemli sonuç doğuran bir karar almayız. Curahold bir iş hizmetidir, 18 yaşından küçük hiç kimseye yönelik değildir; 18 yaşından küçüklere ait veriyi bilerek toplamayız.
 
 ## Deneme talep formu
 
@@ -70,6 +70,18 @@ AB temsilcisi (GDPR m. 27): [ilk AB müşterisinde atanacak]. Birleşik Krallık
 ## Haklarınız ve yanıt süresi
 
 Kişisel verilerinizi görmeyi, düzeltilmesini, silinmesini ya da bir kopyasını almayı, işlenmesinin kısıtlanmasını ya da itiraz etmeyi (doğrudan pazarlamaya her zaman) ve verdiğiniz bir onayı geri almayı isteyebilirsiniz — geri almak vermek kadar kolaydır. Hesabınız bir şirkete aitse yöneticileri de verilerinizi dışa aktarabilir ya da silebilir. [gizlilik e-postası] adresine yazın. En geç **30 gün** içinde, kanununuz daha kısa süre öngörüyorsa daha önce yanıt veririz: Mısır 6 iş günü, Kore 10 gün, Tayvan erişim için 15 gün, AB/BK bir ay (kanunun izin verdiği hâllerde iki ay uzatılabilir). Veri koruma otoritenize de şikâyette bulunabilirsiniz (Türkiye'de Kişisel Verileri Koruma Kurumu).
+
+## Bazı ülkeler için notlar {#regions}
+
+Bu notlar, adı geçen ülkelerdeki kişiler için bildirimin geri kalanını tamamlar ve deneme formunun her ülkede gösterdiği metinlerle uyumludur.
+
+- **Hindistan (Digital Personal Data Protection Act 2023):** Bu bildirimde bize ait olarak tanımlanan veriler için "Data Fiduciary" biziz. Onayınızı, verdiğiniz kadar kolay biçimde her zaman geri alabilirsiniz; geri alma, öncesindeki işlemeyi etkilemez. Verilerinizin ve kimlerle paylaştığımızın bir özetini, verilerinizin düzeltilmesini, tamamlanmasını ya da silinmesini isteyebilir; ölmeniz ya da haklarınızı kendiniz kullanamamanız hâlinde bunları kullanacak bir kişiyi belirleyebilirsiniz. **Şikâyetler:** Önce şikâyet sorumlumuza [gizlilik e-postası] adresinden yazın; en geç 90 gün içinde yanıt veririz. Yanıttan memnun kalmazsanız Hindistan Veri Koruma Kurulu'na (Data Protection Board of India) başvurabilirsiniz. Curahold 18 yaşından küçükler için değildir. [Avukat teyit edecek: deneme formunun onay yerine "meşru kullanım"a (s. 7(a)) dayanıp dayanamayacağı ve Kanunun ve 2025 Yönetmeliği'nin her yükümlülüğünün hangi tarihten itibaren uygulandığı.]
+- **Malezya (Personal Data Protection Act 2010):** Bu bildirim Malayca ve İngilizce yayımlanır; deneme formu da kendi bildirimini iki dilde birlikte gösterir. Talebinizi işleyebilmemiz için zorunlu olarak işaretli alanları doldurmanız gerekir. Verileriniz Malezya dışındaki hizmet sağlayıcılara gider (ülkeler Alt işleyenler sayfasındadır); her biri Kanun'a denk koruma şart koşan bir sözleşmeyle bağlıdır ve bir aktarım etki değerlendirmesi tutarız. Erişim, düzeltme, işlemenin sınırlanması, soru ve şikâyetleriniz için Veri Koruma Görevlimize [gizlilik e-postası] adresinden yazın. Verilerinizin doğrudan pazarlamada kullanılmasını her zaman durdurabilir, Kişisel Verileri Koruma Komiseri'ne (Personal Data Protection Commissioner) şikâyette bulunabilirsiniz. [Avukat teyit edecek: Veri Koruma Görevlisinin atanması, s. 6(2)(a)'nın deneme formundaki onay kutusunu gereksiz kılıp kılmadığı ve aktarım etki değerlendirmesi.]
+- **Birleşik Arap Emirlikleri, Suudi Arabistan, Katar:** Deneme formu, talebi işlemeden ve verilerin yurt dışında saklanmasından önce onayınızı ister; bu onayı [gizlilik e-postası] adresinden her zaman geri alabilirsiniz. Suudi Arabistan'da metinler önce Arapça gösterilir. Pazarlama e-postası yalnızca önceden alınmış onayla gönderilir, göndereni belirtir ve bir durdurma bağlantısı içerir.
+- **İsrail:** Verilerinizi bize vermek için yasal bir yükümlülüğünüz yoktur, ancak bunlar olmadan talebinizi işleyemeyiz. Hakkınızda tutulan verileri inceleme ve düzeltilmesini isteme hakkınız vardır. Pazarlama e-postası yalnızca önceden açıkça verdiğiniz onayla gönderilir ve reklam olarak işaretlenir.
+- **Japonya, Kore, Tayvan, Hong Kong:** Amaçlar, herhangi bir veri toplanmadan önce belirtilir; yurt dışındaki ülkeler ve alıcılar Alt işleyenler sayfasındadır. Kore'de yurt dışına aktarım için ayrı bir onay alınır; pazarlama e-postası "(광고)" ile işaretlenir ve iki yılda bir yeniden teyit edilir.
+- **Singapur (Personal Data Protection Act 2012):** Onayınızı her zaman geri alabilir, verilerinize erişim ve verilerinizin düzeltilmesini isteyebilirsiniz; Veri Koruma Görevlimize [gizlilik e-postası] adresinden yazın. Verileriniz Singapur dışındaki sağlayıcılara yalnızca Kanun'la karşılaştırılabilir koruma sağlayan sözleşmelerle gider. Yanıtımızdan memnun kalmazsanız Kişisel Verileri Koruma Komisyonu'na (Personal Data Protection Commission) şikâyette bulunabilirsiniz. [Avukat teyit edecek: Veri Koruma Görevlisinin atanması.]
+- **Sunulmayan yerler:** Deneme, başlangıçta Çin Halk Cumhuriyeti'nde (anakara) ve Mısır'da sunulmaz; Curahold İran'da sunulmaz.
 
 ## Değişiklikler
 

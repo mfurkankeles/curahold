@@ -4,7 +4,9 @@
 //
 // It is maintained here and nowhere else. scripts/compliance/legal-pack.ts turns
 // it into: the sub-processor page (eleven languages), the tables inside the
-// privacy notice and the KVKK aydınlatma metni (English, Turkish), the internal
+// privacy notice and the KVKK aydınlatma metni (all eleven languages; past English
+// and Turkish the words come from ./noticeRows/<lang>.ts, so a new activity here
+// needs a row there too — the generator says which), the internal
 // records of processing (docs/compliance/data-inventory.md) and the VERBİS
 // preparation sheet (docs/compliance/verbis-hazirlik.md). The trial form's
 // consent texts take their {storage_countries} and {processors} from here, so

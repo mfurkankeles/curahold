@@ -47,14 +47,13 @@ const AI_VERSION: 'a' | 'c' = process.env.SITE_AI_VERSION === 'c' ? 'c' : 'a';
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Which languages the help pages and demo hub are built in, read from what is there: the help centre's folders
-// (docs/site/<lang>) and the demo company's languages (scripts/seed-words). A link goes to the reader's own
-// language and falls back to English only for a page that language does not have yet (`docsPath`), so nine
-// languages are no longer sent to English help and the English demo.
+// (docs/site/<lang>, every site language since 20 Nov 2026) and the demo company's languages
+// (scripts/seed-words). The help build gives every language every page (a page a language lacks is
+// the English one with a note, scripts/build-docs.ts), so a help link stays in the reader's language.
 const DOCS_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => existsSync(join(ROOT, 'docs', 'site', l))));
 const DEMO_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => (SEED_LOCALES as string[]).includes(l)));
-/** A help page in the reader's language when it exists there, else in English. */
-const docsPath = (locale: SiteLocale, slug: string) =>
-  `${DOCS}/${DOCS_LANGS.has(locale) && existsSync(join(ROOT, 'docs', 'site', locale, `${slug}.md`)) ? locale : 'en'}/${slug}/`;
+/** A help page in the reader's language when the help centre is built in it, else in English. */
+const docsPath = (locale: SiteLocale, slug: string) => `${DOCS}/${DOCS_LANGS.has(locale) ? locale : 'en'}/${slug}/`;
 
 
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

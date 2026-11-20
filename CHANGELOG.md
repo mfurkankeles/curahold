@@ -12,11 +12,18 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- The legal pages — terms, privacy notice, data processing agreement, acceptable use, SLA, order form, accessibility
+  statement and the KVKK notice — are now in all eleven languages, each marked as a draft for the lawyer and saying that
+  the English text prevails (for the KVKK notice, the Turkish). The privacy notice adds notes for India (grievance
+  officer, Data Protection Board), Malaysia (Data Protection Officer, transfer safeguard, Malay and English), Singapore,
+  the Gulf, Israel and East Asia, and says plainly that Curahold is not for anyone under 18.
+- The sales site's links to help and legal pages now open in the reader's language instead of English, and the trust
+  page lists the SLA, acceptable use policy, order form and the page for reporting a security issue.
 - Phones: bottom sheets (filters, date picker, task and record panels) can be pulled down to close. Every save button shows
   its saving ring and tick, not only the ones in dialogs. A task, record or opportunity card grows into its panel.
 - Sales site: prices are hidden until launch ("pricing announced at launch") and the EU data claim only shows once it is
-  confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; help and demo links open in the visitor's
-  language where one exists. The home page paints faster on phones (less inline CSS, one film scene at first).
+  confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; demo links open in the visitor's language
+  where the demo has it. The home page paints faster on phones (less inline CSS, one film scene at first).
 - Billing refuses countries we never sell to, in the billing profile, at checkout and at sign-up.
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is

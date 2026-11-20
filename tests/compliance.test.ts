@@ -3,7 +3,7 @@
 // consent (run in a small fake DOM); the evidence tables keep the fields a
 // review asks for; the trial consent texts follow the research's rules; every
 // generated text exists in every language.
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -82,6 +82,22 @@ describe('legal pack generated from the data inventory', () => {
       expect(terms).not.toMatch(/\b14\b.{0,12}(days|gün)/);
       expect(terms).toMatch(/3 (months|ay)/);
       for (const d of Object.values(AGREEMENT_PACK)) expect(readFileSync(join(ROOT, 'docs', 'site', lang, `${d.slug}.md`), 'utf8')).toMatch(/lawyer approval required|avukat onayı gerekli/);
+    }
+  });
+
+  // The legal set was whole only in English and Turkish until 20 Nov 2026 (L9); a page missing in a language
+  // silently fell back to English. Each translation repeats the English version string, so a contract page
+  // left behind after an English change shows up here instead of being accepted under the wrong text.
+  it('has every legal page in all eleven languages, contract pages at the pack version, privacy with the country notes', () => {
+    const en = readdirSync(join(ROOT, 'docs', 'site', 'en')).filter((f) => f.startsWith('legal-'));
+    const privacyVersion = /Version (\S+?)\./.exec(readFileSync(join(ROOT, 'docs', 'site', 'en', 'legal-privacy.md'), 'utf8'))![1];
+    for (const lang of LOCALES) {
+      for (const f of en) expect(existsSync(join(ROOT, 'docs', 'site', lang, f)), `${lang}/${f}`).toBe(true);
+      for (const d of Object.values(AGREEMENT_PACK)) expect(readFileSync(join(ROOT, 'docs', 'site', lang, `${d.slug}.md`), 'utf8'), `${lang}/${d.slug}`).toContain(d.version);
+      const privacy = readFileSync(join(ROOT, 'docs', 'site', lang, 'legal-privacy.md'), 'utf8');
+      expect(privacy, `${lang} privacy version`).toContain(privacyVersion);
+      expect(privacy, `${lang} privacy country notes`).toContain('{#regions}');
+      expect(privacy, `${lang} privacy: India, Malaysia, Singapore`).toMatch(/Data Protection Board of India[\s\S]*Personal Data Protection Act 2010|Data Protection Board of India[\s\S]*Akta Perlindungan Data Peribadi 2010/);
     }
   });
 

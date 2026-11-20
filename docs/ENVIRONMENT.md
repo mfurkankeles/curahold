@@ -44,6 +44,46 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `SIGNUP_MODE` | What "Try it free" on the central host does: `request` (a trial request the operator approves) or `instant` (the earlier self-serve sign-up) | No | `request` (ADR 0017). |
 | `SECURITY_CONTACT` | Address or https link published in `/.well-known/security.txt` | Before go-live | Unset: a clearly marked placeholder is served. |
 
+## 1a. Hosting region (data residency) {#hosting-region}
+
+**The region is a deployment setting, not an environment variable.** Nothing in the code reads a region: it is fixed by
+where the stores are created, and one deployment (one `HYPERDRIVE` binding, one `FILES` bucket) serves one region. The
+default, and the only region set up today, is the **European Union**.
+
+| Where data rests | What is in it | Region is chosen | EU default (go-live guide steps 11–12) |
+| --- | --- | --- | --- |
+| Postgres (Supabase project, reached through `HYPERDRIVE`) | Every company's records, the audit trail, consent and agreement records | When the Supabase project is created; cannot be moved, only restored into a new project | **Central EU (Frankfurt)**; the staging project in the same region |
+| R2 bucket `curahold-files` (`FILES`) | Attachments, logos | When the bucket is created (location hint or jurisdiction); a new bucket to change it | Location **Europe (EEUR)** [confirm the EU jurisdiction option when creating] |
+| R2 bucket `curahold-backups` and the owner's computer | Encrypted weekly database dumps (`scripts/backup/`) | As above | Same as the files bucket |
+| Durable Object `LiveRoomDO` (`LIVE`) | Open WebSocket connections only; it stores nothing (no storage calls in `api/src/live/do.ts`) | Cloudflare places it near the first visitor | — |
+| Workers (the app, the portal) | Nothing at rest; requests are handled at Cloudflare's edge near the reader | Not chosen | — |
+
+Providers outside this table keep their own regions (mail with Google Workspace, payments with Paddle, the AI model
+provider when AI is on); their countries are on the Sub-processors page, generated from
+`shared/src/compliance/dataInventory.ts` — which still shows `[EU region]` and `[R2 location]` until the projects exist.
+
+**When the region is set or changed, update in the same change:** the `countries` of `supabase` and `cloudflare` in
+`dataInventory.ts` (then `npx tsx scripts/compliance/legal-pack.ts` regenerates the sub-processor pages and the trial
+form's `{storage_countries}`), the "Data region" field of the order form, the DPA Annex 4 rider for the customer's
+country, and the `[region]` line of the sales site's trust page if it names one.
+
+**Gulf deployments (Saudi Arabia, United Arab Emirates, Qatar).** Today their data is stored in the EU and the trial
+form asks for consent to that (UAE PDPL art. 23; Saudi PDPL). If storage inside a country is required — the Saudi draft
+amendments of 6 Oct 2026 would add it for some data, not law yet — a separate deployment is needed: a Postgres in the
+country or the nearest allowed region [check the provider's current region list], file storage in the same place (R2 has
+no location in the Gulf [confirm]; the self-host image with its `files` volume on an in-country cloud is the fallback),
+the AI features off or the provider's transfer covered by consent and a transfer assessment, and mail through an
+in-region relay if the contract asks (section 6b). Costs and the contracting entity are the owner's decision.
+
+**Asia deployments (Japan, Korea, Singapore, India, Malaysia, Hong Kong, Taiwan).** None of these laws makes us store
+this kind of business data in the country; each asks for notice, safeguards or consent for the transfer, which the
+trial form and the DPA already give. A customer who wants its data in Asia gets a separate deployment: a Supabase
+project in an Asian region [check the list], an R2 bucket with the Asia-Pacific location hint, its own Hyperdrive
+config and Workers, and the documents above updated. Mainland China is not offered.
+
+**Self-host** puts every store where the customer runs it (section 7); the region is then the customer's choice and the
+customer is the controller of where it is.
+
 ## 2. Platform owner and support desk (hosted)
 
 | Key | Purpose | Required | Default / notes |

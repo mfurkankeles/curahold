@@ -175,6 +175,26 @@ export const API_HELP: Record<string, HelpLink> = {
 };
 
 /**
+ * The legal pages the product (sign-up, the AI notice), the portal, the docs footer and the sales site link to by
+ * name, with the reader's language in the address. Unlike the developer pages they exist in every help language
+ * (drafts translated from the English master, which prevails), so such a link never lands on an English page.
+ * tests/docs-coverage.test.ts checks each one in every language; the contract texts themselves are guarded in
+ * tests/compliance.test.ts.
+ */
+export const LEGAL_PAGES = [
+  'legal-terms',
+  'legal-privacy',
+  'legal-kvkk',
+  'legal-dpa',
+  'legal-sla',
+  'legal-aup',
+  'legal-order-form',
+  'legal-cookies',
+  'legal-subprocessors',
+  'legal-accessibility',
+] as const;
+
+/**
  * Places with no help page on purpose, each with its reason. Menu entries are `nav:<address>`, screens
  * `screen:<address>`. Internal API areas are listed with their reasons in scripts/docs/catalogue.ts (INTERNAL).
  */

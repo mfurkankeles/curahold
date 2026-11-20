@@ -263,6 +263,7 @@ export const tr: InfoCopy = {
   trust: {
     title: 'Güvenlik ve gizlilik',
     lead: 'Verileriniz nasıl saklanıyor, kim görebiliyor, onlarla neler yapabilirsiniz? Düz bir dille; belgeler aşağıda.',
+    pack: "Standart güvenlik anketlerini yanıtlıyor, güvenlik politikalarımızı talep eden müşteri ve adaylarla paylaşıyoruz — yardım merkezi üzerinden bize yazın.",
     points: [
       ['Her şirket ayrı tutulur', 'Her satır kendi şirketini taşır ve kimin göreceğine veritabanının kendisi karar verir; bir ekrandaki hata bile bir şirkete başka şirketin verisini gösteremez.'],
       ['⟦eu|Veri Avrupa Birliği’nde|⟧', 'Veritabanı AB’de çalışır. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.'],
