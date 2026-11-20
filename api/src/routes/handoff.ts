@@ -17,6 +17,7 @@ import { fail } from '../lib/errors';
 import { canSeeField } from '../lib/fieldAccess';
 import { createHandover, flowSettings, renewalOf, shippedDraft } from '../lib/handoff';
 import { modelDraft, templatePromises } from '../assistant/actions';
+import { appConsent } from '../assistant/consent';
 import { assistantConfig, providerOf } from './assist';
 import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { labelOf } from '../../../shared/src/fields';
@@ -546,7 +547,10 @@ handoffRoutes.post('/assist/draft', async (c) => {
     const found = templatePromises(String(m.body ?? ''));
     fallback = { text: '', ...found };
   }
-  const { out, why } = await modelDraft(env, input.kind, locale, facts);
+  // Contact names and meeting notes reach the model only after this person accepted the assistant's notice, as the chat
+  // does (MASTER-RULES 13; DPIA "AI drafts"). Without it the template writes the draft and nothing leaves Curahold.
+  const consented = c.get('tokenKind') ? false : (await run(c, (q) => appConsent(q, auth.userId))).granted === true;
+  const { out, why } = consented ? await modelDraft(env, input.kind, locale, facts) : { out: null, why: 'off' as const };
   const result: DraftResult = out ? { ...out, ai: true, why: null } : { ...fallback, ai: false, why };
   return c.json({ draft: result });
 });

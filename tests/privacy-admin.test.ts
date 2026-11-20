@@ -154,6 +154,10 @@ describe('personal data (KVKK / GDPR)', () => {
     const left = await env.db.system((q) => q.query(`select 1 from portal_users where id = $1`, [pu.id]));
     expect(left).toHaveLength(0);
     expect(await env.db.system((q) => q.query(`select 1 from assistant_log where org_id = $1 and question = 'Where is my request?'`, [env.a.orgId]))).toHaveLength(0);
+    // Her answer to the assistant's notice stays as proof, with nobody attached (0250).
+    expect(await env.db.system((q) => q.query(`select portal_user_id, surface, version, granted from assistant_consents where org_id = $1 and version = 'v-test' and surface = 'portal'`, [env.a.orgId]))).toEqual([
+      { portal_user_id: null, surface: 'portal', version: 'v-test', granted: true },
+    ]);
     // What they wrote stays, with no author.
     const kept = await env.db.system((q) => q.query(`select portal_author_id from comments where org_id = $1 and body = 'from Pia'`, [env.a.orgId]));
     expect(kept).toEqual([{ portal_author_id: null }]);

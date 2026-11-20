@@ -115,7 +115,8 @@ export async function purgeExpired(deps: Deps, now: Date = (deps.now ?? (() => n
     assistantConsents: await count(
       `delete from assistant_consents c
         where c.created_at < $1::timestamptz - make_interval(days => $2)
-          and not (c.granted and not exists (
+          -- An erased portal person's rows (nobody attached, 0250) are never "in force": they go once past the period.
+          and not (c.granted and num_nonnulls(c.user_id, c.portal_user_id) = 1 and not exists (
                 select 1 from assistant_consents n
                  where n.org_id = c.org_id and n.surface = c.surface
                    and n.user_id is not distinct from c.user_id and n.portal_user_id is not distinct from c.portal_user_id

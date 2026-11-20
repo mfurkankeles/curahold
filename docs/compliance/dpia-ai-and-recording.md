@@ -1,4 +1,4 @@
-# DPIA draft — AI assistant, AI team, support session recording; transfer impact assessment outline
+# DPIA draft — AI assistant, AI drafts, AI team, support session recording; transfer impact assessment outline
 
 Draft, 20 Nov 2026 (package l2-privacy, from the L1 audit doc-fix 5). **Taslak — avukat onayı gerekli.** GDPR Art. 35 / KVKK good
 practice. Customers are controllers for the assistant and recordings in their workspace; this document is also the template we
@@ -6,15 +6,15 @@ give them (DPA Annex). Code references are the source of truth for what the syst
 
 ## 1. Screening — why an assessment
 
-| Criterion (EDPB WP248) | Assistant | AI team | Session recording |
-| --- | --- | --- | --- |
-| New technology (LLM) | yes | yes | no |
-| Transfer outside EU/TR | yes (US provider) | yes | no (same hosting) |
-| Systematic monitoring | no | no | limited (screens of the interface, opt-in) |
-| Data about vulnerable people / special categories | not intended; may appear in free text | not intended | masked fields only |
-| Large scale | per company, capped | Curahold-internal | short (7 days) |
+| Criterion (EDPB WP248) | Assistant | AI drafts | AI team | Session recording |
+| --- | --- | --- | --- | --- |
+| New technology (LLM) | yes | yes | yes | no |
+| Transfer outside EU/TR | yes (US provider) | yes (same provider) | yes | no (same hosting) |
+| Systematic monitoring | no | no | no | limited (screens of the interface, opt-in) |
+| Data about vulnerable people / special categories | not intended; may appear in free text | not intended; may appear in meeting notes | not intended | masked fields only |
+| Large scale | per company, capped | per company, same caps | Curahold-internal | short (7 days) |
 
-Two or more criteria → an assessment is advisable for the assistant and the AI team; recording is assessed for completeness.
+Two or more criteria → an assessment is advisable for the assistant, AI drafts and the AI team; recording is assessed for completeness.
 
 ## 2. Description
 
@@ -23,6 +23,14 @@ Two or more criteria → an assessment is advisable for the assistant and the AI
   checked (sources, money amounts, instruction leaks). Off per company until an administrator turns it on (migration 0240); each
   person accepts a notice first (migration 0243, `consent_required` in the API). Log kept per company choice (0–365 days, default 30),
   erased with the person. No training by the provider [confirm in the signed terms].
+- **AI drafts** — `api/src/assistant/actions.ts`, `api/src/routes/handoff.ts` (`POST /assist/draft`); data inventory activity
+  `aiDrafts`. Three drafts on a person's click: a hand-over note (sends the customer's name, the deal, its stakeholders' names,
+  titles and stance, promises, open requests and dates), a "shipped" message to a customer (the customer's name, the work, what
+  they asked for, the sender's name) and the promises in a meeting (the meeting title and up to 8,000 characters of its notes,
+  which can name the customer's contacts). Same provider, company switch and monthly caps as the assistant; since 20 Nov the
+  model is called only after the person accepted the assistant's notice (otherwise the template writes the draft and nothing
+  leaves Curahold). The assistant keeps no draft: the person reads, changes and confirms it, and only then is it saved where
+  they chose, under that record's retention. No training by the provider [confirm in the signed terms].
 - **AI team** — `api/src/team/`. Curahold's internal agents; propose only; an operator approves every outside action
   (`api/src/team/gate.ts`). Memory can mention customers' contacts; mentions of an erased person are redacted (`lib/erasure.ts`).
 - **Session recording** — `shared/src/replay.ts`. Off by default; every input masked; 7-day retention; tied to a help request.
@@ -44,6 +52,9 @@ row, sub-processor list), choice (company switch, personal consent, withdraw any
 | Special-category data typed into a question | medium / high | notice says what is sent; no special-category purpose; company can switch off | medium — guidance to customers |
 | Recording captures typed content | low / medium | every field masked; opt-in; 7 days | low |
 | AI team acts outside its remit | low / high | proposal-only, human approval gate, red-team tests (`tests/team-redteam.test.ts`) | low |
+| AI drafts send contacts' names and meeting notes to the provider | medium / medium | only on a person's click, company switch off by default, personal notice accepted first (API, `tests/flow.test.ts`), only the fields of that one record, notes capped at 8,000 characters | low |
+| A draft is sent or saved unread | low / medium | nothing is saved or sent by the draft route; the person confirms every draft (`actions.ts`) | low |
+| Meeting notes hold special-category data | low / high | notes are the company's own records; guidance to customers in the notice; company can switch AI off | medium — guidance to customers |
 
 ## 5. Transfer impact assessment (outline, for counsel)
 
