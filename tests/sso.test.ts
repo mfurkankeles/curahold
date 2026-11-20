@@ -1,4 +1,4 @@
-// Wave-6A: enterprise SSO (SAML 2.0 + OIDC). End-to-end through the real
+// Enterprise SSO (SAML 2.0 + OIDC). End-to-end through the real
 // handlers, database and row-level security. A session minted by SSO must be
 // accepted by the real app, and an IdP for one company must never log into
 // another.

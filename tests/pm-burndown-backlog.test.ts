@@ -1,4 +1,4 @@
-// Wave-5D PM polish: sprint burndown history, backlog reordering, and the
+// Product management: sprint burndown history, backlog reordering, and the
 // per-board "enable product management" switch. Org isolation is checked
 // alongside each feature, mirroring tests/pm.test.ts.
 import { beforeAll, describe, expect, it } from 'vitest';

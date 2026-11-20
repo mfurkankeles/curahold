@@ -1,4 +1,4 @@
-// Wave-6A: SCIM 2.0 user provisioning. Create / read / patch / deactivate, and
+// SCIM 2.0 user provisioning. Create / read / patch / deactivate, and
 // strict cross-company isolation — a token for one company can neither see nor
 // change another company's users.
 import { beforeAll, describe, expect, it } from 'vitest';

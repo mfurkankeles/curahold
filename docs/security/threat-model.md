@@ -63,7 +63,7 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | --- | --- | --- | --- |
 | A2/A3 reach sprints, epics of boards they cannot see | sprints and tasks under board RLS | `tests/isolation-routes.test.ts`, `tests/pm.test.ts` | held |
 | Jira credentials leak | sealed AES-256-GCM; basic-auth site pinned to `*.atlassian.net` | `tests/jira.test.ts` | held |
-| Jira sync overwrites a local edit | queued sync with pending-change tracking | `tests/jira.test.ts`, `tests/pm-wave5d.test.ts` | partial: conflict policy per connection, not per field |
+| Jira sync overwrites a local edit | queued sync with pending-change tracking | `tests/jira.test.ts`, `tests/pm-burndown-backlog.test.ts` | partial: conflict policy per connection, not per field |
 
 ## 5. Curahold's own console (owner panel, platform console, support desk)
 

@@ -1,5 +1,5 @@
 // The consent banner's words. Kept here, out of the shared dictionaries, so the
-// Wave-4C work stays self-contained; English and Turkish are authored, and any
+// consent work stays self-contained; English and Turkish are authored, and any
 // other locale falls back to English until a native pass lands. The reported
 // keys (consent.*) let these fold into the shared i18n later without a rewrite.
 import type { Locale } from '../../../shared/src/i18n';

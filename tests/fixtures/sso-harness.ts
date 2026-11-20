@@ -1,5 +1,5 @@
-// Mounts the Wave-6A routes the way the coordinator will wire them into
-// api/src/app.ts, so the tests exercise the real handlers, the real database
+// Mounts the SSO and SCIM routes the way api/src/app.ts mounts them,
+// so the tests exercise the real handlers, the real database
 // and real row-level security end to end.
 //   * ssoAuthRoutes + scimRoutes run BEFORE the company/person middleware (they
 //     resolve the company themselves), so the harness only provides `deps`.
