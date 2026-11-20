@@ -2524,7 +2524,7 @@ export const tr: Record<MessageKey, string> = {
   "start.planned.title": "Bir göreve tarih ve kişi verin",
   "start.planned.body": "Kelimelerle yazın: “Teklifi yarın gönder @ben”.",
   'start.planned.go': 'Dene',
-  'start.touch.title': 'Bir görüşmeyi not et',
+  'start.touch.title': 'Bir görüşmeyi not edin',
   'start.touch.body': '{account} zaman çizelgesine düşer, sağlık skoruna sayılır.',
   'start.touch.go': 'Not yaz',
   "start.mention.title": "@ ile birini dahil edin",
