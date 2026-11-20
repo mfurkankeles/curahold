@@ -489,16 +489,26 @@ html:not(.js) .tour__bar { display: none; }
 /* Drawn only when near the screen. Not the story: it holds a pinned stage, and a
    lazily drawn parent makes a pinned child jump on some phones. */
 /* Off-screen sections skip rendering until near; the placeholder sizes are close to the real ones so the scrollbar does not jump. */
-.bento, .faq { content-visibility: auto; contain-intrinsic-size: auto 1600px; }
-.faq { contain-intrinsic-size: auto 560px; }
+.bento, .faq { content-visibility: auto; contain-intrinsic-size: auto 1480px; }
+.faq { contain-intrinsic-size: auto 380px; }
 /* The story's two halves are drawn lazily too: the steps list beside the stage and the window
    inside it, never the pinned stage itself (see above). The script re-measures the steps when they
    appear (its ResizeObserver on the story), so the scroll still drives the scenes exactly. On a phone
    this cuts the layout and style work after the first paint by about 40% (Turkish landing page:
    1,397 layout objects to 968), which is what kept its blocking time over budget. */
-.story__steps { content-visibility: auto; contain-intrinsic-size: auto 2400px; }
+/* The placeholder sizes are the drawn sizes (content box, 1440 wide and on a phone), so the page is
+   its real height before anything is drawn and the scrollbar does not jump. */
+.story__steps { content-visibility: auto; contain-intrinsic-size: auto 1890px; }
 .story__win { content-visibility: auto; contain-intrinsic-size: auto 440px; }
-.wy--brief, .psum { content-visibility: auto; contain-intrinsic-size: auto 600px; }
+.wy--brief, .psum { content-visibility: auto; contain-intrinsic-size: auto 520px; }
+.psum { contain-intrinsic-size: auto 170px; }
+@media (max-width: 760px) {
+  .bento { contain-intrinsic-size: auto 3140px; }
+  .faq { contain-intrinsic-size: auto 480px; }
+  .story__steps { contain-intrinsic-size: auto 2530px; }
+  .wy--brief { contain-intrinsic-size: auto 950px; }
+  .psum { contain-intrinsic-size: auto 300px; }
+}
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }
