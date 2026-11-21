@@ -350,6 +350,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': '{org} にログイン',
+  'auth.seatsFull': '現在、会社に新しいメンバー用の空きシートがありません。管理者にシートを空けるか追加するよう依頼してから、もう一度ログインしてください。',
   'auth.subtitle': '社用メールを使用します。パスワードは不要です。',
   'auth.email': '社用メール',
   'auth.emailPlaceholder': 'name@company.com',

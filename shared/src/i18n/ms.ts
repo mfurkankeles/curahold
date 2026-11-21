@@ -329,6 +329,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'audit.setup.tested': "menyelesaikan persediaan",
   'audit.setup.test_reset': "memulakan semula senarai ujian persediaan",
   'auth.signInTo': "Log masuk ke {org}",
+  'auth.seatsFull': "Syarikat anda tiada tempat duduk kosong untuk orang baharu buat masa ini. Minta pentadbir mengosongkan tempat duduk atau menambahnya, kemudian log masuk semula.",
   'auth.subtitle': "Gunakan e-mel kerja anda. Tiada kata laluan diperlukan.",
   'auth.email': "E-mel kerja",
   'auth.emailPlaceholder': "name@company.com",

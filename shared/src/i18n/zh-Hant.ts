@@ -350,6 +350,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': '登入 {org}',
+  'auth.seatsFull': '貴公司目前沒有可供新成員使用的空閒席次。請聯絡管理員釋出或增加席次，然後重新登入。',
   'auth.subtitle': '使用你的工作電子郵件，無需密碼。',
   'auth.email': '工作電子郵件',
   'auth.emailPlaceholder': 'name@company.com',

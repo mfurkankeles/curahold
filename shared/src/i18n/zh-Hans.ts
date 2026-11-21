@@ -350,6 +350,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': '登录到 {org}',
+  'auth.seatsFull': '贵公司目前没有可供新成员使用的空闲席位。请联系管理员释放或增加席位，然后重新登录。',
   'auth.subtitle': '使用你的工作邮箱，无需密码。',
   'auth.email': '工作邮箱',
   'auth.emailPlaceholder': 'name@company.com',

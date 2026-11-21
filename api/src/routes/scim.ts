@@ -174,7 +174,7 @@ scimRoutes.post('/Users', async (c) => {
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.provisioned', entity: 'user', entityId: u.id, meta: { via: 'scim' } });
     return { user: u };
   }));
-  if ('seats' in result) return scimError(c, 409, result.seats, 'tooMany');
+  if ('seats' in result) return scimError(c, 403, result.seats);
   if ('conflict' in result) return scimError(c, 409, 'A user with this userName already exists', 'uniqueness');
   return scimJson(c, 201, toScimUser(c, org.slug, result.user));
 });
@@ -202,7 +202,7 @@ scimRoutes.put('/Users/:id', async (c) => {
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.updated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return { user: u };
   }));
-  if ('seats' in out) return scimError(c, 409, out.seats, 'tooMany');
+  if ('seats' in out) return scimError(c, 403, out.seats);
   if ('missing' in out) return scimError(c, 404, 'User not found');
   return scimJson(c, 200, toScimUser(c, org.slug, out.user));
 });
@@ -268,7 +268,7 @@ scimRoutes.patch('/Users/:id', async (c) => {
     await audit(q, { orgId: org.id, actorId: null, action: active ? 'sso.updated' : 'sso.deactivated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return { user: u };
   }));
-  if ('seats' in out) return scimError(c, 409, out.seats, 'tooMany');
+  if ('seats' in out) return scimError(c, 403, out.seats);
   if ('missing' in out) return scimError(c, 404, 'User not found');
   return scimJson(c, 200, toScimUser(c, org.slug, out.user));
 });
@@ -296,7 +296,9 @@ async function seatRefused<T>(work: Promise<T>): Promise<T | { seats: string }> 
   try {
     return await work;
   } catch (e) {
-    if (e instanceof HttpError && ['seat_cap_reached', 'plan_limit_seats', 'terms_required'].includes(e.code)) return { seats: `No seat left: ${e.code}` };
+    // 403 with a plain reason (review nit): a 409 on create reads as "already exists" to some identity providers.
+    if (e instanceof HttpError && e.code === 'terms_required') return { seats: 'The company has not accepted the terms yet: an administrator does it in Curahold first.' };
+    if (e instanceof HttpError && ['seat_cap_reached', 'plan_limit_seats'].includes(e.code)) return { seats: 'No seat left for a new person: the company is at its seat limit.' };
     throw e;
   }
 }

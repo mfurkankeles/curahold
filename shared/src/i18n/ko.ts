@@ -350,6 +350,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': '{org}에 로그인',
+  'auth.seatsFull': '지금은 회사에 새 사용자를 위한 빈 좌석이 없습니다. 관리자에게 좌석을 비우거나 추가해 달라고 요청한 뒤 다시 로그인하세요.',
   'auth.subtitle': '회사 이메일을 사용하세요. 비밀번호가 필요 없습니다.',
   'auth.email': '회사 이메일',
   'auth.emailPlaceholder': 'name@company.com',

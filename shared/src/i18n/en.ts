@@ -333,6 +333,7 @@ export const en = {
 
   // ------------------------------------------------------------------ auth
   'auth.signInTo': 'Sign in to {org}',
+  'auth.seatsFull': 'Your company has no free seat for a new person right now. Ask an administrator to free a seat or add more, then sign in again.',
   'auth.subtitle': 'Use your work email. No password needed.',
   'auth.email': 'Work email',
   'auth.emailPlaceholder': 'name@company.com',

@@ -329,6 +329,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'audit.setup.tested': "सेटअप पूरा किया",
   'audit.setup.test_reset': "सेटअप टेस्ट सूची फिर से शुरू की",
   'auth.signInTo': "{org} में साइन इन करें",
+  'auth.seatsFull': "अभी आपकी कंपनी में किसी नए व्यक्ति के लिए कोई खाली सीट नहीं है। किसी एडमिन से सीट खाली करने या नई सीटें जोड़ने को कहें, फिर दोबारा साइन इन करें।",
   'auth.subtitle': "अपना काम का ईमेल इस्तेमाल करें। पासवर्ड की ज़रूरत नहीं।",
   'auth.email': "काम का ईमेल",
   'auth.emailPlaceholder': "name@company.com",

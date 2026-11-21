@@ -350,6 +350,7 @@ export const he: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': 'התחברות אל {org}',
+  'auth.seatsFull': 'כרגע אין בחברה שלכם מושב פנוי לאדם חדש. בקשו ממנהל לפנות מושב או להוסיף מושבים, ואז התחברו שוב.',
   'auth.subtitle': 'השתמש בדוא״ל של העבודה. אין צורך בסיסמה.',
   'auth.email': 'דוא״ל של העבודה',
   'auth.emailPlaceholder': 'name@company.com',

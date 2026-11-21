@@ -350,6 +350,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': 'تسجيل الدخول إلى {org}',
+  'auth.seatsFull': 'لا يوجد حاليًا مقعد شاغر لشخص جديد في شركتك. اطلب من أحد المسؤولين إخلاء مقعد أو إضافة مقاعد، ثم سجّل الدخول مرة أخرى.',
   'auth.subtitle': 'استخدم بريد العمل. لا حاجة إلى كلمة مرور.',
   'auth.email': 'بريد العمل',
   'auth.emailPlaceholder': 'name@company.com',

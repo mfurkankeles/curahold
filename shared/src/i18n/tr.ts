@@ -332,6 +332,7 @@ export const tr: Record<MessageKey, string> = {
   // ---- end setup health
 
   "auth.signInTo": "{org} hesabına giriş yapın",
+  'auth.seatsFull': "Şirketinizde şu an yeni bir kişi için boş kullanıcı yeri yok. Bir yöneticiden yer açmasını ya da yeni yer eklemesini isteyin, ardından yeniden oturum açın.",
   "auth.subtitle": "İş e-postanızı kullanın. Şifre gerekmez.",
   'auth.email': 'İş e-postası',
   'auth.emailPlaceholder': 'ad@sirket.com',

@@ -50,7 +50,7 @@ describe('a full trial takes no more full seats', () => {
     expect(found.provisioned).toBe(false);
   });
 
-  it('SCIM is told there is no seat left (409), and adds no one', async () => {
+  it('SCIM is told there is no seat left (403), and adds no one', async () => {
     const n = await fillTheTrial();
     const scim = (method: string, path: string, body?: unknown) =>
       authApp(env).request(`https://x/api/scim/v2${path}`, {
@@ -60,15 +60,15 @@ describe('a full trial takes no more full seats', () => {
       });
     const user = (email: string, active = true) => ({ schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], userName: email, displayName: 'Scim Person', active });
     const r = await scim('POST', '/Users', user('scim-new@demo.example'));
-    expect(r.status).toBe(409);
-    expect(((await r.json()) as any).scimType).toBe('tooMany');
+    expect(r.status).toBe(403);
+    expect(((await r.json()) as any).detail).toMatch(/seat limit/);
     expect(await fullSeats()).toBe(n);
     // A disabled person may be added (no seat taken), but turning them on needs a seat.
     const off = await scim('POST', '/Users', user('scim-off@demo.example', false));
     expect(off.status).toBe(201);
     const id = ((await off.json()) as any).id;
     const on = await scim('PATCH', `/Users/${id}`, { schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], Operations: [{ op: 'replace', path: 'active', value: true }] });
-    expect(on.status).toBe(409);
+    expect(on.status).toBe(403);
     expect(await fullSeats()).toBe(n);
     // With a seat free again, the same call goes through.
     await env.db.system((q) => q.query(`update orgs set trial_seat_cap = $2 where id = $1`, [env.a.orgId, n + 1]));

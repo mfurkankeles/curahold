@@ -350,6 +350,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
 
   // Sign-in.
   'auth.signInTo': 'ورود به {org}',
+  'auth.seatsFull': 'در حال حاضر شرکت شما صندلی خالی برای فرد جدید ندارد. از یک مدیر بخواه صندلی‌ای آزاد کند یا صندلی اضافه کند، سپس دوباره وارد شو.',
   'auth.subtitle': 'از ایمیل کاری خود استفاده کنید. نیازی به گذرواژه نیست.',
   'auth.email': 'ایمیل کاری',
   'auth.emailPlaceholder': 'name@company.com',
