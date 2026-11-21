@@ -267,9 +267,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   many arrive at once; SCIM
   answers `403` with the reason and the sign-in page says the seats are full.
 - Billing: the checkout is now a Paddle transaction the server makes with the plan's price and the company's seats; the
-  page only opens it, so neither can be changed in the browser. A new subscription for a price that is not in
-  `PADDLE_PRICES` is refused instead of ending the trial, and a plan too small for the company's full seats is flagged
-  in the activity log (`billing.over_plan`) when its subscription arrives.
+  page only opens it and never sees the signed company id. Because the browser can still change an open checkout, the
+  webhook checks what was bought: a new subscription for a price that is not in `PADDLE_PRICES` is refused instead of
+  ending the trial, too few seats are brought back to the company's seats at once, and a plan too small for the
+  company's full seats is flagged; each raises an alert in the owner's console and on his phones.
 - A change sent twice still happens once, but when its answer holds something shown only once (a new API key, a
   webhook's signing secret, an authenticator secret, recovery codes, a secret link or calendar feed address), the server keeps only that it was
   done: the repeat answers `{ "ok": true, "repeated": true }`. Repeat keys are kept a day instead of two; migration 0256

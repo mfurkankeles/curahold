@@ -242,6 +242,9 @@ cosmetic. QUALITY.md targets uptime >= 99.9% with the app still opening and show
 | `PLATFORM_OWNER (or SUPPORT_STAFF) must be set` at start | Multi-company install without an owner (deliberately fail-closed) | Set `PLATFORM_OWNER` secret/var. |
 | `AUTH_SECRET must be at least 32 characters` | Secret missing or shortened | `wrangler secret put AUTH_SECRET`. |
 | `PADDLE_PRICES needs team.month ...` | Malformed JSON | Fix the four price ids. |
+| Console alert `billing:unknown_price:…` (a phone push too) | A new subscription for a price not in `PADDLE_PRICES` (a checkout changed in the browser, or a price changed in Paddle first) | Nothing was applied; the company keeps its state. The buyer **was charged**: refund the transaction in Paddle (Transactions → refund) and cancel that subscription, then tell the company to buy from the Billing page. If the price is ours, add it to `PADDLE_PRICES` and replay the event. |
+| Console alert `billing:over_plan:…` | A plan smaller than the company's full seats | New full seats are refused (seatGuard). Contact the company: a larger plan, or fewer full seats. |
+| Console alert `billing:too_few_seats:…` | Fewer seats bought than the company has | The server already changed the subscription back to the billed seats (`fixed: true` in the alert); if `fixed` is false, the hourly seat sync retries. |
 | No digests / reminders | Cron not firing or the job failing | Check cron events and `wrangler tail` around the top of the hour; run `runScheduled` locally against a copy if needed. |
 | Stuck notifications | Chat provider failing or token revoked | Rows in `notifications` with attempts and last error; the hourly job retries; fix the connection. |
 | One CRM not syncing | Expired refresh token, revoked app, remote rate limit | `sync_runs` error, the product's connection status; the company reconnects. Backoff schedule: 1, 5, 30, 120, 720, 1440 min. |

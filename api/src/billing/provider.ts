@@ -19,7 +19,8 @@ export interface CheckoutHandle {
   clientToken: string;
   /**
    * The provider's transaction made on the server with the price, quantity and signed company id in it: the browser
-   * opens only this id, so it can change neither what is bought nor for whom (security audit M2).
+   * opens only this id and never sees the signed company id (security audit M2). The checkout's items can still be
+   * changed in the browser, so what arrives on the webhook is checked again (billing/service.ts, review S5).
    */
   transactionId: string;
   /** For the screen only. */

@@ -94,7 +94,8 @@ export class PaddleProvider implements PaymentProvider {
     if (!priceId) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
     const quantity = Math.max(1, input.quantity);
     // Made here, not in the browser (security audit M2): the price comes from the catalogue, the quantity from the
-    // company's seats, and the signed company id never reaches the page.
+    // company's seats, and the signed company id never reaches the page. Paddle.js can still change an open
+    // checkout's items, so the webhook checks what was bought against what the server would sell (service.ts).
     const tx = await this.call<{ id: string }>('POST', '/transactions', {
       items: [{ price_id: priceId, quantity }],
       custom_data: await checkoutCustomData(this.cfg, input.orgId),

@@ -20,6 +20,8 @@ import { CATALOGUE, MIN_SEATS_DEFAULT, minSeatsFor, PLANS, planOf, regionFor, tr
 import { fetchOf, nowOf, type Deps } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
+import { pushToOwner } from '../lib/ownerOutbox';
+import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
 import { PaddleProvider } from './paddle';
 import { projectBillingQ } from './project';
 import type { PaymentProvider, ProviderInvoice, ProviderSubscription, WebhookEvent } from './provider';
@@ -126,8 +128,12 @@ async function firstTime(q: Q, provider: string, event: WebhookEvent, orgId: str
   return fresh.length > 0;
 }
 
+/** Something a subscription carried that the server did not offer (review S5): told to the owner after the commit. */
+type Mismatch = { orgId: string; why: 'unknown_price' | 'over_plan' | 'too_few_seats'; seats?: number; want?: number; cap?: number };
+
 async function applySubscription(deps: Deps, provider: string, event: WebhookEvent, sub: ProviderSubscription): Promise<string | null> {
-  return deps.db.system(async (q) => {
+  const found: Mismatch[] = [];
+  const orgId = await deps.db.system(async (q) => {
     const refuse = async (orgId: string, why: string) => {
       // Written to the company's activity log so an administrator (and we) can see the attempt.
       await audit(q, { orgId, actorId: null, action: 'billing.refused', entity: 'org', entityId: orgId, meta: { why, subscription: sub.providerSubscriptionId, event: event.id } });
@@ -159,7 +165,11 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
     const orgId = cur?.org_id ?? sub.signedOrgId!;
     // Money (security audit M2): a new subscription must be for a price of ours (PADDLE_PRICES). Any other recurring
     // price in the same Paddle account would otherwise end a trial as "paying" on the trial's plan.
-    if (!held && !sub.plan) return refuse(orgId, 'unknown_price');
+    if (!held && !sub.plan) {
+      // Paid at the provider all the same: the owner hears of it to refund it (RUNBOOK "Billing: a refused subscription").
+      found.push({ orgId, why: 'unknown_price' });
+      return refuse(orgId, 'unknown_price');
+    }
     if (!(await firstTime(q, provider, event, orgId))) return orgId;
     // Paddle may deliver out of order: never let an older event overwrite a newer one.
     const last = iso(cur?.event_at);
@@ -188,17 +198,67 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
       [orgId, provider, sub.providerCustomerId, sub.providerSubscriptionId, plan, sub.status, trial, sub.currentPeriodEnd, sub.cancelAtPeriodEnd, sub.interval, sub.seats, sub.currency, pastDueSince, event.occurredAt],
     );
     await audit(q, { orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: orgId, meta: { status: sub.status, plan, seats: sub.seats } });
-    // The plan's seat limit, checked again here and not only at checkout: a checkout opened by hand can buy a plan too
-    // small for the company. Flagged in the activity log (the operator follows up); seatGuard then refuses every new
-    // full seat, and the hourly seat sync bills the real number of seats.
-    const cap = planOf(plan)?.caps.seatsMax ?? null;
-    if (cap != null && LIVE.includes(sub.status)) {
-      const [{ n }] = await q.query<{ n: number }>(`select ${SEATS_SQL} as n from orgs o where o.id = $1`, [orgId]);
-      if (Number(n) > cap) await audit(q, { orgId, actorId: null, action: 'billing.over_plan', entity: 'org', entityId: orgId, meta: { plan, seats: Number(n), cap, event: event.id } });
+    // What the server would have sold, checked again here and not only at checkout (review S5): the browser's Paddle.js
+    // can still change an open checkout's items. A plan too small for the company's full seats is flagged (seatGuard
+    // then refuses every new full seat) and told to the owner; too few seats are brought back to the company's billed
+    // seats at once, after the commit, as the hourly sync would.
+    if (LIVE.includes(sub.status)) {
+      const [o] = await q.query<{ n: number; country: string | null }>(`select ${SEATS_SQL} as n, o.billing_country as country from orgs o where o.id = $1`, [orgId]);
+      const n = Number(o?.n ?? 0);
+      const cap = planOf(plan)?.caps.seatsMax ?? null;
+      if (cap != null && n > cap) {
+        await audit(q, { orgId, actorId: null, action: 'billing.over_plan', entity: 'org', entityId: orgId, meta: { plan, seats: n, cap, event: event.id } });
+        found.push({ orgId, why: 'over_plan', seats: n, cap });
+      }
+      const interval = sub.interval ?? cur?.billing_interval ?? null;
+      const want = interval ? billedSeats(deps, plan as PlanKey, interval, billingRegionKey(o?.country, sub.currency), n) : null;
+      if (want != null && sub.seats != null && sub.seats < want) found.push({ orgId, why: 'too_few_seats', seats: sub.seats, want });
     }
     await projectBillingQ(q, orgId);
     return orgId;
   });
+  for (const m of found) await actOnMismatch(deps, sub, m, event.id);
+  return orgId;
+}
+
+/**
+ * After the commit: what the server does about a subscription it did not offer. Too few seats → the subscription is
+ * changed back to the company's billed seats now. Every kind → an alert in the console and a push to the owner's phones
+ * (owner outbox, once per subscription and kind), because each needs a person: a refund, a plan the company outgrew.
+ */
+async function actOnMismatch(deps: Deps, sub: ProviderSubscription, m: Mismatch, eventId: string): Promise<void> {
+  let fixed = false;
+  if (m.why === 'too_few_seats' && sub.plan && sub.interval && m.want) {
+    const provider = providerFor(deps);
+    try {
+      if (provider) {
+        const next = await provider.changeItems(sub.providerSubscriptionId, sub.plan, sub.interval, m.want, CATALOGUE.proration.seatsUp);
+        await deps.db.system(async (q) => {
+          await q.query(`update subscriptions set seats = $2, updated_at = now() where org_id = $1`, [m.orgId, next.seats ?? m.want]);
+          await projectBillingQ(q, m.orgId);
+        });
+        fixed = true;
+      }
+    } catch (e) {
+      // The hourly seat sync tries again; the owner is told either way.
+      console.error('[curahold] could not bring a subscription back to its seats', m.orgId, e);
+    }
+  }
+  const ref = `billing:${m.why}:${sub.providerSubscriptionId}`.slice(0, 200);
+  const [org] = await deps.db.system(async (q) => {
+    const rows = await q.query<{ name: string; slug: string }>(`select name, slug from orgs where id = $1`, [m.orgId]);
+    await q.query(
+      `insert into company_log (seat, kind, body, ref, meta) select 'system', 'alert', $1, $2, $3 where not exists (select 1 from company_log where ref = $2)`,
+      [`Billing: ${m.why.replace(/_/g, ' ')} on ${rows[0]?.slug ?? m.orgId}${fixed ? ' (seats brought back)' : ''}`, ref, JSON.stringify({ org_id: m.orgId, subscription: sub.providerSubscriptionId, event: eventId, ...m, fixed })],
+    );
+    return rows;
+  });
+  await pushToOwner(deps, `push:${ref}`, (l) => ({
+    title: ownerWord(l, 'billing.push.mismatch.title'),
+    body: ownerWord(l, `billing.push.mismatch.${m.why}` as OwnerKey, { company: (org?.name ?? '').slice(0, 80) }),
+    url: '/system',
+    urgency: 'high',
+  }));
 }
 
 async function applyInvoice(deps: Deps, provider: string, event: WebhookEvent, invoice: ProviderInvoice): Promise<string | null> {
