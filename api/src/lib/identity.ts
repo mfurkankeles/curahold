@@ -202,6 +202,10 @@ export async function startTotp(c: C, user: { id: string; email: string }) {
   return { secret, uri: otpauthUri(secret, user.email, org.name ? `Curahold ${org.name}` : 'Curahold') };
 }
 
+/** Wrong authenticator codes in a row before that person's codes stop working for TOTP_LOCK_MINUTES (L2). */
+const TOTP_LOCK_AFTER = 10;
+const TOTP_LOCK_MINUTES = 15;
+
 /**
  * Checks an authenticator code (confirmed app, or — with `confirming` — the one
  * being set up). Right: the step is stored so the code cannot be used again.
@@ -210,19 +214,32 @@ export async function useTotp(c: C, userId: string, code: string, confirming = f
   const deps = c.get('deps');
   const orgId = c.get('org').id;
   const [row] = await deps.db.system((q) =>
-    q.query<{ secret_sealed: string; last_step: string; confirmed_at: Date | null }>(
-      'select secret_sealed, last_step, confirmed_at from user_totp where org_id = $1 and user_id = $2',
+    q.query<{ secret_sealed: string; last_step: string; confirmed_at: Date | null; locked: boolean }>(
+      'select secret_sealed, last_step, confirmed_at, coalesce(locked_until > now(), false) as locked from user_totp where org_id = $1 and user_id = $2',
       [orgId, userId],
     ),
   );
   if (!row || !!row.confirmed_at === confirming) return false;
+  // Locked after too many wrong codes in a row, across sign-ins (security audit L2): each new e-mail link brings a new
+  // step token with tries of its own, so the count lives on the person's authenticator, as the desk's does.
+  if (row.locked) return false;
   const secret = (await unseal<{ s: string }>(row.secret_sealed, secretsKey(deps.config)))?.s;
   if (!secret) return false;
   const step = await checkTotp(secret, code, nowOf(deps).getTime(), Number(row.last_step));
-  if (step === null) return false;
+  if (step === null) {
+    await deps.db.system((q) =>
+      q.query(
+        `update user_totp set failed = case when failed + 1 >= $3 then 0 else failed + 1 end,
+                locked_until = case when failed + 1 >= $3 then now() + make_interval(mins => $4) else locked_until end
+          where org_id = $1 and user_id = $2`,
+        [orgId, userId, TOTP_LOCK_AFTER, TOTP_LOCK_MINUTES],
+      ),
+    );
+    return false;
+  }
   const done = await deps.db.system((q) =>
     q.query(
-      `update user_totp set last_step = $3, confirmed_at = coalesce(confirmed_at, now())
+      `update user_totp set last_step = $3, confirmed_at = coalesce(confirmed_at, now()), failed = 0, locked_until = null
         where org_id = $1 and user_id = $2 and last_step < $3 returning 1`,
       [orgId, userId, step],
     ),

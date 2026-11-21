@@ -58,6 +58,38 @@ describe('TOTP (RFC 6238)', () => {
 });
 
 describe('authenticator app and recovery codes', () => {
+  // Security audit L2: a new e-mail link brings new tries for the step, so wrong codes are counted on the person.
+  it('ten wrong codes in a row, over several sign-ins, stop the authenticator for a while; a recovery code still works', async () => {
+    // The sign-in links this test asks for are moved an hour back, so the other tests keep their five a quarter-hour.
+    const earlier = () => env.db.system((q) => q.query(`update login_tokens set created_at = created_at - interval '1 hour' where email = 'sofia@demo.example'`));
+    const { secret, recovery } = await withTotp('sofia@demo.example');
+    for (let round = 0; round < 2; round++) {
+      await earlier();
+      const { c, v } = await firstStep('acme', 'sofia@demo.example');
+      for (let i = 0; i < 5; i++) expect((await c.post('/api/auth/second', { token: v.json.token, deviceId: c.device, code: '000000' })).json.error).toBe('second_step_failed');
+    }
+    await earlier();
+    const locked = await firstStep('acme', 'sofia@demo.example');
+    const right = await codeFor(secret, 1);
+    expect((await locked.c.post('/api/auth/second', { token: locked.v.json.token, deviceId: locked.c.device, code: right })).json.error).toBe('second_step_failed');
+    const r = await locked.c.post('/api/auth/second', { token: locked.v.json.token, deviceId: locked.c.device, recoveryCode: recovery[0] });
+    expect(r.json.status).toBe('ok');
+    // Once the lock has run out, the app's code works again and the count starts over.
+    await env.db.system((q) => q.query(`update user_totp set locked_until = now() - interval '1 minute' where org_id = $1 and user_id = $2`, [env.a.orgId, env.a.ids.sofia]));
+    await earlier();
+    const later = await firstStep('acme', 'sofia@demo.example');
+    expect((await later.c.post('/api/auth/second', { token: later.v.json.token, deviceId: later.c.device, code: right })).json.status).toBe('ok');
+    const [row] = await env.db.system((q) => q.query<{ failed: number }>(`select failed from user_totp where org_id = $1 and user_id = $2`, [env.a.orgId, env.a.ids.sofia]));
+    expect(row.failed).toBe(0);
+    // Leave Sofia as the later tests expect her: no second step, no sessions from here.
+    await earlier();
+    await env.db.system(async (q) => {
+      await q.query(`delete from user_totp where org_id = $1 and user_id = $2`, [env.a.orgId, env.a.ids.sofia]);
+      await q.query(`delete from user_recovery_codes where org_id = $1 and user_id = $2`, [env.a.orgId, env.a.ids.sofia]);
+      await q.query(`update sessions set revoked_at = now() where org_id = $1 and user_id = $2 and revoked_at is null`, [env.a.orgId, env.a.ids.sofia]);
+    });
+  });
+
   it('asks for the second step at the next sign-in; a wrong code, a reused code and a used recovery code are refused', async () => {
     const { secret, recovery } = await withTotp('lena@demo.example');
     expect(recovery).toHaveLength(10);

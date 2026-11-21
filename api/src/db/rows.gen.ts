@@ -2218,6 +2218,8 @@ export interface UserTotpRow {
   confirmed_at: Date | null;
   last_step: number | string;
   created_at: Date;
+  failed: number;
+  locked_until: Date | null;
 }
 
 /** Table `users`. */
