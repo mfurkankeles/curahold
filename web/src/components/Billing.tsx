@@ -18,7 +18,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useUnsaved } from '../lib/unsaved';
-import { formatMoney } from '../lib/format';
+import { formatMoney, formatNumber } from '../lib/format';
 import { Icon } from './icons';
 import { Confirm } from './ui';
 import { ALL_COUNTRIES } from '../../../shared/src/trialForm';
@@ -36,11 +36,14 @@ type CapKind = 'seats' | 'storage' | 'connectors' | 'ai';
 interface BillingInfo {
   enabled: boolean;
   access: Access;
-  plans: (PlanDef & { regional: Record<Interval, Regional> })[];
+  /** `minSeats`: the fewest seats the plan is billed for here (the server's BILLING_MIN_SEATS rule). */
+  plans: (PlanDef & { regional: Record<Interval, Regional>; minSeats?: Record<Interval, number> })[];
   catalogue: { version: string; status: 'draft' | 'final'; currency: string; trialMonths: number; graceDays: number };
   region: { key: string; currency: string; collect: string; tax: { name: string; rate: number | null; b2b: boolean } } | null;
   seats: number;
   usage: Record<CapKind, { used: number; cap: number | null }>;
+  /** During the trial only: the seats approved for it (null: none set) and the file space per full seat. */
+  trialLimits?: { seats: number | null; storageGbPerSeat: number | null } | null;
   subscription: Subscription | null;
   profile: { taxNumber: string | null; billingEmail: string | null; country?: string | null };
   checkout?: { env: 'sandbox' | 'live'; clientToken: string; email: string };
@@ -48,9 +51,10 @@ interface BillingInfo {
 interface CheckoutHandle {
   env: 'sandbox' | 'live';
   clientToken: string;
+  /** The transaction the server made (price, seats, the signed company id); the page opens only this. */
+  transactionId: string;
   priceId: string;
   quantity: number;
-  customData: Record<string, string>;
   email: string;
 }
 
@@ -201,15 +205,14 @@ export function BillingSettings() {
     if (!info.checkout) return;
     setBusy(plan);
     try {
-      // The server signs the company id; this page never makes one up.
+      // The server makes the transaction (price, seats, the signed company id); this page only opens it.
       const { checkout: h } = await post<{ checkout: CheckoutHandle }>('/billing/checkout', { plan, interval });
       const P = await loadPaddle(h.env, h.clientToken, (e) => {
         if (e.name === 'checkout.completed') void waitForSubscription();
       });
       P.Checkout.open({
-        items: [{ priceId: h.priceId, quantity: h.quantity }],
+        transactionId: h.transactionId,
         customer: { email: h.email },
-        customData: h.customData,
         // Paddle's own code for the language where it has one (zh-Hant is zh-TW there); otherwise it follows the browser.
         settings: PADDLE_LOCALE[locale] ? { locale: PADDLE_LOCALE[locale] } : {},
       });
@@ -255,6 +258,15 @@ export function BillingSettings() {
           : a.state === 'ending'
             ? t('billing.state.ending', { date: when(a.periodEnd) })
             : t('billing.state.locked');
+  // The trial limits the terms point to (legal-terms §4: "shown at sign-up and on the Billing page").
+  const tl = a.state === 'trial' ? info.trialLimits : null;
+  const gb = tl?.storageGbPerSeat != null ? formatNumber(tl.storageGbPerSeat, locale) : null;
+  const trialLine =
+    tl && gb != null
+      ? tl.seats != null
+        ? t('billing.trialLimits', { seats: formatNumber(tl.seats, locale), gb })
+        : t('billing.trialLimitsSpace', { gb })
+      : null;
   const canExit = !!sub && LIVE.includes(sub.status) && !!sub.providerSubscriptionId && !sub.cancelAtPeriodEnd;
   const canResume = !!sub && sub.cancelAtPeriodEnd;
   // The cheapest plan's yearly saving, worked out from the price list rather than written into a sentence.
@@ -276,6 +288,7 @@ export function BillingSettings() {
         <div className="billing-manage__body">
           <h2 className="billing__title">{t('billing.title')}</h2>
           <p>{statusLine}</p>
+          {trialLine && <p className="field__hint">{trialLine}</p>}
           <div className="billing-manage__actions">
             {sub?.providerCustomerId && (
               <button className="btn" disabled={busy === 'portal'} onClick={() => void act('portal')}>
@@ -342,6 +355,7 @@ export function BillingSettings() {
           const r = p.regional[interval];
           const money = (n: number, cur = r.collect) => formatMoney(n, cur, locale);
           const extra = p.features.map((f) => FEATURE_POINT[f]).filter(Boolean);
+          const billed = Math.max(seats, p.minSeats?.[interval] ?? 1);
           return (
             <section key={p.key} className="sheet billing__plan" data-current={current || undefined} data-featured={p.key === featured || undefined}>
               <h3 className="billing__planname">{planName(p.key, p.name)}</h3>
@@ -350,8 +364,9 @@ export function BillingSettings() {
               </p>
               {r.currency !== r.collect && r.shown != null && <p className="billing__total muted">{t('billing.region.guide', { local: money(r.shown, r.currency), currency: r.collect })}</p>}
               <p className="billing__total muted">
-                {t(interval === 'year' ? 'billing.totalYear' : 'billing.totalMonth', { total: money(r.amount * seats * (interval === 'year' ? 12 : 1)), n: seats })}
+                {t(interval === 'year' ? 'billing.totalYear' : 'billing.totalMonth', { total: money(r.amount * billed * (interval === 'year' ? 12 : 1)), n: billed })}
               </p>
+              {billed > seats && <p className="billing__total muted">{t('billing.minSeats', { n: billed })}</p>}
               <ul className="billing__points">
                 {extra.length > 0 && <li className="billing__everything">{t('billing.point.everythingTeam')}</li>}
                 {(extra.length ? extra : BASE_POINTS).map((k) => (

@@ -9,6 +9,9 @@
 // DRILL_PG's user must be able to create databases. Only databases this script
 // creates (drill_src_*, drill_restored_*) are touched; DRILL_KEEP=1 leaves the
 // restored one in place. DRILL_DIR (scratch for the backup file).
+// DRILL_TARGET_PG: restore onto ANOTHER server, one that has never seen the
+// curahold_* roles — what a disaster recovery into a new project is. Roles are
+// per server and not in the dump; restore.ts must make them (review B1).
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -28,12 +31,14 @@ if (!base) {
 const id = Date.now().toString(36);
 const src = `drill_src_${id}`;
 const dst = `drill_restored_${id}`;
-const at = (name: string) => {
-  const u = new URL(base);
+const target = process.env.DRILL_TARGET_PG || base;
+const at = (name: string, server = base) => {
+  const u = new URL(server);
   u.pathname = `/${name}`;
   return u.toString();
 };
 const admin = postgres(base, { max: 1, onnotice: () => undefined });
+const targetAdmin = target === base ? admin : postgres(target, { max: 1, onnotice: () => undefined });
 const steps: { step: string; ms: number }[] = [];
 const time = async <T>(step: string, fn: () => Promise<T>): Promise<T> => {
   const t0 = Date.now();
@@ -59,10 +64,10 @@ try {
     await admin.unsafe(`drop database ${src} with (force)`);
   });
   const m = await time('4. restore into an empty database', async () => {
-    await admin.unsafe(`create database ${dst}`);
-    return restore({ url: at(dst), file: b.file, passphrase });
+    await targetAdmin.unsafe(`create database ${dst}`);
+    return restore({ url: at(dst, target), file: b.file, passphrase });
   });
-  const v = await time('5. verify counts + row-level security', () => verify(at(dst), m));
+  const v = await time('5. verify counts + row-level security', () => verify(at(dst, target), m));
   const total = steps.reduce((n, s) => n + s.ms, 0);
   const rows = Object.values(m.rows).reduce((a, n) => a + n, 0);
   const mismatched = v.counts.filter((c) => c.expected !== c.found);
@@ -74,9 +79,10 @@ try {
     writeFileSync(process.env.DRILL_REPORT, JSON.stringify({ at: new Date().toISOString(), ok: v.ok, totalMs: total, steps, tables: v.counts.length, rows, backupBytes: b.m.bytes, lastMigration: m.lastMigration, mismatched, rls: v.rls }, null, 2));
   ok = v.ok;
 } finally {
-  if (!process.env.DRILL_KEEP) await admin.unsafe(`drop database if exists ${dst} with (force)`).catch(() => undefined);
+  if (!process.env.DRILL_KEEP) await targetAdmin.unsafe(`drop database if exists ${dst} with (force)`).catch(() => undefined);
   await admin.unsafe(`drop database if exists ${src} with (force)`).catch(() => undefined);
   await admin.end({ timeout: 2 });
+  if (targetAdmin !== admin) await targetAdmin.end({ timeout: 2 });
   if (!process.env.DRILL_DIR) rmSync(dir, { recursive: true, force: true });
 }
 process.exit(ok ? 0 : 1);

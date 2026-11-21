@@ -4,6 +4,7 @@
 //      GET /oauth/callback (central host) → back to the company with a
 //      one-time token → POST /auth/verify; a device seen for the first time
 //      must also enter a 6-digit code sent by email (POST /auth/device).
+import { seatGuard } from '../lib/trial';
 import type { JoinRequestsRow, LoginTokensRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
@@ -293,6 +294,8 @@ authRoutes.post('/join', async (c) => {
     const [existing] = await q.query<Pick<UsersRow, 'id' | 'status'>>('select id, status from users where email = $1', [email]);
     if (existing) fail('already_member');
     if (org.auto_join) {
+      // Money (security audit M3): joining by the company's domain takes a full seat, within the trial's or plan's limit.
+      await seatGuard(q, org.id, 1);
       const [role] = await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
       const [u] = await q.query<{ id: string }>(
         `insert into users (org_id, email, name, role_id, seat, status, locale) values ($1, $2, $3, $4, 'full', 'active', $5) returning id`,

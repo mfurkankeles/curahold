@@ -23,7 +23,7 @@ import { normalizeLocale } from '../../../shared/src/i18n';
 import { maxDevices, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type Config, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { randomToken, seal, sha256Hex, unseal } from '../lib/crypto';
-import { fail } from '../lib/errors';
+import { fail, HttpError } from '../lib/errors';
 import { openSession } from '../lib/sessions';
 import { setSessionCookie } from './auth';
 import { makeSaml, samlMetadata, samlRedirectUrl, verifySamlResponse } from '../lib/saml';
@@ -109,6 +109,15 @@ async function passTest(c: C, org: OrgRow, config: SsoAuthConfig, email: string)
   await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => audit(q, { orgId: org.id, actorId: null, action: 'sso.tested', entity: 'org', entityId: org.id, meta: { ok: true, email, fp } }));
   return testBack(cfg, org.slug, 'ok', email);
 }
+
+/**
+ * Why a sign-in was refused, for the login page's `error` (and `cap`): a seat limit says so (M3), anything else stays
+ * "no account" so the page reveals nothing more about the company.
+ */
+const refusedWhy = (e: unknown) =>
+  e instanceof HttpError && ['seat_cap_reached', 'plan_limit_seats', 'terms_required'].includes(e.code)
+    ? `${e.code}${e.vars?.cap != null ? `&cap=${encodeURIComponent(String(e.vars.cap))}` : ''}`
+    : 'no_account';
 
 const origin = (c: C) => ({ ip: c.req.header('cf-connecting-ip') ?? null, geo: c.req.header('cf-ipcountry') ?? null });
 
@@ -221,8 +230,8 @@ ssoAuthRoutes.post('/:slug/saml/acs', async (c) => {
   try {
     const to = await completeLogin(c, org, state, identity);
     return c.redirect(to);
-  } catch {
-    return c.redirect(loginBack(cfg, slug, 'no_account'));
+  } catch (e) {
+    return c.redirect(loginBack(cfg, slug, refusedWhy(e)));
   }
 });
 
@@ -263,8 +272,9 @@ ssoAuthRoutes.get('/:slug/oidc/callback', async (c) => {
   try {
     const to = await completeLogin(c, org, state, identity);
     return c.redirect(to);
-  } catch {
-    return c.redirect(failBack(cfg, slug, state, 'no_account'));
+  } catch (e) {
+    // The seat reason, as on the SAML path (review S4).
+    return c.redirect(failBack(cfg, slug, state, refusedWhy(e)));
   }
 });
 

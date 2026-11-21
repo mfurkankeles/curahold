@@ -229,6 +229,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                 <>
                   <p className="field__hint tile__line">{t(`conn.what.${p.id}` as MessageKey)}</p>
                   <a className="btn btn--primary btn--small" href={`/api/connect/${p.id}/start${back === 'setup' ? '?back=setup' : ''}`}>
+                    <Icon name="plug" size={16} />
                     {t('conn.connect', { app: PROVIDER_NAMES[p.id] })}
                   </a>
                 </>

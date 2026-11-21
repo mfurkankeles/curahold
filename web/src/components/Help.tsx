@@ -23,7 +23,7 @@ import { collectContext } from '../lib/diagnostics';
 import { useI18n } from '../lib/i18n';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
-import { Avatar, Dialog, onTabKeys } from './ui';
+import { Avatar, CloseButton, Dialog, onTabKeys } from './ui';
 import { DateField } from './DateField';
 import { todayIso } from '../lib/time';
 
@@ -91,7 +91,8 @@ type DocHit = {
 const docIndex: Partial<Record<string, Promise<DocHit[]>>> = {};
 function loadDocs(locale: string) {
   docIndex[locale] ??= fetch(docsFile(`${locale}/search.json`))
-    .then((r) => (r.ok ? r.json() : []))
+    // A missing file (404 for a language's docs) is cancelled, not left unread: an unread answer keeps its connection open.
+    .then((r) => (r.ok ? r.json() : r.body?.cancel().then(() => []) ?? []))
     .catch(() => []);
   return docIndex[locale]!;
 }
@@ -242,9 +243,12 @@ function Annotate({ shot, onDone, onClose }: { shot: Shot; onDone: (f: File) => 
   return (
     <div className="dialog help__annotate">
       <div className="dialog__box dialog__box--wide" role="dialog" aria-modal="true" aria-labelledby="annotate-title">
-        <h2 className="dialog__head" id="annotate-title">
-          {t('help.annotate.title')}
-        </h2>
+        <div className="dialog__top">
+          <h2 className="dialog__head" id="annotate-title">
+            {t('help.annotate.title')}
+          </h2>
+          <CloseButton onClick={onClose} />
+        </div>
         <div className="dialog__body">
           <div className="toolbar">
             <div className="seg" role="group" aria-label={t('help.annotate.tool')}>

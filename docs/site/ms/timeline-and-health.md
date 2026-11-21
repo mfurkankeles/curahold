@@ -42,7 +42,7 @@ Hidupkannya dalam Tetapan → Skor kesihatan. Ia ialah nombor dari 0 hingga 100 
 | Hubungan terkini | Panggilan, mesyuarat, e-mel atau nota terakhir dalam tempoh 14 hari | 45 hari atau lebih lama |
 | Kerja lewat | Tiada tugasan lewat | 3 atau lebih tugasan lewat |
 | Beban sokongan | Tiada tiket sokongan terbuka | 5 tiket terbuka (tiket segera dikira dua kali) |
-| Seorang juara | Sekurang-kurangnya satu kenalan "Juara" | Tiada |
+| Seorang penyokong utama | Sekurang-kurangnya satu kenalan "Penyokong utama" | Tiada |
 | Pembuat keputusan diketahui | Sekurang-kurangnya satu kenalan "Pembuat keputusan" | Tiada |
 | Tiada penghalang | Tiada penghalang atau orang yang ragu-ragu | Seorang penghalang |
 | Penilaian pemilik | Pilihan pertama medan pilihan (contohnya "Baik") | Pilihan terakhirnya (contohnya "Berisiko") |

@@ -29,7 +29,7 @@ const text: NoticeText = {
       subjects: '客戶自己的客戶、聯絡人與員工',
       basis: '歐盟/英國：GDPR 第 28 條——以客戶的依據為準。土耳其：客戶為控制者，Curahold 為受託處理者（KVKK 第 12 條）。波斯灣地區：依控制者指示處理的受託處理者。其他地區：委託處理（JP 第 27(5) 條、KR 第 26 條）。',
       retention: '契約期間；可隨時匯出；公司申請刪除 30 天後刪除（包括檔案、連線金鑰與快取），備份於 35 天內刪除；發票依稅法保存',
-      others: '客戶自行並依其指示連接的工具：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、客服系統（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、會計（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、信箱（Gmail、Outlook）、資料（Segment、BigQuery、Snowflake、Google Sheets、Excel）、聊天（Slack、Teams、Google Chat）、Jira、Webhook',
+      others: '客戶自行並依其指示連接的工具：CRM（Salesforce、HubSpot、Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell）、客服系統（Zendesk、Freshdesk、Intercom、Jira Service Management、Front）、會計（Paraşüt、Odoo、Xero、QuickBooks、freee、Zoho Books）、信箱（Gmail、Outlook）、資料（Segment、BigQuery、Snowflake、Google Sheets、Excel）、聊天（Slack、Teams、Google Chat）、Jira、Webhook；使用者透過 Curahold 連接器（MCP）連接的 AI 助理（依使用者或公司與該 AI 公司的協議）',
     },
     trialLeads: {
       purpose: '評估試用申請、聯絡申請人、開通試用',
@@ -76,7 +76,7 @@ const text: NoticeText = {
       data: '問題及回答所需的最少脈絡',
       subjects: '向 AI 助理提問的使用者；問題中提及的人',
       basis: '歐盟/英國：第 28 條——以客戶的依據為準。土耳其：代表客戶（受託處理者）；向境外 AI 提供者的傳輸適用 KVKK 第 9 條。波斯灣地區：受託處理者。其他地區：委託處理。',
-      retention: '對話紀錄依公司的選擇保存（預設 30 天，可設為不保存至 365 天）；隨當事人一併刪除；提供者處 [30 天——待確認]，不用於訓練',
+      retention: '問題依公司的選擇保存：不保存、7 天、30 天（預設）、90 天或 365 天；不保存回答（僅以文件為本的回答可重複使用 7 天）；隨當事人一併刪除；提供者處 [30 天——待確認]，不用於訓練',
     },
     aiDrafts: {
       purpose: '起草回覆、後續聯繫或摘要，供當事人閱讀與修改；當事人確認前不儲存、不寄出任何內容（在管理員開啟 AI 之前關閉）；絕不用於訓練模型',
@@ -84,6 +84,14 @@ const text: NoticeText = {
       subjects: '請求草稿的使用者；所依據紀錄中提及的客戶聯絡人與同事',
       basis: '歐盟/英國：第 28 條——以客戶的依據為準。土耳其：代表客戶（受託處理者）；向境外 AI 提供者的傳輸適用 KVKK 第 9 條。波斯灣地區：受託處理者。其他地區：委託處理。',
       retention: '助理不保留草稿：確認後的草稿保存在其所存入的紀錄中，依該紀錄的保存期限處理；提供者處 [30 天——待確認]，不用於訓練',
+    },
+    publicAsk: {
+      purpose: '以 AI 回答訪客在我們網站或文件中提出的問題（僅在訪客接受告知後）；絕不用於訓練模型',
+      data: '問題與對話中最近幾則訊息、語言和頁面；訪客對 AI 告知的回覆（以隨機 ID 記錄）；IP 位址，為限制請求在記憶體中短暫保留，不予儲存',
+      subjects: '在我們網站或文件中向助理提問的訪客',
+      basis: '歐盟/英國：GDPR 第 6(1)(a) 條（同意）；依 IP 位址限制請求：第 6(1)(f) 條（安全）。土耳其：KVKK 第 5/1 條（明示同意）；用於限制請求的 IP 位址適用第 5/2-f 條；向境外 AI 提供者傳輸適用第 9 條。波斯灣地區：同意。其他地區：告知後、第一個問題前取得同意。',
+      kvkk: 'KVKK 第 5/1 條（明示同意）；用於限制請求的 IP 位址適用第 5/2-f 條；向境外 AI 提供者傳輸適用第 9 條',
+      retention: 'Curahold 不儲存問題；以文件為本的回答可依問題的單向指紋重複使用 7 天；對告知的回覆作為同意紀錄保存；提供者處 [30 天——待確認]，不用於訓練',
     },
     humanCheck: {
       purpose: '阻擋機器人提交公開表單（Cloudflare Turnstile，免解謎，無追蹤 Cookie）',
@@ -115,6 +123,13 @@ const text: NoticeText = {
       basis: '歐盟/英國：第 6(1)(c) 條。土耳其：KVKK 第 5/2-ç 條（法定義務）。波斯灣地區：法定義務。其他地區：法定義務。',
       kvkk: 'KVKK 第 5/2-ç 條（法定義務）',
       retention: '外洩事件結案後 5 年 [待律師確認]',
+    },
+    privacyRequests: {
+      purpose: '記錄每項請求都已回覆且準時回覆（客戶自己的紀錄）',
+      data: '姓名、電子郵件（選填）、請求類型、適用法律、日期、狀態、備註、登記人與結案人',
+      subjects: '就其個人資料向客戶公司提出請求的人',
+      basis: '歐盟/英國：第 28 條——以客戶的依據為準。土耳其：代表客戶（受託處理者）。波斯灣地區：受託處理者。其他地區：委託處理。',
+      retention: '請求回覆或拒絕後 3 年 [待律師確認]；未結請求保留至結案；公司被刪除時隨之刪除',
     },
     website: {
       purpose: '營運網站；經同意後衡量網站及我們的廣告成效',

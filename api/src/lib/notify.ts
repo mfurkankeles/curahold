@@ -10,6 +10,7 @@ import { FatalChatError, type ChatMessage } from '../connectors/messaging/types'
 import { defer, nowOf, orgUrl, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { day } from './mappers';
+import { PLANS, type PlanKey } from '../../../shared/src/billing';
 
 export interface NewNotification {
   orgId: string;
@@ -106,7 +107,10 @@ export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'handover', 'handover_owner', 'onboarding_mail']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'webhook_orphaned', 'handover', 'handover_owner', 'onboarding_mail', 'renewal_notice']);
+// Contractual notices (terms §5: the yearly renewal notice): always by e-mail to the person, whatever their channel,
+// mutes or quiet hours, because a notice that only reached a muted chat was never given (billing/renewalNotice.ts).
+const NOTICE_KINDS = new Set(['renewal_notice']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
@@ -291,6 +295,25 @@ export function render(ctx: RenderCtx): ChatMessage {
         url: `${ctx.base}/settings/sources`,
         openLabel: t('notify.open'),
       };
+    case 'webhook_orphaned':
+      // A webhook whose creator left was switched off (lib/webhooks.ts): the admins hear it once, with where to add it again.
+      return {
+        title: t('notify.webhookOrphaned', { url: data.url ?? '' }),
+        body: t('notify.webhookOrphanedBody'),
+        url: `${ctx.base}/settings/developer`,
+        openLabel: t('notify.open'),
+      };
+    case 'renewal_notice': {
+      // The yearly renewal notice (billing/renewalNotice.ts): the date in the reader's language, the way to change or stop it.
+      const date = data.renewsOn ? new Date(`${data.renewsOn}T00:00:00Z`).toLocaleDateString(intlTag(locale), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+      const plan = PLANS[data.plan as PlanKey]?.name ?? String(data.plan ?? '');
+      return {
+        title: t('notify.renewal', { org: ctx.orgName, date }),
+        body: t('notify.renewalBody', { plan, seats: Number(data.seats ?? 0), date }),
+        url: `${ctx.base}/settings/billing`,
+        openLabel: t('notify.open'),
+      };
+    }
     case 'sync_recovered':
       return { title: t('notify.syncRecovered', { app: data.app ?? '' }), body: '', url: `${ctx.base}/settings/sources`, openLabel: t('notify.open') };
     case 'test':
@@ -366,6 +389,12 @@ type Outcome = { via: string; state: 'sent' | 'skipped' | 'held'; notBefore?: Da
 async function sendToPerson(deps: Deps, ctx: Awaited<ReturnType<typeof loadRenderCtx>>): Promise<Outcome> {
   const { n, user } = ctx;
   if (!user || !['active', 'invited'].includes(user.status)) return { via: 'inapp', state: 'skipped' };
+  if (NOTICE_KINDS.has(n.kind)) {
+    const msg = render(ctx);
+    const lines = [msg.body, msg.url].filter(Boolean);
+    await deps.email.send({ to: user.email, subject: msg.title, text: lines.join('\n') });
+    return { via: 'email', state: 'sent' };
+  }
   const prefs = prefsOf(user.prefs);
   const prefKey = PREF_OF_KIND[n.kind];
   if (prefKey && prefs.events[prefKey] === false) return { via: 'inapp', state: 'skipped' };

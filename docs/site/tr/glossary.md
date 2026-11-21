@@ -36,9 +36,9 @@ Bir webhook'un mesajlarının imzalandığı gizli değer (`whsec_…`); webhook
 
 Bir müşterinin altında tutulan her şey: kişi, fırsat, destek kaydı ya da şirketin tanımladığı bir tür. Kayıt türü, kayıtlarının hangi alanları taşıdığını söyler.
 
-## Koltuk
+## Kullanıcı türü
 
-Bir kişinin en başta ne yapabildiği: tam koltuk görür ve değiştirir, izleyici koltuğu yalnızca görür. İzleyicinin oluşturduğu anahtar değişiklik yapamaz.
+Bir kişinin en başta ne yapabildiği: tam kullanıcı görür ve değiştirir, izleyici yalnızca görür. İzleyicinin oluşturduğu anahtar değişiklik yapamaz.
 
 ## Müşteri (account)
 

@@ -148,6 +148,7 @@ export function KeyList({ all = false }: { all?: boolean }) {
             {t('dev.keys.new')}
           </button>
           <a className="btn btn--quiet" href={docsHref(`${locale}/api-keys`)} {...docsLink}>
+            <Icon name="book" size={16} />
             {t('dev.docs')}
           </a>
         </div>
@@ -292,6 +293,7 @@ export function DeveloperTab() {
         </dl>
         <div className="toolbar">
           <a className="btn" href={docsHref(`${locale}/developers`)} {...docsLink}>
+            <Icon name="book" size={16} />
             {t('dev.docs')}
           </a>
           <a
@@ -302,6 +304,7 @@ export function DeveloperTab() {
               navigate('/profile');
             }}
           >
+            <Icon name="key" size={16} />
             {t('dev.api.myKeys')}
           </a>
         </div>
@@ -457,6 +460,7 @@ function InboundTickets() {
           </button>
         )}
         <a className="btn btn--quiet" href={docsHref(`${locale}/connect-your-own-tool`)} {...docsLink}>
+          <Icon name="book" size={16} />
           {t('dev.docs')}
         </a>
       </div>

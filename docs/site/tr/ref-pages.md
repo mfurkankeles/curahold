@@ -19,7 +19,7 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `GET /pages/:id/data` | Sayfanın kartlarının soran kişi için gösterdiği. |
 | `POST /pages/preview` | Sayfa kaydedilmeden önce kartların ne göstereceği. |
 | `POST /pages` | Sayfa ekler. |
-| `POST /pages/from-template` | Hazır bir gösterge panosunu kendi sayfan olarak ekler. |
+| `POST /pages/from-template` | Hazır bir gösterge panosunu kendi sayfanız olarak ekler. |
 | `PATCH /pages/:id` | Sayfayı değiştirir. |
 | `PUT /pages/order` | Sayfaların sırasını belirler. |
 | `DELETE /pages/:id` | Sayfayı çöp kutusuna taşır; orada 30 gün kalır. |
@@ -81,7 +81,7 @@ Sayfa ekler.
 
 ### `POST /pages/from-template`
 
-Hazır bir gösterge panosunu kendi sayfan olarak ekler.
+Hazır bir gösterge panosunu kendi sayfanız olarak ekler.
 
 **Gerekenler:** yetki `org.manage`
 
@@ -168,7 +168,7 @@ Tanımıyla birlikte tek bir kayıtlı rapor.
 
 Rapor kaydeder.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -181,7 +181,7 @@ Rapor kaydeder.
 
 Kayıtlı raporu değiştirir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -194,7 +194,7 @@ Kayıtlı raporu değiştirir.
 
 Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /exports`
 

@@ -5,34 +5,45 @@ import type { HelpLanguage } from '../../../shared/src/i18n';
 import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistReply } from '../../../shared/src/assist';
 import type { Db, Q } from '../db';
-import type { OrgBilling } from '../../../shared/src/billing';
-import { capsForOrgRow } from '../billing/entitlements';
+import { accessOf, type OrgBilling } from '../../../shared/src/billing';
+import { capsForOrg, paidSeats } from '../billing/entitlements';
 import { CACHE_TTL_DAYS, type AssistStore, type Spend } from './core';
+import { AI_CEILING_DEFAULTS, planAiCeilingUsd, type AssistantConfig } from './cost';
 
 const MONTH = `date_trunc('month', now())::date`;
 
 /** Usage, cache and log for one company and person (or the public docs: no company). */
-export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | null; portalUserId?: string | null; surface: string; retentionDays: number; billingOn?: boolean }): AssistStore {
+export function dbStore(
+  db: Db,
+  ctx: { orgId: string | null; userId: string | null; portalUserId?: string | null; surface: string; retentionDays: number; billingOn?: boolean; config?: AssistantConfig },
+): AssistStore {
   const tx = <T>(fn: (q: Q) => Promise<T>) => db.tenant<T>({ orgId: ctx.orgId, userId: ctx.userId }, fn);
   return {
     async usage() {
       return tx(async (q) => {
-        const [g] = await q.query(`select cost_micros from assistant_global where month = ${MONTH}`);
+        const [g] = await q.query(`select cost_micros, public_cost_micros from assistant_global where month = ${MONTH}`);
         const [c] = ctx.orgId ? await q.query(`select cost_micros, model_questions from assistant_usage where org_id = $1 and month = ${MONTH}`, [ctx.orgId]) : [];
-        // The plan's cap on model-answered questions a month (shared/src/plans.json → caps.aiQuestionsPerSeat × full seats).
         const [o] = ctx.orgId ? await q.query<Pick<OrgsRow, 'id' | 'billing' | 'trial_ends_at'>>(`select id, billing, trial_ends_at from orgs where id = $1`, [ctx.orgId]) : [];
-        const questionCap = o ? (await capsForOrgRow(q, o as { id: string; billing: OrgBilling | null; trial_ends_at: unknown }, !!ctx.billingOn, new Date())).aiQuestionsPerMonth : null;
-        return { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0), companyQuestions: Number(c?.model_questions ?? 0), questionCap };
+        const base = { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0) };
+        if (!o) return { ...base, publicMicros: Number(g?.public_cost_micros ?? 0), publicCapUsd: ctx.orgId ? null : (ctx.config?.publicMonthlyUsd ?? AI_CEILING_DEFAULTS.publicMonthlyUsd) };
+        // The plan's caps: model-answered questions (plans.json → caps.aiQuestionsPerSeat × full seats) and money
+        // (cost.ts planAiCeilingUsd: seats paid for × the plan's rate, a trial's fixed amount).
+        const trial = o.trial_ends_at ? new Date(o.trial_ends_at as unknown as string).toISOString() : null;
+        const access = accessOf(!!ctx.billingOn, o.billing as OrgBilling | null, trial, new Date());
+        const caps = await capsForOrg(q, o.id, access);
+        const planCapUsd = planAiCeilingUsd(access, await paidSeats(q, o.id, caps.fullSeats), ctx.config ?? {});
+        return { ...base, companyQuestions: Number(c?.model_questions ?? 0), questionCap: caps.aiQuestionsPerMonth, planCapUsd };
       });
     },
     async record(s: Spend) {
       await tx(async (q) => {
         const m = s.model ? 1 : 0;
         await q.query(
-          `insert into assistant_global (month, questions, model_questions, cost_micros) values (${MONTH}, 1, $1, $2)
+          `insert into assistant_global (month, questions, model_questions, cost_micros, public_cost_micros) values (${MONTH}, 1, $1, $2, $3)
            on conflict (month) do update set questions = assistant_global.questions + 1,
-             model_questions = assistant_global.model_questions + $1, cost_micros = assistant_global.cost_micros + $2`,
-          [m, s.micros],
+             model_questions = assistant_global.model_questions + $1, cost_micros = assistant_global.cost_micros + $2,
+             public_cost_micros = assistant_global.public_cost_micros + $3`,
+          [m, s.micros, ctx.orgId ? 0 : s.micros],
         );
         if (!ctx.orgId) return;
         await q.query(

@@ -26,6 +26,6 @@ Curahold'u Claude, ChatGPT ya da MCP destekleyen başka bir asistana bağladığ
 ## Güvenlik
 
 - Asistan **sizin adınıza** çalışır. Yalnızca sizin görebildiğinizi görür, değiştirebildiğinizi değiştirir. Rol ve alan kurallarınız aynen geçerlidir.
-- İzin verirken "Değişiklik yapmasına da izin ver" kutusunu kapatırsanız asistan yalnızca okur. İzleyici koltuğundaysanız asistan zaten yalnızca okur.
+- İzin verirken "Değişiklik yapmasına da izin ver" kutusunu kapatırsanız asistan yalnızca okur. İzleyiciyseniz asistan zaten yalnızca okur.
 - Bağlantıyı istediğiniz zaman Ayarlarınız → API anahtarları ve bağlı uygulamalar'dan kesebilirsiniz.
 - Asistan kendi Claude ya da ChatGPT planınızla çalışır; Curahold'a ek bir yapay zekâ ücreti yoktur.

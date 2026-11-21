@@ -6,7 +6,7 @@ summary: Curahold ile müşteri şirket arasındaki sözleşme — deneme, planl
 ---
 # Kullanım koşulları (ana abonelik sözleşmesi)
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-19.draft3. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft7. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
 
 Bu koşullar **[Şirket unvanı]**, [merkez adresi], [MERSİS / vergi no.] ("Curahold", "biz") ile Curahold'u kullanan şirket ya da kuruluş ("Müşteri", "siz") arasındaki sözleşmedir. Koşulları kabul eden kişi, kutuyu işaretleyerek Müşteri'yi bağlamaya yetkili olduğunu beyan eder. Kendi kaydolan müşteriler bu koşulları tıklayarak kabul eder; kurumsal müşteriler bu koşullara atıf yapan bir **Sipariş formu** imzalar. **Veri işleme sözleşmesi (VİS)**, **Hizmet düzeyi sözleşmesi (SLA)** ve **Kabul edilebilir kullanım politikası** bu koşulların parçasıdır.
 
@@ -27,15 +27,19 @@ Müşteri, kullanıcılarından, giriş bilgilerinin güvenliğinden ve hesabın
 ## 4. Deneme
 
 - Deneme, deneme formuyla talep edilir ve **onayımızdan sonra açılır**; talebi gerekçe göstermeden reddedebiliriz.
-- Deneme ücretsizdir ve **varsayılan olarak 3 ay** sürer (yazılı olarak farklı bir süre kararlaştırılabilir); **en fazla 25 koltuk** içindir.
+- Deneme ücretsizdir ve **varsayılan olarak 3 ay** sürer (yazılı olarak farklı bir süre kararlaştırılabilir); kayıt sırasında ve Abonelik sayfasında gösterilen **deneme sınırları** (koltuk ve depolama gibi; varsayılan olarak 25 tam koltuk ve tam koltuk başına 1 GB depolama) içinde kullanılır.
 - Deneme bitmeden hatırlatmalar gönderilir. Deneme bittiğinde Müşteri verisi, bir plan seçilene ya da hesap kapatılana kadar **salt okunur ve dışa aktarılabilir** kalır, değiştirilemez (hesap kapanınca 13. madde uygulanır).
 - Deneme süresince Hizmet olduğu gibi sunulur; SLA'daki hizmet kredileri uygulanmaz.
 
 ## 5. Planlar, bedeller ve yenileme
 
-- Ücretli planlar, Sipariş formunda aksi yazmıyorsa **aylık** yenilenir. Müşteri bir planı **herhangi bir ayın sonunda** sonlandırabilir (aylık çıkış hakkı); kanun ya da Sipariş formu gerektirmedikçe ay kısmı için iade yapılmaz.
-- Fiyatları en az **30 gün** önceden bildirerek değiştirebiliriz; değişiklik bildirim süresinin bittiği sonraki dönemden itibaren uygulanır.
-- **Satıcı:** kendi yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den, onun alıcı koşullarına göre yapılır; faturayı Paddle keser ve vergiyi o tahsil eder. Hizmet'i kullanma hakkı, VİS ve SLA Müşteri ile Curahold arasında kalır. Doğrudan faturalanan kurumsal müşteriler Sipariş formu kullanır.
+- Ücretli planlar, ödeme ekranında ya da Sipariş formunda seçildiği gibi **aylık ya da yıllık** faturalanır ve sona erdirilene kadar aynı uzunlukta yeni bir dönem için kendiliğinden yenilenir.
+- **Aylık** plan herhangi bir ayın sonunda sona erdirilebilir (aylık çıkış hakkı). **Yıllık** plan ödenen yıl boyunca sürer: sona erdirmek bir sonraki yenilemeyi durdurur ve plan o yılın sonuna kadar etkin kalır. Yıllık plan yenilenmeden en az [30] gün önce yöneticilere haber veririz.
+- Daha büyük bir plan ya da ek koltuk, dönemin kalanı için kıst olarak hemen faturalanır; daha küçük bir plan ya da daha az koltuk, kıst tutar olarak bir sonraki faturada mahsup edilir.
+- Her plan en az **asgari sayıda tam koltuk** üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla). Bu sayı satın almadan önce Abonelik sayfasında gösterilir; bu sayıya kadar olan tam koltuklar ek ücrete yol açmaz.
+- İadeler **İade politikasına** göre yapılır: başlamış bir dönemin kullanılmayan kısmı iade edilmez; politikada sayılan hâller (2. ve 19. maddeler dahil) ve emredici hukukun gerektirdiği durumlar saklıdır.
+- Fiyatları en az **30 gün** önceden bildirerek değiştirebiliriz; değişiklik bildirim süresinin bittiği sonraki dönemden itibaren uygulanır, yani yıllık plan yenilenene kadar fiyatını korur.
+- **Satıcı:** uygulama üzerinden doğrudan yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den, onun alıcı koşullarına göre yapılır; faturayı Paddle keser ve vergiyi o tahsil eder. Hizmet'i kullanma hakkı, VİS ve SLA Müşteri ile Curahold arasında kalır. Doğrudan faturalanan kurumsal müşteriler Sipariş formu kullanır.
 
 ## 6. Vergiler
 
@@ -66,16 +70,17 @@ Hizmet bize, Müşteri verisi ve kendi materyalleri Müşteri'ye aittir. Müşte
 4. Hizmet'i ya da ondan öğrenilen herhangi bir şeyi rakip bir ürün ya da hizmet geliştirmek, eğitmek ya da iyileştirmek için kullanmak veya Hizmet'i bu amaçla kıyaslamak (benchmark) ya da test etmek;
 5. Hizmet, dokümantasyon ya da web sitelerimiz üzerinde metin ve veri madenciliği yapmak. Bu hakları 2019/790 sayılı (AB) Direktifi'nin 4(3). maddesi ve ilgili ulusal mevzuat uyarınca, makinece okunabilir biçimde de (robots.txt, /.well-known/tdmrep.json adresindeki TDMRep dosyası ve tdm-reservation etiketleri) açıkça saklı tutuyoruz.
 
-Bu madde, Müşteri'nin her zaman dışa aktarabileceği kendi verisini kullanmasını sınırlamaz (13. madde). Bu maddenin ihlali esaslı bir ihlaldir (13. madde); ihlalde kullanılan erişimi askıya alabiliriz.
+Bu madde, Müşteri'nin her zaman dışa aktarabileceği kendi verisini kullanmasını (13. madde) ve bir kullanıcının, yayımladığımız bağlayıcı (MCP) üzerinden bağlayıp kendi yetkileri içinde Müşteri verisiyle çalıştırdığı yapay zekâ asistanını (11. madde) sınırlamaz. Bu maddenin ihlali esaslı bir ihlaldir (13. madde); ihlalde kullanılan erişimi askıya alabiliriz.
 
 ## 10. Bağlanan üçüncü taraf araçlar
 
-Müşteri başka bir araç (CRM, sohbet uygulaması, muhasebe sistemi) bağladığında veri, Müşteri'nin talimatıyla ve Müşteri'nin o aracın sağlayıcısıyla yaptığı kendi sözleşmesine göre aktarılır. Bu sağlayıcılar alt işleyenimiz değildir ve onlardan sorumlu değiliz.
+Müşteri başka bir araç (CRM, sohbet uygulaması, muhasebe sistemi ya da bağlayıcımız üzerinden bir yapay zekâ asistanı) bağladığında veri, Müşteri'nin talimatıyla ve Müşteri'nin o aracın sağlayıcısıyla yaptığı kendi sözleşmesine göre aktarılır. Bu sağlayıcılar alt işleyenimiz değildir ve onlardan sorumlu değiliz.
 
 ## 11. Yapay zekâ özellikleri
 
 - Yapay zekâ özellikleri her şirket için bir yönetici tarafından açılıp kapatılabilir. Model sağlayıcısına yalnızca yanıt için gereken en az veri gönderilir; sağlayıcı, bölgesi ve saklama süresiyle Alt işleyenler sayfasında yazılıdır.
-- **Müşteri verisi, sorular ve yanıtlar ne bizim ne de model sağlayıcılarımızın yapay zekâ modellerini eğitmesinde kullanılmaz**; sağlayıcılarımız bununla yazılı olarak bağlıdır.
+- Sağladığımız yapay zekâ özelliklerinde **Müşteri verisi, sorular ve yanıtlar ne bizim ne de model sağlayıcılarımızın yapay zekâ modellerini eğitmesinde kullanılmaz**; sağlayıcılarımız bununla yazılı olarak bağlıdır.
+- **Bir kullanıcının bağlayıcımız (MCP) üzerinden bağladığı yapay zekâ asistanı** o kullanıcı olarak çalışır, yalnızca kullanıcının görebildiğini görür ve veriyi yalnızca kullanıcı değişikliğe izin verdiyse değiştirir. Bu, yapay zekâ özelliklerimizden biri değil, 10. madde kapsamında bağlı bir araçtır: ne aldığı, ne kadar saklandığı ve eğitimde kullanılıp kullanılmadığı Müşteri'nin ya da kullanıcının o yapay zekâ şirketiyle yaptığı sözleşmeye tabidir.
 - Yapay zekâ çıktısı hatalı olabilir; kararı bir insan verir. Hizmet, bir kişi hakkında hukuki ya da benzeri önemli sonuç doğuran bir kararı yalnızca yapay zekâyla almaz. Kişiler bir yapay zekâyla konuştuklarında bunu bilir.
 - Müşteri girdileri ve aldığı çıktılar üzerindeki haklarını korur.
 - Türkiye: yurt dışında barındırılan bir yapay zekâ sistemi KVKK m. 9 kapsamında yurt dışına aktarımdır; yalnızca açık rızayla değil, VİS'teki güvencelerle karşılanır.
@@ -105,11 +110,11 @@ Hizmet'in üçüncü kişilerin fikrî mülkiyet haklarını ihlal ettiği iddia
 - Her tarafın toplam sorumluluğu, olaydan önceki **12 ayda** ödenen ya da ödenecek bedelle sınırlıdır. Kişisel verilerin korunması ve gizlilik yükümlülüklerinin ihlalinde sınır bu tutarın **[2–3] katıdır**.
 - Bu sınırlar hile, kast, **kanunen sorumluluğu kaldırılamayan ağır ihmal** (TBK m. 115), ölüm ya da bedensel zarar, Müşteri'nin bedel ödeme borcu ve 15. maddedeki tazmin yükümlülükleri için uygulanmaz [avukat: fikrî mülkiyet tazmini için ayrı sınır?].
 - Erişilebilirlik hedefinin tutturulamamasında tek çare hizmet kredileridir (SLA).
-- Not (avukat): genel işlem koşulları tacirler arasında da denetlenir; olağan dışı hükümler kabul kutusunun yanında ayrıca özetlenir (TBK m. 20–25).
+- Bu koşulların olağan dışı hükümleri, kabul kutusunun yanında ayrıca özetlenir (TBK m. 20–25).
 
 ## 17. Yaptırımlar, ihracat kontrolü ve yolsuzlukla mücadele
 
-Müşteri Hizmet'i kapsamlı yaptırım altındaki bir ülke ya da bölgeden veya oradaki kişiler için, ya da bir yaptırım listesindeki herhangi biri için kullanmaz. İran politika gereği hariçtir. Taraflar kendilerine uygulanan yolsuzlukla mücadele mevzuatına uyar.
+Müşteri Hizmet'i kapsamlı yaptırım altındaki bir ülke ya da bölgeden veya oradaki kişiler için, ya da bir yaptırım listesindeki herhangi biri için kullanmaz. Curahold İran'da sunulmaz: deneme formu, kayıt ve ödeme adımı İran'ı reddeder; diğer ülke ve kişiler için Müşteri'nin bu taahhüdüne dayanırız. Taraflar kendilerine uygulanan yolsuzlukla mücadele mevzuatına uyar.
 
 ## 18. Tanıtım
 

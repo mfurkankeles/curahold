@@ -43,7 +43,10 @@ export function depsFor(me: Me, locale: Locale, words: { one: string; other: str
     docs: () =>
       (loaded[locale] ??= fetch(docsFile(`${locale}/answers.json`))
         .then((r) => {
-          if (!r.ok) throw new Error(String(r.status));
+          if (!r.ok) {
+            void r.body?.cancel().catch(() => undefined); // an unread answer (a 404 for a language's docs) would keep its connection open
+            throw new Error(String(r.status));
+          }
           return r.json() as Promise<DocSection[]>;
         })
         .then(prepare)),

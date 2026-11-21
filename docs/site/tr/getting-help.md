@@ -107,9 +107,9 @@ Kurumun kendi çalışanlarına bunu bir gizlilik bildiriminde anlatması gereki
 
 Aynı kartta:
 
-- **Aylık sınır (USD)**: dolunca CuraAI ay sonuna kadar belge aramasıyla cevap verir. Kart bu ayki soruları ve maliyetlerini gösterir.
+- **Aylık sınır (USD)**: dolunca CuraAI ay sonuna kadar belge aramasıyla cevap verir. Kart bu ayki soruları ve maliyetlerini gösterir. Ayarlayabileceğiniz en yüksek tutar planınıza ve tam kullanıcı sayınıza göre belirlenir, deneme süresince sabittir; kart bunu gösterir.
 - **Soruları saklama süresi**: soruların ne kadar saklanacağı (ya da hiç saklanmayacağı). Bir kişinin kendi soruları kişisel veri indirmesinde yer alır.
-- **Destek taleplerimize ilk cevap taslağı yaz**: Curahold desteği taleplerinize taslak bir ilk cevap görür; siz taslağı hiç görmezsiniz, yalnızca desteğin gerçek cevabını görürsünüz.
+- **Destek taleplerimize ilk cevap taslağı yaz**: Curahold desteği taleplerinize taslak bir ilk cevap görür; siz taslağı hiç görmezsiniz, yalnızca desteğin gerçek cevabını görürsünüz. Taslak yalnızca CuraAI bilgilendirmesini kabul etmiş kişilerin taleplerine yazılır; diğer talepler desteğe taslaksız ulaşır ve içerikleri yapay zekâ sağlayıcısına gönderilmez.
 
 Kart, bu kurulumda yapay zekâ ile cevabın kurulmadığını söylüyorsa CuraAI belge aramasını kullanır; yapay zekâ anahtarını Curahold sunucunu çalıştıran kişi ekler.
 

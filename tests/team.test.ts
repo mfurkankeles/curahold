@@ -97,7 +97,8 @@ describe('the org chart', () => {
     const ids = new Set(ORG_CHART.map((s) => s.seat));
     expect(ids.size).toBe(ORG_CHART.length);
     expect(new Set(ORG_CHART.map((s) => s.name)).size).toBe(ORG_CHART.length);
-    expect(ORG_CHART.find((s) => s.seat === 'cpo')!.name).toBe('Gülco');
+    // No real person's name or nickname in the public org chart: names are invented (orgChart.ts header; tests/leak.test.ts guards it).
+    expect(ORG_CHART.find((s) => s.seat === 'cpo')!.name).toBe('Öykü');
     for (const s of ORG_CHART) {
       expect(s.reportsTo === null || ids.has(s.reportsTo), s.seat).toBe(true);
       expect(LADDER).toContain(s.level);
@@ -109,8 +110,8 @@ describe('the org chart', () => {
       // A seat may review a kind only where separation of duties names it.
       for (const k of s.card.reviews ?? []) if (isExternal(k)) expect(NEEDS_REVIEW[k]?.reviewers, `${s.seat} reviews ${k}`).toContain(s.seat);
     }
-    // Only the CPO has a private tone, and the dormant seats cost nothing on a schedule.
-    expect(ORG_CHART.filter((s) => s.card.privateTone).map((s) => s.seat)).toEqual(['cpo']);
+    // No built-in seat carries a private tone (only the owner's stored card may), and the dormant seats cost nothing on a schedule.
+    expect(ORG_CHART.filter((s) => s.card.privateTone).map((s) => s.seat)).toEqual([]);
     for (const s of ORG_CHART.filter((x) => x.state === 'dormant')) expect(weeklyEstimate(s.seat).wakes).toBe(0);
   });
 
@@ -308,15 +309,21 @@ describe('memory and chat history', () => {
     expect(JSON.stringify(last.messages[0].content)).toContain('Earlier in this conversation');
   });
 
-  it('Gülco’s warm tone is in the owner’s private chat only', async () => {
+  it('a private tone the owner stored for the CPO is in his private chat only', async () => {
     const t = (await owner.req('POST', '/team/seats/cpo/threads')).json.thread.id;
+    // Built in, the seat has none: the owner's chat gets the professional tone.
     await owner.req('POST', `/team/threads/${t}/messages`, { text: 'Yol haritası?' });
-    expect(model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n')).toContain('canım');
+    expect(model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n')).toContain('Tone: professional and warm, concise.');
+    // The owner's own data, in the stored card only (tests/private-tone.test.ts keeps it out of the code).
+    const TONE = 'Short and cheerful, in Turkish.';
+    await env.db.system((q) => q.query(`update seats set card = card || jsonb_build_object('privateTone', $1::text) where seat = 'cpo'`, [TONE]));
+    await owner.req('POST', `/team/threads/${t}/messages`, { text: 'Peki sonra?' });
+    expect(model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n')).toContain(`Private chat with the CEO: ${TONE}`);
     await activate('cpo');
     const n = model.calls.length;
     await owner.req('POST', '/team/seats/cpo/wake', { force: true });
     const wakeCall = model.calls.slice(n)[0];
-    expect(wakeCall.system.map((b) => b.text).join('\n')).not.toContain('canım');
+    expect(wakeCall.system.map((b) => b.text).join('\n')).not.toContain(TONE);
   });
 });
 

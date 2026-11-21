@@ -157,7 +157,8 @@ interface Db {
 | --- | --- | --- | --- |
 | `db.tenant({orgId, userId, locale, today}, fn)` | `set local role curahold_app` | `app.org_id`, `app.user_id`, `app.locale`, `app.today` (via `set_config(..., true)`, transaction-local) | **Row-level security**: every policy is written against `app_org()` / `app_user()` (and `app_has_perm(...)`). A query for another company's rows returns nothing and a write is rejected, whatever the SQL says. |
 | `db.portal({orgId, portalUserId}, fn)` | `set local role curahold_portal` | `app.org_id`, `app.portal_user` | The role has **no table privileges at all**; it can only call `portal_*` `SECURITY DEFINER` functions, each of which filters on `app_org()` and the portal person. |
-| `db.system(fn)` | The **owner / connecting user** (no `set role`) | nothing | **Nothing.** RLS is not applied (no table uses `FORCE ROW LEVEL SECURITY`, so the owner bypasses it). |
+| `db.system(fn)` | `set local role curahold_system` (migration 0254) | nothing | Its own policy (`curahold_system_all`) opens **every company's rows**: the query must name `org_id` itself. It owns nothing, so it cannot alter tables, policies or triggers. |
+| `db.owner(fn)` | The connecting user (the table owner) | nothing | Migrations only (`db/migrate.ts`); `tests/rls.test.ts` fails if `api/src` uses it elsewhere. |
 
 All request routes go through `run(c, ...)` in `context.ts`, which opens `db.tenant(...)` with the authenticated
 person. A route handler never receives a raw connection.
@@ -197,12 +198,12 @@ Because `system()` bypasses RLS, **correctness of every `system()` query is enti
 
 ### 4.4 Known deployment requirement
 
-The migrations grant `curahold_app` / `curahold_portal` to the user that ran them, and the API connects as that
-same user so that `system()` works. The role separation that would make this fully robust (`FORCE ROW LEVEL
-SECURITY` plus a login role that does not own the tables) is a **deployment concern, not schema**, and is tracked in
-[SECURITY.md](SECURITY.md#known-operational-requirements). A bug that runs raw SQL as the connecting user, or an
-SQL injection that issues `reset role`, would not be stopped by RLS today. Treat that as the reason `system()` review
-is strict and why parameterised queries are mandatory.
+Since migration 0254 (ADR 0023) every table with row security forces it and `system()` runs as `curahold_system`,
+which owns nothing. The migrations grant the three working roles to the user that ran them, so one login still works;
+in production the API should connect as a login that owns nothing (`db/ops/role-separation.sql`) and only
+`MIGRATION_DATABASE_URL` should hold the owner — tracked in [SECURITY.md](SECURITY.md#known-operational-requirements).
+An SQL injection that issues `set role curahold_system` would still read every company, which is why `system()` review
+is strict and parameterised queries are mandatory.
 
 ## 5. Authentication and sessions
 
@@ -241,7 +242,7 @@ These rules come from QUALITY.md ("Güvenilirlik", reliability). Most are implem
 | Guarantee | Mechanism |
 | --- | --- |
 | No lost concurrent edits | Tasks carry a `version`; edits to different fields merge, the same field conflicting returns a "changed just now" answer with undo (`shared/src/merge.ts`). Extending version checks to customers and records is on the QUALITY.md list. |
-| A repeated request does its work once | `Idempotency-Key` header; the key is written in the request's **first transaction**, answer stored on it, a retry gets the first answer (`lib/repeats.ts`). Keys purge after 2 days. |
+| A repeated request does its work once | `Idempotency-Key` header; the key is written in the request's **first transaction**, answer stored on it, a retry gets the first answer (`lib/repeats.ts`), except an answer with a secret in it (a new key, codes, a secret link), of which only the status is kept. Keys purge after a day. |
 | Side effects never lost or doubled | Notifications, chat messages, emails and webhooks are written to an **outbox** (`notifications`, `webhook_events`) **in the same transaction** as the change, with a `dedupe_key`; delivery happens after the response (`defer`) and is retried hourly (`lib/notify.ts`, `lib/webhooks.ts`). |
 | Offline edits survive | **Planned, not built yet**: queue writes while offline and replay them with the same idempotency keys (the keys already make that safe). Today an offline write shows an "offline" error. |
 | Nothing is deleted for good immediately | `trash*` keep deleted rows 30 days; imports are undoable for 30 days. |

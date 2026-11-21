@@ -91,6 +91,8 @@ const TOOLS: Tool[] = [
     inputSchema: obj({ id: str('An id from search, e.g. account:5f0…') }, ['id']),
     run: async (api, a, { base }) => {
       const [kind, id] = String(a.id).split(':');
+      // The id goes into an API address: only a real id, never a path the model made up (security audit L10).
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id ?? '')) throw new ToolError('Use an id from search, e.g. account:5f0c2b1e-….');
       if (kind === 'account') {
         const r = await api('GET', `/api/accounts/${id}`);
         const [contacts, tickets, timeline, health] = await Promise.all([

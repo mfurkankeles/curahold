@@ -132,11 +132,12 @@ is in `scripts/quality/cost.inputs.json` with its source or "assumption".
 1. **Billing is one path now, but untested against live Paddle.** ADR 0019 (Accepted): `api/src/billing` + the subscriptions
    table, both webhook addresses on one handler. Before live keys run one sandbox purchase, renewal, failed payment and
    cancellation end to end, and mirror `shared/src/plans.json` prices in Paddle.
-2. **Row security can be bypassed by the login role.** The API connects as the user that owns the tables and no table
-   uses `FORCE ROW LEVEL SECURITY`; a raw query or an injected `reset role` would see every company. The fix is a
-   deployment step (`db/ops/role-separation.sql`, `db/OPS-SECURITY.md` P1): do it before the first customer.
-3. **`db.system()` code is unguarded by the database.** Scheduler, sync engine, webhooks and the console run with owner
-   access; correctness rests on every statement naming `org_id`. `tests/rls.test.ts` checks a baseline that may only
+2. **The production login still needs splitting.** Since migration 0254 (ADR 0023) every table forces row security and
+   `db.system()` runs as `curahold_system`, which owns nothing. What is left is deployment: the Worker's login should be
+   a separate login that owns nothing (`db/ops/role-separation.sql`, `MIGRATION_DATABASE_URL` for the owner). Until
+   then an injected `reset role` on the one login would reach the owner. Do it before the first customer.
+3. **`db.system()` code is guarded by discipline, not by company.** Scheduler, sync engine, webhooks and the console run
+   as `curahold_system` (rows of every company, no schema rights); correctness rests on every statement naming `org_id`. `tests/rls.test.ts` checks a baseline that may only
    shrink. Review every new `system()` call.
 4. **Backups are scripted but not yet rehearsed against production.** `scripts/backup/` makes an encrypted dump with a
    manifest and restores it with checks (a timed drill exists); point-in-time recovery is off until the first paying

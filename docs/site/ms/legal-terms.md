@@ -6,7 +6,7 @@ summary: Perjanjian antara Curahold dan syarikat pelanggan — percubaan, pelan,
 ---
 # Terma perkhidmatan (perjanjian langganan induk)
 
-> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-19.draft3. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
+> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft7. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
 
 Terma ini ialah perjanjian antara **[Nama sah syarikat]**, [alamat berdaftar], [nombor pendaftaran / cukai] ("Curahold", "kami") dan syarikat atau organisasi yang menggunakan Curahold ("Pelanggan", "anda"). Orang yang menerimanya mengesahkan, dengan menanda kotak, bahawa dia diberi kuasa untuk mengikat Pelanggan. Pelanggan layan diri menerima terma ini dengan satu klik; pelanggan perusahaan menandatangani **Borang pesanan** yang merujuk kepadanya. **Perjanjian pemprosesan data**, **Perjanjian tahap perkhidmatan** dan **Dasar penggunaan yang boleh diterima** ialah sebahagian daripada terma ini.
 
@@ -27,14 +27,18 @@ Pelanggan bertanggungjawab ke atas penggunanya, menjaga keselamatan butiran log 
 ## 4. Percubaan
 
 - Percubaan diminta melalui borang percubaan dan **dibuka selepas kelulusan kami**; kami boleh menolak permintaan tanpa memberikan sebab.
-- Percubaan adalah percuma dan berlangsung **3 bulan secara lalai** (kami boleh bersetuju secara bertulis tentang tempoh yang berbeza), untuk **sehingga 25 tempat duduk**.
+- Percubaan adalah percuma dan berlangsung **3 bulan secara lalai** (kami boleh bersetuju secara bertulis tentang tempoh yang berbeza), dalam **had percubaan** (seperti tempat duduk dan storan; secara lalai 25 tempat duduk penuh dan 1 GB storan bagi setiap tempat duduk penuh) yang ditunjukkan semasa pendaftaran dan di halaman Pengebilan.
 - Peringatan dihantar sebelum percubaan tamat. Apabila tamat, data Pelanggan kekal tersedia **untuk dibaca sahaja dan boleh dieksport**, tetapi tidak boleh diubah, sehingga pelan dipilih atau akaun ditutup (data kemudiannya dikendalikan di bawah seksyen 13).
 - Semasa percubaan, Perkhidmatan disediakan seadanya; kredit perkhidmatan SLA tidak terpakai.
 
 ## 5. Pelan, yuran dan pembaharuan
 
-- Pelan berbayar diperbaharui **setiap bulan** melainkan Borang pesanan menyatakan sebaliknya. Pelanggan boleh menamatkan pelan **pada akhir mana-mana bulan** (hak keluar bulanan); tiada bayaran balik bagi sebahagian bulan melainkan undang-undang atau Borang pesanan menghendakinya.
-- Kami boleh mengubah harga dengan notis sekurang-kurangnya **30 hari**; perubahan terpakai mulai tempoh berikutnya selepas notis tamat.
+- Pelan berbayar dibilkan **setiap bulan atau setiap tahun**, seperti yang dipilih semasa pembayaran atau dalam Borang pesanan, dan diperbaharui secara automatik bagi tempoh lain yang sama panjang sehingga ditamatkan.
+- Pelan **bulanan** boleh ditamatkan pada akhir mana-mana bulan (hak keluar bulanan). Pelan **tahunan** berjalan sepanjang tahun yang telah dibayar: menamatkannya menghentikan pembaharuan seterusnya, dan pelan kekal aktif sehingga tahun itu berakhir. Kami memaklumkan pentadbir sekurang-kurangnya [30] hari sebelum pelan tahunan diperbaharui.
+- Pelan yang lebih besar atau lebih banyak tempat duduk dibilkan serta-merta, secara pro rata bagi baki tempoh; pelan yang lebih kecil atau kurang tempat duduk dikreditkan secara pro rata pada bil seterusnya.
+- Setiap pelan dibilkan untuk sekurang-kurangnya **bilangan minimum tempat duduk penuh** (biasanya 3; lebih di sesetengah rantau dan untuk bil tahunan). Halaman Pengebilan menunjukkan bilangan itu sebelum pembelian, dan tempat duduk penuh sehingga bilangan itu tidak dikenakan kos tambahan.
+- Bayaran balik mengikut **Dasar bayaran balik**: bahagian yang tidak digunakan bagi tempoh yang telah bermula tidak dibayar balik, kecuali dalam kes yang disenaraikan dasar itu (termasuk seksyen 2 dan 19) atau apabila undang-undang mandatori menghendakinya.
+- Kami boleh mengubah harga dengan notis sekurang-kurangnya **30 hari**; perubahan terpakai mulai tempoh berikutnya selepas notis tamat, jadi pelan tahunan mengekalkan harganya sehingga diperbaharui.
 - **Penjual semula:** pembelian layan diri dibuat daripada penjual semula dan pedagang rekod kami, Paddle.com Market Ltd, di bawah terma pembelinya; Paddle mengeluarkan invois dan memungut cukai. Hak untuk menggunakan Perkhidmatan, DPA dan SLA kekal antara Pelanggan dan Curahold. Pelanggan perusahaan yang diinvois terus menggunakan Borang pesanan.
 
 ## 6. Cukai
@@ -66,16 +70,17 @@ Kami memiliki Perkhidmatan; Pelanggan memiliki datanya dan bahannya sendiri. Pel
 4. menggunakan Perkhidmatan, atau apa sahaja yang dipelajari daripadanya, untuk membina, melatih atau menambah baik produk atau perkhidmatan yang bersaing, atau menanda aras atau menguji Perkhidmatan untuk tujuan itu;
 5. menjalankan perlombongan teks dan data ke atas Perkhidmatan, dokumentasi atau laman web kami. Kami secara nyata merizabkan hak ini di bawah Perkara 4(3) Arahan (EU) 2019/790 dan undang-undang kebangsaan yang sepadan, juga dalam bentuk yang boleh dibaca mesin (robots.txt, fail TDMRep di /.well-known/tdmrep.json dan tag tdm-reservation).
 
-Ini tidak mengehadkan penggunaan Pelanggan terhadap datanya sendiri, yang boleh dieksportnya pada bila-bila masa (seksyen 13). Pelanggaran seksyen ini ialah pelanggaran material (seksyen 13), dan kami boleh menggantung akses yang digunakan untuknya.
+Seksyen ini tidak mengehadkan penggunaan Pelanggan terhadap datanya sendiri, yang boleh dieksportnya pada bila-bila masa (seksyen 13), dan tidak juga pembantu AI yang disambungkan pengguna melalui penyambung yang kami terbitkan (MCP) untuk bekerja dengan data Pelanggan dalam kebenaran pengguna itu (seksyen 11). Pelanggaran seksyen ini ialah pelanggaran material (seksyen 13), dan kami boleh menggantung akses yang digunakan untuknya.
 
 ## 10. Alat pihak ketiga yang disambungkan
 
-Apabila Pelanggan menyambungkan alat lain (CRM, aplikasi sembang, sistem perakaunan), data bergerak antara keduanya atas arahan Pelanggan dan di bawah perjanjian Pelanggan sendiri dengan pembekal alat tersebut. Pembekal itu bukan subpemproses kami dan kami tidak bertanggungjawab ke atas mereka.
+Apabila Pelanggan menyambungkan alat lain (CRM, aplikasi sembang, sistem perakaunan, atau pembantu AI melalui penyambung kami), data bergerak antara keduanya atas arahan Pelanggan dan di bawah perjanjian Pelanggan sendiri dengan pembekal alat tersebut. Pembekal itu bukan subpemproses kami dan kami tidak bertanggungjawab ke atas mereka.
 
 ## 11. Ciri AI
 
 - Ciri AI boleh dihidupkan atau dimatikan bagi setiap syarikat oleh pentadbir. Hanya data minimum yang diperlukan untuk jawapan dihantar kepada pembekal model AI, yang disenaraikan di halaman Subpemproses bersama rantau dan tempoh simpanannya.
-- **Data Pelanggan, gesaan dan output tidak digunakan untuk melatih model AI**, oleh kami atau oleh pembekal model kami; pembekal kami terikat dengan perkara ini secara bertulis.
+- Dalam ciri AI yang kami sediakan, **Data Pelanggan, gesaan dan output tidak digunakan untuk melatih model AI**, oleh kami atau oleh pembekal model kami; pembekal kami terikat dengan perkara ini secara bertulis.
+- **Pembantu AI yang disambungkan pengguna melalui penyambung kami (MCP)** bekerja sebagai pengguna itu, hanya melihat apa yang boleh dilihat pengguna dan mengubah data hanya jika pengguna membenarkan perubahan. Ia ialah alat yang disambungkan di bawah seksyen 10, bukan salah satu ciri AI kami: apa yang diterimanya, berapa lama ia disimpan dan sama ada ia digunakan untuk latihan tertakluk pada perjanjian Pelanggan atau pengguna dengan syarikat AI itu.
 - Output AI boleh salah; seorang manusia membuat keputusan. Perkhidmatan tidak membuat keputusan yang mempunyai kesan undang-undang atau kesan penting yang serupa ke atas seseorang melalui AI semata-mata. Orang dimaklumkan apabila mereka bercakap dengan AI.
 - Pelanggan mengekalkan haknya ke atas inputnya dan ke atas output yang diterimanya.
 - Türkiye: sistem AI yang dihoskan di luar negara ialah pemindahan di bawah Perkara 9 KVKK; ia dilindungi oleh perlindungan dalam DPA, bukan oleh persetujuan semata-mata.
@@ -108,7 +113,7 @@ Kami mempertahankan Pelanggan terhadap tuntutan pihak ketiga bahawa Perkhidmatan
 
 ## 17. Sekatan, kawalan eksport dan antirasuah
 
-Pelanggan tidak akan menggunakan Perkhidmatan dari, atau untuk orang di, negara atau wilayah di bawah sekatan menyeluruh, mahupun untuk sesiapa dalam senarai sekatan. Iran dikecualikan mengikut dasar. Setiap pihak mematuhi undang-undang antirasuah yang terpakai kepadanya.
+Pelanggan tidak akan menggunakan Perkhidmatan dari, atau untuk orang di, negara atau wilayah di bawah sekatan menyeluruh, mahupun untuk sesiapa dalam senarai sekatan. Curahold tidak ditawarkan di Iran: borang percubaan, pendaftaran dan pembayaran menolaknya; bagi negara dan orang lain kami bergantung pada janji Pelanggan ini. Setiap pihak mematuhi undang-undang antirasuah yang terpakai kepadanya.
 
 ## 18. Publisiti
 
@@ -125,7 +130,7 @@ Kami tidak akan menggunakan nama atau logo Pelanggan tanpa persetujuan bertulisn
 
 - **Keterangan:** pihak-pihak bersetuju bahawa log dan rekod elektronik Perkhidmatan, termasuk rekod penerimaan dengan klik (siapa, bila, versi mana, dari negara mana), ialah keterangan yang sah (bagi Türkiye, HMK perkara 193).
 - **Notis:** kepada Pelanggan di alamat e-mel pentadbirnya; kepada kami di [e-mel undang-undang]. Notis rasmi tentang keingkaran atau penamatan antara pedagang Turki diberikan melalui notari, mel berdaftar atau KEP (TTK perkara 18/3).
-- **Undang-undang yang mentadbir dan pertikaian:** [lalai mengikut entiti yang berkontrak — kajian §2.9]. Bagi Pelanggan yang ditubuhkan di Türkiye: undang-undang Turki; mahkamah dan pejabat penguatkuasaan **Istanbul (Çağlayan)**; teks bahasa Turki diguna pakai. [Rantau lain: undang-undang Inggeris dan mahkamah London/LCIA; mahkamah DIFC/ADGM atau DIAC bagi Teluk; undang-undang Singapura dan SIAC bagi Timur Jauh — peguam untuk meluluskan terlebih dahulu.]
+- **Undang-undang yang mentadbir dan pertikaian:** [lalai mengikut entiti yang berkontrak]. Bagi Pelanggan yang ditubuhkan di Türkiye: undang-undang Turki; mahkamah dan pejabat penguatkuasaan **Istanbul (Çağlayan)**; teks bahasa Turki diguna pakai. [Rantau lain: undang-undang Inggeris dan mahkamah London/LCIA; mahkamah DIFC/ADGM atau DIAC bagi Teluk; undang-undang Singapura dan SIAC bagi Timur Jauh — peguam untuk meluluskan terlebih dahulu.]
 - **Bahasa:** perjanjian ini dibuat dalam bahasa Inggeris dan bahasa Turki; antara syarikat Turki, teks bahasa Turki terpakai (Undang-undang 805).
 - Penyerahhakan hanya dengan persetujuan, kecuali kepada pengganti seluruh perniagaan; force majeure; jika sesuatu fasal tidak sah, yang selebihnya kekal; ini ialah keseluruhan perjanjian tentang perkaranya.
 

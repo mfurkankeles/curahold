@@ -25,8 +25,11 @@ export const DEPTS: DeptKey[] = ['inside', 'sales', 'onboarding', 'success', 'pr
 export const CHAIN: DeptKey[] = ['inside', 'sales', 'onboarding', 'success'];
 export const OPTIONAL_DEPTS = new Set<DeptKey>(['onboarding']);
 export const FEATURES: FeatureKey[] = ['health', 'meetings', 'sprints', 'portal', 'renewals', 'assistant', 'reports', 'sync'];
-/** What is not shipped yet carries the "Coming soon" label wherever it appears. */
-export const SOON_DEPTS = new Set<DeptKey>(['finance']);
+/**
+ * What is not shipped yet carries the "Coming soon" label wherever it appears. Empty: the finance pages speak only
+ * of what finance has today (contract value, renewals, cost to serve), not of the unshipped accounting connectors.
+ */
+export const SOON_DEPTS = new Set<DeptKey>([]);
 export const PAGE = {
   why: 'why/', about: 'about/', pricing: 'pricing/', faq: 'faq/', trust: 'trust/', integrations: 'integrations/', solutions: 'solutions/',
   dept: (k: DeptKey) => `teams/${DEPT_SLUG[k]}/`,
@@ -36,22 +39,29 @@ export const PAGE = {
 
 /**
  * The integrations, by group, with the names as each vendor writes them (never
- * translated). Only connectors the product has; `soon` groups are built but not
- * yet published, and are labelled so.
+ * translated). Only connectors that are shipped and usable today; `soon` stays for the
+ * renderers but no group uses it (no public "Coming soon" claims). Groups whose tools compete with Curahold
+ * (CRM, support desks, engineering trackers) carry no brand names on the public
+ * site (MASTER rule 9, legal audit #32): the menu and the page show the group's
+ * own sentence instead. Mail lists no mailbox brands, because the site promises
+ * only the e-mail digest there (claim #30). Owner question: whether integration
+ * partners may be named on the integrations page alone.
  */
 export const INTEGRATION_GROUPS: { key: IntegrationGroup; names: string[]; soon?: boolean }[] = [
-  { key: 'crm', names: ['Salesforce', 'HubSpot', 'Dynamics 365', 'Pipedrive', 'Zoho CRM', 'Bitrix24', 'Freshsales', 'Zendesk Sell'] },
+  { key: 'crm', names: [] },
   { key: 'chat', names: ['Slack', 'Microsoft Teams', 'Google Chat'] },
-  { key: 'support', names: ['Zendesk', 'Freshdesk', 'Intercom', 'Jira Service Management', 'Front'] },
-  { key: 'mail', names: ['Gmail', 'Outlook'] },
+  { key: 'support', names: [] },
+  { key: 'mail', names: [] },
   { key: 'sheets', names: ['Google Sheets', 'Excel'] },
   { key: 'data', names: ['Google BigQuery', 'Snowflake', 'Segment'] },
-  { key: 'dev', names: ['Jira'] },
+  { key: 'dev', names: [] },
   { key: 'ai', names: ['Claude', 'ChatGPT'] },
   { key: 'signin', names: ['Google', 'Microsoft', 'SAML 2.0', 'OpenID Connect', 'SCIM'] },
   { key: 'api', names: ['REST API', 'Webhooks'] },
-  { key: 'automation', names: ['Zapier', 'Make'], soon: true },
-  { key: 'accounting', names: [], soon: true },
+  // No accounting group and no automation-platform group: neither is shipped (the accounting connectors are
+  // not built; the Zapier and Make apps are built but not published in those vendors' directories). Claims
+  // list B #20 and CLAUDE.md allow public claims only about shipped features, so a "Coming soon" entry is
+  // not allowed either. Add each group back, with its copy in every language, once it is live.
 ];
 
 // Small line glyphs, drawn for Curahold (16 × 16, currentColor).
@@ -281,6 +291,6 @@ export function flowHtml(locale: SiteLocale, current?: DeptKey): string {
   <ol class="fl__chain">${CHAIN.map(chip).join('')}</ol>
   <ul class="fl__under">${DEPTS.filter((k) => !CHAIN.includes(k)).map(chip).join('')}</ul>
   <p class="fl__note">${esc(c.nav.flowNote)}</p>
-  <p class="fl__soon"><span class="hx__soon">${esc(c.nav.soon)}</span><b>${esc(sh)}</b> ${esc(sp)}</p>
+  <p class="fl__soon"><b>${esc(sh)}</b> ${esc(sp)}</p>
 </div>`;
 }

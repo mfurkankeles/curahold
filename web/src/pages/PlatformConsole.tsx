@@ -285,6 +285,7 @@ export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | 
   return (
     <EmptyState icon="external" title={t('console.elsewhere.title')} body={t('console.elsewhere.body', { host: new URL(access.consoleUrl).host })}>
       <a className="btn btn--primary" href={access.consoleUrl}>
+        <Icon name="arrowRight" size={16} />
         {t('console.open' as MessageKey)}
       </a>
     </EmptyState>

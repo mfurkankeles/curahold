@@ -9,7 +9,7 @@ import { runInNewContext } from 'node:vm';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LOCALES } from '../shared/src/i18n/core';
 import { compare, outputs, scan } from '../scripts/compliance/inventory';
-import { consentBundle } from '../scripts/compliance/build-consent';
+import { consentBundle, siteTextHashes } from '../scripts/compliance/build-consent';
 import { PURPOSES, STORAGE } from '../shared/src/compliance/storage';
 import { COOKIE_PAGE } from '../shared/src/compliance/cookieText';
 import { CONSENT_POLICY_VERSION } from '../shared/src/consent/core';
@@ -23,6 +23,7 @@ import { login, setup, type Env } from './helpers';
 import { shownTextHash } from '../api/src/routes/consent';
 import { bannerText, sha256Hex } from '../shared/src/consent/core';
 import { CONSENT_STRINGS } from '../shared/src/consent/strings';
+import { siteConsent } from '../site/content';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -216,6 +217,7 @@ const ids = { ga4: 'G-TEST', meta: '100000000000000', tiktok: 'CABCDEF0123456789
 describe('site/consent.js (the shared library, bundled)', () => {
   it('is the current build of shared/src/consent (run build-consent.ts)', () => {
     expect(readFileSync(join(ROOT, 'site', 'consent.js'), 'utf8')).toBe(consentBundle());
+    expect(readFileSync(join(ROOT, 'shared', 'src', 'consent', 'site-text-hashes.json'), 'utf8')).toBe(siteTextHashes());
   });
 
   it('loads no tracker before a choice, and none after "reject all"', () => {
@@ -391,10 +393,14 @@ describe('consent and agreement evidence (migration 0160)', () => {
     analytics: false,
     marketing: false,
     policyVersion: CONSENT_POLICY_VERSION,
-    textHash: 'a'.repeat(64),
+    textHash: '',
     locale: 'tr',
     surface: 'site',
   };
+  // A text the Turkish static banner shows (both optional categories in use).
+  beforeAll(async () => {
+    event.textHash = await sha256Hex(bannerText(siteConsent('tr') as unknown as Record<string, string>, { analytics: true, marketing: true }));
+  });
 
   it('records a visitor’s choice through the public endpoint with country, version and hash — never the address', async () => {
     const res = await env.app.request('https://acme.curahold.test/api/consent-event', {
@@ -404,13 +410,27 @@ describe('consent and agreement evidence (migration 0160)', () => {
     });
     expect(res.status).toBe(204);
     const [row] = await env.db.system((q) => q.query('select * from consent_events where consent_id = $1', [event.consentId]));
-    expect(row).toMatchObject({ surface: 'site', action: 'reject_all', policy_version: CONSENT_POLICY_VERSION, text_hash: 'a'.repeat(64), locale: 'tr', country: 'TR' });
+    expect(row).toMatchObject({ surface: 'site', action: 'reject_all', policy_version: CONSENT_POLICY_VERSION, text_hash: event.textHash, locale: 'tr', country: 'TR' });
     expect(Object.keys(row)).not.toContain('ip');
   });
 
   it('refuses a malformed record', async () => {
     const res = await env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...event, textHash: 'nope' }) });
     expect(res.status).toBe(400);
+  });
+
+  it('stores a visitor’s hash only when it names a text one of our banners shows', async () => {
+    const send = (extra: Record<string, unknown>) =>
+      env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...event, consentId: crypto.randomUUID(), ...extra }) });
+    const made = await send({ textHash: 'b'.repeat(64) });
+    expect(made.status).toBe(400);
+    expect(await made.json()).toEqual({ error: 'unknown_text' });
+    const { textHash: _drop, ...noHash } = event;
+    expect((await env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...noHash, consentId: crypto.randomUUID() }) })).status).toBe(400);
+    // The in-app banner's words (a visitor on the sign-in page), in Korean with analytics only: accepted.
+    expect((await send({ surface: 'app', locale: 'ko', textHash: await shownTextHash('ko', { analytics: true, marketing: false }) })).status).toBe(204);
+    const [n] = await env.db.system((q) => q.query(`select count(*)::int as n from consent_events where text_hash = $1`, ['b'.repeat(64)]));
+    expect(n.n).toBe(0);
   });
 
   it('refuses a choice made against another policy version (a stale page), so it is never proof of the current one', async () => {

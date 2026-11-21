@@ -66,7 +66,7 @@ The codebase predates the linter, so lint is set up to be **green with warnings 
    - `db.system(...)` runs as the owner and **bypasses row-level security**. Use it only where no company is in scope
      (migrations, sign-in lookups, webhooks, scheduler, sync) and **always filter by `org_id`**. A new `system()` query that touches
      company tables must satisfy `tests/rls.test.ts`; do not grow its baseline casually.
-   - New table with company data: migration with `org_id`, `enable row level security`, a policy on `app_org()`, grants. The gate fails without them.
+   - New table with company data: migration with `org_id`, `select app_secure_table('<table>')` (row security on and forced), a policy on `app_org()`, grants. The gate fails without them.
 2. **Migrations are append-only.** New file `db/migrations/NNNN_name.sql`, next number. Never edit an applied migration. Prefer additive changes so
    a code rollback stays possible. Both PGlite and Postgres must run it.
 3. **Every write is safe to repeat.** Mutations support `Idempotency-Key`; side effects (notifications, chat messages, emails, webhooks, CRM writes) go through

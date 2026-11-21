@@ -186,7 +186,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
                 <span>{t('board.doneColumn')}</span>
               </label>
               <button className="btn btn--quiet btn--icon" aria-label={t('common.delete')} disabled={columns.length <= 1} onClick={() => setColumns(columns.filter((_, j) => j !== i))}>
-                ×
+                <Icon name="trash" size={16} />
               </button>
             </div>
           ))}
@@ -304,7 +304,7 @@ function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v:
                   </label>
                 ))}
                 <button className="btn btn--quiet btn--icon" aria-label={t('common.remove')} onClick={() => onChange(value.filter((_, j) => j !== i))}>
-                  ×
+                  <Icon name="close" size={16} />
                 </button>
               </div>
             );

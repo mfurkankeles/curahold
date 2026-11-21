@@ -21,7 +21,7 @@ import { CATALOGUE, INTERVALS, PLAN_LIST, isPlanKey, planOf, regionFor, regional
 import { accessFor, nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import { capsForOrg, usageOf, withinCap } from '../billing/entitlements';
 import { projectBilling } from '../billing/project';
-import { LIVE, SEATS_SQL, applyWebhook, changePlan, ensureSubscription, providerFor, readSubscription } from '../billing/service';
+import { LIVE, SEATS_SQL, applyWebhook, billedSeats, billingRegionOf, changePlan, ensureSubscription, providerFor, readSubscription } from '../billing/service';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { body, email } from '../lib/validate';
@@ -52,14 +52,35 @@ async function overview(c: C) {
     const caps = await capsForOrg(q, org.id, access);
     return {
       sub: await readSubscription(q, nowOf(deps)),
-      profile: (await q.query<{ tax_number: string | null; billing_email: string | null; billing_country: string | null }>('select tax_number, billing_email, billing_country from orgs where id = $1', [org.id]))[0],
+      profile: (
+        await q.query<{ tax_number: string | null; billing_email: string | null; billing_country: string | null; billing_region: string | null; trial_seat_cap: number | null }>(
+          `select tax_number, billing_email, billing_country, settings->>'billingRegion' as billing_region, trial_seat_cap from orgs where id = $1`,
+          [org.id],
+        )
+      )[0],
       caps,
       usage: await usageOf(q, org.id, caps),
     };
   });
+  // The terms promise the trial limits "shown at sign-up and on the Billing page" (legal-terms §4): during the trial
+  // the seat row counts against the seats approved for the trial (orgs.trial_seat_cap, enforced by lib/trial.ts
+  // seatGuard), not the plan's seatsMax, which would otherwise read "no limit" for a Business trial.
+  const trialSeatCap = access.state === 'trial' && profile?.trial_seat_cap != null ? Number(profile.trial_seat_cap) : null;
+  if (trialSeatCap != null) usage.seats = { ...usage.seats, cap: trialSeatCap };
+  const trialLimits = access.state === 'trial' ? { seats: trialSeatCap, storageGbPerSeat: CATALOGUE.trial.caps.storageGbPerSeat ?? null } : null;
   // The buyer's region for the prices shown (Cloudflare's country header; Paddle decides the real one at checkout).
   const region = regionFor(c.req.header('cf-ipcountry') ?? null);
-  const plans = PLAN_LIST.map((p) => ({ ...p, regional: { month: regionalPrice(region, p.key, 'month'), year: regionalPrice(region, p.key, 'year') } }));
+  // The fewest seats each plan is billed for here (billedSeats): the screen counts the total with it.
+  // After a purchase, the region stored at checkout (billingRegionOf), so the screen and the hourly sync agree.
+  const bought = !!sub?.providerSubscriptionId && LIVE.includes(sub.status);
+  const billedIn = bought
+    ? billingRegionOf({ stored: profile?.billing_region, country: profile?.billing_country, currency: sub?.currency })
+    : billingRegionOf({ country: profile?.billing_country, seenFrom: c.req.header('cf-ipcountry') });
+  const plans = PLAN_LIST.map((p) => ({
+    ...p,
+    regional: { month: regionalPrice(region, p.key, 'month'), year: regionalPrice(region, p.key, 'year') },
+    minSeats: { month: billedSeats(deps, p.key, 'month', billedIn, 1), year: billedSeats(deps, p.key, 'year', billedIn, 1) },
+  }));
   return c.json({
     enabled: !!cfg,
     access,
@@ -69,16 +90,21 @@ async function overview(c: C) {
     seats: caps.fullSeats,
     caps,
     usage,
-    subscription: sub,
-    profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null },
+    trialLimits,
+    // The plan and its state are everyone's to see; the tax number, the billing address and the provider's ids are for
+    // the people who may pay (security audit L1).
+    subscription: sub && !isAdmin ? { ...sub, providerCustomerId: null, providerSubscriptionId: null } : sub,
+    profile: isAdmin
+      ? { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null }
+      : { taxNumber: null, billingEmail: null, country: null },
     // Public values Paddle.js needs, for the people who may pay. Never a secret: the API key and webhook secret stay on the server.
     ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, email: c.get('auth').email } } : {}),
   });
 }
 
 /**
- * Where the company stands with billing: plan, status, usage against the plan's caps, the plans with regional prices,
- * and checkout values. Needs org.manage; 'billing_off' when the install has no payment provider (ADR 0019).
+ * Where the company stands with billing: plan, status, usage against the plan's caps and the plans with regional
+ * prices, for every member; the billing profile, the provider's ids and checkout values only with org.manage.
  */
 billingRoutes.get('/billing', overview);
 /** Same answer as GET /billing, kept for older clients. */
@@ -96,7 +122,20 @@ billingRoutes.post('/billing/checkout', async (c) => {
   refuseNotOffered(billing_country, c.req.header('cf-ipcountry'));
   // A plan with a seat limit cannot be bought for more full seats than it allows.
   withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, Number(seats)));
-  const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval: input.interval ?? 'month', quantity: Math.max(1, Number(seats)), email: c.get('auth').email });
+  // Never fewer seats than the plan's minimum for that interval and region (billedSeats).
+  const interval = input.interval ?? 'month';
+  // The region is decided here once and stored, so the hourly sync and a later plan change bill the same
+  // minimum (billingRegionOf; review S2).
+  const region = billingRegionOf({ country: billing_country, seenFrom: c.req.header('cf-ipcountry') });
+  await run(c, (q) =>
+    q.query(
+      `update orgs set settings = case when $2::text is null then coalesce(settings, '{}'::jsonb) - 'billingRegion'
+         else coalesce(settings, '{}'::jsonb) || jsonb_build_object('billingRegion', $2::text) end where id = $1`,
+      [org.id, region],
+    ),
+  );
+  const quantity = billedSeats(deps, input.plan, interval, region, Number(seats));
+  const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval, quantity, email: c.get('auth').email });
   return c.json({ checkout });
 });
 
@@ -108,13 +147,16 @@ billingRoutes.post('/billing/change', async (c) => {
   if (!provider) return fail('billing_off');
   const input = await body(c, z.object({ plan: planKey, interval: z.enum(INTERVALS) }));
   const org = c.get('org');
-  const { sub, seats } = await run(c, async (q) => ({
-    sub: await readSubscription(q, nowOf(deps)),
-    seats: Number((await q.query<{ n: number }>(`select ${SEATS_SQL} as n from orgs o where o.id = $1`, [org.id]))[0]?.n ?? 0),
-  }));
+  const { sub, seats, country, stored } = await run(c, async (q) => {
+    const [o] = await q.query<{ n: number; billing_country: string | null; billing_region: string | null }>(
+      `select ${SEATS_SQL} as n, o.billing_country, o.settings->>'billingRegion' as billing_region from orgs o where o.id = $1`,
+      [org.id],
+    );
+    return { sub: await readSubscription(q, nowOf(deps)), seats: Number(o?.n ?? 0), country: o?.billing_country ?? null, stored: o?.billing_region ?? null };
+  });
   if (!sub?.providerSubscriptionId || !['active', 'trialing', 'past_due'].includes(sub.status)) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
   withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, seats));
-  await changePlan(deps, provider, org.id, sub, input.plan, input.interval, seats);
+  await changePlan(deps, provider, org.id, sub, input.plan, input.interval, seats, billingRegionOf({ stored, country, currency: sub.currency }));
   await run(c, (q) => audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { plan: input.plan, interval: input.interval } }));
   return c.json({ ok: true });
 });
@@ -127,6 +169,7 @@ billingRoutes.post('/billing/portal', async (c) => {
   if (!provider) return fail('billing_off');
   const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
   if (!sub?.providerCustomerId) return fail('not_found');
+  c.set('repeatNoStore', true); // a signed-in link to the provider's portal: not kept for a repeat
   return c.json({ url: await provider.portalUrl(sub.providerCustomerId, sub.providerSubscriptionId) });
 });
 

@@ -113,6 +113,7 @@ function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnsti
           <p className="auth__sub">{t('signup.sent', { email })}</p>
           {sent.devToken && (
             <a className="btn" href={`/signup/verify#token=${sent.devToken}`}>
+              <Icon name="link" size={16} />
               {t('auth.devLink')}
             </a>
           )}
@@ -139,17 +140,25 @@ function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnsti
           </form>
           <p className="field__hint">{t('signup.noCard')}</p>
           <p className="field__hint">{t('signup.privacy')}</p>
-          {/* The terms and privacy policy, in the help pages' Legal section. */}
+          {/* The terms and privacy policy, in the help pages' Legal section. One sentence per language with the two
+              links in place ({terms}, {privacy}), so Hebrew prefixes, Arabic "و" and CJK or Hindi full stops sit
+              where each language puts them (it was glued from four fragments: review, 21 Nov 2026). */}
           <p className="field__hint">
-            {t('signup.agree')}{' '}
-            <a href={docsHref(`${helpLanguageOf(locale)}/legal-terms`)} {...docsLink}>
-              {t('legal.terms')}
-            </a>{' '}
-            {t('legal.and')}{' '}
-            <a href={docsHref(`${helpLanguageOf(locale)}/legal-privacy`)} {...docsLink}>
-              {t('legal.privacy')}
-            </a>
-            .
+            {t('signup.agreeLine')
+              .split(/(\{terms\}|\{privacy\})/)
+              .map((part, i) =>
+                part === '{terms}' ? (
+                  <a key={i} href={docsHref(`${helpLanguageOf(locale)}/legal-terms`)} {...docsLink}>
+                    {t('legal.terms')}
+                  </a>
+                ) : part === '{privacy}' ? (
+                  <a key={i} href={docsHref(`${helpLanguageOf(locale)}/legal-privacy`)} {...docsLink}>
+                    {t('legal.privacy')}
+                  </a>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </>
       )}

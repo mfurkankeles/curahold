@@ -22,7 +22,7 @@ Bir müşteriyi, kaydı, görevi, zaman çizelgesi girişini, sayfayı, kayıtl�
 
 ### `GET /trash`
 
-Hâlâ geri alınabilenleri en yenisi önce, 50'şer listeler. `kind` tek bir türe indirir (`account`, `record`, `task`, `activity`, `page`, `report`, `automation`), `q` adlarda arar, `before` (elindeki son öğenin `deletedAt` değeri) sonraki 50'yi verir. Cevaptaki `manage`, bu kişinin kalıcı silip silemeyeceğini söyler.
+Hâlâ geri alınabilenleri en yenisi önce, 50'şer listeler. `kind` tek bir türe indirir (`account`, `record`, `task`, `activity`, `page`, `report`, `automation`), `q` adlarda arar, `before` (elinizdeki son öğenin `deletedAt` değeri) sonraki 50'yi verir. Cevaptaki `manage`, bu kişinin kalıcı silip silemeyeceğini söyler.
 
 **Sorgu:** `kind`, `q`, `before`
 
@@ -30,7 +30,7 @@ Hâlâ geri alınabilenleri en yenisi önce, 50'şer listeler. `kind` tek bir t�
 
 Eskisi gibi geri getirir. `dropped`, bağlı oldukları şey bu arada kalıcı olarak silindiği için dışarıda kalan satırları tablo tablo sayar; `unlinked` aynı nedenle boşaltılan bağları listeler. `409 trash_parent_first`, bağlı olduğu şeyin de çöp kutusunda olduğunu söyler (önce onu geri alın; adı `parentLabel` içinde), `409 trash_parent_gone` artık hiç olmadığını, `409 trash_conflict` aynı CRM kimliğini ya da e-postayı şimdi başka bir şeyin tuttuğunu. Reddedilen istek hiçbir şeyi değiştirmez.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `DELETE /trash/:id`
 

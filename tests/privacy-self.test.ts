@@ -79,7 +79,7 @@ describe('my own data', () => {
     expect((await zeynep.get('/api/me/export')).status).toBe(200);
     // A day later it works again.
     // (The activity log cannot be changed: the test lifts that guard for a moment to move time.)
-    await env.db.system(async (q) => {
+    await env.db.owner(async (q) => {
       await q.query('alter table audit_log disable trigger audit_log_no_update');
       await q.query(`update audit_log set at = at - interval '25 hours' where org_id = $1 and actor_id = $2 and action = 'user.self_exported'`, [env.a.orgId, env.a.ids.omar]);
       await q.query('alter table audit_log enable trigger audit_log_no_update');

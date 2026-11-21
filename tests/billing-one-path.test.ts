@@ -126,7 +126,10 @@ describe('plan changes and dunning', () => {
       return new Response(JSON.stringify({ data: sub({ items: [{ price: { id: body.items[0].price_id }, quantity: body.items[0].quantity }] }) }), { status: 200 });
     };
     expect((await ada.post('/api/billing/change', { plan: 'business', interval: 'month' })).status).toBe(200);
-    expect(calls[0]).toMatchObject({ items: [{ price_id: 'pri_biz_m', quantity: 2 }], proration_billing_mode: CATALOGUE.proration.upgrade });
+    // The seats in use (not the old quantity on the subscription), but never fewer than the plan's minimum
+    // (3 by default, BILLING_MIN_SEATS).
+    const [{ n }] = await sys<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status = 'active'`, [orgId]);
+    expect(calls[0]).toMatchObject({ items: [{ price_id: 'pri_biz_m', quantity: Math.max(3, n) }], proration_billing_mode: CATALOGUE.proration.upgrade });
     expect((await ada.get('/api/me')).json.org.billing.plan).toBe('business');
     expect((await ada.post('/api/billing/change', { plan: 'team', interval: 'year' })).status).toBe(200);
     expect(calls[1]).toMatchObject({ items: [{ price_id: 'pri_team_y' }], proration_billing_mode: CATALOGUE.proration.downgrade });
@@ -206,12 +209,14 @@ describe('caps on what costs money', () => {
   });
 
   it('checkout refuses a plan whose seat limit is below the company’s full seats', async () => {
+    env.fetchHolder.impl = async () => new Response(JSON.stringify({ data: { id: 'txn_one_path' } }), { status: 201 });
     const [{ n }] = await sys<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status = 'active'`, [orgId]);
     expect(n).toBeGreaterThan(0);
     expect((await ada.post('/api/billing/checkout', { plan: 'business', interval: 'year' })).status).toBe(200);
   });
 
   it('never sells where Curahold is never offered: billing country, checkout and the connection (NEVER_OFFERED)', async () => {
+    env.fetchHolder.impl = async () => new Response(JSON.stringify({ data: { id: 'txn_one_path' } }), { status: 201 });
     const refused = await ada.patch('/api/billing/profile', { taxNumber: null, billingEmail: null, country: 'IR' });
     expect(refused.status).toBe(451);
     expect(refused.json.error).toBe('country_not_offered');

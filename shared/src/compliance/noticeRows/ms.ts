@@ -30,7 +30,7 @@ const text: NoticeText = {
       subjects: 'Pelanggan, kenalan dan kakitangan pelanggan itu sendiri',
       basis: 'EU/UK: Perkara 28 GDPR — asas pelanggan. Türkiye: Pelanggan ialah pengawal data; Curahold ialah pemproses (KVKK perkara 12). Teluk: Pemproses atas arahan pengawal. Rantau lain: Penyerahan / penyumberan luar (JP perkara 27(5), KR perkara 26).',
       retention: 'Sepanjang kontrak; boleh dieksport pada bila-bila masa; dipadam 30 hari selepas syarikat meminta pemadaman (termasuk fail, kunci sambungan dan cache), sandaran dalam 35 hari; invois disimpan mengikut undang-undang cukai',
-      others: 'Alat yang disambungkan oleh pelanggan sendiri, atas arahannya: CRM (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), meja bantuan (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), perakaunan (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), peti mel (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), sembang (Slack, Teams, Google Chat), Jira, webhook',
+      others: 'Alat yang disambungkan oleh pelanggan sendiri, atas arahannya: CRM (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), meja bantuan (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), perakaunan (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), peti mel (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), sembang (Slack, Teams, Google Chat), Jira, webhook; pembantu AI yang disambungkan pengguna melalui penyambung Curahold (MCP), di bawah perjanjian pengguna atau syarikat sendiri dengan syarikat AI itu',
     },
     trialLeads: {
       purpose: 'Menilai permintaan percubaan, menghubungi individu itu, membuka percubaan',
@@ -77,7 +77,7 @@ const text: NoticeText = {
       data: 'Soalan dan konteks minimum yang diperlukan untuk jawapan',
       subjects: 'Pengguna yang bertanya kepada pembantu AI; orang yang disebut dalam soalan',
       basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses); pemindahan kepada pembekal AI di luar negara tertakluk pada KVKK perkara 9. Teluk: Pemproses. Rantau lain: Penyerahan.',
-      retention: 'Log perbualan mengikut pilihan syarikat (30 hari secara lalai, tiada hingga 365); dipadam bersama individu itu; di pihak pembekal [30 hari — sahkan], tiada latihan',
+      retention: 'Soalan mengikut pilihan syarikat: tiada, 7, 30 (lalai), 90 atau 365 hari; jawapan tidak disimpan (jawapan yang diambil daripada dokumentasi sahaja boleh diguna semula selama 7 hari); dipadam bersama individu itu; di pihak pembekal [30 hari — sahkan], tiada latihan',
     },
     aiDrafts: {
       purpose: 'Mendraf balasan, susulan atau ringkasan untuk dibaca dan diubah oleh individu itu; tiada apa-apa disimpan atau dihantar sehingga dia mengesahkannya (dimatikan sehingga pentadbir menghidupkan AI); tidak sekali-kali digunakan untuk melatih model',
@@ -85,6 +85,14 @@ const text: NoticeText = {
       subjects: 'Pengguna yang meminta draf; kenalan pelanggan dan rakan sekerja yang disebut dalam rekod asasnya',
       basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses); pemindahan kepada pembekal AI di luar negara tertakluk pada KVKK perkara 9. Teluk: Pemproses. Rantau lain: Penyerahan.',
       retention: 'Pembantu tidak menyimpan draf: draf yang disahkan kekal dalam rekod tempat ia disimpan, mengikut tempoh simpanan rekod itu; di pihak pembekal [30 hari — sahkan], tiada latihan',
+    },
+    publicAsk: {
+      purpose: 'Menjawab soalan pelawat di laman web atau dokumentasi kami dengan AI (hanya selepas pelawat menerima notis); tidak sekali-kali digunakan untuk melatih model',
+      data: 'Soalan dan beberapa mesej terakhir dalam sembang, bahasa dan halaman; jawapan pelawat kepada notis AI di bawah id rawak; alamat IP, dipegang sebentar dalam memori untuk mengehadkan permintaan dan tidak disimpan',
+      subjects: 'Pelawat yang bertanya kepada pembantu di laman web atau dokumentasi kami',
+      basis: 'EU/UK: Perkara 6(1)(a) GDPR (persetujuan); mengehadkan permintaan mengikut alamat IP: Perkara 6(1)(f) (keselamatan). Türkiye: KVKK perkara 5/1 (persetujuan nyata); alamat IP untuk mengehadkan permintaan perkara 5/2-f; pemindahan kepada pembekal AI di luar negara perkara 9. Teluk: Persetujuan. Rantau lain: Persetujuan selepas notis, sebelum soalan pertama.',
+      kvkk: 'KVKK perkara 5/1 (persetujuan nyata); alamat IP untuk mengehadkan permintaan perkara 5/2-f; pemindahan kepada pembekal AI di luar negara perkara 9',
+      retention: 'Soalan tidak disimpan oleh Curahold; jawapan daripada dokumentasi boleh diguna semula selama 7 hari di bawah cap jari sehala soalan itu; jawapan kepada notis disimpan sebagai rekod persetujuan; di pihak pembekal [30 hari — sahkan], tiada latihan',
     },
     humanCheck: {
       purpose: 'Menghalang bot daripada borang awam (Cloudflare Turnstile, tiada teka-teki, tiada kuki penjejakan)',
@@ -116,6 +124,13 @@ const text: NoticeText = {
       basis: 'EU/UK: Perkara 6(1)(c). Türkiye: KVKK perkara 5/2-ç (kewajipan undang-undang). Teluk: Kewajipan undang-undang. Rantau lain: Kewajipan undang-undang.',
       kvkk: 'KVKK perkara 5/2-ç (kewajipan undang-undang)',
       retention: '5 tahun selepas pelanggaran ditutup [peguam untuk mengesahkan]',
+    },
+    privacyRequests: {
+      purpose: 'Merekodkan bahawa setiap permintaan telah dijawab, dan tepat pada masanya (rekod pelanggan sendiri)',
+      data: 'Nama, e-mel (pilihan), jenis permintaan, undang-undang yang terpakai, tarikh, status, nota, siapa yang merekodkan dan menutupnya',
+      subjects: 'Orang yang membuat permintaan tentang data peribadi mereka kepada syarikat pelanggan',
+      basis: 'EU/UK: Perkara 28 — asas pelanggan. Türkiye: Bagi pihak pelanggan (pemproses). Teluk: Pemproses. Rantau lain: Penyerahan.',
+      retention: '3 tahun selepas permintaan dijawab atau ditolak [peguam untuk mengesahkan]; permintaan terbuka sehingga ditutup; bersama syarikat jika ia dipadam',
     },
     website: {
       purpose: 'Mengendalikan laman web; dengan persetujuan, mengukurnya dan pengiklanan kami',

@@ -17,6 +17,7 @@ import { syncSeats } from '../billing/service';
 import { emptyTrash } from './trash';
 import { snapshotActiveSprints } from './burndown';
 import { sendTrialReminders } from './trial';
+import { queueRenewalNotices } from '../billing/renewalNotice';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { purgeAssistantLogs } from '../assistant/store';
 import { dailySetupHealth } from './setupHealth';
@@ -114,7 +115,8 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from sync_runs where started_at < now() - interval '90 days'`);
     await q.query(`delete from oauth_codes where expires_at < now()`);
     // Keys of changes that must happen once: a retry comes within minutes, not days.
-    await q.query(`delete from idempotency_keys where created_at < now() - interval '2 days'`);
+    // A day covers every retry the app makes (a lost answer, the offline queue); less kept, less to leak (audit M1).
+    await q.query(`delete from idempotency_keys where created_at < now() - interval '1 day'`);
     await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
     // Errors are kept long enough to find and fix a fault, then let go.
     await q.query(`delete from error_log where at < now() - interval '30 days'`);
@@ -173,6 +175,8 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   });
   // Onboarding plans move on from what the product sees, and whoever's turn it is hears it (in the app).
   await sweepOnboarding(deps, now).catch((e) => console.error('[curahold] onboarding sweep failed', e));
+  // Yearly plans renewing soon: the notice the terms promise, queued before this run delivers the outbox.
+  await queueRenewalNotices(deps, now).catch((e) => console.error('[curahold] renewal notices failed', e));
   let delivered = 0;
   for (let i = 0; i < 20; i++) {
     const n = await deliverPending(deps, 100);

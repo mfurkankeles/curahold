@@ -33,6 +33,9 @@ describe('retention settings', () => {
     expect(retentionFrom({ RETENTION_AUDIT_DAYS: '730' }).auditDays).toBe(730);
     expect(retentionFrom({ RETENTION_CONSENT_DAYS: '10' }).consentDays).toBe(RETENTION_DEFAULTS.consentDays);
     expect(retentionFrom({ COMPANY_DELETE_GRACE_DAYS: 'soon' }).companyDeleteGraceDays).toBe(30);
+    expect(retentionFrom({}).privacyRequestsDays).toBe(1095);
+    expect(retentionFrom({ RETENTION_PRIVACY_REQUEST_DAYS: '30' }).privacyRequestsDays).toBe(1095);
+    expect(retentionFrom({ RETENTION_PRIVACY_REQUEST_DAYS: '730' }).privacyRequestsDays).toBe(730);
   });
 });
 
@@ -93,6 +96,23 @@ describe('the nightly purge', () => {
     expect(left.trials).toEqual(['new.applicant@demo.example']);
     expect(left.audit).toEqual(['test.new']);
     expect(left.consent).toEqual(['kept@demo.example:marketing']);
+  });
+
+  it('lets go of a request about personal data 3 years after it was closed, never of an open one', async () => {
+    const o = env.a.orgId;
+    await env.db.system((q) =>
+      q.query(
+        `insert into privacy_requests (org_id, kind, subject_name, law, received_on, due_on, status, closed_at, created_at)
+         values ($1, 'access', 'Old Closed', 'gdpr', $2::date, $2::date, 'done', $3, $3),
+                ($1, 'erasure', 'Recent Closed', 'gdpr', $4::date, $4::date, 'refused', $4, $4),
+                ($1, 'objection', 'Old Open', 'kvkk', $2::date, $2::date, 'open', null, $3)`,
+        [o, daysAgo(1200).slice(0, 10), daysAgo(1150), daysAgo(400)],
+      ),
+    );
+    const r = await purgeExpired(env.deps);
+    expect(r.privacyRequests).toBe(1);
+    const left = await env.db.system((q) => q.query<{ subject_name: string }>(`select subject_name from privacy_requests where org_id = $1 order by subject_name`, [o]));
+    expect(left.map((x) => x.subject_name)).toEqual(['Old Open', 'Recent Closed']);
   });
 
   it('consent records cannot be rewritten: only the anonymisation goes through', async () => {

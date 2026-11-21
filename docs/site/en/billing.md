@@ -11,7 +11,8 @@ summary: The free trial, the Team and Business plans, seats, invoices, changing 
 A trial starts from a request: **Try it free** on the website opens a short form (work e-mail with a code, your company, the teams and seats you want). We read every request and answer, usually within one working day. Once it is approved, your company is created with the teams you chose and its first administrator gets a sign-in link.
 
 - **Length:** three months by default, with everything switched on and no card. The length is set when the request is approved, so a larger pilot can get longer.
-- **Seats:** the trial includes the full seats agreed at approval (usually up to 25). Viewer seats are free and never counted.
+- **Seats:** the trial includes the full seats agreed at approval (25 by default). Viewer seats are free and never counted.
+- **File space:** 1 GB per full seat during the trial, shared by the company. Settings → **Billing** shows the trial limits and how much is used.
 - **First sign-in:** the administrator accepts the terms of service and the data processing agreement with one click; then the team can be invited.
 - **Reminders:** the administrators get an e-mail 14, 7 and 1 day before the end. Settings → **Billing** shows how many days are left; in the last week a line at the top of the app says so too.
 
@@ -36,7 +37,11 @@ An administrator opens Settings → **Billing**, picks monthly or yearly and pre
 
 ## Seats
 
-The bill follows the people who have **joined** with a full seat: an invitation not yet accepted is not billed. Add someone and the extra seat is billed for the rest of the period; remove someone and the next bill is lower. Nobody needs to change the seat count by hand.
+The bill follows the people who have **joined** with a full seat: an invitation not yet accepted is not billed. Add someone and the extra seat is billed for the rest of the period; remove someone and the next bill is lower. Nobody needs to change the seat count by hand. Every plan is billed for at least a few full seats (usually 3; more in some regions and for yearly billing): Settings → **Billing** shows the number for your region, and people up to it cost nothing extra.
+
+## Yearly plans: the renewal notice
+
+A yearly plan renews by itself for another year. **At least 30 days before** it does, every administrator gets an e-mail with the date, the plan and the seats, and a link to Settings → **Billing**. It comes by e-mail even if you turned other notifications off, because it is a notice under the terms. To change the plan or the seats, or to stop the renewal, do it on the Billing page before that date: cancelling stops the renewal, and the plan keeps working until the end of the year paid for. What is refunded and when is in the [refund policy](/docs/en/legal-refunds/).
 
 ## Invoices, payment method, cancelling
 

@@ -42,6 +42,7 @@ import { addHelpMessage, toHelpMessage } from '../lib/helpThread';
 import { deskFirstReply } from './assist';
 import { pushToOwner } from '../lib/ownerOutbox';
 import { ownerWord } from '../../../shared/src/i18n/owner';
+import { quarantine, released } from '../lib/uploadScan';
 
 export const helpRoutes = new Hono<AppEnv>();
 export const supportEntry = new Hono<AppEnv>();
@@ -324,6 +325,8 @@ helpRoutes.post('/help', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'help.created', entity: 'help_request', entityId: req.id, meta: { ref: req.ref } });
     return { req, saved, grant };
   });
+  // Support staff open these files: they wait for the upload scanner like a task's files do (security audit L7).
+  for (const f of saved) await quarantine(deps, org.id, f.storage_key);
 
   // The desk first, then a receipt with the reference for the person who asked.
   const locale = c.get('locale');
@@ -336,7 +339,7 @@ helpRoutes.post('/help', async (c) => {
       if (req.impact === 'blocking')
         await pushToOwner(deps, `push:help:${req.ref}`, (l) => ({ title: ownerWord(l, 'help.push.title'), body: ownerWord(l, 'help.push.body', { ref: req.ref, company: org.name.slice(0, 80) }), url: `/support?r=${encodeURIComponent(req.ref)}`, urgency: 'high' }));
       // A first answer drafted from the docs, as a note only the desk sees (routes/assist.ts).
-      const draft = await deskFirstReply(deps, org, req as { id: string; subject: string; description: string }, locale).catch(() => null);
+      const draft = await deskFirstReply(deps, org, req as { id: string; subject: string; description: string }, locale, auth.userId).catch(() => null);
       if (draft) {
         const sources = draft.citations.map((s) => `- ${s.title}${s.section ? ` › ${s.section}` : ''}: ${s.url}`).join('\n');
         const note = `${translate('en', 'assist.desk.draft')}\n\n${draft.text}${sources ? `\n\n${sources}` : ''}`;
@@ -500,6 +503,8 @@ helpRoutes.get('/help/files/:id', async (c) => {
 });
 
 async function sendFile(c: C, row: Row) {
+  // Held while the scanner looks, and never after it found something (lib/uploadScan.ts).
+  if (!(await released(c.get('deps'), row.org_id, row.storage_key))) fail('file_quarantined');
   const obj = await c.get('deps').storage.get(row.storage_key);
   if (!obj) fail('not_found');
   return c.body(obj!.data, 200, {
@@ -647,6 +652,7 @@ supportEntry.post('/support/enter-link', async (c) => {
     return true;
   });
   if (!ok) fail('support_ended');
+  c.set('repeatNoStore', true); // a sign-in link for support: shown once, never kept for a repeat
   return c.json({ url: `${orgUrl(deps.config, org.slug)}/support/enter#token=${entry}`, validMinutes: ENTRY_LINK_MINUTES }, 201);
 });
 

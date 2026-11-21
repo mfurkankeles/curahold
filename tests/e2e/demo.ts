@@ -50,6 +50,8 @@ const browser = await puppeteer.launch({
 // Turkish is chosen with the switch in the bar, and the checks below read Turkish.
 const page = await browser.newPage();
 await page.setViewport({ width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900) });
+// This reaches the top page only: the demo's own frame is another origin, so it runs its real page transitions, and
+// the journeys below click through them as a quick visitor would.
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(String(e)));
@@ -101,16 +103,27 @@ await page.screenshot({ path: join(SCREENS, 'demo-home.png') });
 
 if (ok && !process.env.QUICK) {
   // A few journeys: a board, a customer, switching person, search.
+  // Clicks the first element matching `sel` (and holding `text`) once it is rendered and the screen has settled. It
+  // used to look once and throw, and to click at once: a page's later parts (a board's view tabs, a customer's tabs)
+  // render after their data arrives, and a click that lands while a screen change is still fading in is lost (the
+  // moving main area is a snapshot then; web/src/motion.css). On a loaded machine both stretch, so a different step
+  // failed on each run. Waiting for the element and for the transition's end is waiting for state, not for time.
+  const find = (sel: string, text: string, timeout: number) =>
+    frame!
+      .waitForFunction((s: string, t: string) => [...document.querySelectorAll(s)].find((n) => !t || (n.textContent ?? '').includes(t)) ?? null, { timeout }, sel, text)
+      .then((h) => h.asElement() as import('puppeteer-core').ElementHandle<Element> | null)
+      .catch(() => null);
+  const settled = () =>
+    frame!
+      .waitForFunction(() => !document.getAnimations().some((a) => String((a.effect as KeyframeEffect | null)?.pseudoElement ?? '').startsWith('::view-transition')), { timeout: 15000 })
+      .catch(() => undefined);
   const click = async (sel: string, text?: string) => {
-    const els = await frame!.$$(sel);
-    for (const el of els) {
-      const t = await el.evaluate((n) => n.textContent ?? '');
-      if (!text || t.includes(text)) {
-        await el.click();
-        return true;
-      }
-    }
-    throw new Error(`no ${sel} ${text ?? ''}`);
+    if (!(await find(sel, text ?? '', 15000))) throw new Error(`no ${sel} ${text ?? ''}`);
+    await settled();
+    const el = await find(sel, text ?? '', 5000);
+    if (!el) throw new Error(`no ${sel} ${text ?? ''} once the screen settled`);
+    await el.click();
+    return true;
   };
   await click('.navlink--board', 'Yenilemeler');
   await frame!.waitForFunction(() => document.querySelectorAll('.card, .task, [data-task]').length > 0, { timeout: 10000 }).catch(() => undefined);
@@ -227,17 +240,23 @@ if (ok && !process.env.QUICK) {
   await page.screenshot({ path: join(SCREENS, 'demo-ask.png') });
   await page.keyboard.press('Escape');
   await frame!.waitForFunction(() => !document.querySelector('.dialog'), { timeout: 5000 });
+  // The step each journey below is at, so a failure says where it stopped.
+  let at = '';
   // The trash works inside the demo as well: a task is deleted from its panel, taken back from the
   // notice, deleted again and put back from the Trash page — the same database functions, in the browser.
   {
+    at = 'the Renewals board';
     await click('.navlink--board', 'Yenilemeler');
+    at = 'cards on the board';
     await frame!.waitForSelector('.card', { timeout: 10000 });
     const cardsBefore = await frame!.$$eval('.card', (els) => els.length);
     const open = async () => {
       // The board redraws when the undo brings a card back: a card found a moment ago may be gone.
       for (let i = 0; ; i++) {
         try {
-          await frame!.click('.card');
+          at = 'opening a card';
+          await click('.card');
+          at = 'the delete button in the task panel';
           await frame!.waitForSelector('button[aria-label="Görevi sil"]', { timeout: 3000 });
           break;
         } catch (e) {
@@ -246,52 +265,75 @@ if (ok && !process.env.QUICK) {
         }
       }
       // No question first: the deleted task goes to the trash with a way back in the toast.
-      await frame!.click('button[aria-label="Görevi sil"]');
+      at = 'deleting the task';
+      await click('button[aria-label="Görevi sil"]');
+      at = 'the "moved to the trash" notice';
       await frame!.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Çöp kutusuna taşındı')), { timeout: 10000 });
     };
     try {
       await open();
-      await frame!.click('.toast__action');
+      at = 'undo in the notice';
+      await click('.toast__action');
+      at = 'the card coming back';
       await frame!.waitForFunction((n) => document.querySelectorAll('.card').length === n, { timeout: 10000 }, cardsBefore);
       await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
       await open();
       await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
-      await frame!.click('.sidebar__me');
+      at = 'the person menu';
+      await click('.sidebar__me');
+      at = 'Trash in the person menu';
       await click('.popmenu__item', 'Çöp kutusu');
+      at = 'a row on the Trash page';
       await frame!.waitForSelector('.trashrow', { timeout: 10000 });
       await page.screenshot({ path: join(SCREENS, 'demo-trash.png') });
-      await frame!.click('.trashrow__actions .btn');
+      at = 'restoring from the Trash page';
+      await click('.trashrow__actions .btn');
+      at = 'the restored notice';
       await frame!.waitForFunction(() => !document.querySelector('.trashrow') && [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('geri geldi')), { timeout: 10000 });
       await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
     } catch (e) {
-      errors.push(`the trash inside the demo: ${e instanceof Error ? e.message : e}`);
+      errors.push(`the trash inside the demo, at ${at}: ${e instanceof Error ? e.message : e}`);
     }
   }
   // The demo has no address bar and no browser history of its own: the way back is the app's.
   // Renewals from the menu, a customer from there, back to Renewals; then dashboards open filled.
   try {
+    at = 'Renewals in the menu';
     await click('a.navlink', 'Yenilemeler');
+    at = 'the Renewals title';
     await frame!.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Sözleşme yenilemeleri', { timeout: 10000 });
+    at = 'a renewal row';
     await frame!.waitForSelector('.renewals .rowlink', { timeout: 10000 });
-    await frame!.click('.renewals .rowlink');
+    at = 'opening a renewal';
+    await click('.renewals .rowlink');
+    at = 'the Back bar';
     await frame!.waitForSelector('.backbar__back', { timeout: 10000 });
     const says = await frame!.$eval('.backbar__back', (e) => e.textContent?.trim());
     if (says !== 'Yenilemeler') errors.push(`the way back inside the demo says "${says}"`);
     await page.screenshot({ path: join(SCREENS, 'demo-way-back.png') });
-    await frame!.click('.backbar__back');
+    at = 'Back';
+    await click('.backbar__back');
+    at = 'back on Renewals';
     await frame!.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Sözleşme yenilemeleri' && !document.querySelector('.backbar'), { timeout: 10000 });
+    at = 'Dashboards in the menu';
     await click('a.navlink', 'Paneller');
+    at = 'the chosen dashboard';
     await frame!.waitForSelector('.dashpick__item[aria-current="page"]', { timeout: 15000 });
+    at = 'a filled report pane';
     await frame!.waitForSelector('.pane[data-type="report"] :is(.vchart, .donut, .kpi, .hbars, .emptystate, .pane__note)', { timeout: 15000 });
     if ((await frame!.$$('.dashpick__item')).length < 7) errors.push('the ready-made dashboards did not arrive inside the demo');
     await page.screenshot({ path: join(SCREENS, 'demo-dashboards.png') });
+    at = 'Calendar in the menu';
     await click('a.navlink', 'Takvim');
+    at = 'calendar days';
     await frame!.waitForSelector('.cal .cal__day', { timeout: 10000 });
+    at = 'the week view';
     await click('.seg--views button', 'Hafta');
+    at = 'week days';
     await frame!.waitForSelector('.calweek__day', { timeout: 10000 });
     await page.screenshot({ path: join(SCREENS, 'demo-calendar-week.png') });
   } catch (e) {
-    errors.push(`getting around inside the demo: ${e instanceof Error ? e.message : e}`);
+    errors.push(`getting around inside the demo, at ${at}: ${e instanceof Error ? e.message : e}`);
   }
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));

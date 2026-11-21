@@ -913,6 +913,7 @@ function RequestSettings({ settings, onSaved, failed }: { settings: RequestList[
       </label>
       <p className="oc__muted">{o('settings.note')}</p>
       <button type="submit" className="btn btn--small btn--primary">
+        <Icon name="check" size={14} />
         {saved ? o('common.saved') : o('common.save')}
       </button>
     </form>
@@ -1121,6 +1122,7 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
                   {o('req.approveNow')}
                 </button>
                 <button type="button" className="btn btn--quiet" onClick={() => setMode('none')}>
+                  <Icon name="close" size={16} />
                   {o('common.cancel')}
                 </button>
               </div>
@@ -1140,9 +1142,11 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
               <p className="oc__muted ocapprove__note">{o('req.rejectNote')}</p>
               <div className="ocbuttons">
                 <button type="submit" className="btn btn--danger" disabled={busy}>
+                  <Icon name="close" size={16} />
                   {o('req.rejectNow')}
                 </button>
                 <button type="button" className="btn btn--quiet" onClick={() => setMode('none')}>
+                  <Icon name="close" size={16} />
                   {o('common.cancel')}
                 </button>
               </div>
@@ -1160,6 +1164,7 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
                 </button>
               ) : null}
               <button type="button" className="btn btn--danger" onClick={() => setMode('reject')}>
+                <Icon name="close" size={16} />
                 {o('req.reject')}
               </button>
             </div>
@@ -1631,6 +1636,7 @@ export function ApprovalCard({
               {o('ap.approveEdited')}
             </button>
             <button type="button" className="btn btn--quiet" onClick={() => setMode('view')}>
+              <Icon name="close" size={16} />
               {o('common.cancel')}
             </button>
           </>
@@ -1641,6 +1647,7 @@ export function ApprovalCard({
               {o('ap.rejectNow')}
             </button>
             <button type="button" className="btn btn--quiet" onClick={() => setMode('view')}>
+              <Icon name="close" size={16} />
               {o('common.cancel')}
             </button>
           </>
@@ -1952,6 +1959,7 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                         {o('check.done')}
                       </button>
                       <button type="button" className="btn" onClick={() => void mark(n.id, 'skipped')}>
+                        <Icon name="clock" size={16} />
                         {o('check.later')}
                       </button>
                     </div>
@@ -2279,6 +2287,7 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
               </table>
               {!end && (data?.activity.length ?? 0) >= 200 ? (
                 <button type="button" className="btn btn--small oc__gap" onClick={() => void loadMore()}>
+                  <Icon name="chevronDown" size={14} />
                   {o('activity.more')}
                 </button>
               ) : null}

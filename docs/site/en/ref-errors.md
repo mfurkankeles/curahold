@@ -21,7 +21,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `domain_public` | 400 | … is a public email service, so it cannot belong to one company. |
 | `free_mail_note` | 400 | Tell us in a sentence why you use a personal address for a company trial. |
 | `help_file_type` | 400 | … can't be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can. |
-| `help_too_many_files` | 400 | A request can carry up to … files. |
+| `help_too_many_files` | 400 | You can attach up to … files to a request. |
 | `human_check` | 400 | We could not confirm that a person sent this. Complete the check on the form and try again. |
 | `invalid_token` | 400 | This link or code is not valid any more. Request a new one. |
 | `link_loop` | 400 | These tasks would end up waiting for each other. |
@@ -66,6 +66,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `read_only_token` | 403 | This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes. |
 | `reauth_required` | 403 | Confirm it's you to continue. |
 | `robot_refused` | 403 | Automated access to Curahold needs our written permission. To connect a tool, use the API with a key. |
+| `session_required` | 403 | Only a signed-in person can do this. API keys and connected apps cannot, whatever they were allowed. |
 | `sso_required` | 403 | This company requires single sign-on. Use your organization's SSO to sign in. |
 | `staff_second_step` | 403 | Curahold staff open the console with a passkey or a second step. Add one in My devices, then sign in again. |
 | `support_blocked` | 403 | Support can't open this part, even with permission. |
@@ -73,6 +74,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `support_not_allowed` | 403 | Your company doesn't allow you to let support in. |
 | `support_read_only` | 403 | This support visit is read only. |
 | `terms_required` | 403 | Accept the terms of service and the DPA first — an administrator can do it in one click. |
+| `token_scope` | 403 | This key or app is limited to other areas. Make a key for this area, or reconnect the app and allow it. |
 | `form_off` | 404 | This board does not take requests through a form. |
 | `no_account` | 404 | There is no account for … in this workspace. Ask your administrator to invite you. |
 | `not_found` | 404 | Not found. |
@@ -82,6 +84,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `email_taken` | 409 | Someone in your company already uses this email. |
 | `handover_confirmed` | 409 | This hand-over is already confirmed. |
 | `last_admin` | 409 | Your company needs at least one active administrator. |
+| `plan_limit_ai` | 409 | Your plan allows an AI limit of at most … USD a month. Choose a lower limit; more seats or a larger plan raise it. |
 | `plan_limit_connectors` | 409 | Your plan includes up to … connected tools. Remove one, or choose a larger plan. |
 | `plan_limit_seats` | 409 | Your plan includes up to … full seats and all of them are in use. Invite as a viewer (free), or choose a larger plan. |
 | `portal_email_taken` | 409 | That address already has portal access. |
@@ -94,7 +97,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `sso_untested` | 409 | Test sign-in through your identity provider with these details first; then SSO can be required. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |
-| `trash_conflict` | 409 | Something else has taken its place since (the same CRM id or email). Change or remove that first. |
+| `trash_conflict` | 409 | Something else has taken its place since (the same CRM ID or email). Change or remove that first. |
 | `trash_parent_first` | 409 | “…” is in the trash too. Put that back first. |
 | `trash_parent_gone` | 409 | What this belonged to no longer exists, so it cannot be put back. |
 | `type_not_empty` | 409 | There are still … records of this kind. Archive or delete them first. |

@@ -42,7 +42,7 @@ Altındaki bir şey bağlı olduğu şeyi kalıcı olarak yitirdiyse gerisi yine
 
 - Kendi sildiklerinizi görür ve geri alırsınız.
 - Şirket ayarlarını değiştirebilen ya da gizliliği yöneten kişiler şirkette silinen her şeyi görür ve hepsini geri alabilir.
-- Görüntüleyici koltuğundakiler silemez; onların çöp kutusu olmaz.
+- İzleyiciler silemez; onların çöp kutusu olmaz.
 
 ## Kalıcı olarak silmek
 

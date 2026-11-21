@@ -6,7 +6,7 @@ summary: Sıfırdan ilk görevine ve ilk webhook'una, yaklaşık beş dakikada.
 ---
 # Hızlı başlangıç
 
-Beş adım, yaklaşık beş dakika. Bir Curahold şirketi ve değişiklik yapabilen bir koltuk gerekir.
+Beş adım, yaklaşık beş dakika. Bir Curahold şirketi ve tam kullanıcı olmanız gerekir.
 
 ## 1. Anahtar oluşturun
 

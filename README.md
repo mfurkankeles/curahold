@@ -492,17 +492,19 @@ is simply not offered.
 
 ### Database roles
 
-The migrations create two roles without a login, `curahold_app` and
-`curahold_portal`, and give both to the user that ran them. The API connects
-as that same user. Every request a person makes runs
-`set local role curahold_app` inside its transaction, so row-level security
-always applies; customer-portal requests run as `curahold_portal`, which has
-no table privileges at all and can only call the `portal_*` functions. Work
-that belongs to no single company — a sign-in link before anyone is signed
-in, an incoming webhook, the hourly jobs — runs as the connecting user on
-purpose (`db.system` in the code); it is the only code that sees more than
-one company. So a login that can do nothing but become `curahold_app` (no
-table rights of its own) is not enough: that work would be refused.
+The migrations create three roles without a login, `curahold_app`,
+`curahold_portal` and `curahold_system`, and give them to the user that ran
+them. Every request a person makes runs `set local role curahold_app` inside
+its transaction, so row-level security always applies; customer-portal
+requests run as `curahold_portal`, which has no table privileges at all and
+can only call the `portal_*` functions. Work that belongs to no single
+company — a sign-in link before anyone is signed in, an incoming webhook, the
+hourly jobs — runs as `curahold_system` (`db.system` in the code): it reaches
+every company's rows through its own policy but owns nothing, so it cannot
+change the schema, a policy or a trigger. Every table forces row security
+(migration 0254, ADR 0023). In production the API's login should own nothing
+and only be allowed to become those three roles; the owner runs migrations
+(`MIGRATION_DATABASE_URL`). See `db/ops/role-separation.sql`.
 
 ## Running it on your own server
 

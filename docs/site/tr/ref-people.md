@@ -14,27 +14,27 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 
 | | |
 | --- | --- |
-| `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
-| `PATCH /me` | Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir. |
+| `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, kullanıcı türü, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
+| `PATCH /me` | Kendi adınızı, dilinizi, bildirim tercihlerinizi ve ekran tercihlerinizi değiştirir. |
 | `GET /me/export` | Curahold’un sizin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkınız); önce kimliğinizi doğrulamanızı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır. |
 | `GET /me/start` | Kişinin üründeki ilk adımlarından geriye kalanlar. |
-| `GET /me/sessions` | Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı. |
-| `DELETE /me/sessions/:id` | Cihazlarından birinin oturumunu kapatır. |
+| `GET /me/sessions` | Nerelerde oturumunuzun açık olduğu: cihazlar ve her birinin en son ne zaman kullanıldığı. |
+| `DELETE /me/sessions/:id` | Cihazlarınızdan birinin oturumunu kapatır. |
 | `POST /me/sessions/sign-out-others` | Bu cihaz dışındaki tüm cihazlardan çıkış yapar. |
-| `GET /me/security` | İkinci adımın: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinin bunu zorunlu tutup tutmadığı. |
+| `GET /me/security` | İkinci adımınız: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinizin bunu zorunlu tutup tutmadığı. |
 | `POST /me/security/totp` | Doğrulama uygulaması kurulumunu başlatır (yalnızca tarayıcı oturumu). |
 | `POST /me/security/totp/confirm` | Uygulamayı ilk koduyla onaylar; on adet tek kullanımlık kurtarma koduyla yanıt verir. |
 | `DELETE /me/security/totp` | Doğrulama uygulamasını ve kurtarma kodlarını kaldırır. |
 | `POST /me/security/recovery-codes` | Yeni kurtarma kodları üretir; eskileri çalışmaz olur. |
 | `POST /me/security/passkeys/options` | Passkey eklemek için seçenekler (WebAuthn). |
 | `POST /me/security/passkeys` | Tarayıcının oluşturduğu passkey'i ekler. |
-| `DELETE /me/security/passkeys/:id` | Passkey'lerinden birini kaldırır. |
+| `DELETE /me/security/passkeys/:id` | Passkey'lerinizden birini kaldırır. |
 | `POST /me/confirm/options` | Hassas bir değişiklikten önce kimliğinizi nasıl onaylayabileceğiniz. |
 | `POST /me/confirm/email` | Onay kodunu e-postayla gönderir (yalnızca ikinci adım yoksa). |
 | `POST /me/confirm` | Kimliğinizi onaylar; on dakika boyunca hassas değişiklikler yapılabilir. |
 | `GET /me/delivery` | Bu kişinin bildirimleri nereden alabileceği: e-posta ya da şirketin bağladığı bir sohbet uygulaması. |
-| `GET /me/calendar` | Takvim akışı adresin olup olmadığı. |
-| `POST /me/calendar` | Görevlerin için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer. |
+| `GET /me/calendar` | Takvim akışı adresinizin olup olmadığı. |
+| `POST /me/calendar` | Görevleriniz için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer. |
 | `DELETE /me/calendar` | Takvim adresini kapatır. |
 | `GET /calendar/:file` | Takvim akışının kendisi (iCalendar): bitiş tarihi olan açık görevler. |
 | `GET /people` | Şirketteki herkes, ekip üyelikleriyle; ve ekipler. |
@@ -47,7 +47,7 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | `GET /departments/moves` | Departmanlara geçişte her panonun nereye gittiği ve nedeni (`sprints`, `name`, `company`); panoyu önceden görebilip henüz üye olmayan kişiler (`suggestions`). |
 | `POST /departments/moves/accept` | Önerilen kişileri departmanlarına üye yapar (`suggestions` içindeki `ids`). |
 | `GET /search` | Müşterileri, görevleri, kayıtları, panoları ve kişileri ada göre arar (`q`, en az iki harf). |
-| `GET /notifications` | Bildirimlerin; en yenisi başta. |
+| `GET /notifications` | Bildirimleriniz; en yenisi başta. |
 | `GET /notifications/count` | Kaç tanesi okunmamış. |
 | `POST /notifications/read` | Bildirimleri okundu işaretler: bazılarını ya da hepsini. |
 | `GET /pulse` | Ucuz bir "görebildiğim bir şey değişti mi?" sorusu: en yeni değişikliğin anı. |
@@ -56,11 +56,11 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 
 ### `GET /me`
 
-Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.
+Anahtarın arkasındaki kişi: ad, rol, yetkiler, kullanıcı türü, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.
 
 ### `PATCH /me`
 
-Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir.
+Kendi adınızı, dilinizi, bildirim tercihlerinizi ve ekran tercihlerinizi değiştirir.
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -79,11 +79,11 @@ Kişinin üründeki ilk adımlarından geriye kalanlar.
 
 ### `GET /me/sessions`
 
-Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı.
+Nerelerde oturumunuzun açık olduğu: cihazlar ve her birinin en son ne zaman kullanıldığı.
 
 ### `DELETE /me/sessions/:id`
 
-Cihazlarından birinin oturumunu kapatır.
+Cihazlarınızdan birinin oturumunu kapatır.
 
 ### `POST /me/sessions/sign-out-others`
 
@@ -91,7 +91,7 @@ Bu cihaz dışındaki tüm cihazlardan çıkış yapar.
 
 ### `GET /me/security`
 
-İkinci adımın: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinin bunu zorunlu tutup tutmadığı.
+İkinci adımınız: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinizin bunu zorunlu tutup tutmadığı.
 
 ### `POST /me/security/totp`
 
@@ -129,7 +129,7 @@ Tarayıcının oluşturduğu passkey'i ekler.
 
 ### `DELETE /me/security/passkeys/:id`
 
-Passkey'lerinden birini kaldırır.
+Passkey'lerinizden birini kaldırır.
 
 ### `POST /me/confirm/options`
 
@@ -156,11 +156,11 @@ Bu kişinin bildirimleri nereden alabileceği: e-posta ya da şirketin bağladı
 
 ### `GET /me/calendar`
 
-Takvim akışı adresin olup olmadığı.
+Takvim akışı adresinizin olup olmadığı.
 
 ### `POST /me/calendar`
 
-Görevlerin için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer.
+Görevleriniz için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer.
 
 ### `DELETE /me/calendar`
 
@@ -182,7 +182,7 @@ Takvim akışının kendisi (iCalendar): bitiş tarihi olan açık görevler. Gi
 
 Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında bandını hangi departmanların gördüğünü belirler (`bandView`, hepsi için null). Yalnızca yöneticiler; en az bir departman açık kalır.
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -193,7 +193,7 @@ Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında band
 
 Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi yöneticileri).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `users.manage`
+**Gerekenler:** tam kullanıcı · yetki `users.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi
 
 Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir. Departman lideri üye ekleyebilir; lider yapmak kişi yöneticisinin işidir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -214,11 +214,11 @@ Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir
 
 Bir kişiyi departmandan çıkarır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /departments/desks`
 
-Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. `POST /boards/:id/requests` ve `fromTaskId` ile gönderince kendi görevine bağlanır; diğer pano size kapalı kalır.
+Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. `POST /boards/:id/requests` ve `fromTaskId` ile gönderince kendi görevinize bağlanır; diğer pano size kapalı kalır.
 
 ### `GET /departments/moves`
 
@@ -230,7 +230,7 @@ Departmanlara geçişte her panonun nereye gittiği ve nedeni (`sprints`, `name`
 
 Önerilen kişileri departmanlarına üye yapar (`suggestions` içindeki `ids`).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -244,7 +244,7 @@ Müşterileri, görevleri, kayıtları, panoları ve kişileri ada göre arar (`
 
 ### `GET /notifications`
 
-Bildirimlerin; en yenisi başta. `unread=1` daraltır, `before` geriye sayfalar.
+Bildirimleriniz; en yenisi başta. `unread=1` daraltır, `before` geriye sayfalar.
 
 **Sorgu:** `filter`, `unread`, `limit`, `before`
 

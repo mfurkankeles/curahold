@@ -14,6 +14,8 @@ interface View {
   usage: { questions: number; modelQuestions: number; costUsd: number };
   engine: { available: boolean; model: string | null; maxMonthlyCapUsd: number };
   retentionChoices: number[];
+  /** The draft first reply goes to the model only for requesters who accepted CuraAI's notice (operator setting). */
+  deskNeedsConsent?: boolean;
 }
 
 /**
@@ -67,7 +69,8 @@ export function AssistantSettings() {
             inputMode="decimal"
             min={0}
             max={view.engine.maxMonthlyCapUsd}
-            step={1}
+            // Cents: ceilings are seats × a fractional rate (1.65 $), which a whole-dollar step could not reach.
+            step={0.01}
             value={cap}
             onChange={(e) => setCap(e.target.value)}
             onBlur={() => {
@@ -92,6 +95,7 @@ export function AssistantSettings() {
         <input type="checkbox" checked={s.deskFirstReply === 'note'} onChange={(e) => void save({ deskFirstReply: e.target.checked ? 'note' : 'off' })} />
         <span>
           <strong>{t('assist.settings.desk')}</strong>
+          {view.deskNeedsConsent && <span className="muted"> {t('assist.settings.deskHint')}</span>}
         </span>
       </label>
     </section>

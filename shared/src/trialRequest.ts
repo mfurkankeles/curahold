@@ -15,7 +15,13 @@ export const TRIAL_REQUEST_STATUSES = ['new', 'contacted', 'approved', 'rejected
 export type TrialRequestStatus = (typeof TRIAL_REQUEST_STATUSES)[number];
 
 /** Defaults the owner can change in the console (Requests → settings); seats and months come from the price list (shared/src/plans.json → trial). */
-export const TRIAL_DEFAULTS = { seatCap: CATALOGUE.trial.autoApproveSeats, months: CATALOGUE.trial.months, reminderDays: [14, 7, 1] } as const;
+export const TRIAL_DEFAULTS = {
+  seatCap: CATALOGUE.trial.autoApproveSeats,
+  months: CATALOGUE.trial.months,
+  reminderDays: [14, 7, 1],
+  /** File space per full seat during the trial (plans.json trial.caps), shown on the request form. */
+  storageGbPerSeat: CATALOGUE.trial.caps.storageGbPerSeat ?? null,
+} as const;
 
 /** One consent the person gave (or did not), as shown to them: which text, which version, its digest. */
 export interface TrialConsent {

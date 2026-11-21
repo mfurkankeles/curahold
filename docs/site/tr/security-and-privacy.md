@@ -42,7 +42,7 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 
 - **Verilerini indir:** o kişiyle ilgili kayıtlar tek dosyada.
 - **Kişisel verilerini sil:** ad ve e-posta kaldırılır; yaptığı işler anonim olarak kalır. Müşterilerini ve açık görevlerini önce başka birine devredebilirsiniz.
-- **Silme**, kişinin CuraAI'ye sorduklarını, bildirimlerini, sohbet bağlantılarını, geçiş anahtarlarını ve ikinci adımlarını, oturum kayıtlarını ve yapay zekâ ekibinin notlarında adresinin ya da tam adının geçtiği yerleri de kaldırır. Yasa gereği kalanlar: faturalar, şirket adına koşulları kimin kabul ettiğinin kaydı ve adres olmadan (yalnızca parmak iziyle) rıza kayıtları.
+- **Silme**, kişinin CuraAI'ye sorduklarını, bildirimlerini, sohbet bağlantılarını, passkey'lerini ve ikinci adımlarını, oturum kayıtlarını ve yapay zekâ ekibinin notlarında adresinin ya da tam adının geçtiği yerleri de kaldırır. Yasa gereği kalanlar: faturalar, şirket adına koşulları kimin kabul ettiğinin kaydı ve adres olmadan (yalnızca parmak iziyle) rıza kayıtları.
 - **Müşterilerinizdeki kişiler** (Ayarlar → Müşteri portalı → Giriş yapabilen kişiler): gizliliği yöneten bir yönetici **Verileri indir** ya da **Kişisel verileri sil** diyebilir. Silme, portal hesabının kendisini siler; yazdıkları adı olmadan kalır.
 
 ### Şirketin tamamını silmek
@@ -51,7 +51,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 
 ### Kişisel veri talepleri
 
-**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK ve GDPR'de 30 gün, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
+**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK'da 30 gün, GDPR'de bir takvim ayı, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
 
 ## Saklama süreleri
 
@@ -66,6 +66,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 | Hata kayıtları (ne, nerede bozuldu — istek içeriği asla) | 30 gün |
 | İptal edilmiş API anahtarları | 30 gün |
 | Aktivite kaydı | 12 ay |
+| Kişisel veri talepleri (yanıtlandıktan ya da reddedildikten sonra) | Kapandıktan sonra 3 yıl |
 | Yardım talepleri, mesajları ve dosyaları | Son değişiklikten 24 ay sonra |
 | CuraAI'ye sorulanlar | Şirketinizin seçtiği süre (değiştirilmediyse 30 gün) |
 | Silinen bir şirket | Talepten 30 gün sonra silinir |

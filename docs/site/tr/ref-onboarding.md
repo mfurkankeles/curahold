@@ -47,7 +47,7 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | `POST /onboarding-issues/:id/ticket` | Sorunu müşterinin destek talebine bağlar (`recordId`; bağı kaldırmak için `null`). |
 | `DELETE /onboarding-issues/:id` | Bir sorunu siler. |
 | `POST /onboarding-plans/:id/fields` | Veri eşleme tablosuna satır ekler: alan, hedef, tür, zorunluluk, örnek, gelen değer. |
-| `PATCH /onboarding-fields/:id` | Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin taraf kontrol etti). |
+| `PATCH /onboarding-fields/:id` | Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin tarafınız kontrol etti). |
 | `DELETE /onboarding-fields/:id` | Veri eşleme tablosundan bir satırı siler. |
 | `POST /onboarding-plans/:id/sites` | Yayılıma bir şube ekler (`name`, `region`, `stages`). |
 | `PATCH /onboarding-sites/:id` | Bir şubeyi ya da bir aşamadaki durumunu değiştirir (`stages: { "<aşama>": "todo\|doing\|done\|na" }`). |
@@ -76,7 +76,7 @@ O planın yalnızca başlığı: ağırlıklı tamamlanma ve sıradaki adım.
 
 Bu ayarları değiştirir (şirket ayarlarını değiştirebilen kişi).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ Görebildiğiniz tüm müşteri planları; ilerleme, bekleme günleri ve takılm
 
 Bir müşteri (`accountId`) için şablondan plan açar (`templateId`: şablon kimliği ya da yerleşik anahtar; yoksa şirketin varsayılanı). Müşteri başına bir süren plan.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -112,7 +112,7 @@ Bir planın tamamı: adımlar, iki tarafın kişileri, hedefler, ortak sorunlar,
 
 Planın adını, durumunu, sorumlusunu, karşılama metnini, devir notunu, hedef gününü ya da müşterinin portalda görüp görmediğini (`portalVisible`) değiştirir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -128,7 +128,7 @@ Planın adını, durumunu, sorumlusunu, karşılama metnini, devir notunu, hedef
 
 Planı bitirir: bugünkü sağlık skoru ve rakamlar başlangıç değeri olarak saklanır; Onboarding'de yaşayan plan Müşteri Başarısı'na bir devir kartı verir (`handoverId`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /onboarding-plans/:id/report`
 
@@ -138,13 +138,13 @@ Plandan kurulan ilerleme raporu: tamamlanma, aşamalar, kimin beklendiği, sıra
 
 O rapora salt okunur bir bağlantı oluşturur (`url`; gizli kısım bir kez gösterilir). Yeniden paylaşmak eski bağlantının yerini alır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `DELETE /onboarding-plans/:id/share`
 
 Rapor bağlantısını kapatır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /share/onboarding/:secret`
 
@@ -154,7 +154,7 @@ Paylaşılan rapor, giriş gerekmeden: yalnızca raporun gösterdiği; not ve il
 
 Kendi adımınızı ekler (`title`, `phase`, `side`; isteğe bağlı `dueOn`, `after`, `required`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -170,7 +170,7 @@ Kendi adımınızı ekler (`title`, `phase`, `side`; isteğe bağlı `dueOn`, `a
 
 Bir adımı değiştirir: durum, sorumlu (`ownerId`) ya da müşterinin kişisi (`personId`), tarihler, gecikme nedeni, metin, zorunluluk. Ürünün kendisi tamamladığı adım elle işaretlenemez (`400`), başka adımı bekleyen adım da (`409`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -188,13 +188,13 @@ Bir adımı değiştirir: durum, sorumlu (`ownerId`) ya da müşterinin kişisi 
 
 Bir adımı siler; onu bekleyen adımlar artık beklemez.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `PUT /onboarding-plans/:id/phases`
 
 Planın aşamaları sırasıyla (`phases`: `key` ve `name`; yeni bir aşama için `key` verilmez, o zaman adı gerekir). Yalnızca bu planın aşamalarını yeniden adlandırır, sıralar, ekler ya da kaldırır; şablonuna dokunmaz. İçinde adım kalan bir aşama kaldırılamaz (`409`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ Planın aşamaları sırasıyla (`phases`: `key` ve `name`; yeni bir aşama içi
 
 Adımları bir aşamada bu sıraya koyar (`phase`, `ids`); başka bir aşamadaki adım bu aşamaya geçer.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -215,7 +215,7 @@ Adımları bir aşamada bu sıraya koyar (`phase`, `ids`); başka bir aşamadaki
 
 Şablonunu bekleyen kazanılmış müşteri taslağı (`ask`): seçilen şablondan (`templateId`) yeniden oluşturur. Yeni planı döner.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -225,7 +225,7 @@ Adımları bir aşamada bu sıraya koyar (`phase`, `ids`); başka bir aşamadaki
 
 Bir adımın kısa formu: adımın adını verdiği müşteri alanları için `values` müşterinin kaydına yazılır, sonra adım tamamlanır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -235,13 +235,13 @@ Bir adımın kısa formu: adımın adını verdiği müşteri alanları için `v
 
 Bir adıma dosya ekler (multipart `file`); diğerleri gibi bir dosyadır ve `GET /files/:id` ile indirilir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /onboarding-steps/:id/request`
 
 Adım ürün işini bekliyor: onu bir işe (`storyId`) bir müşteri isteği daha olarak bağlar; Ürün'ün iş listesi bunu sayar.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -252,7 +252,7 @@ Adım ürün işini bekliyor: onu bir işe (`storyId`) bir müşteri isteği dah
 
 Bir tarafa kişi ekler (`side`, `name`, `role`, `duty`, `contact`; isteğe bağlı `userId`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -267,7 +267,7 @@ Bir tarafa kişi ekler (`side`, `name`, `role`, `duty`, `contact`; isteğe bağl
 
 Plandaki bir kişiyi değiştirir. Yalnızca gönderdiğiniz alanlar değişir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -275,13 +275,13 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Bir kişiyi plandan çıkarır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /onboarding-plans/:id/goals`
 
 Hedef ekler (`title`, `priority`, `targetOn`; isteğe bağlı `proofUrl`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -296,7 +296,7 @@ Hedef ekler (`title`, `priority`, `targetOn`; isteğe bağlı `proofUrl`).
 
 Bir hedefi değiştirir; `status: done` ulaşıldığı günü kaydeder.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -304,13 +304,13 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Bir hedefi siler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /onboarding-plans/:id/issues`
 
 Ortak bir sorun bildirir: konu, ayrıntı, hamlenin kimde olduğu (`side`), tür, aciliyet, son gün, ilgili adım.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -326,7 +326,7 @@ Ortak bir sorun bildirir: konu, ayrıntı, hamlenin kimde olduğu (`side`), tür
 
 Bir sorunu değiştirir, diğer tarafa geçirir ya da çözer (`status: resolved`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -334,7 +334,7 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Sorunu müşterinin destek talebine bağlar (`recordId`; bağı kaldırmak için `null`). Talep kopyalanmaz; çözülünce sorun da çözülür.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -344,13 +344,13 @@ Sorunu müşterinin destek talebine bağlar (`recordId`; bağı kaldırmak için
 
 Bir sorunu siler. Geçmeyen kurulum testinin sorunu silinemez (`409`): test geçince çözülür.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /onboarding-plans/:id/fields`
 
 Veri eşleme tablosuna satır ekler: alan, hedef, tür, zorunluluk, örnek, gelen değer.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -364,9 +364,9 @@ Veri eşleme tablosuna satır ekler: alan, hedef, tür, zorunluluk, örnek, gele
 
 ### `PATCH /onboarding-fields/:id`
 
-Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin taraf kontrol etti).
+Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzerinde çalışır) ya da işaretler: `checked` (müşteri doğru görünüyor der) ve `verified` (sizin tarafınız kontrol etti).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -374,13 +374,13 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Veri eşleme tablosundan bir satırı siler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /onboarding-plans/:id/sites`
 
 Yayılıma bir şube ekler (`name`, `region`, `stages`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -392,7 +392,7 @@ Yayılıma bir şube ekler (`name`, `region`, `stages`).
 
 Bir şubeyi ya da bir aşamadaki durumunu değiştirir (`stages: { "<aşama>": "todo|doing|done|na" }`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -400,13 +400,13 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Bir şubeyi kaldırır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `PATCH /onboarding-metrics/:id`
 
 Önce/sonra rakamı: `baseline` (eski yöntem), `current`, `target` ve yükseğin mi daha iyi olduğu.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -425,7 +425,7 @@ Yerleşik şablonlar (kopyalamak için) ve şirketin kendi şablonları; her bir
 
 Şablon oluşturur: yerleşik birinden (`from: "standard"`), şirketin kendi şablonunun kopyasından (`from: <kimlik>`), süren bir plandan (`fromPlan`) ya da yazılarak (`blueprint`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -440,7 +440,7 @@ Yerleşik şablonlar (kopyalamak için) ve şirketin kendi şablonları; her bir
 
 Bir şablonun adını, özetini ya da adımlarını değiştirir; ondan yapılmış planlar kendilerininkini korur.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -452,4 +452,4 @@ Bir şablonun adını, özetini ya da adımlarını değiştirir; ondan yapılm�
 
 Bir şablonu kaldırır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı

@@ -4,12 +4,12 @@
   "status": "draft",
   "currency": "USD",
   "trial": {
-    "_source": "owner, 17 Nov (request form, his approval, 3 months; seats asked for, auto-approvable up to 25)",
+    "_source": "owner, 17 Nov (request form, his approval, 3 months; seats asked for, auto-approvable up to 25; the owner console's trial.seatCap changes it). 1 GB a seat from the pricing audit (20 Nov), so a trial's file space stays bounded; the audit's 10-seat default is an open owner question, not applied",
     "months": 3,
     "approval": true,
     "plan": "business",
     "autoApproveSeats": 25,
-    "caps": { "aiQuestionsPerSeat": 10 }
+    "caps": { "aiQuestionsPerSeat": 10, "storageGbPerSeat": 1 }
   },
   "dunning": {
     "_source": "assumption: Paddle retries a failed renewal for about 30 days before it cancels; we keep everything open for that long, then read-only",

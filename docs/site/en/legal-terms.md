@@ -6,7 +6,7 @@ summary: The agreement between Curahold and a customer company — the trial, pl
 ---
 # Terms of service (master subscription agreement)
 
-> **Draft — lawyer approval required.** Version 2026-11-19.draft3. Text in [square brackets] is to be filled in. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-21.draft7. Text in [square brackets] is to be filled in. Not legal advice.
 
 These terms are an agreement between **[Company legal name]**, [registered address], [registry / tax number] ("Curahold", "we") and the company or organisation that uses Curahold ("the Customer", "you"). The person who accepts them confirms, by ticking the box, that they are authorised to bind the Customer. Self-serve customers accept these terms with a click; enterprise customers sign an **Order form** that refers to them. The **Data processing agreement**, the **Service level agreement** and the **Acceptable use policy** are part of these terms.
 
@@ -27,14 +27,18 @@ The Customer is responsible for its users, for keeping sign-in details safe and 
 ## 4. Trial
 
 - A trial is requested through the trial form and **opens after our approval**; we may decline a request without giving reasons.
-- The trial is free and lasts **3 months by default** (we may agree a different period in writing), for **up to 25 seats**.
+- The trial is free and lasts **3 months by default** (we may agree a different period in writing), within the **trial limits** (such as seats and storage; by default 25 full seats and 1 GB of storage per full seat) shown at sign-up and on the Billing page.
 - Reminders are sent before the trial ends. When it ends, the Customer's data stays available **read-only and exportable**, but cannot be changed, until a plan is chosen or the account is closed (data is then handled under section 13).
 - During a trial the Service is provided as it is; the service credits of the SLA do not apply.
 
 ## 5. Plans, fees and renewal
 
-- Paid plans renew **monthly** unless the Order form says otherwise. The Customer may end a plan **at the end of any month** (the monthly exit right); no refunds for a part-month unless the law or the Order form requires it.
-- We may change prices with at least **30 days'** notice; a change applies from the next period after the notice ends.
+- Paid plans are billed **monthly or yearly**, as chosen at checkout or in the Order form, and renew automatically for another period of the same length until they are ended.
+- A **monthly** plan can be ended at the end of any month (the monthly exit right). A **yearly** plan runs for the year paid for: ending it stops the next renewal, and the plan stays active until that year ends. We tell administrators at least [30] days before a yearly plan renews.
+- A larger plan or more seats is billed at once, pro rata for the rest of the period; a smaller plan or fewer seats is credited pro rata on the next bill.
+- Every plan is billed for at least a **minimum number of full seats** (usually 3; more in some regions and for yearly billing). The Billing page shows the number before purchase, and full seats up to it cost nothing extra.
+- Refunds follow the **Refund policy**: the unused part of a period already started is not refunded, except in the cases that policy lists (among them sections 2 and 19) or where mandatory law requires it.
+- We may change prices with at least **30 days'** notice; a change applies from the next period after the notice ends, so a yearly plan keeps its price until it renews.
 - **Reseller:** self-serve purchases are made from our reseller and merchant of record, Paddle.com Market Ltd, under its buyer terms; Paddle issues the invoice and collects the tax. The right to use the Service, the DPA and the SLA remain between the Customer and Curahold. Enterprise customers invoiced directly use an Order form.
 
 ## 6. Taxes
@@ -66,16 +70,17 @@ We own the Service; the Customer owns its data and its own materials. The Custom
 4. use the Service, or anything learned from it, to build, train or improve a competing product or service, or benchmark or test the Service for that purpose;
 5. carry out text and data mining on the Service, the documentation or our websites. We expressly reserve these rights under Article 4(3) of Directive (EU) 2019/790 and the corresponding national laws, also in machine-readable form (robots.txt, the TDMRep file at /.well-known/tdmrep.json and tdm-reservation tags).
 
-This does not limit the Customer's use of its own data, which it may export at any time (section 13). A breach of this section is a material breach (section 13), and we may suspend the access used for it.
+This section does not limit the Customer's use of its own data, which it may export at any time (section 13), nor an AI assistant that a user connects through our published connector (MCP) to work with the Customer's data within that user's permissions (section 11). A breach of this section is a material breach (section 13), and we may suspend the access used for it.
 
 ## 10. Connected third-party tools
 
-When the Customer connects another tool (CRM, chat app, accounting system), data moves between them on the Customer's instruction and under the Customer's own agreement with that tool's provider. Those providers are not our sub-processors and we are not responsible for them.
+When the Customer connects another tool (CRM, chat app, accounting system, or an AI assistant through our connector), data moves between them on the Customer's instruction and under the Customer's own agreement with that tool's provider. Those providers are not our sub-processors and we are not responsible for them.
 
 ## 11. AI features
 
 - AI features can be switched on or off per company by an administrator. Only the minimum data needed for an answer is sent to the AI model provider, which is listed on the Sub-processors page with its region and retention.
-- **Customer data, prompts and outputs are not used to train AI models**, by us or by our model providers; our providers are bound to this in writing.
+- In the AI features we provide, **Customer data, prompts and outputs are not used to train AI models**, by us or by our model providers; our providers are bound to this in writing.
+- **An AI assistant a user connects through our connector (MCP)** works as that user, sees only what the user may see and changes data only where the user allowed changes. It is a connected tool under section 10, not one of our AI features: what it receives, how long it is kept and whether it is used for training follow the Customer's or the user's agreement with that AI company.
 - AI output can be wrong; a person decides. The Service does not take decisions with legal or similarly significant effect on a person by AI alone. People are told when they are talking to an AI.
 - The Customer keeps its rights in its inputs and in the outputs it receives.
 - Türkiye: an AI system hosted abroad is a transfer under Article 9 of the KVKK; it is covered by the safeguards in the DPA, not by consent alone.
@@ -108,7 +113,7 @@ We defend the Customer against third-party claims that the Service infringes the
 
 ## 17. Sanctions, export control and anti-corruption
 
-The Customer will not use the Service from, or for people in, a country or region under comprehensive sanctions, nor for anyone on a sanctions list. Iran is excluded by policy. Each party complies with the anti-corruption laws that apply to it.
+The Customer will not use the Service from, or for people in, a country or region under comprehensive sanctions, nor for anyone on a sanctions list. Curahold is not offered in Iran: the trial form, sign-up and checkout refuse it; for other countries and persons we rely on this promise by the Customer. Each party complies with the anti-corruption laws that apply to it.
 
 ## 18. Publicity
 
@@ -125,7 +130,7 @@ We will not use the Customer's name or logo without its written consent.
 
 - **Evidence:** the parties agree that the Service's logs and electronic records, including the click-accept record (who, when, which version, from which country), are valid evidence (for Türkiye, HMK art. 193).
 - **Notices:** to the Customer at its administrators' e-mail addresses; to us at [legal e-mail]. Formal notices between Turkish merchants of default or termination are given by notary, registered mail or KEP (TTK art. 18/3).
-- **Governing law and disputes:** [default by contracting entity — research §2.9]. For a Customer established in Türkiye: Turkish law; the courts and enforcement offices of **Istanbul (Çağlayan)**; the Turkish text prevails. [Other regions: English law and London courts/LCIA; DIFC/ADGM courts or DIAC for the Gulf; Singapore law and SIAC for the Far East — lawyer to pre-approve.]
+- **Governing law and disputes:** [default by contracting entity]. For a Customer established in Türkiye: Turkish law; the courts and enforcement offices of **Istanbul (Çağlayan)**; the Turkish text prevails. [Other regions: English law and London courts/LCIA; DIFC/ADGM courts or DIAC for the Gulf; Singapore law and SIAC for the Far East — lawyer to pre-approve.]
 - **Language:** the agreement is made in English and Turkish; between Turkish companies the Turkish text applies (Law 805).
 - Assignment only with consent, except to a successor of the whole business; force majeure; if a clause is invalid the rest stands; this is the entire agreement on its subject.
 

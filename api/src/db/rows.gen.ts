@@ -221,6 +221,7 @@ export interface ApiTokensRow {
   datasets: string[] | null;
   departments: string[] | null;
   rotated_at: Date | null;
+  areas: string[] | null;
 }
 
 /** Table `approvals`. */
@@ -282,6 +283,7 @@ export interface AssistantGlobalRow {
   questions: number;
   model_questions: number;
   cost_micros: number | string;
+  public_cost_micros: number | string;
 }
 
 /** Table `assistant_log`. */
@@ -1102,6 +1104,7 @@ export interface OauthCodesRow {
   challenge: string;
   can_write: boolean;
   expires_at: Date;
+  areas: string[] | null;
 }
 
 /** Table `onboarding_checklists`. */
@@ -1554,6 +1557,8 @@ export interface PortalUsersRow {
   invited_by: string | null;
   created_at: Date;
   last_seen_at: Date | null;
+  code_failed: number;
+  code_locked_until: Date | null;
 }
 
 /** Table `privacy_requests`. */
@@ -2213,6 +2218,8 @@ export interface UserTotpRow {
   confirmed_at: Date | null;
   last_step: number | string;
   created_at: Date;
+  failed: number;
+  locked_until: Date | null;
 }
 
 /** Table `users`. */

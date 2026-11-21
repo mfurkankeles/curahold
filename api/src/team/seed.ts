@@ -26,7 +26,10 @@ export async function seedOrgChart(q: Q, opts: { reset?: boolean; by: string }):
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        on conflict (seat) do update set title = excluded.title, title_tr = excluded.title_tr, team = excluded.team, reports_to = excluded.reports_to,
          tier = excluded.tier, state = excluded.state, cadence = excluded.cadence, weekly_budget = excluded.weekly_budget,
-         wake_trigger = excluded.wake_trigger, card = excluded.card, updated_at = now()`,
+         wake_trigger = excluded.wake_trigger,
+         -- A reset restores the built-in card but keeps the owner's private tone: that text is his own data,
+         -- lives only in the stored card and has no default to return to (orgChart.ts header).
+         card = excluded.card || jsonb_strip_nulls(jsonb_build_object('privateTone', seats.card->'privateTone')), updated_at = now()`,
       [s.seat, s.title, s.titleTr, s.team, s.reportsTo, s.tier, s.state, s.cadence, s.weeklyBudget, s.wakeTrigger ?? null, JSON.stringify({ ...s.card, level: s.level })],
     );
     const [agent] = await q.query<Pick<AgentsRow, 'id'>>('select id from agents where seat = $1', [s.seat]);

@@ -92,6 +92,7 @@ export function SetupHealthPage() {
                   {t('sh.again')}
                 </button>
                 <a className="btn btn--quiet btn--small" href={helpHref} {...docsLink}>
+                  <Icon name="help" size={16} />
                   {t('sh.help')}
                 </a>
               </div>

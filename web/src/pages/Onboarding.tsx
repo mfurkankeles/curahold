@@ -296,14 +296,17 @@ function NextCard({ ctx }: { ctx: Ctx }) {
       <div className="ob-next__actions">
         {href && href.startsWith('#') ? (
           <a className="btn btn--primary" href={href}>
+            <Icon name="arrowRight" size={16} />
             {t('ob.doIt')}
           </a>
         ) : href ? (
           <a className="btn btn--primary" href={href} onClick={(e) => (e.preventDefault(), navigate(href))}>
+            <Icon name="arrowRight" size={16} />
             {t('ob.doIt')}
           </a>
         ) : (
           <a className="btn btn--primary" href={`#step-${next.id}`}>
+            <Icon name="arrowRight" size={16} />
             {t('ob.openStep')}
           </a>
         )}

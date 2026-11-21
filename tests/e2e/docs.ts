@@ -27,6 +27,11 @@ const check = (ok: boolean, what: string) => {
   console.log(`${ok ? '✓' : '✗'} ${what}`);
   if (!ok) errors.push(what);
 };
+// Waits until the results box answers the whole term (docs.js marks it with data-for once the index has loaded).
+// The checks waited a fixed 3 s for any result, which on a loaded machine could be the index still loading, or the
+// results of the first letters typed, so a different search check failed on each run.
+const resultsFor = (term: string) =>
+  page.waitForFunction((t: string) => document.getElementById('results')?.getAttribute('data-for') === t, { timeout: 20000 }, term).catch(() => undefined);
 
 for (const [path, w, h] of [['/docs/tr/', 1440, 900], ['/docs/tr/webhooks/', 1440, 900], ['/docs/en/mcp-and-oauth/', 390, 844]] as const) {
   await page.setViewport({ width: w, height: h });
@@ -41,7 +46,7 @@ await page.click('.langs__menu a[hreflang="en"]');
 await page.waitForNavigation({ waitUntil: 'networkidle0' }).catch(() => undefined);
 check(page.url().endsWith('/docs/en/webhooks/'), 'language switch keeps the page');
 await page.type('#q', 'signature');
-await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefined);
+await resultsFor('signature');
 const hits = await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')));
 check(hits.some((h) => h?.startsWith('/docs/en/webhooks/')), 'search finds the webhook signature section');
 const llms = await (await fetch(`${base}/llms.txt`)).text();
@@ -76,11 +81,11 @@ check(ar.dir === 'rtl' && ar.navRight, 'Arabic pages read right to left, the men
 check(ar.shots.length >= 2 && ar.shots.every((w) => w > 0), 'Arabic pages show the Arabic demo\'s own screens');
 await page.screenshot({ path: join(SCREENS, 'docs-ar-customers.png') });
 await page.type('#q', 'سلة المحذوفات');
-await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefined);
+await resultsFor('سلة المحذوفات');
 check((await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')))).some((h) => h?.startsWith('/docs/ar/trash/')), 'search in Arabic finds the trash page');
 await page.goto(`${base}/docs/ja/`, { waitUntil: 'networkidle0' });
 await page.type('#q', '顧客インポート');
-await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefined);
+await resultsFor('顧客インポート');
 check((await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')))).some((h) => h?.startsWith('/docs/ja/customers/')), 'search in Japanese finds a phrase written without spaces');
 await page.goto(`${base}/docs/ja/webhooks/`, { waitUntil: 'networkidle0' });
 check(await page.evaluate(() => !!document.querySelector('.doc__lang') && document.querySelector('article.doc')?.getAttribute('lang') === 'en'), 'a page not written in Japanese yet says it is in English');

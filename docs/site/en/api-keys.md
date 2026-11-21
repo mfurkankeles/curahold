@@ -33,6 +33,24 @@ Requests with a key are handled as requests by the key's owner: the same custome
 
 A key can never: make another key, give an app OAuth consent, or use "See it as them".
 
+## What only a signed-in person can do
+
+Whatever a key or an app was allowed, it gets `403 session_required` on administration (roles, people, removing someone
+or exporting their data, company deletion, domains, the activity log, security settings), single sign-on and SCIM,
+billing, API keys, connected chat apps and CRMs, your own sign-in security and sessions, and support
+access. The same goes for anything that needs an administrator's permission (company, people and teams, the
+activity log, privacy, customer settings and imports, automations, connections), wherever it is: those need you,
+signed in, and some ask you to confirm it is you. The one exception is subscribing a webhook (`/api/dev/webhooks`).
+
+## Limiting a key to areas
+
+A key made through the API (`POST /api/dev/keys`) can carry `areas`, each read or write: `work` (boards, tasks, pages,
+automations), `customers` (customers, records, tickets, the portal, onboarding), `reports` (reports, search, exports,
+analytics) `people` (the people list and your own profile) and `webhooks` (subscribing outgoing webhooks, as automation
+platforms do). For example `"areas": ["work:write", "customers:read"]`.
+Anything outside them returns `403 token_scope`; `GET /api/me` always works. A write grant needs **Can make changes**.
+Without `areas` a key reaches every area.
+
 ## Revoking and oversight
 
 - See your keys in Your settings and **Revoke** any of them; it stops working at once.

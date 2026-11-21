@@ -12,6 +12,7 @@ import { useDismiss } from './Menus';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 import { SavedViews, useSavedViews } from './SavedViews';
 import { useLeave } from '../lib/leave';
+import { CloseButton } from './ui';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -117,6 +118,11 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
         </button>
         {open === 'filter' && (
           <div ref={leavePop} className="popmenu filterpop" role="dialog" aria-label={t('filters.button')}>
+            {/* A visible Close at the end corner, as on every popup (Esc and a click outside close it too). */}
+            <div className="filterpop__head">
+              <span className="filterpop__title">{t('filters.button')}</span>
+              <CloseButton onClick={() => setOpen(null)} />
+            </div>
             {groups}
             <div className="filterpop__foot">
               <button className="linkbtn" disabled={!n} onClick={() => onChange({ q: filters.q })}>

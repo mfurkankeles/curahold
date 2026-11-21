@@ -18,6 +18,7 @@ import { todayIso } from '../lib/time';
 import { dayParts, formatDayLong, formatDayNumeric, formatInt, formatMonthYear, formatTime, isoDay, monthGrid, parseDay, parseTime, shiftDay, shiftMonth, weekdayNames, weekdayOf, weekStart } from '../lib/format';
 import { useDismiss } from './Menus';
 import { Icon } from './icons';
+import { CloseButton } from './ui';
 import { useLeave } from '../lib/leave';
 import { SHEET_PHONE, useDragClose } from '../lib/dragClose';
 import { useMedia } from './FilterSheet';
@@ -394,6 +395,8 @@ function CalendarPop({
           <button type="button" className="btn btn--quiet btn--icon datepop__step" aria-label={t('date.nextMonth')} onClick={() => move(shiftMonth(focus, 1))}>
             <Icon name="chevronRight" size={16} />
           </button>
+          {/* A visible Close at the end corner, as on every popup; Esc and picking a day close it too. */}
+          <CloseButton onClick={() => onClose(true)} />
         </div>
         {onRange && <p className="datepop__hint" aria-live="polite">{t(start ? 'date.rangeLast' : 'date.rangeFirst')}</p>}
         <table className="datepop__grid" role="grid" aria-labelledby={headId} ref={grid} onKeyDown={onKey}>

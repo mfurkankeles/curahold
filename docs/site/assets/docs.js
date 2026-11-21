@@ -33,12 +33,18 @@
   var esc = function (s) {
     return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
   };
+  // One load of the index, shared by every keystroke: each keystroke used to start its own, and an early, slower one
+  // could finish last and show results for half a word.
+  var loading = null;
   function load() {
     if (index) return Promise.resolve(index);
-    return fetch((cfg.base || '/docs/') + cfg.lang + '/search.json').then(function (r) { return r.json(); }).then(function (d) {
-      index = d.map(function (p) { return { p: p, t: fold(p.t), x: fold(p.x), h: p.h.map(function (h) { return [h[0], h[1], fold(h[1])]; }) }; });
-      return index;
-    });
+    if (!loading) {
+      loading = fetch((cfg.base || '/docs/') + cfg.lang + '/search.json').then(function (r) { return r.json(); }).then(function (d) {
+        index = d.map(function (p) { return { p: p, t: fold(p.t), x: fold(p.x), h: p.h.map(function (h) { return [h[0], h[1], fold(h[1])]; }) }; });
+        return index;
+      }, function (e) { loading = null; throw e; });
+    }
+    return loading;
   }
   function search(term) {
     var groups = groupsOf(term);
@@ -78,16 +84,22 @@
     return out.sort(function (a, b) { return b.score - a.score; }).slice(0, 8);
   }
   var sel = -1;
-  function render(list) {
+  function render(list, term) {
     sel = -1;
     box.hidden = false;
+    // Which search these results answer (the browser checks wait for it, tests/e2e/docs.ts).
+    box.setAttribute('data-for', term);
     box.innerHTML = list.length ? list.map(function (r) { return '<a href="' + r.url + '">' + esc(r.title) + '<small>' + esc(r.sub) + '</small></a>'; }).join('') : '<p>' + esc(cfg.none) + '</p>';
   }
   if (q) {
     q.addEventListener('input', function () {
-      var v = q.value.trim();
-      if (v.length < 2) { box.hidden = true; return; }
-      load().then(function () { render(search(v)); });
+      if (q.value.trim().length < 2) { box.hidden = true; return; }
+      // Always what is in the box when the index is ready, never the word as it was a few keystrokes ago.
+      load().then(function () {
+        var v = q.value.trim();
+        if (v.length < 2) return;
+        render(search(v), v);
+      });
     });
     q.addEventListener('keydown', function (e) {
       var links = box.querySelectorAll('a');

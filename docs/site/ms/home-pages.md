@@ -16,7 +16,7 @@ Halaman utama wujud supaya orang ramai melihat kerja mereka sebaik sahaja membuk
 | Pembaharuan akan datang | Pelanggan yang memperbaharui dalam tempoh hari yang anda pilih, dan jumlah nilainya |
 | Perlu perhatian | Pelanggan yang kesihatannya berisiko atau patut diperhatikan |
 | Telah senyap | Pelanggan tanpa aktiviti untuk seketika |
-| Risiko pihak berkepentingan | Penghalang dan orang yang ragu-ragu, serta pelanggan tanpa juara |
+| Risiko pihak berkepentingan | Penghalang dan orang yang ragu-ragu, serta pelanggan tanpa penyokong utama |
 | Nombor | Satu nilai, seperti bilangan pelanggan atau jumlah nilai |
 | Pecahan | Pelanggan dibahagikan mengikut medan pilihan |
 | Beban pasukan | Pelanggan, kerja terbuka, lewat dan berisiko bagi setiap orang |

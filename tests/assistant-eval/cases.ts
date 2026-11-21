@@ -174,6 +174,11 @@ export const BASE: BaseCase[] = [
     q: { en: 'How do I turn on AI answers for CuraAI and set a monthly limit?', tr: 'CuraAI için yapay zekâ ile cevabı nasıl açarım ve aylık sınır nasıl koyarım?', ar: 'كيف أفعّل الإجابة بالذكاء الاصطناعي في CuraAI وأضع حدًا شهريًا؟', he: 'איך מפעילים מענה בבינה מלאכותית ב-CuraAI וקובעים מגבלה חודשית?', fa: 'چطور پاسخ با هوش مصنوعی را برای CuraAI روشن کنم و سقف ماهانه بگذارم؟', 'zh-Hans': '如何为 CuraAI 开启 AI 回答并设置每月上限？', 'zh-Hant': '如何為 CuraAI 開啟 AI 回答並設定每月上限？', ja: 'CuraAI の AI 回答をオンにして月間上限を設定するには？', ko: 'CuraAI의 AI 답변을 켜고 월 한도를 정하려면 어떻게 하나요?', hi: "CuraAI के लिए AI जवाब कैसे चालू करूं और मासिक सीमा कैसे तय करूं?", ms: "Bagaimana saya menghidupkan jawapan AI untuk CuraAI dan menetapkan had bulanan?" },
   },
   {
+    id: 'howto-desk-draft-consent', category: 'how_to', kinds: ['answer'], cite: 'getting-help',
+    rubric: 'Says the draft first reply is written only for requests from people who accepted the CuraAI notice; other requests reach support without a draft and are not sent to the AI provider.',
+    q: { en: 'Does support get an AI draft for help requests from people who declined CuraAI?', tr: 'CuraAI’yı reddeden kişilerin yardım talepleri için destek ekibine yapay zekâ taslağı gider mi?', ar: 'هل يحصل الدعم على مسودة بالذكاء الاصطناعي لطلبات المساعدة من أشخاص رفضوا CuraAI؟', he: 'האם התמיכה מקבלת טיוטת AI לבקשות עזרה של אנשים שסירבו ל-CuraAI?', fa: 'آیا پشتیبانی برای درخواست‌های کمکِ کسانی که CuraAI را نپذیرفته‌اند پیش‌نویس هوش مصنوعی می‌گیرد؟', 'zh-Hans': '拒绝了 CuraAI 的人提交的帮助请求，支持团队还会收到 AI 草稿吗？', 'zh-Hant': '拒絕了 CuraAI 的人提出的協助請求，支援團隊還會收到 AI 草稿嗎？', ja: 'CuraAI を断った人のヘルプリクエストにも、サポートには AI の下書きが届きますか？', ko: 'CuraAI를 거절한 사람의 도움 요청에도 지원팀이 AI 초안을 받나요?', hi: "जिन लोगों ने CuraAI को मना किया, उनके सहायता अनुरोधों पर क्या सपोर्ट को AI ड्राफ़्ट मिलता है?", ms: "Adakah sokongan mendapat draf AI untuk permintaan bantuan daripada orang yang menolak CuraAI?" },
+  },
+  {
     id: 'howto-setup-health', category: 'how_to', kinds: ['answer'], cite: 'setup-health',
     rubric: 'Explains Setup health in the menu: what is missing, each line with its fix button, Check again; then Test your setup.',
     q: { en: 'Where do I see what is still missing or wrong in our setup?', tr: 'Kurulumda hâlâ eksik ya da yanlış olanı nerede görürüm?', ar: 'أين أرى ما لا يزال ناقصًا أو خاطئًا في إعدادنا؟', he: 'איפה רואים מה עוד חסר או שגוי בהגדרה שלנו?', fa: 'کجا ببینم چه چیزی در راه‌اندازی ما هنوز کم یا اشتباه است؟', 'zh-Hans': '在哪里查看我们的设置还缺什么或哪里不对？', 'zh-Hant': '在哪裡查看我們的設定還缺什麼或哪裡不對？', ja: '設定でまだ足りないものや間違いはどこで見られますか？', ko: '설정에서 아직 빠졌거나 잘못된 것을 어디서 보나요?', hi: "हमारे सेटअप में अभी क्या कमी या गलती है, यह कहां दिखता है?", ms: "Di mana saya melihat apa yang masih kurang atau salah dalam persediaan kami?" },
@@ -182,6 +187,11 @@ export const BASE: BaseCase[] = [
     id: 'howto-trial', category: 'how_to', kinds: ['answer'], cite: 'billing',
     rubric: 'Says the trial starts from an approved request, lasts three months by default, includes the agreed seats, viewers are free, and reminders come 14/7/1 days before the end.',
     q: { en: 'How long is the free trial and how many seats does it include?', tr: 'Ücretsiz deneme ne kadar sürüyor ve kaç koltuk içeriyor?', ar: 'كم مدة التجربة المجانية وكم مقعدًا تشمل؟', he: 'כמה זמן נמשך הניסיון החינמי וכמה מושבים כלולים בו?', fa: 'دورهٔ آزمایشی رایگان چقدر است و چند صندلی دارد؟', 'zh-Hans': '免费试用多长时间，包含多少席位？', 'zh-Hant': '免費試用多長時間，包含多少席位？', ja: '無料トライアルの期間と含まれるシート数は？', ko: '무료 체험은 얼마 동안이고 좌석은 몇 개인가요?', hi: "मुफ़्त ट्रायल कितने समय का है और इसमें कितनी सीटें हैं?", ms: "Berapa lama percubaan percuma dan berapa tempat duduk yang disertakan?" },
+  },
+  {
+    id: 'howto-renewal-notice', category: 'how_to', kinds: ['answer'], cite: 'billing',
+    rubric: 'Says a yearly plan renews by itself, every administrator gets an e-mail 30 days before with the date, and the plan can be changed or the renewal stopped on the Billing page before then; refunds follow the refund policy.',
+    q: { en: 'Will we be told before our yearly plan renews?', tr: 'Yıllık planımız yenilenmeden önce bize haber verilecek mi?', ar: 'هل سنُبلَّغ قبل أن تتجدد خطتنا السنوية؟', he: 'האם נקבל הודעה לפני שהתוכנית השנתית שלנו מתחדשת?', fa: 'آیا پیش از تمدید طرح سالانه‌مان به ما خبر داده می‌شود؟', 'zh-Hans': '年度套餐续约前会通知我们吗？', 'zh-Hant': '年繳方案續約前會通知我們嗎？', ja: '年払いのプランが更新される前に知らせてもらえますか？', ko: '연간 요금제가 갱신되기 전에 알려 주나요?', hi: "क्या हमारा वार्षिक प्लान रिन्यू होने से पहले हमें बताया जाएगा?", ms: "Adakah kami akan dimaklumkan sebelum pelan tahunan kami diperbaharui?" },
   },
   {
     id: 'howto-digest', category: 'how_to', kinds: ['answer'], cite: 'notifications',

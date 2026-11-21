@@ -8,6 +8,8 @@ export interface ApiKeyInfo {
   kind: 'key' | 'oauth';
   prefix: string;
   canWrite: boolean;
+  /** The areas the key or app is limited to (`work:write`, `customers:read`…); null: every area (ADR 0024). */
+  areas: string[] | null;
   userId: string;
   clientId: string | null;
   createdAt: string;

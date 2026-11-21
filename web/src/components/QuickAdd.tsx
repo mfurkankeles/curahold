@@ -402,14 +402,17 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   if (!boards.length) {
     return (
       <div className="qa-wrap" ref={leaveWrap} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-        <div className="qa" role="dialog" aria-modal="true" aria-label={t('quick.title')} onKeyDown={onDialogKey}>
+        <div className="qa" role="dialog" aria-modal="true" aria-labelledby="qa-title" onKeyDown={onDialogKey}>
+          {/* The same head as the full dialog: the title and the shared 44 × 44 Close at the end corner (MASTER-RULES 15). */}
+          <div className="qa__head">
+            <h2 className="qa__title" id="qa-title">
+              <Icon name="plus" size={16} /> {t('quick.title')}
+            </h2>
+            <CloseButton onClick={onClose} />
+          </div>
           <div className="qa__empty">
             <Icon name="board" size={22} />
             <p>{t('quick.noBoards')}</p>
-            <button className="btn" onClick={onClose}>
-              <Icon name="close" size={16} />
-              {t('common.close')}
-            </button>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ summary: How Curahold processes personal data on a customer's behalf — roles, 
 ---
 # Data processing agreement (DPA)
 
-> **Draft — lawyer approval required.** Version 2026-11-19.draft2. Part of the Terms of service; a signable copy is available on request. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-21.draft3. Part of the Terms of service; a signable copy is available on request. Not legal advice.
 
 This agreement between the Customer and **[Company legal name]** ("Curahold") applies whenever Curahold processes personal data for the Customer. It meets GDPR / UK GDPR art. 28, KVKK art. 12 and the processor terms of the other laws in Annex 4. It prevails over the Terms of service on personal data.
 
@@ -58,7 +58,9 @@ Personal data is transferred outside the Customer's country only with the safegu
 
 ## 11. AI features
 
-AI features process data only when an administrator has switched them on, send only the minimum needed, and keep conversation logs for 30 days. No Customer data, prompt or output is used to train a model. Under the KVKK an AI provider abroad is a transfer covered by Annex 4, not by consent alone.
+AI features process data only when an administrator has switched them on and send only the minimum needed. Questions are kept as the Customer's administrator chose (not at all, 7, 30 by default, 90 or 365 days); answers are not kept, except that an answer drawn only from the documentation may be reused for 7 days. No Customer data, prompt or output is used to train a model, by Curahold or by its AI sub-processor. Under the KVKK an AI provider abroad is a transfer covered by Annex 4, not by consent alone.
+
+**AI assistants the Customer's users connect.** A user can connect their own AI assistant to the Service through Curahold's connector (MCP). The assistant acts as that user, with that user's permissions, and changes data only where the user allowed changes when connecting it. What the assistant reads leaves the Service on the Customer's instruction (Terms of service, section 10) and goes to the AI company the user chose; that company is not Curahold's sub-processor, and its retention and any use for training follow the Customer's or the user's own agreement with it. Administrators can see and disconnect connected apps in the developer settings.
 
 ## 12. Liability, term
 
@@ -100,7 +102,7 @@ The current list is the **Sub-processors** page, generated from Curahold's data 
 
 ## Annex 4 — Transfer riders
 
-Attach the rider for the Customer's country (research §2.3, to be completed by the lawyer):
+Attach the rider for the Customer's country (to be completed by the lawyer):
 
 | Customer in | Rider |
 | --- | --- |

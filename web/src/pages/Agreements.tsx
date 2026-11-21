@@ -93,6 +93,7 @@ export function AgreementsGate({ me, onLocale, onAccepted }: { me: Me; onLocale:
                       <small>{t('agreements.version', { version: d.version })}</small>
                     </span>
                     <a className="btn btn--small" href={docsHref(`${helpLanguageOf(locale)}/${AGREEMENTS[d.doc].docs}`)} {...docsLink}>
+                      <Icon name="book" size={16} />
                       {t('agreements.open')}
                     </a>
                   </li>

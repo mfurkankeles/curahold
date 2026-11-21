@@ -47,7 +47,7 @@ Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve A
 
 | Yol | Nasıl çalışır |
 |---|---|
-| **E-posta kodu ve bağlantısı** | Tek e-postada 6 haneli kod ve bağlantı gelir; ikisi de bir kez ve 30 dakika çalışır. Kod, e-postayı telefonda okuyup bilgisayardan girmeyi sağlar. |
+| **E-posta kodu ve bağlantısı** | Tek e-postada 6 haneli kod ve bağlantı gelir; ikisi de bir kez ve 30 dakika çalışır. Kod, e-postayı telefonda okuyup bilgisayardan girmeyi sağlar. Beş yanlış deneme bir kodu bitirir; üst üste on yanlış kod o kişinin kodlarını 15 dakika durdurur (e-postadaki bağlantı çalışmaya devam eder). |
 | **Google** | Kişi şirket Google hesabıyla girer. Şirketi hesabını kapatırsa portala da giremez. |
 | **Microsoft** | Microsoft 365 hesabıyla girer. İlk Microsoft girişi bir kez e-postaya gelen kodla onaylanır; sonra hesabın kendisi tanınır. |
 | **Passkey** | Parmak izi, yüz tanıma ya da cihaz PIN'i. En güvenli yol; kişi ilk girişten sonra **Hesabınız** sayfasından ekler. Passkey yalnızca o portalın adresinde çalışır, sahte bir sitede işe yaramaz. |

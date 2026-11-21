@@ -191,7 +191,8 @@ create table widgets (
   created_at timestamptz not null default now(),
   foreign key (org_id, created_by) references users (org_id, id) on delete set null (created_by)
 );
-alter table widgets enable row level security;
+-- Row security on and forced, plus the server role's own way in (migration 0254, ADR 0023).
+select app_secure_table('widgets');
 -- Who may read and change it, in words first, then in SQL.
 create policy widgets_select on widgets for select using (org_id = app_org());
 create policy widgets_insert on widgets for insert with check (org_id = app_org() and app_can_write());

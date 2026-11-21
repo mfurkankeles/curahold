@@ -4,9 +4,9 @@
 // payments (dunning) and hosts invoices and the customer portal. We keep what it
 // tells us in the subscriptions table (docs/ADR/0019).
 //
-// Checkout runs in the browser (Paddle.js), so createCheckout makes no HTTP call
-// — it only hands back the public values and the signed company id. Every other
-// call goes through an injected fetch, so tests run against a mock and never
+// Checkout runs in the browser (Paddle.js), but on a transaction the server makes
+// first (price, quantity and the signed company id in it), so the browser holds
+// only the transaction's id. Every call goes through an injected fetch, so tests run against a mock and never
 // touch the network; there are no real keys anywhere in the repository.
 import type { Interval, PlanKey, Proration, SubscriptionStatus } from '../../../shared/src/billing';
 import type { BillingConfig } from '../context';
@@ -92,15 +92,17 @@ export class PaddleProvider implements PaymentProvider {
   async createCheckout(input: CheckoutInput): Promise<CheckoutHandle> {
     const priceId = this.cfg.prices[input.plan]?.[input.interval];
     if (!priceId) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
-    return {
-      provider: this.name,
-      env: this.cfg.env,
-      clientToken: this.cfg.clientToken,
-      priceId,
-      quantity: Math.max(1, input.quantity),
-      customData: await checkoutCustomData(this.cfg, input.orgId),
-      email: input.email,
-    };
+    const quantity = Math.max(1, input.quantity);
+    // Made here, not in the browser (security audit M2): the price comes from the catalogue, the quantity from the
+    // company's seats, and the signed company id never reaches the page. Paddle.js can still change an open
+    // checkout's items, so the webhook checks what was bought against what the server would sell (service.ts).
+    const tx = await this.call<{ id: string }>('POST', '/transactions', {
+      items: [{ price_id: priceId, quantity }],
+      custom_data: await checkoutCustomData(this.cfg, input.orgId),
+      collection_mode: 'automatic',
+    });
+    if (!tx?.id) return fail('billing_error');
+    return { provider: this.name, env: this.cfg.env, clientToken: this.cfg.clientToken, transactionId: tx.id, priceId, quantity, email: input.email };
   }
 
   async getSubscription(id: string): Promise<ProviderSubscription> {

@@ -20,7 +20,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 33 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
-| `/consent-event/…` | 1 | A visitor's cookie choice (no account), recorded as proof of consent: version, text hash, country; sent by the banner. |
+| `/consent-event/…` | 1 | A visitor's cookie choice (no account), recorded as proof of consent: version, text hash, country; sent by the banner. A hash that names none of the texts our banners show is refused. |
 | `/desk/…` | 101 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |

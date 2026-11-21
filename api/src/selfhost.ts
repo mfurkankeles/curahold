@@ -147,11 +147,22 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   const config = selfHostConfig(env);
   const root = env.APP_ROOT ?? process.cwd();
   const db = postgresDb(env.DATABASE_URL, { max: Number(env.DB_POOL || 10) });
-  await migrate(db, loadMigrations(join(root, 'db', 'migrations')));
+  // Migrations run as the table owner. With MIGRATION_DATABASE_URL the owner is a login of its own and the server's
+  // DATABASE_URL need not own anything (ADR 0023); without it the one login does both, as before.
+  if (env.MIGRATION_DATABASE_URL) {
+    const owner = postgresDb(env.MIGRATION_DATABASE_URL, { max: 1 });
+    try {
+      await migrate(owner, loadMigrations(join(root, 'db', 'migrations')));
+    } finally {
+      await owner.close();
+    }
+  } else await migrate(db, loadMigrations(join(root, 'db', 'migrations')));
   const slug = config.singleTenantSlug!;
   if ((await ensureCompany(db, env, slug)) === 'created') console.log(`[curahold] company "${slug}" created; sign in at ${env.PUBLIC_URL} with ${env.ADMIN_EMAIL}`);
   await breakGlass(db, slug, env.RESET_SECOND_STEP);
 
+  // Without SMTP every sign-in link is printed to the log: the log is then a credential store (security audit L11).
+  if (!env.SMTP_URL) console.warn('[curahold] SMTP_URL is not set: sign-in links are written to this log. Keep the log private, and set SMTP_URL before inviting people.');
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
   const deps: Deps = {

@@ -78,11 +78,24 @@ export interface UsageNow {
   /** Model-answered questions this month, and the plan's cap on them (null or absent: no cap). */
   companyQuestions?: number;
   questionCap?: number | null;
+  /** The plan's money ceiling for this company, USD a month (cost.ts planAiCeilingUsd; null or absent: none). */
+  planCapUsd?: number | null;
+  /** The public chat's own spend this month and its cap (only where there is no company). */
+  publicMicros?: number;
+  publicCapUsd?: number | null;
 }
 
-/** Whether a money cap or the plan's question cap is reached: then the free docs search answers instead of the model. */
+/**
+ * Whether a money cap or the plan's question cap is reached: then the free docs search answers instead of the model.
+ * The plan's ceiling counts whatever the company's own setting says, so an administrator cannot spend past it; the
+ * public chat stops at its own cap so it can never use up the installation's cap that customers share.
+ */
 export const overCap = (used: UsageNow, globalUsd: number, companyUsd: number | null): boolean =>
-  used.globalMicros >= globalUsd * 1e6 || (companyUsd != null && used.companyMicros >= companyUsd * 1e6) || (used.questionCap != null && (used.companyQuestions ?? 0) >= used.questionCap);
+  used.globalMicros >= globalUsd * 1e6 ||
+  (companyUsd != null && used.companyMicros >= companyUsd * 1e6) ||
+  (used.planCapUsd != null && used.companyMicros >= used.planCapUsd * 1e6) ||
+  (used.publicCapUsd != null && (used.publicMicros ?? 0) >= used.publicCapUsd * 1e6) ||
+  (used.questionCap != null && (used.companyQuestions ?? 0) >= used.questionCap);
 export interface Spend {
   model: boolean;
   usage: LlmUsage;

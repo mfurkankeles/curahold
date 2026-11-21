@@ -14,6 +14,8 @@
 .ip__crumbs a:hover { color: var(--ink); text-decoration: underline; }
 .ip__back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
 .ip__back svg { width: 16px; height: 16px; }
+.ip__bar { padding-top: 28px; }
+.ip__bar .ip__crumbs { margin-bottom: 0; }
 [dir='rtl'] .ip__back .ic-dir { transform: scaleX(-1); }
 .ip__glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 22px; border-radius: 16px; background: var(--iris-wash); color: var(--iris-ink); }
 .ip__glyph svg { width: 26px; height: 26px; }
@@ -62,10 +64,6 @@
 
 .ip__review { position: relative; z-index: 2; margin: 0; padding: 12px 20px; text-align: center; background: rgba(226, 149, 58, .14); border-bottom: 1px solid rgba(226, 149, 58, .35); color: #f6cf9f; font-size: 14.5px; }
 
-.ip__next { display: grid; gap: 6px; margin-top: 24px; padding: 20px 22px; border-radius: 18px; border: 1px dashed rgba(226, 149, 58, .45); background: rgba(226, 149, 58, .06); }
-.ip__next .ip__soon { justify-self: start; }
-.ip__next h2 { font-size: 21px; }
-.ip__next p { margin: 0; color: var(--ink-2); }
 .ip__points--dont li { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
 .ip__body .fl { margin-top: 40px; }
 

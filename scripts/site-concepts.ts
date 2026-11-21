@@ -166,7 +166,8 @@ export function conceptCPage(p: ConceptParts): string {
     sat0: esc(c.sat[0]),
     sat1: esc(c.sat[1]),
     sat2: esc(c.sat[2]),
-    sat3: `${esc(c.sat[3])} <em class="soon">${esc(a.d_soon)}</em>`,
+    // Only what finance has today (contract value for the roles allowed); no "coming soon" claim (claims list B #20).
+    sat3: esc(c.sat[3]),
     k0: esc(usd(240000)),
     k1: esc(`${num(48)} → ${num(85)}`),
     k2: esc(ui.sprint),

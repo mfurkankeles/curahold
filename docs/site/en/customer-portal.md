@@ -47,7 +47,7 @@ In **Settings → Customer portal → How customers sign in**, choose the ways t
 
 | Way | How it works |
 |---|---|
-| **Email code and link** | One email with a six-digit code and a link, each working once for 30 minutes. The code lets someone read the email on their phone and sign in on their computer. |
+| **Email code and link** | One email with a six-digit code and a link, each working once for 30 minutes. The code lets someone read the email on their phone and sign in on their computer. Five wrong tries spend a code; ten wrong codes in a row stop that person's codes for 15 minutes (the link in the email still works). |
 | **Google** | Their company Google account. If their company closes the account, the portal is closed to them too. |
 | **Microsoft** | Their Microsoft 365 account. The first Microsoft sign-in is confirmed once with an emailed code; after that the account itself is recognised. |
 | **Passkey** | Fingerprint, face or device PIN. The safest way; people add one on **Your account** after a first sign-in. A passkey works only on that portal's address, never on a look-alike site. |

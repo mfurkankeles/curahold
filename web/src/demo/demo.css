@@ -52,6 +52,7 @@
   background: var(--surface); color: var(--ink); border-radius: var(--r-m); padding: 16px 16px;
   box-shadow: var(--shadow-3); z-index: 70;
 }
+.demobar__ideasHead { display: flex; justify-content: flex-end; margin-block-end: var(--s-2); }
 .demobar__ideas ul { margin: 0 0 12px; padding-inline-start: 16px; display: grid; gap: 8px; line-height: 1.4; }
 .demobar__ideas .demobar__reset { color: var(--brand-ink); border-color: var(--line-strong); }
 
@@ -122,7 +123,8 @@
 .tour__top { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--tour-mute); }
 .tour__count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--brand-ink); }
 .tour__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tour__x { border: 0; background: none; font-size: var(--fs-xl); line-height: 1; color: var(--tour-mute); cursor: pointer; padding: 0 4px; border-radius: var(--r-s); }
+/* The tour card's Close: 44 × 44 at the end corner, like every popup's (Esc closes too). */
+.tour__x { flex: none; display: grid; place-items: center; inline-size: var(--tap); block-size: var(--tap); margin-inline-start: auto; border: 0; background: none; color: var(--tour-mute); cursor: pointer; border-radius: var(--r-m); }
 .tour__x:hover { color: var(--ink); background: var(--sunk); }
 .tour__bar { height: 3px; border-radius: var(--r-xs); background: var(--sunk); margin: 8px 0 8px; overflow: hidden; }
 .tour__bar span { display: block; height: 100%; background: var(--brand); border-radius: var(--r-xs); transition: width var(--dur) var(--ease); }
@@ -132,7 +134,9 @@
 .tour__nav, .tour__end { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
 .tour__end { justify-content: flex-start; flex-wrap: wrap; }
 .tour__end .tour__link { margin-inline-start: auto; }
+/* Icon and label side by side, as on every button (the icon came with the icon rule; review, 21 Nov 2026). */
 .tour__btn {
+  display: inline-flex; align-items: center; gap: var(--s-2);
   font: inherit; font-size: var(--fs-m); font-weight: 600; cursor: pointer; text-decoration: none;
   border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
   border-radius: var(--r-m); padding: 8px 12px;

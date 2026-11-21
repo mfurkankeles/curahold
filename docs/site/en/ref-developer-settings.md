@@ -72,6 +72,7 @@ Makes a key (in the browser only). The key is shown once.
 | --- | --- | --- | --- |
 | `name` | text | required | at least 1 characters; at most 80 characters |
 | `canWrite` | yes/no | optional | default false |
+| `areas` | list of text | optional | at most TOKEN_AREAS.length * 2 items |
 | `expiresInDays` | whole number | optional | at least 1; at most 730; may be null; default 365 |
 
 ### `DELETE /dev/keys/:id`

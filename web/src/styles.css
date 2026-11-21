@@ -808,7 +808,7 @@ tr.vspacer td { padding: 0; border: 0; }
 }
 .toast__icon { flex: none; color: var(--toast-icon); }
 .toast__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.toast__close { flex: none; width: 26px; height: 26px; border: 0; border-radius: var(--r-s); background: none; color: inherit; opacity: .7; cursor: pointer; display: grid; place-items: center; }
+.toast__close { flex: none; width: var(--tap); height: var(--tap); border: 0; border-radius: var(--r-s); background: none; color: inherit; opacity: .7; cursor: pointer; display: grid; place-items: center; }
 .toast__close:hover { opacity: 1; background: var(--tint-strong); }
 .toast--error { background: var(--late); color: var(--on-status); }
 .toast--error .toast__icon { color: inherit; }
@@ -1699,6 +1699,9 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
 .ask__consent p { margin: 0; }
 .ask__consent-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
 .ask__consent-list { margin: 0; padding-inline-start: var(--s-4); display: grid; gap: var(--s-1); color: var(--ink-2); }
+.ask__consent-part { display: grid; gap: var(--s-1); }
+.ask__consent-part h5 { margin: 0; font-size: var(--fs-s); }
+.ask__consent-part--give { padding-block-start: var(--s-2); border-block-start: 1px solid var(--line); }
 .ask__consent-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: flex-end; }
 .ask__consent-btn { min-height: var(--tap); min-width: var(--tap); display: inline-flex; align-items: center; gap: var(--s-1); }
 /* An answer the model is writing, and what it prepared or read for it. */
@@ -2384,6 +2387,8 @@ a.btn { text-decoration: none; }
 .fcount--quiet { background: var(--sunk); color: var(--ink-2); }
 .btn[data-on] { border-color: var(--brand); color: var(--brand-ink); }
 .filterpop { width: min(360px, calc(100vw - 24px)); padding: 12px; gap: 12px; max-height: 70vh; overflow-y: auto; }
+.filterpop__head { display: flex; align-items: center; gap: var(--s-2); }
+.filterpop__title { flex: 1; min-width: 0; font-weight: 600; }
 .filterpop__group { display: grid; gap: 4px; }
 .filterpop__label { font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); }
 .filterpop__chips { display: flex; flex-wrap: wrap; gap: 4px; }

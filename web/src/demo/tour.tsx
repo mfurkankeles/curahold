@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { tourText, type Tour } from '../../../shared/src/tours';
 import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { Icon } from '../components/icons';
 
 export interface TourDeps {
   lang: Locale;
@@ -216,9 +217,11 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <p className="tour__body">{ui.endBody}</p>
             <div className="tour__end">
               <a className="tour__btn tour__btn--primary" href={deps.startFree} target="_blank" rel="noopener">
+                <Icon name="arrowRight" size={16} />
                 {ui.free}
               </a>
               <button type="button" className="tour__btn" onClick={onClose}>
+                <Icon name="eye" size={16} />
                 {ui.keep}
               </button>
               <a className="tour__link" href={deps.hub}>
@@ -231,8 +234,8 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <div className="tour__top">
               <span className="tour__count">{ui.of(i + 1, total)}</span>
               <span className="tour__name">{words.title(tour)}</span>
-              <button type="button" className="tour__x" aria-label={ui.close} title={ui.close} onClick={onClose}>
-                ×
+              <button type="button" className="tour__x" aria-label={ui.close} title={`${ui.close} (Esc)`} onClick={onClose}>
+                <Icon name="close" size={18} />
               </button>
             </div>
             <div className="tour__bar" aria-hidden="true">
@@ -244,6 +247,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <div className="tour__nav">
               {i > 0 ? (
                 <button type="button" className="tour__btn" onClick={back}>
+                  <Icon name="arrowLeft" size={16} />
                   {ui.back}
                 </button>
               ) : (
@@ -253,6 +257,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
               )}
               {(!s!.click || anchor !== 'found') && (
                 <button type="button" className="tour__btn tour__btn--primary" onClick={next} autoFocus>
+                  <Icon name={i + 1 === total ? 'check' : 'arrowRight'} size={16} />
                   {i + 1 === total ? ui.finish : ui.next}
                 </button>
               )}

@@ -51,7 +51,7 @@ An administrator can ask, in **Settings → Company → Delete the company**, by
 
 ### Requests about personal data
 
-In **Settings → Company → Requests about personal data**, people with the privacy permission log every request a person makes about their data: access, correction, erasure, restriction, objection, portability or withdrawn consent, with the law that applies. The due date comes from that law (for example 30 days under KVKK and the GDPR, 10 under Korea’s PIPA), and an overdue request is marked in red with an icon. Mark it answered or refused once it is done; each change is in the activity log. The export and erase actions on the person do the work itself.
+In **Settings → Company → Requests about personal data**, people with the privacy permission log every request a person makes about their data: access, correction, erasure, restriction, objection, portability or withdrawn consent, with the law that applies. The due date comes from that law (for example 30 days under KVKK, one calendar month under the GDPR, 10 days under Korea’s PIPA), and an overdue request is marked in red with an icon. Mark it answered or refused once it is done; each change is in the activity log. The export and erase actions on the person do the work itself.
 
 ## How long things are kept
 
@@ -66,6 +66,7 @@ In **Settings → Company → Requests about personal data**, people with the pr
 | Error records (what broke, where — never request contents) | 30 days |
 | Revoked API keys | 30 days |
 | Activity log | 12 months |
+| Requests about personal data, once answered or refused | 3 years after closing |
 | Help requests, their messages and files | 24 months after the last change |
 | Questions to CuraAI | As your company chose (30 days unless changed) |
 | A deleted company | 30 days after the request, then erased |

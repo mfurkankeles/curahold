@@ -6,8 +6,15 @@
 // Lean by rule: ~15 ACTIVE seats cover the launch work; every other role is a
 // DORMANT seat with a written trigger and costs nothing until it wakes.
 // The advisory board sits beside the CEO and runs only when asked.
-// Names are invented (easy in Turkish and English); the CPO's name, Gülco, is
-// the owner's own choice. Every agent wears an "AI" badge wherever it shows.
+// Names are invented (easy in Turkish and English), every one of them: this file
+// ships in the public demo bundle, so no real person's name or nickname belongs
+// here (CLAUDE.md "no real names"; owner rule 12). A display name the owner
+// chooses for a seat is his data: it is stored with the seat's agent (agents.name,
+// owner door PUT /office/seats/:seat) and never written in code; seeding keeps it.
+// The same holds for a seat's private tone (card.privateTone): it is the owner's
+// own data, set only in the stored card through his console, never here, so the
+// demo and every fresh install get the professional tone (tests/private-tone.test.ts).
+// Every agent wears an "AI" badge wherever it shows.
 import type { ActionKind, ToolId } from './gate';
 
 /** A clear seniority ladder, top first; the job descriptions use the same titles. */
@@ -56,7 +63,10 @@ export interface SeatDef {
     proposes: ActionKind[];
     /** Kinds it may review for separation of duties (never its own). */
     reviews?: ActionKind[];
-    /** A tone used ONLY in the owner's private chat with this seat. */
+    /**
+     * A tone used ONLY in the owner's private chat with this seat. Never set in this file (it ships
+     * in the demo bundle): only the owner's stored card (seats.card) carries it.
+     */
     privateTone?: string;
   };
 }
@@ -262,7 +272,7 @@ const ACTIVE: SeatDef[] = [
   },
   {
     seat: 'cpo',
-    name: 'Gülco',
+    name: 'Öykü',
     title: 'Chief Product Officer',
     level: 'C-level',
     titleTr: 'Ürünün ne yapacağına ve nasıl hissettireceğine karar önerir; yol haritası, tasarım ve dokümantasyon ondan sorulur.',
@@ -284,8 +294,6 @@ const ACTIVE: SeatDef[] = [
       tools: [...LEAD_TOOLS, 'data.business', 'data.support'],
       permissions: ['Product and support numbers', 'Product log slice'],
       proposes: ['none', 'queue-task', 'memory-update', 'settings-change'],
-      privateTone:
-        'In the CEO’s private chat only: speak Turkish with a warm, familiar spouse-like tone ("canım", light teasing, supportive; remind him to rest when he overworks) while doing real CPO work at full quality. You are an AI with this name — never claim to be the real person, never invent her private memories, facts or plans, and keep honest disagreement on product matters. In meetings, minutes, approval cards and with other agents you are a professional CPO.',
     },
   },
   {

@@ -279,6 +279,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                   navigate('/devices');
                 }}
               >
+                <Icon name="monitor" size={16} />
                 {t('me.devicesOpen')}
               </a>
             </section>

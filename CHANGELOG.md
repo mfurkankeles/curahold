@@ -10,8 +10,62 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ## [Unreleased]
 
+### Added
+
+- Yearly plans: every administrator gets an e-mail 30 days before the plan renews (the date, the plan and seats, and
+  where to change or stop it), as the terms and the refund policy promise. It comes even with other notifications
+  turned off; operators can set the window with `RENEWAL_NOTICE_DAYS` (7–90).
+
 ### Changed
 
+- Sales site: the integrations page and menu no longer list automation platforms as "Coming soon" (those apps are not
+  published yet; the site names only what ships). The yearly-saving figure next to the monthly/yearly switch is now part
+  of the price gate in every language, so it can only appear once prices are published.
+- Every language reads as one product (localisation review): Persian speaks formally ("شما") in the app and the whole
+  help centre; Hebrew uses the plural on the site, in e-mails (the customer portal's included), consent, sign-up and
+  the trial, with noun buttons and one word each for single sign-on, e-mail and trial (older in-app screens still use
+  the singular); Korean shows one particle after a name, chosen by how Korean reads it ("Acme를", "Slack을",
+  "Microsoft를", not "Acme을(를)"; a name whose ending cannot be read keeps the two-form fallback), and one politeness
+  level; Turkish says "siz" everywhere and "kullanıcı" for a seat outside the legal pages; Hindi writes
+  "कुंजी" for a key; Malay no longer uses Indonesian or "tempat duduk". Seat, plan, viewer, record and e-mail are in the
+  glossary for all eleven languages. Four translations that changed the meaning are fixed (a refund promised where the
+  English says credit, in Turkish and Japanese; the Arabic AI-consent purpose; the Korean indemnity clause). The AI
+  consent version moves on, so people are asked once more.
+- Sign-up: the line naming the terms and the privacy policy is one sentence in each language, so Hebrew prefixes, the
+  Arabic "و" and the CJK and Hindi full stops sit right.
+- Every action button, and every link styled as a button, carries an icon (a spinner alone does not count); every popup
+  shows its own 44 × 44 Close and closes on Esc, the site's privacy choices dialog included; the site's /why/ page and
+  the blog index have Back. The help centre's getting-started page says how a trial starts in all eleven languages.
+- The site no longer marks the hand-over card, linked stories and linked work "Coming soon": they ship.
+- Yearly plans: the renewal e-mail is now sent a little more than 30 days before the renewal, so it always arrives at
+  least 30 days ahead, as the terms say; the billing help says "at least 30 days".
+- Plans: the seat minimum is stated on the pricing page, in the terms (§5) and in the refund policy, in all eleven
+  languages. The region it follows is fixed at checkout, so the hourly seat sync no longer lowers a subscription below
+  the minimum it was bought with, and a plan change starts from the seats in use. The CuraAI money limit counts the
+  seats paid for, the minimum included, and its field accepts cents.
+- Site: the finance pages speak only of what ships today (contract value for the roles you allow, renewals, the cost
+  to serve report); the accounting "coming soon" lines and the accounting integration group are gone.
+- Legal drafts: a broken sentence in the DPA's Annex 4 is fixed in all eleven languages.
+- AI team: no seat carries a private tone in the built-in org chart; only the owner's stored card can hold one, so the
+  demo and a fresh install use the professional tone.
+- Plans: a paying company's CuraAI money limit can no longer be set above its plan's allowance (full seats × the plan's
+  rate; a fixed amount in the trial), and the public help chat has its own monthly cap. Every plan is billed for at
+  least a few seats (3 by default; more in India and for some yearly plans), shown on the Billing page. A new trial keeps
+  25 seats and has 1 GB a seat by default. All of these are operator settings (ADR 0022); prices are not final.
+- Turkish: the in-app cookie banner and the API reference address the reader as "siz", like the rest of the product.
+- Trial limits are where the terms say they are: during a trial, Settings → **Billing** shows the seats approved for the
+  trial and the file space per full seat, and its seat row counts against the trial's seats (it said "no limit" before).
+  The trial request form names the file space next to the seats, and the billing help says 25 seats by default and 1 GB
+  a seat, in all eleven languages.
+- Legal drafts (all eleven languages): the terms cover monthly and yearly plans, renewal, plan and seat changes and
+  refer to a new **Refund policy** page (draft for the lawyer, linked from the site footer and the trust page); the
+  privacy notice and DPA give the AI question retention the product really applies (none, 7, 30 by default, 90 or 365
+  days; answers are not kept), list the public website chat as Curahold's own activity, and explain an AI assistant a
+  user connects through the connector; the terms and acceptable use policy allow that connector use; the sanctions
+  clause says what the product refuses (Iran) and the fair-use paragraph says what is limited; internal notes are out
+  of the public text. The cookie page lists the Turnstile human check on public forms (cookie choices are asked again).
+- The sales site no longer says the old tool becomes optional, that e-mails show on the timeline, or that accounting is
+  available today; the settings hint says rule runs and hand-overs are not counted or sold per plan, fair use applies.
 - The legal pages — terms, privacy notice, data processing agreement, acceptable use, SLA, order form, accessibility
   statement and the KVKK notice — are now in all eleven languages, each marked as a draft for the lawyer and saying that
   the English text prevails (for the KVKK notice, the Turkish). The privacy notice adds notes for India (grievance
@@ -166,6 +220,19 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Help centre search: typing fast on a slow connection could leave the results of the first letters on screen
+  (each keystroke loaded the search index again, and an early load could finish last). The index loads once and the
+  results always answer what is in the box.
+- Moving between screens: a click on the menu while the page was still fading in did nothing (the whole window
+  was a still picture for the length of the fade, longer on a busy computer). The menu and the rest of the frame now
+  stay live during the fade.
+- Requests about personal data: a GDPR or UK GDPR request's due date is one calendar month after receipt (it showed up
+  to two days late in February), and moving a due date before the day the request came in is a clear error, not a
+  server error.
+- The owner's console no longer sends the same e-mail or phone alert twice when two sends overlap, and two different
+  alerts for the same screen both stay on the phone.
+- A save button pressed again while its ring was settling keeps its ring until the second save is back.
+- Help and CuraAI no longer leave a connection open when a language's help index is missing.
 - Opening the app in a new browser no longer leaves one connection to the server open for as long as the page stays open
   (an early answer the app could not use was never let go); every page now settles as soon as it has loaded.
   The owner console, a shared onboarding report, file downloads and session replays let go of error answers the same way.
@@ -222,6 +289,44 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Smaller hardening from the security audit: members see the plan on Billing but no longer the tax number, billing
+  address or the payment provider's ids; the AI connector's "open one item" takes only real ids; ten wrong authenticator codes in a
+  row stop that person's codes for 15 minutes (recovery codes still work); help-request files wait for the upload
+  scanner; error logs mask every token prefix and the portal's too; the portal sends HSTS; a self-hosted server
+  without SMTP warns at start that sign-in links go to its log.
+- Customer portal: the six-digit e-mail code is checked one try at a time, even when many guesses arrive together, and
+  ten wrong codes in a row stop that person's codes for 15 minutes, however many new e-mails were asked for.
+- Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,
+  not private boards or other departments' boards. When that person leaves, the webhook is switched off and the people
+  who manage connections are notified.
+- Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or
+  turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does, also when
+  many arrive at once; SCIM
+  answers `403` with the reason and the sign-in page says the seats are full.
+- Billing: the checkout is now a Paddle transaction the server makes with the plan's price and the company's seats; the
+  page only opens it and never sees the signed company id. Because the browser can still change an open checkout, the
+  webhook checks what was bought: a new subscription for a price that is not in `PADDLE_PRICES` is refused instead of
+  ending the trial, too few seats are brought back to the company's seats at once, and a plan too small for the
+  company's full seats is flagged; each raises an alert in the owner's console and on his phones.
+- A change sent twice still happens once, but when its answer holds something shown only once (a new API key, a
+  webhook's signing secret, an authenticator secret, recovery codes, a secret link or calendar feed address), the server keeps only that it was
+  done: the repeat answers `{ "ok": true, "repeated": true }`. Repeat keys are kept a day instead of two; migration 0256
+  clears what was kept before.
+- API keys and connected apps (the AI connector included) can no longer administer the company: roles, people,
+  removing or exporting someone, company deletion, single sign-on and SCIM, billing, API keys, connected chat apps and
+  CRMs, security settings and support access answer `403 session_required` to every key and app token, whatever it was
+  allowed — as does anything that needs an administrator's permission (assistant and portal settings, departments,
+  customer imports and settings, automations…), checked in the database too. A key or an app can also be limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`), each read
+  or write (ADR 0024). Subscribing outgoing webhooks with a key keeps working.
+- Database: the server's own work (sign-in look-ups, inbound hooks, the hourly jobs) no longer runs as the owner of the
+  tables. It runs as a role that can read and write rows but cannot change the schema, a policy or a trigger, and every
+  table now forces row security (migration 0254, ADR 0023). Operators: give migrations their own owner login with
+  `MIGRATION_DATABASE_URL` and let the application connect with a login that owns nothing (`db/ops/role-separation.sql`).
+- Privacy: the desk's draft first reply on a help request now asks the AI model only when the person who wrote the
+  request has accepted CuraAI's notice; for anyone else support answers without a draft and nothing leaves Curahold
+  (an operator setting can rest it on the company's switch instead, ADR 0021). A visitor's cookie choice is stored only
+  with the hash of a text our banners really show. Answered requests about personal data are kept 3 years after closing,
+  then deleted (`RETENTION_PRIVACY_REQUEST_DAYS`), and appear in the privacy notice in every language.
 - Privacy: the server stores a hash of the consent words it actually served and refuses a consent without a policy version;
   old assistant consents are purged (the latest yes is kept); an erased portal person's consent proof stays, anonymised;
   AI drafts need the person's consent; a company's deletion certificate is e-mailed to its administrators.
@@ -238,6 +343,6 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (add the two strings, e.g. with `npm run strings`) before the gate can go green.
 - `db/OPS-SECURITY.md` is referenced from `api/src/lib/headers.ts` and `tests/rls.test.ts` but does not exist; the content it was meant to
   hold is now in `SECURITY.md` ("Known operational requirements"). Update the two comments when convenient.
-- Edge rate limiting, database role separation (`FORCE ROW LEVEL SECURITY` with a non-owner login), an off-site backup with a rehearsed
+- Edge rate limiting, an off-site backup with a rehearsed
   restore, and a `SECRETS_KEY` re-seal tool are not in place yet; see `SECURITY.md` and `docs/RUNBOOK.md`.
 - Prettier has not been applied to the existing code; run it once in a dedicated PR.

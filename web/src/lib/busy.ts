@@ -102,7 +102,9 @@ export function trackChange<T>(sent: Promise<T>): Promise<T> {
     pending.delete(el);
     const took = now() - mine.started;
     if (took > QUIET_MS && took < QUIET_MS + SHOWN_MS) await new Promise((r) => setTimeout(r, QUIET_MS + SHOWN_MS - took));
-    if (mine.n > 0) return; // pressed again meanwhile: that change owns the button now
+    // Pressed again meanwhile: that change owns the button now. A new press makes a new entry (this one was deleted
+    // above), so it shows in `pending`, never in `mine.n`.
+    if (pending.has(el)) return;
     el.removeAttribute('aria-busy');
     if (mine.failed || took <= QUIET_MS || !el.isConnected) return;
     el.setAttribute('data-done', '');

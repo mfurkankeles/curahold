@@ -17,7 +17,8 @@ import { run } from '../context';
 import { body } from '../lib/validate';
 import { CONSENT_POLICY_VERSION, SURFACES, bannerText, sha256Hex, type Surface } from '../../../shared/src/consent/core';
 import { CONSENT_STRINGS } from '../../../shared/src/consent/strings';
-import { normalizeLocale } from '../../../shared/src/i18n';
+import SITE_TEXT_HASHES from '../../../shared/src/consent/site-text-hashes.json';
+import { LOCALES, normalizeLocale } from '../../../shared/src/i18n';
 
 export const consentRoutes = new Hono<AppEnv>();
 
@@ -44,6 +45,23 @@ const consentInput = z.object({
 export async function shownTextHash(locale: string | undefined, inUse: { analytics: boolean; marketing: boolean }): Promise<string> {
   const strings = CONSENT_STRINGS[normalizeLocale(locale)] ?? CONSENT_STRINGS.en!;
   return sha256Hex(bannerText(strings as unknown as Record<string, string>, inUse));
+}
+const IN_USE_COMBOS = [false, true].flatMap((analytics) => [false, true].map((marketing) => ({ analytics, marketing })));
+let known: Promise<Set<string>> | undefined;
+/**
+ * Every text a banner of ours can show under the policy in force, as hashes: the in-app banner in each language and
+ * category combination (computed here, once per isolate), and the static pages' banner (site-text-hashes.json, built
+ * from the site copy by scripts/compliance/build-consent.ts and kept current by tests/compliance.test.ts — the site
+ * copy is too big to bundle into the API). The public door stores a visitor's hash only when it is one of these, so
+ * the proof never names words we did not show (review 20 Nov; ADR 0014).
+ */
+export function knownTextHashes(): Promise<Set<string>> {
+  known ??= (async () => {
+    const out = new Set<string>(SITE_TEXT_HASHES.policyVersion === CONSENT_POLICY_VERSION ? SITE_TEXT_HASHES.hashes : []);
+    for (const l of LOCALES) for (const inUse of IN_USE_COMBOS) out.add(await shownTextHash(l, inUse));
+    return out;
+  })();
+  return known;
 }
 const eventInput = z.object({
   analytics: z.boolean(),
@@ -125,7 +143,7 @@ consentRoutes.post('/consent', async (c) => {
 export const consentEventRoutes = new Hono<AppEnv>();
 /**
  * Public, at /api/consent-event: a visitor's consent choice before sign-in, recorded append-only as evidence (ADR 0014).
- * Body capped at 2,000 characters (413).
+ * Body capped at 2,000 characters (413); a text hash that names none of our banners' texts is refused (400 'unknown_text').
  */
 consentEventRoutes.post('/', async (c) => {
   const raw = await c.req.text();
@@ -141,6 +159,8 @@ consentEventRoutes.post('/', async (c) => {
   const e = ok.data;
   // Proof only of the notice in force (L1 audit): a choice against another policy version is not recorded as if it were.
   if (e.policyVersion !== CONSENT_POLICY_VERSION) return c.json({ error: 'stale_policy' }, 409);
+  // The hash must name a text one of our banners shows; a made-up or missing one is not stored as proof.
+  if (!e.textHash || !(await knownTextHashes()).has(e.textHash)) return c.json({ error: 'unknown_text' }, 400);
   await c.get('deps').db.system((q) =>
     q.query(
       `insert into consent_events (consent_id, surface, action, analytics, marketing, policy_version, text_hash, locale, country)

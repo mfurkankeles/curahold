@@ -1,6 +1,6 @@
 // Office search: people by name, title (English or Turkish), team or the task
 // they are on now. Accent- and case-insensitive in Turkish and English
-// ("gulco" finds Gülco, "ılgın" and "ilgin" find each other). Pure.
+// ("oyku" finds Öykü, "ılgın" and "ilgin" find each other). Pure.
 
 export interface Findable {
   seat: string;

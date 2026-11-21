@@ -306,8 +306,8 @@ export const ACTIVITIES: Activity[] = [
     retention: { en: 'For the contract; exportable at any time; deleted 30 days after the company asks for deletion (files, connection keys and caches included), backups within 35 days; invoices kept for tax law', tr: 'Sözleşme süresince; her an dışa aktarılabilir; şirket silme isteğinden 30 gün sonra silinir (dosyalar, bağlantı anahtarları ve önbellekler dahil), yedekler 35 gün içinde; faturalar vergi mevzuatı gereği saklanır' },
     processors: ['cloudflare', 'supabase', 'googleWorkspace', 'anthropic'],
     others: {
-      en: 'Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks',
-      tr: 'Müşterinin kendi bağladığı araçlar, onun talimatıyla: CRM\'ler (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), destek masaları (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), muhasebe (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), posta kutuları (Gmail, Outlook), veri (Segment, BigQuery, Snowflake, Google Sheets, Excel), sohbet (Slack, Teams, Google Chat), Jira, webhook\'lar',
+      en: 'Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks; AI assistants a user connects through Curahold’s connector (MCP), under the user’s or the company’s own agreement with that AI company',
+      tr: 'Müşterinin kendi bağladığı araçlar, onun talimatıyla: CRM\'ler (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), destek masaları (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), muhasebe (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), posta kutuları (Gmail, Outlook), veri (Segment, BigQuery, Snowflake, Google Sheets, Excel), sohbet (Slack, Teams, Google Chat), Jira, webhook\'lar; kullanıcının Curahold bağlayıcısı (MCP) üzerinden bağladığı yapay zekâ asistanları (kullanıcının ya da şirketin o yapay zekâ şirketiyle kendi sözleşmesine göre)',
     },
     verbis: ['Kimlik', 'İletişim', 'Müşteri işlem'],
   },
@@ -379,7 +379,9 @@ export const ACTIVITIES: Activity[] = [
     data: { en: 'The question and the minimum context needed for the answer', tr: 'Soru ve yanıt için gereken en az bağlam' },
     purpose: { en: 'Answering in the product (off until an administrator turns AI on, and only after the person accepts the notice); never used to train models', tr: 'Ürün içinde yanıt vermek (bir yönetici yapay zekâyı açana kadar kapalı ve yalnızca kişi bilgilendirmeyi kabul ettikten sonra); model eğitimi için asla kullanılmaz' },
     basis: { tr: { tr: 'Müşteri adına (veri işleyen); yurt dışındaki yapay zekâ sağlayıcısına aktarım KVKK m. 9 kapsamındadır', en: "On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
-    retention: { en: 'Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training', tr: 'Konuşma kayıtları şirketin seçtiği süre (varsayılan 30 gün, hiç ile 365 arası); kişiyle birlikte silinir; sağlayıcıda [30 gün — teyit], eğitim yok' },
+    // What api/src/assistant/store.ts keeps: the question only (assistant_log; RETENTION_CHOICES in core.ts), never the
+    // answer; a docs-only answer is cached for CACHE_DAYS under a hash of the question (legal audit, 21 Nov 2026).
+    retention: { en: 'Questions as the company chose: none, 7, 30 (default), 90 or 365 days; answers are not kept (an answer drawn only from the documentation may be reused for 7 days); erased with the person; at the provider [30 days — confirm], no training', tr: 'Sorular şirketin seçtiği süre kadar: hiç, 7, 30 (varsayılan), 90 ya da 365 gün; cevaplar saklanmaz (yalnızca belgelerden derlenen bir cevap 7 gün yeniden kullanılabilir); kişiyle birlikte silinir; sağlayıcıda [30 gün — teyit], eğitim yok' },
     processors: ['anthropic', 'supabase'],
     verbis: ['Kimlik', 'Müşteri işlem'],
   },
@@ -399,6 +401,34 @@ export const ACTIVITIES: Activity[] = [
     },
     processors: ['anthropic', 'supabase'],
     verbis: ['Kimlik', 'İletişim', 'Müşteri işlem'],
+  },
+  {
+    // The docs and site chat for visitors (api/src/routes/assist.ts assistPublicRoutes): Curahold decides why, so it is
+    // a controller activity, unlike the in-app assistant (processor). Consent first (assistant/consent.ts); the
+    // question is never logged (store.ts logs only with a company); the IP address lives only in the in-memory limiter.
+    id: 'publicAsk',
+    role: 'controller',
+    subjects: { en: 'Visitors who ask the assistant on our website or documentation', tr: 'Web sitemizde ya da belgelerimizde asistana soru soran ziyaretçiler' },
+    data: {
+      en: 'The question and the last few messages of the chat, the language and the page; the visitor’s answer to the AI notice under a random id; the IP address, held briefly in memory to limit requests and not stored',
+      tr: 'Soru ve sohbetin son birkaç mesajı, dil ve sayfa; ziyaretçinin yapay zekâ bilgilendirmesine verdiği cevap (rastgele bir kimlikle); istekleri sınırlamak için kısa süre bellekte tutulan ve saklanmayan IP adresi',
+    },
+    purpose: {
+      en: 'Answering a visitor’s question on our website or documentation with AI (only after the visitor accepts the notice); never used to train models',
+      tr: 'Web sitemizde ya da belgelerimizde bir ziyaretçinin sorusunu yapay zekâyla cevaplamak (yalnızca ziyaretçi bilgilendirmeyi kabul ettikten sonra); model eğitimi için asla kullanılmaz',
+    },
+    basis: {
+      tr: { tr: 'KVKK m. 5/1 (açık rıza); istek sınırı için IP adresi m. 5/2-f; yurt dışındaki yapay zekâ sağlayıcısına aktarım m. 9', en: 'KVKK art. 5/1 (explicit consent); the IP address for limiting requests art. 5/2-f; transfer to the AI provider abroad art. 9' },
+      eu: 'Art. 6(1)(a) GDPR (consent); limiting requests by IP address: Art. 6(1)(f) (security)',
+      gulf: 'Consent',
+      other: 'Consent after a notice, before the first question',
+    },
+    retention: {
+      en: 'The question is not stored by Curahold; an answer drawn from the documentation may be reused for 7 days under a one-way fingerprint of the question; the answer to the notice is kept as a consent record; at the provider [30 days — confirm], no training',
+      tr: 'Soru Curahold’da saklanmaz; belgelerden derlenen bir cevap, sorunun tek yönlü özeti altında 7 gün yeniden kullanılabilir; bilgilendirmeye verilen cevap rıza kaydı olarak saklanır; sağlayıcıda [30 gün — teyit], eğitim yok',
+    },
+    processors: ['cloudflare', 'supabase', 'anthropic'],
+    verbis: ['İşlem güvenliği', 'Diğer'],
   },
   {
     id: 'humanCheck',
@@ -443,6 +473,22 @@ export const ACTIVITIES: Activity[] = [
     retention: { en: '5 years after the breach is closed [lawyer to confirm]', tr: 'İhlal kapandıktan sonra 5 yıl [avukat teyit edecek]' },
     processors: ['supabase'],
     verbis: ['İşlem güvenliği'],
+  },
+  {
+    // The customer's own log of requests people make about their data (0250). Kept past closing as the proof the
+    // request was answered on time; the period (RETENTION_PRIVACY_REQUEST_DAYS) is an owner/lawyer question.
+    id: 'privacyRequests',
+    role: 'processor',
+    subjects: { en: 'People who make a request about their personal data to a customer company', tr: 'Bir müşteri şirkete kişisel verileriyle ilgili talepte bulunan kişiler' },
+    data: { en: 'Name, e-mail (optional), kind of request, the law, dates, status, a note, who logged and who closed it', tr: 'Ad, e-posta (isteğe bağlı), talep türü, ilgili yasa, tarihler, durum, not, talebi kaydeden ve kapatan kişi' },
+    purpose: { en: 'Recording that each request was answered, and on time (the customer’s own log)', tr: 'Her talebin yanıtlandığının ve süresinde yanıtlandığının kaydı (müşterinin kendi kaydı)' },
+    basis: { tr: { tr: 'Müşteri adına (veri işleyen)', en: "On the customer's behalf (processor)" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
+    retention: {
+      en: '3 years after the request is answered or refused [lawyer to confirm]; open requests until they are closed; with the company if it is deleted',
+      tr: 'Talep yanıtlandıktan ya da reddedildikten sonra 3 yıl [avukat teyit edecek]; açık talepler kapanana kadar; şirket silinirse onunla birlikte',
+    },
+    processors: ['cloudflare', 'supabase'],
+    verbis: ['Kimlik', 'İletişim', 'Hukuki işlem'],
   },
   {
     id: 'website',

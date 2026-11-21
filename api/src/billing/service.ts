@@ -16,10 +16,12 @@
 // never spill into another's. By-hand changes an administrator makes go through
 // the request role and row-level security, in the route.
 import type { BillingEventsRow, SubscriptionsRow } from '../db/rows.gen';
-import { CATALOGUE, PLANS, planOf, trialEndsAt, type Interval, type PlanKey, type Subscription, type SubscriptionStatus } from '../../../shared/src/billing';
+import { CATALOGUE, MIN_SEATS_DEFAULT, minSeatsFor, PLANS, planOf, regionFor, trialEndsAt, type Interval, type PlanKey, type Subscription, type SubscriptionStatus } from '../../../shared/src/billing';
 import { fetchOf, nowOf, type Deps } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
+import { pushToOwner } from '../lib/ownerOutbox';
+import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
 import { PaddleProvider } from './paddle';
 import { projectBillingQ } from './project';
 import type { PaymentProvider, ProviderInvoice, ProviderSubscription, WebhookEvent } from './provider';
@@ -30,6 +32,40 @@ const DAY = 86_400_000;
 
 /** Full seats that are in use: people who joined (an invitation not yet taken is not billed). */
 export const SEATS_SQL = `(select count(*)::int from users u where u.org_id = o.id and u.seat = 'full' and u.status = 'active')`;
+
+/**
+ * The price region a company is billed in: its billing country, else the country it is seen from (checkout only),
+ * else the one region that collects the subscription's currency. Null: the fallback region's rule applies.
+ */
+function billingRegionKey(country: string | null | undefined, currency?: string | null): string | null {
+  if (country) return regionFor(country)?.key ?? null;
+  const byCurrency = currency ? CATALOGUE.regions.filter((r) => r.collect === currency.toUpperCase()) : [];
+  return byCurrency.length === 1 ? byCurrency[0]!.key : null;
+}
+
+/**
+ * The one price region the fewest billed seats follow, for checkout, the Billing screen, a plan change and the hourly
+ * seat sync alike. Two answers for one company would bill it at checkout for one region's minimum and then, within
+ * the hour, move it to another's (independent review S2: a Malaysian company buying yearly without a billing
+ * country was billed 4 seats, then lowered to 3 because USD is collected in several regions). So checkout decides
+ * once and stores it (`stored`, orgs.settings.billingRegion), and everything after the purchase reads that value:
+ *   stored region, else the billing country, else the country the request comes from (checkout and the screen
+ *   before a purchase only), else the one region that collects the subscription's currency; null: the fallback.
+ * Checkout itself passes no `stored`: a new purchase decides again from what is known now.
+ */
+export function billingRegionOf(o: { stored?: string | null; country?: string | null; seenFrom?: string | null; currency?: string | null }): string | null {
+  if (o.stored && CATALOGUE.regions.some((r) => r.key === o.stored)) return o.stored;
+  return billingRegionKey(o.country ?? o.seenFrom, o.currency);
+}
+
+/**
+ * The seats a subscription is billed for: the full seats in use, but never fewer than the plan's minimum for that
+ * interval and region (BILLING_MIN_SEATS; shared/src/billing.ts MIN_SEATS_DEFAULT). Every quantity sent to the
+ * provider goes through here (checkout, plan change, the hourly seat sync), so none can buy below it.
+ */
+export function billedSeats(deps: Pick<Deps, 'config'>, plan: PlanKey, interval: Interval, region: string | null, fullSeats: number): number {
+  return Math.max(minSeatsFor(deps.config.billing?.minSeats ?? MIN_SEATS_DEFAULT, plan, interval, region), Math.max(1, Math.floor(fullSeats) || 0));
+}
 
 /** The configured payment provider, or null when billing is off (self-hosted, demo, tests). */
 export function providerFor(deps: Pick<Deps, 'config' | 'fetch'>): PaymentProvider | null {
@@ -107,8 +143,12 @@ async function firstTime(q: Q, provider: string, event: WebhookEvent, orgId: str
   return fresh.length > 0;
 }
 
+/** Something a subscription carried that the server did not offer (review S5): told to the owner after the commit. */
+type Mismatch = { orgId: string; why: 'unknown_price' | 'over_plan' | 'too_few_seats'; seats?: number; want?: number; cap?: number };
+
 async function applySubscription(deps: Deps, provider: string, event: WebhookEvent, sub: ProviderSubscription): Promise<string | null> {
-  return deps.db.system(async (q) => {
+  const found: Mismatch[] = [];
+  const orgId = await deps.db.system(async (q) => {
     const refuse = async (orgId: string, why: string) => {
       // Written to the company's activity log so an administrator (and we) can see the attempt.
       await audit(q, { orgId, actorId: null, action: 'billing.refused', entity: 'org', entityId: orgId, meta: { why, subscription: sub.providerSubscriptionId, event: event.id } });
@@ -123,6 +163,7 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
          from subscriptions where provider_subscription_id = $1 limit 1`,
       [sub.providerSubscriptionId],
     );
+    const held = !!cur;
     if (cur) {
       // A subscription that belongs to a company stays there: custom data cannot re-point it, nor can a new customer take it.
       if (sub.signedOrgId && sub.signedOrgId !== cur.org_id) return refuse(cur.org_id, 'named_other_org');
@@ -137,12 +178,20 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
       if (cur?.provider_customer_id && sub.providerCustomerId && cur.provider_customer_id !== sub.providerCustomerId && LIVE.includes(cur.status)) return refuse(org.id, 'customer_changed');
     }
     const orgId = cur?.org_id ?? sub.signedOrgId!;
+    // Money (security audit M2): a new subscription must be for a price of ours (PADDLE_PRICES). Any other recurring
+    // price in the same Paddle account would otherwise end a trial as "paying" on the trial's plan.
+    if (!held && !sub.plan) {
+      // Paid at the provider all the same: the owner hears of it to refund it (RUNBOOK "Billing: a refused subscription").
+      found.push({ orgId, why: 'unknown_price' });
+      return refuse(orgId, 'unknown_price');
+    }
     if (!(await firstTime(q, provider, event, orgId))) return orgId;
     // Paddle may deliver out of order: never let an older event overwrite a newer one.
     const last = iso(cur?.event_at);
     if (cur?.provider_subscription_id === sub.providerSubscriptionId && last && Date.parse(last) > Date.parse(event.occurredAt)) return orgId;
 
-    const plan = sub.plan ?? cur?.plan ?? CATALOGUE.trial.plan;
+    // An existing subscription whose price is no longer in the list keeps the plan it was bought on.
+    const plan = sub.plan ?? cur!.plan;
     const trial = sub.trialEndsAt ?? iso(cur?.trial_ends_at) ?? null;
     // Dunning: remember when the first failed payment happened; a payment that goes through clears it.
     const pastDueSince = sub.status === 'past_due' ? (iso(cur?.past_due_since) ?? event.occurredAt) : null;
@@ -164,9 +213,67 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
       [orgId, provider, sub.providerCustomerId, sub.providerSubscriptionId, plan, sub.status, trial, sub.currentPeriodEnd, sub.cancelAtPeriodEnd, sub.interval, sub.seats, sub.currency, pastDueSince, event.occurredAt],
     );
     await audit(q, { orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: orgId, meta: { status: sub.status, plan, seats: sub.seats } });
+    // What the server would have sold, checked again here and not only at checkout (review S5): the browser's Paddle.js
+    // can still change an open checkout's items. A plan too small for the company's full seats is flagged (seatGuard
+    // then refuses every new full seat) and told to the owner; too few seats are brought back to the company's billed
+    // seats at once, after the commit, as the hourly sync would.
+    if (LIVE.includes(sub.status)) {
+      const [o] = await q.query<{ n: number; country: string | null }>(`select ${SEATS_SQL} as n, o.billing_country as country from orgs o where o.id = $1`, [orgId]);
+      const n = Number(o?.n ?? 0);
+      const cap = planOf(plan)?.caps.seatsMax ?? null;
+      if (cap != null && n > cap) {
+        await audit(q, { orgId, actorId: null, action: 'billing.over_plan', entity: 'org', entityId: orgId, meta: { plan, seats: n, cap, event: event.id } });
+        found.push({ orgId, why: 'over_plan', seats: n, cap });
+      }
+      const interval = sub.interval ?? cur?.billing_interval ?? null;
+      const want = interval ? billedSeats(deps, plan as PlanKey, interval, billingRegionKey(o?.country, sub.currency), n) : null;
+      if (want != null && sub.seats != null && sub.seats < want) found.push({ orgId, why: 'too_few_seats', seats: sub.seats, want });
+    }
     await projectBillingQ(q, orgId);
     return orgId;
   });
+  for (const m of found) await actOnMismatch(deps, sub, m, event.id);
+  return orgId;
+}
+
+/**
+ * After the commit: what the server does about a subscription it did not offer. Too few seats → the subscription is
+ * changed back to the company's billed seats now. Every kind → an alert in the console and a push to the owner's phones
+ * (owner outbox, once per subscription and kind), because each needs a person: a refund, a plan the company outgrew.
+ */
+async function actOnMismatch(deps: Deps, sub: ProviderSubscription, m: Mismatch, eventId: string): Promise<void> {
+  let fixed = false;
+  if (m.why === 'too_few_seats' && sub.plan && sub.interval && m.want) {
+    const provider = providerFor(deps);
+    try {
+      if (provider) {
+        const next = await provider.changeItems(sub.providerSubscriptionId, sub.plan, sub.interval, m.want, CATALOGUE.proration.seatsUp);
+        await deps.db.system(async (q) => {
+          await q.query(`update subscriptions set seats = $2, updated_at = now() where org_id = $1`, [m.orgId, next.seats ?? m.want]);
+          await projectBillingQ(q, m.orgId);
+        });
+        fixed = true;
+      }
+    } catch (e) {
+      // The hourly seat sync tries again; the owner is told either way.
+      console.error('[curahold] could not bring a subscription back to its seats', m.orgId, e);
+    }
+  }
+  const ref = `billing:${m.why}:${sub.providerSubscriptionId}`.slice(0, 200);
+  const [org] = await deps.db.system(async (q) => {
+    const rows = await q.query<{ name: string; slug: string }>(`select name, slug from orgs where id = $1`, [m.orgId]);
+    await q.query(
+      `insert into company_log (seat, kind, body, ref, meta) select 'system', 'alert', $1, $2, $3 where not exists (select 1 from company_log where ref = $2)`,
+      [`Billing: ${m.why.replace(/_/g, ' ')} on ${rows[0]?.slug ?? m.orgId}${fixed ? ' (seats brought back)' : ''}`, ref, JSON.stringify({ org_id: m.orgId, subscription: sub.providerSubscriptionId, event: eventId, ...m, fixed })],
+    );
+    return rows;
+  });
+  await pushToOwner(deps, `push:${ref}`, (l) => ({
+    title: ownerWord(l, 'billing.push.mismatch.title'),
+    body: ownerWord(l, `billing.push.mismatch.${m.why}` as OwnerKey, { company: (org?.name ?? '').slice(0, 80) }),
+    url: '/system',
+    urgency: 'high',
+  }));
 }
 
 async function applyInvoice(deps: Deps, provider: string, event: WebhookEvent, invoice: ProviderInvoice): Promise<string | null> {
@@ -200,9 +307,11 @@ const worth = (plan: PlanKey, interval: Interval) => PLANS[plan]?.price[interval
  * for the rest of the period; a downgrade is credited at the next bill (the
  * catalogue's proration settings). Shown at once; Paddle's webhook confirms it.
  */
-export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number): Promise<void> {
+export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number, region: string | null): Promise<void> {
   const up = worth(plan, interval) >= worth(sub.plan, sub.interval ?? interval);
-  const seats = Math.max(1, sub.seats ?? fullSeats);
+  // From the seats in use, not the old quantity: the old quantity may hold the previous interval's minimum
+  // (India yearly 6 → monthly must become 5, not stay 6 until the next hourly sync). `region` is billingRegionOf's.
+  const seats = billedSeats(deps, plan, interval, region, fullSeats);
   const next = await provider.changeItems(sub.providerSubscriptionId!, plan, interval, seats, up ? CATALOGUE.proration.upgrade : CATALOGUE.proration.downgrade);
   await deps.db.system(async (q) => {
     await q.query(`update subscriptions set plan = $2, billing_interval = $3, seats = coalesce($4, seats), updated_at = now() where org_id = $1`, [
@@ -225,16 +334,17 @@ export async function syncSeats(deps: Deps): Promise<number> {
   const provider = providerFor(deps);
   if (!provider) return 0;
   const rows = await deps.db.system((q) =>
-    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number }>(
-      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want
+    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number; billing_country: string | null; billing_region: string | null; currency: string | null }>(
+      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want, o.billing_country, o.settings->>'billingRegion' as billing_region, s.currency
          from subscriptions s join orgs o on o.id = s.org_id
         where s.provider_subscription_id is not null and s.status in ('active', 'trialing', 'past_due')`,
     ),
   );
   let changed = 0;
   for (const r of rows) {
-    const want = Math.max(1, Number(r.want));
-    if (r.seats === want || !r.billing_interval || !planOf(r.plan)) continue;
+    if (!r.billing_interval || !planOf(r.plan)) continue;
+    const want = billedSeats(deps, r.plan, r.billing_interval, billingRegionOf({ stored: r.billing_region, country: r.billing_country, currency: r.currency }), Number(r.want));
+    if (r.seats === want) continue;
     try {
       const next = await provider.changeItems(r.provider_subscription_id, r.plan, r.billing_interval, want, want > (r.seats ?? 0) ? CATALOGUE.proration.seatsUp : CATALOGUE.proration.seatsDown);
       await deps.db.system(async (q) => {
