@@ -502,6 +502,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
           {t('trial.done.text', { ref: done.ref, email: done.email })}
         </p>
         <a className="btn" href="/demo/">
+          <Icon name="play" size={16} />
           {t('trial.done.demo')}
         </a>
       </Frame>

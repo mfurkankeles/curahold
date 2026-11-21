@@ -22,7 +22,12 @@ const lineOf = (s: string, i: number) => s.slice(0, i).split('\n').length;
 
 // Option rows in a list, not actions: they name a choice and have no verb.
 const CHOICE_CHIPS = /\b(picker__opt|fin-match__fit)\b/;
-const HAS_ICON = /<Icon\b|<svg\b|<Loader\b|<[A-Z]\w*Icon\b|\$\{ICON_\w+\}|\$\{icon\w*\}/;
+// A spinner is not an icon: it shows only while the action runs, so a button with nothing else is wordless-iconless
+// at rest (localisation and UI review, 21 Nov 2026).
+const HAS_ICON = /<Icon\b|<svg\b|<[A-Z]\w*Icon\b|<[A-Z]\w*Glyph\b|\$\{ICON_\w+\}|\$\{icon\w*\}/;
+// The `btn` family: `btn` itself and the `__btn` element classes (`tour__btn`). `\b` alone would not see `tour__btn`,
+// because "_" is a word character.
+const BTN_CLASS = /className=[{"`'][^>]*(?<![\w-])(btn|\w+__btn)(?![\w-])/;
 
 describe('every action button has an icon and a label', () => {
   it('in the app (web/src)', () => {
@@ -30,11 +35,13 @@ describe('every action button has an icon and a label', () => {
     let seen = 0;
     for (const p of tsx) {
       const s = read(p);
-      for (const m of s.matchAll(/<button\b/g)) {
-        const end = s.indexOf('</button>', m.index);
+      // Buttons, and links styled as buttons (`<a className="btn">`: they look like an action, so they follow the rule).
+      for (const m of s.matchAll(/<(button|a)\b/g)) {
+        const end = s.indexOf(`</${m[1]}>`, m.index);
         if (end < 0) continue;
         const el = s.slice(m.index, end);
-        if (!/className=[{"`'][^>]*\bbtn\b/.test(el) || CHOICE_CHIPS.test(el)) continue;
+        const open = el.slice(0, el.search(/>\s*(?:\n|[^=])/) + 1 || el.length);
+        if (!BTN_CLASS.test(m[1] === 'a' ? open : el) || CHOICE_CHIPS.test(el)) continue;
         seen++;
         if (!HAS_ICON.test(el)) bad.push(`${relative(ROOT, join(ROOT, p))}:${lineOf(s, m.index!)}`);
       }

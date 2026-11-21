@@ -113,6 +113,7 @@ function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnsti
           <p className="auth__sub">{t('signup.sent', { email })}</p>
           {sent.devToken && (
             <a className="btn" href={`/signup/verify#token=${sent.devToken}`}>
+              <Icon name="link" size={16} />
               {t('auth.devLink')}
             </a>
           )}

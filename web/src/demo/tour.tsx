@@ -217,9 +217,11 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <p className="tour__body">{ui.endBody}</p>
             <div className="tour__end">
               <a className="tour__btn tour__btn--primary" href={deps.startFree} target="_blank" rel="noopener">
+                <Icon name="arrowRight" size={16} />
                 {ui.free}
               </a>
               <button type="button" className="tour__btn" onClick={onClose}>
+                <Icon name="eye" size={16} />
                 {ui.keep}
               </button>
               <a className="tour__link" href={deps.hub}>
@@ -245,6 +247,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <div className="tour__nav">
               {i > 0 ? (
                 <button type="button" className="tour__btn" onClick={back}>
+                  <Icon name="arrowLeft" size={16} />
                   {ui.back}
                 </button>
               ) : (
@@ -254,6 +257,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
               )}
               {(!s!.click || anchor !== 'found') && (
                 <button type="button" className="tour__btn tour__btn--primary" onClick={next} autoFocus>
+                  <Icon name={i + 1 === total ? 'check' : 'arrowRight'} size={16} />
                   {i + 1 === total ? ui.finish : ui.next}
                 </button>
               )}

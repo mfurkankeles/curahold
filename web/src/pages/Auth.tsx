@@ -125,11 +125,13 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
         {org.joinRequests && !ssoOnly && <p className="field__hint">{t('auth.linkSentJoin')}</p>}
         {sent.devToken && (
           <a className="btn" href={`/auth/verify#token=${sent.devToken}`}>
+            <Icon name="link" size={16} />
             {t('auth.devLink')}
           </a>
         )}
         {sent.devJoinToken && (
           <a className="btn" href={`/join#token=${sent.devJoinToken}`}>
+            <Icon name="link" size={16} />
             {t('auth.devLink')}
           </a>
         )}

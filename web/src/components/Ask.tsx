@@ -579,6 +579,7 @@ function FixButtons({ fixes }: { fixes: { label: string; to: string }[] }) {
       {fixes.map((f) =>
         f.to.startsWith('/docs/') ? (
           <a key={f.to} className="btn btn--small" href={docsHref(`${helpLanguageOf(locale)}/${f.to.slice('/docs/'.length)}`)} {...docsLink}>
+            <Icon name="book" size={16} />
             {f.label}
           </a>
         ) : (

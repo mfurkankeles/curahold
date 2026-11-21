@@ -62,6 +62,7 @@ export function TotpSecret({ secret, uri }: { secret: string; uri: string }) {
         </ul>
       </div>
       <a className="btn" href={uri}>
+        <Icon name="external" size={16} />
         {t('sec.enroll.open')}
       </a>
     </div>
