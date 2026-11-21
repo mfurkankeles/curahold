@@ -24,6 +24,7 @@ import { LOCALES, type Locale } from '../../shared/src/i18n/core';
 import { COOKIE_POLICY_VERSION } from '../../shared/src/compliance/version';
 import { PURPOSES, STORAGE, nameMatches, needsConsent, type StorageItem, type StorageType } from '../../shared/src/compliance/storage';
 import { COOKIE_PAGE } from '../../shared/src/compliance/cookieText';
+import { resolveKoParticles } from '../../shared/src/i18n/koParticles';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const BROWSER_DIRS = ['web/src', 'web/portal', 'web/public', 'site', 'docs/site/assets', 'shared/src/consent'];
@@ -172,7 +173,9 @@ function rows(locale: Locale): string[][] {
     if (it.identifier && !it.third) notes.push(t.identifier);
     if (it.conditional && it.conditional !== 'checkout') notes.push(t.onlyIf);
     const name = items.map((i) => (i.third ? i.name : `\`${i.label ?? i.name}\``)).join(', ');
-    const party = it.third ? fill(t.thirdParty, { company: it.third.company, countries: countries(it.third.countries, locale) }) : t.firstParty;
+    // Korean writes 으로/로 by the last country's sound (미국으로, 영국으로): ../../shared/src/i18n/koParticles.ts.
+    const filled = it.third ? fill(t.thirdParty, { company: it.third.company, countries: countries(it.third.countries, locale) }) : t.firstParty;
+    const party = locale === 'ko' ? resolveKoParticles(filled) : filled;
     return [name, t.types[it.type], t.categories[it.category].name, notes.join(' '), durationText(it, locale), party, it.surfaces.map((s) => t.surfaces[s]).join(', ')];
   });
 }

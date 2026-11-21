@@ -23,6 +23,7 @@ import { OWNER_EN, OWNER_TR } from '../shared/src/i18n/owner';
 import { OFFICE_EN, OFFICE_TR } from '../shared/src/i18n/ownerOffice';
 import { TEAM_EN, TEAM_TR } from '../shared/src/i18n/ownerTeam';
 import { CONSENT_STRINGS } from '../shared/src/consent/strings';
+import { resolveKoParticles } from '../shared/src/i18n/koParticles';
 import { GROUPS, INTERNAL } from '../scripts/docs/catalogue';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -279,6 +280,36 @@ describe('Persian register', () => {
       });
     for (const [k, v] of siteText('fa')) if (informal(v)) found.push(`${k}: ${v.slice(0, 80)}`);
     expect(found.join('\n')).toBe('');
+  });
+});
+
+describe('Korean particles and politeness', () => {
+  // A two-form particle ("을(를)") is written in the dictionary and resolved once the name is in
+  // (shared/src/i18n/koParticles.ts); the reader never sees the fallback (review, 21 Nov 2026: 178 shown).
+  it('picks 을/를, 이/가, 은/는, 과/와 and (으)로 by the sound before them', () => {
+    expect(resolveKoParticles('Acme을(를) 삭제')).toBe('Acme를 삭제');
+    expect(resolveKoParticles('Slack이(가) 연결')).toBe('Slack이 연결');
+    expect(resolveKoParticles('벨토은(는) 고객')).toBe('벨토는 고객');
+    expect(resolveKoParticles('서울(으)로, 미국(으)로')).toBe('서울로, 미국으로');
+    expect(resolveKoParticles('API과(와) 3과(와) Google은(는)')).toBe('API와 3과 Google은');
+    expect(resolveKoParticles('“보고서”을(를)')).toBe('“보고서”를');
+    expect(resolveKoParticles('🙂을(를)')).toBe('🙂을(를)');
+  });
+  it('no Korean string shows a two-form particle once its names are filled in', () => {
+    const d = dict('ko');
+    const shown = Object.keys(d)
+      .filter((k) => /\(를\)|\(가\)|\(는\)|\(으\)로|\(와\)|\(과\)/.test(d[k]))
+      .map((k) => {
+        const vars = Object.fromEntries([...d[k].matchAll(/\{(\w+)\}/g)].map((m) => [m[1], 'Acme']));
+        return [k, translate('ko', k as MessageKey, vars)] as const;
+      })
+      .filter(([, s]) => /[가-힣A-Za-z0-9](을\(를\)|이\(가\)|은\(는\)|\(으\)로|과\(와\)|와\(과\))/.test(s));
+    expect(shown.map(([k, s]) => `${k}: ${s.slice(0, 60)}`).join('\n')).toBe('');
+  });
+  it('speaks 합니다체: no 해요 sentence and no -ㄹ까요 confirmation', () => {
+    const d = dict('ko');
+    const bad = Object.keys(d).filter((k) => /(어요|아요|해요|에요|예요|겠어요|네요|까요\?)(?=[.!?,)\s]|$)/.test(d[k]));
+    expect(bad.map((k) => `${k}: ${d[k].slice(0, 60)}`).join('\n')).toBe('');
   });
 });
 

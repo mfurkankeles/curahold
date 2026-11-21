@@ -8,6 +8,7 @@
 //   (see ./vite-plugin.ts): they register only the language in use, fetched on
 //   demand, already filled with English wherever a phrase is not yet translated.
 import type { MessageKey } from './en';
+import { resolveKoParticles } from './koParticles';
 
 export type Dictionary = Partial<Record<MessageKey, string>>;
 
@@ -116,7 +117,9 @@ export function translate(locale: Locale, key: MessageKey, vars: Vars = {}, term
     accounts_l: lower(words.other),
     ...vars,
   };
-  return agreeNumbers(locale, template, all).replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
+  const text = agreeNumbers(locale, template, all).replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
+  // Korean particles depend on the name just filled in (Acme를, Velto는): ./koParticles.ts.
+  return locale === 'ko' ? resolveKoParticles(text) : text;
 }
 
 // Number agreement for languages where the noun after a count changes with the

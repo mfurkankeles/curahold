@@ -180,7 +180,7 @@ export const REGISTER: Record<GlossaryLocale, string> = {
   he: 'second person plural ("אתם", "שלכם", "בדקו"), gender-neutral, on every first-contact surface (site, e-mails, consent, sign-up, trial, agreements) and in the help centre; impersonal "אפשר ל…" where it reads better; never two forms in one string or mail. Buttons are nouns ("אישור", "שמירה"). Older in-app screens still use masculine singular: move them to plural when touched (owner/native-check item, 21 Nov 2026). tests/i18n-quality.test.ts guards it',
   fa: 'formal "شما" with plural verbs (کنید)',
   ja: 'です/ます; buttons as plain nouns or verbs (保存, 送信)',
-  ko: '합니다/하세요 in sentences, 해요 never; buttons as nouns (저장)',
+  ko: '합니다/하세요 in sentences, 해요 never; confirmations ask -시겠습니까? (삭제하시겠습니까?); FAQ questions in the reader\'s own voice may end in -나요, as Korean FAQs do; buttons as nouns (저장). After a {placeholder} write the two-form particle (을(를), 이(가), 은(는), 과(와), (으)로): translate() picks the right one (koParticles.ts); never hard-code one after a name',
   'zh-Hans': '你 in the product, 您 in e-mails and legal text (mainland norm)',
   'zh-Hant': '你 in the product, Taiwan vocabulary (設定, 儲存, 支援, 帳號)',
   hi: 'आप with polite imperatives (करें, चुनें); SaaS nouns as Devanagari loans (टास्क, डैशबोर्ड, सेटिंग), product names in Latin, Latin digits; job titles in English',
