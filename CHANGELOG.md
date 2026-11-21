@@ -18,6 +18,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Sales site: the integrations page and menu no longer list automation platforms as "Coming soon" (those apps are not
+  published yet; the site names only what ships). The yearly-saving figure next to the monthly/yearly switch is now part
+  of the price gate in every language, so it can only appear once prices are published.
 - Every language reads as one product (localisation review): Persian speaks formally ("شما") in the app and the whole
   help centre; Hebrew uses the plural on the site, in e-mails, consent, sign-up and the trial, with one word each for
   single sign-on, e-mail and trial; Korean shows the right particle after a name ("Acme를", not "Acme을(를)") and one

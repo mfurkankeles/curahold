@@ -20,7 +20,12 @@ export interface SiteCopy {
   tour: SiteTourCopy;
   /** The bento of what sets Curahold apart: six tiles, each a living mini-UI. */
   bento: SiteBentoCopy;
-  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string;
+  pricing: { title: string; lead: string; monthly: string; yearly: string;
+    /**
+     * The yearly saving next to the interval switch. A price-related figure, so it sits behind the price gate
+     * (`⟦price|…|⟧`, site/gates.ts): no price figures in public material while pricing is an open owner decision.
+     */
+    save: string;
     /** The landing page's two-line summary: {from} is the lowest monthly seat price (a yearly plan); `see` links to /pricing/. */
     summary: string;
     see: string;
@@ -206,7 +211,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'Every plan starts with a 3-month trial of everything. Viewer seats are free.',
       monthly: 'Monthly',
       yearly: 'Yearly',
-      save: 'about 20% less',
+      save: '⟦price|about 20% less|⟧',
       summary: '⟦price|From {from} per seat a month on a yearly plan. Every plan starts with three months free, no card needed.|Prices are announced at launch. Every plan starts with three months free once approved, no card needed.⟧',
       see: 'Compare the plans',
       perSeat: 'per seat a month',
@@ -328,7 +333,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'Her plan, her şeyin açık olduğu 3 aylık denemeyle başlar. Görüntüleyen kullanıcılar ücretsiz.',
       monthly: 'Aylık',
       yearly: 'Yıllık',
-      save: 'yaklaşık %20 daha az',
+      save: '⟦price|yaklaşık %20 daha az|⟧',
       summary: '⟦price|Fiyatlar, yıllık planda kullanıcı başına aylık {from} ile başlar. Her plan, kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.|Fiyatlar lansmanda açıklanacak. Her plan, onaydan sonra kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.⟧',
       see: 'Planları karşılaştırın',
       perSeat: 'kullanıcı başına, aylık',
@@ -450,7 +455,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'تبدأ كل خطة بتجربة مجانية لكل شيء لمدة 3 أشهر. مقاعد المشاهدة مجانية.',
       monthly: 'شهري',
       yearly: 'سنوي',
-      save: 'أقل بنحو 20٪',
+      save: '⟦price|أقل بنحو 20٪|⟧',
       summary: '⟦price|تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.|تُعلَن الأسعار عند الإطلاق. وتبدأ كل خطة بثلاثة أشهر مجانًا بعد الموافقة، دون بطاقة دفع.⟧',
       see: 'قارن بين الخطط',
       perSeat: 'لكل مقعد شهريًا',
@@ -566,7 +571,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'כל תוכנית מתחילה בתקופת הניסיון של 3 חודשים בכל התכונות. מושבי צפייה חינם.',
       monthly: 'חודשי',
       yearly: 'שנתי',
-      save: 'בכ-20% פחות',
+      save: '⟦price|בכ-20% פחות|⟧',
       summary: '⟦price|החל מ-{from} למושב לחודש בתוכנית שנתית. כל תוכנית מתחילה בשלושה חודשים בחינם, בלי כרטיס אשראי.|המחירים יפורסמו בהשקה. כל תוכנית מתחילה בשלושה חודשים בחינם לאחר אישור, בלי כרטיס אשראי.⟧',
       see: 'השוואת תוכניות',
       perSeat: 'למושב לחודש',
@@ -688,7 +693,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'هر طرح با یک دورهٔ آزمایشی ۳ماهه از همهٔ امکانات آغاز می‌شود. بینندگان رایگان‌اند.',
       monthly: 'ماهانه',
       yearly: 'سالانه',
-      save: 'حدود ۲۰٪ کمتر',
+      save: '⟦price|حدود ۲۰٪ کمتر|⟧',
       summary: '⟦price|از {from} برای هر کاربر در ماه با طرح سالانه. هر طرح با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.|قیمت‌ها هنگام عرضه اعلام می‌شود. هر طرح پس از تأیید با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.⟧',
       see: 'مقایسهٔ طرح‌ها',
       perSeat: 'هر کاربر در ماه',
@@ -796,7 +801,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: '每个套餐都以 3 个月全功能试用开始。只读席位免费。',
       monthly: '按月',
       yearly: '按年',
-      save: '约便宜 20%',
+      save: '⟦price|约便宜 20%|⟧',
       summary: '⟦price|按年付每席位每月 {from} 起。每个套餐都以 3 个月免费试用开始，无需信用卡。|价格将在正式发布时公布。每个套餐都在申请通过后以 3 个月免费试用开始，无需信用卡。⟧',
       see: '比较套餐',
       perSeat: '每席位每月',
@@ -896,7 +901,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: '每個方案都以 3 個月全功能試用開始。唯讀席次免費。',
       monthly: '按月',
       yearly: '按年',
-      save: '約便宜 20%',
+      save: '⟦price|約便宜 20%|⟧',
       summary: '⟦price|年繳每席次每月 {from} 起。每個方案都以 3 個月免費試用開始，不需信用卡。|價格將於正式推出時公布。每個方案都在申請核准後以 3 個月免費試用開始，不需信用卡。⟧',
       see: '比較方案',
       perSeat: '每席次每月',
@@ -996,7 +1001,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'どのプランも全機能の3か月間トライアルから。閲覧シートは無料。',
       monthly: '月額',
       yearly: '年額',
-      save: '約20%お得',
+      save: '⟦price|約20%お得|⟧',
       summary: '⟦price|年払いプランなら1シートあたり月額{from}から。どのプランも3か月の無料トライアルから始められ、カード登録は不要です。|料金はローンチ時に発表します。どのプランも承認後3か月の無料トライアルから始められ、カード登録は不要です。⟧',
       see: 'プランを比較',
       perSeat: '1シートあたり月額',
@@ -1096,7 +1101,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: '모든 요금제는 모든 기능의 3개월 체험으로 시작합니다. 보기 전용 좌석은 무료입니다.',
       monthly: '월간',
       yearly: '연간',
-      save: '약 20% 저렴',
+      save: '⟦price|약 20% 저렴|⟧',
       summary: '⟦price|연간 요금제 기준 좌석당 월 {from}부터. 모든 요금제는 카드 없이 3개월 무료 체험으로 시작합니다.|요금은 출시 때 공개합니다. 모든 요금제는 승인 후 카드 없이 3개월 무료 체험으로 시작합니다.⟧',
       see: '요금제 비교',
       perSeat: '좌석당 월',
@@ -1250,7 +1255,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: "हर प्लान सब कुछ के 3 महीने के ट्रायल से शुरू होता है। व्यूअर सीटें मुफ़्त हैं।",
       monthly: "मासिक",
       yearly: "सालाना",
-      save: "करीब 20% कम",
+      save: "⟦price|करीब 20% कम|⟧",
       summary: "⟦price|सालाना प्लान पर प्रति सीट प्रति महीना {from} से शुरू। हर प्लान तीन महीने के मुफ़्त ट्रायल से शुरू होता है, कार्ड की ज़रूरत नहीं।|कीमतें लॉन्च पर घोषित होंगी। हर प्लान मंज़ूरी के बाद तीन महीने के मुफ़्त ट्रायल से शुरू होता है, कार्ड की ज़रूरत नहीं।⟧",
       see: "प्लान की तुलना करें",
       perSeat: "प्रति सीट प्रति महीना",
@@ -1439,7 +1444,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: "Setiap pelan bermula dengan percubaan 3 bulan untuk semua ciri. Pemerhati adalah percuma.",
       monthly: "Bulanan",
       yearly: "Tahunan",
-      save: "kira-kira 20% kurang",
+      save: "⟦price|kira-kira 20% kurang|⟧",
       summary: "⟦price|Dari {from} setiap pengguna sebulan dengan pelan tahunan. Setiap pelan bermula dengan tiga bulan percuma, tiada kad diperlukan.|Harga diumumkan semasa pelancaran. Setiap pelan bermula dengan tiga bulan percuma selepas diluluskan, tiada kad diperlukan.⟧",
       see: "Bandingkan pelan",
       perSeat: "setiap pengguna sebulan",
