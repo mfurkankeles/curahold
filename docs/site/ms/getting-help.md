@@ -107,7 +107,7 @@ Jika organisasi anda perlu memaklumkan orangnya sendiri tentang perkara ini dala
 
 Pada kad yang sama:
 
-- **Had bulanan (USD)**: apabila dicapai, CuraAI menjawab daripada carian dokumentasi sehingga bulan depan. Kad menunjukkan soalan bulan ini dan kosnya. Had tertinggi yang boleh anda tetapkan bergantung pada pelan anda dan bilangan tempat duduk penuhnya, dan tetap semasa percubaan; kad itu menunjukkannya.
+- **Had bulanan (USD)**: apabila dicapai, CuraAI menjawab daripada carian dokumentasi sehingga bulan depan. Kad menunjukkan soalan bulan ini dan kosnya. Had tertinggi yang boleh anda tetapkan bergantung pada pelan anda dan bilangan pengguna penuhnya, dan tetap semasa percubaan; kad itu menunjukkannya.
 - **Simpan soalan selama**: berapa lama soalan disimpan (atau tidak langsung). Soalan seseorang ada dalam muat turun data peribadinya.
 - **Draf balasan pertama pada permintaan bantuan kami**: sokongan Curahold melihat draf jawapan pertama kepada permintaan anda; anda tidak pernah melihat draf itu, hanya jawapan sebenar sokongan. Draf hanya ditulis untuk permintaan daripada orang yang telah menerima notis CuraAI; permintaan orang lain sampai kepada sokongan tanpa draf, dan kandungannya tidak dihantar kepada pembekal AI.
 

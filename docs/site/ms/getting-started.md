@@ -12,7 +12,7 @@ Curahold ialah tempat pasukan kejayaan pelanggan dan pasukan akaun mengurus pela
 
 ## Memulakan percubaan
 
-**Cuba percuma** di laman web meminta percubaan dan bukannya membuka syarikat dengan serta-merta: borang ringkas, kod ke e-mel kerja anda, dan kami menjawab, biasanya dalam tempoh satu hari bekerja. Setelah diluluskan, syarikat anda dicipta dan anda menerima pautan log masuk; lihat [Pelan dan pengebilan](/docs/ms/billing/) untuk tempoh, tempat duduk dan peringatan.
+**Cuba percuma** di laman web meminta percubaan dan bukannya membuka syarikat dengan serta-merta: borang ringkas, kod ke e-mel kerja anda, dan kami menjawab, biasanya dalam tempoh satu hari bekerja. Setelah diluluskan, syarikat anda dicipta dan anda menerima pautan log masuk; lihat [Pelan dan pengebilan](/docs/ms/billing/) untuk tempoh, pengguna dan peringatan.
 
 ## Alamat syarikat anda
 
@@ -50,7 +50,7 @@ Tiada apa-apa diteka daripada pelayar anda, jadi semua orang yang membuka pautan
 
 ## Had peranti
 
-Seseorang boleh kekal log masuk pada dua peranti serentak; pentadbir boleh menetapkannya antara 1 hingga 5. Log masuk pada satu peranti lagi akan melog keluar peranti yang paling lama. Ini menghalang satu tempat duduk dikongsi oleh beberapa orang.
+Seseorang boleh kekal log masuk pada dua peranti serentak; pentadbir boleh menetapkannya antara 1 hingga 5. Log masuk pada satu peranti lagi akan melog keluar peranti yang paling lama. Ini menghalang satu pengguna dikongsi oleh beberapa orang.
 
 > **Petua:** Tetapan anda → Peranti menyenaraikan tempat anda log masuk, dan membolehkan anda log keluar daripada mana-mana satu.
 

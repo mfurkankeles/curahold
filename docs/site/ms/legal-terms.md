@@ -6,7 +6,7 @@ summary: Perjanjian antara Curahold dan syarikat pelanggan — percubaan, pelan,
 ---
 # Terma perkhidmatan (perjanjian langganan induk)
 
-> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft6. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
+> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft7. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
 
 Terma ini ialah perjanjian antara **[Nama sah syarikat]**, [alamat berdaftar], [nombor pendaftaran / cukai] ("Curahold", "kami") dan syarikat atau organisasi yang menggunakan Curahold ("Pelanggan", "anda"). Orang yang menerimanya mengesahkan, dengan menanda kotak, bahawa dia diberi kuasa untuk mengikat Pelanggan. Pelanggan layan diri menerima terma ini dengan satu klik; pelanggan perusahaan menandatangani **Borang pesanan** yang merujuk kepadanya. **Perjanjian pemprosesan data**, **Perjanjian tahap perkhidmatan** dan **Dasar penggunaan yang boleh diterima** ialah sebahagian daripada terma ini.
 

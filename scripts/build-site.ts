@@ -25,7 +25,7 @@ import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
-import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
+import { DEPTS, FEATURES, ICON_BACK, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
 import { classesIn, minifyCss, pruneCss } from './site-css';
 import { hubPages } from './site-hub';
@@ -657,6 +657,7 @@ ${SKY}
 <a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
 ${blogHeader(locale)}
 <main id="main" class="wrap blog-wrap">
+  <nav class="post__back"><a href="${localeBase(locale)}">${ICON_BACK}<span>${esc(infoCopy(locale).common.home)}</span></a></nav>
   <header class="blog-hero">
     <h1>${esc(b.title)}</h1>
     <p class="lead">${esc(b.lead)}</p>
@@ -711,7 +712,7 @@ ${SKY}
 ${blogHeader(locale)}
 <main id="main" class="wrap post-wrap">
   <article class="post">
-    <nav class="post__back"><a href="${blogBaseOf(locale)}">← ${esc(b.backToBlog)}</a></nav>
+    <nav class="post__back"><a href="${blogBaseOf(locale)}">${ICON_BACK}<span>${esc(b.backToBlog)}</span></a></nav>
     <header class="post__head">
       <h1>${esc(post.title)}</h1>
       <p class="post__meta"><span>${esc(b.updated)} <time datetime="${post.date}">${esc(fmtDate(locale, post.date))}</time></span> · <span>${post.readMinutes} ${esc(b.minRead)}</span></p>

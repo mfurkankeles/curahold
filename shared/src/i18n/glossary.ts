@@ -102,7 +102,7 @@ export const GLOSSARY: Concept[] = [
   },
   {
     id: 'backlog', en: 'backlog', match: /\bbacklog\b/i, scope: 'concept',
-    terms: { tr: t('Backlog', 'english'), ar: t('قائمة الأعمال المتراكمة'), he: t('בקלוג'), fa: t('بک‌لاگ'), ja: t('バックログ'), ko: t('백로그'), 'zh-Hans': t('待办事项'), 'zh-Hant': t('待辦事項'), hi: t('बैकलॉग', 'english'), ms: t('backlog', 'english') },
+    terms: { tr: t('Backlog', 'english'), ar: t('قائمة الأعمال المتراكمة'), he: t('בקלוג'), fa: t('بک‌لاگ'), ja: t('バックログ'), ko: t('백로그'), 'zh-Hans': t('待办列表'), 'zh-Hant': t('待辦清單'), hi: t('बैकलॉग', 'english'), ms: t('backlog', 'english') },
   },
   {
     id: 'onboarding', en: 'onboarding', match: /\bonboarding\b/i, scope: 'concept',
@@ -151,7 +151,47 @@ export const GLOSSARY: Concept[] = [
   },
   {
     id: 'trial', en: 'trial', match: /\btrial\b/i, scope: 'concept',
-    terms: { tr: t('deneme'), ar: t('تجربة'), he: t('ניסיון'), fa: t('آزمایشی'), ja: t('トライアル', 'translate', ['無料体験']), ko: t('체험', 'translate', ['평가판', '트라이얼']), 'zh-Hans': t('试用'), 'zh-Hant': t('試用'), hi: t('ट्रायल', 'english'), ms: t('percubaan') },
+    note: 'he: "תקופת ניסיון" (התנסות was a second word). fa: "دورهٔ آزمایشی" ("آزمایش" alone reads as "an experiment").',
+    terms: { tr: t('deneme'), ar: t('تجربة'), he: t('ניסיון', 'translate', ['התנסות']), fa: t('دورهٔ آزمایشی', 'translate', ['/آزمایش(?!ی)/']), ja: t('トライアル', 'translate', ['無料体験']), ko: t('체험', 'translate', ['평가판', '트라이얼']), 'zh-Hans': t('试用'), 'zh-Hant': t('試用'), hi: t('ट्रायल', 'english'), ms: t('percubaan') },
+  },
+  {
+    id: 'seat', en: 'seat (a paid person on a plan)', match: /\bseats?\b/i, scope: 'concept',
+    note: 'tr: "kullanıcı" ("tam kullanıcı", "izleyici"; owner, 21 Nov 2026: the site\'s word, kept in the app; "koltuk" is the open alternative, still in the legal pages). fa: "کاربر" (صندلی was a calque). ms: "pengguna" ("tempat duduk" is a chair). zh-Hant: 席次, as the site writes it. ja: シート, counted with 席 ("3 席"). An AI-team "seat" in the owner console is a different word.',
+    terms: {
+      tr: t('kullanıcı', 'translate', ['/[Kk]oltu/']), ar: t('مقعد'), he: t('מושב'), fa: t('کاربر', 'translate', ['صندلی']), ja: t('シート', 'translate', ['フル席']), ko: t('좌석', 'translate', ['/(?<!드)시트/']),
+      'zh-Hans': t('席位', 'translate', ['座位']), 'zh-Hant': t('席次', 'translate', ['席位']), hi: t('सीट', 'english'), ms: t('pengguna', 'translate', ['/[Tt]empat duduk/']),
+    },
+  },
+  {
+    id: 'plan', en: 'plan (the subscription)', match: /\bplans?\b/i, scope: 'concept',
+    note: 'The subscription plan (Team, Business). An onboarding, sprint or support plan is another word in some languages (ko 플랜, zh 计划/計畫), so only words that never fit are avoided. ko: 요금제, as the app and the site now write it.',
+    terms: {
+      tr: t('plan'), ar: t('خطة', 'translate', ['باقة']), he: t('תוכנית', 'translate', ['חבילה']), fa: t('طرح', 'translate', ['پلن']), ja: t('プラン'), ko: t('요금제'),
+      'zh-Hans': t('套餐', 'translate', ['方案']), 'zh-Hant': t('方案', 'translate', ['套餐']), hi: t('प्लान', 'english'), ms: t('pelan'),
+    },
+  },
+  {
+    id: 'viewer', en: 'viewer (the free read-only person)', match: /\bviewers?\b/i, scope: 'concept',
+    terms: {
+      tr: t('izleyici', 'translate', ['/[Gg]örüntüleyici|[Gg]örüntüleyen/']), ar: t('مشاهد'), he: t('צופה'), fa: t('بیننده', 'translate', ['مشاهده‌گر']), ja: t('閲覧者'), ko: t('뷰어'),
+      'zh-Hans': t('查看者'), 'zh-Hant': t('檢視者', 'translate', ['查看者']), hi: t('व्यूअर', 'english'), ms: t('pemerhati', 'translate', ['penonton']),
+    },
+  },
+  {
+    id: 'record', en: 'record (a contact, opportunity or own kind under a customer)', match: /\brecords?\b/i, scope: 'concept',
+    note: 'Also means a log ("the record of who changed what"), so nothing is avoided. fa: رکورد for the data object, سابقه only for a history. zh-Hant: the Ministry of Education writes the noun 紀錄 and the verb 記錄; many nouns still read 記錄 (native check).',
+    terms: {
+      tr: t('kayıt'), ar: t('سجل'), he: t('רשומה'), fa: t('رکورد'), ja: t('レコード'), ko: t('레코드'),
+      'zh-Hans': t('记录'), 'zh-Hant': t('紀錄'), hi: t('रिकॉर्ड', 'english'), ms: t('rekod'),
+    },
+  },
+  {
+    id: 'email', en: 'e-mail', match: /\be-?mails?\b/i, scope: 'concept',
+    note: 'he: one word, דוא״ל (אימייל and מייל were also used). ms: Malaysian "e-mel", never the Indonesian "surel".',
+    terms: {
+      tr: t('e-posta'), ar: t('البريد الإلكتروني'), he: t('דוא״ל', 'translate', ['אימייל', '/(?<![\\u05d0-\\u05ea])[ובלהשמכ]{0,2}מייל/']), fa: t('ایمیل'), ja: t('メール'), ko: t('이메일'),
+      'zh-Hans': t('邮件'), 'zh-Hant': t('電子郵件'), hi: t('ईमेल'), ms: t('e-mel', 'translate', ['surel']),
+    },
   },
 ];
 
@@ -177,10 +217,10 @@ export const REGISTER: Record<GlossaryLocale, string> = {
   en: 'plain, direct second person',
   tr: '"siz" everywhere: the product, e-mails, the portal, the docs and the sales site (owner, 20 Nov 2026). Sentences say "deneyin", "seçin", "hesabınız"; short button and menu labels keep the bare verb Turkish interfaces use ("Kaydet", "Görev ekle"). tests/i18n-quality.test.ts guards it',
   ar: 'Modern Standard Arabic, polite imperative addressed to one person (masculine default)',
-  he: 'second person; gender-neutral where cheap ("אפשר ל…", plural "בדקו"), masculine singular otherwise',
+  he: 'second person plural ("אתם", "שלכם", "בדקו"), gender-neutral, on every first-contact surface (site, e-mails, consent, sign-up, trial, agreements) and in the help centre; impersonal "אפשר ל…" where it reads better; never two forms in one string or mail. Buttons are nouns ("אישור", "שמירה"). Older in-app screens still use masculine singular: move them to plural when touched (owner/native-check item, 21 Nov 2026). tests/i18n-quality.test.ts guards it',
   fa: 'formal "شما" with plural verbs (کنید)',
   ja: 'です/ます; buttons as plain nouns or verbs (保存, 送信)',
-  ko: '합니다/하세요 in sentences, 해요 never; buttons as nouns (저장)',
+  ko: '합니다/하세요 in sentences, 해요 never; confirmations ask -시겠습니까? (삭제하시겠습니까?); FAQ questions in the reader\'s own voice may end in -나요, as Korean FAQs do; buttons as nouns (저장). After a {placeholder} write the two-form particle (을(를), 이(가), 은(는), 과(와), (으)로): translate() picks the right one (koParticles.ts); never hard-code one after a name',
   'zh-Hans': '你 in the product, 您 in e-mails and legal text (mainland norm)',
   'zh-Hant': '你 in the product, Taiwan vocabulary (設定, 儲存, 支援, 帳號)',
   hi: 'आप with polite imperatives (करें, चुनें); SaaS nouns as Devanagari loans (टास्क, डैशबोर्ड, सेटिंग), product names in Latin, Latin digits; job titles in English',

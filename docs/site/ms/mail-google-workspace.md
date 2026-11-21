@@ -8,13 +8,13 @@ summary: Untuk pentadbir dan pengendali — rekod DNS (MX, SPF, DKIM, DMARC) dan
 
 > Untuk pentadbir dan pengendali. Skrin dan had Google berubah; nilai di bawah disemak dengan bantuan pentadbir Google setakat 19 Nov 2026 — sahkannya dalam Admin console semasa anda meneruskan.
 
-## 1. Peti mel: sedikit tempat duduk, banyak alamat
+## 1. Peti mel: sedikit lesen, banyak alamat
 
 Workspace dibayar bagi setiap pengguna, jadi kekalkan bilangan pengguna yang sedikit dan jadikan yang lain **alias** atau **group**:
 
 | Alamat | Apa itu | Bagaimana |
 | --- | --- | --- |
-| alamat anda sendiri | pemilik | pengguna (1 tempat duduk) |
+| alamat anda sendiri | pemilik | pengguna (1 lesen) |
 | hello@, billing@, security@, social@ | peti masuk yang orang tulis kepadanya | alias pemilik, atau group |
 | support@ | peti masuk sokongan kongsi | Google Group dengan "collaborative inbox" dihidupkan |
 | no-reply@ | penghantar e-mel produk | alias pengguna yang membuat pengesahan dengan geganti (panduan seterusnya) |

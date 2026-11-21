@@ -29,7 +29,7 @@ Anahtarla yapılan istekler, anahtarın sahibinin yaptığı istekler gibi işle
 ## Okuma ve yazma
 
 - **Yalnızca okur** (varsayılan): `GET` istekleri çalışır; diğerleri `403 read_only_token` döner.
-- **Okur ve değiştirir:** görev, müşteri, kayıt açabilir ve güncelleyebilir. İzleyici koltuğundaki kişiler yazma yetkili anahtar oluşturamaz.
+- **Okur ve değiştirir:** görev, müşteri, kayıt açabilir ve güncelleyebilir. İzleyiciler yazma yetkili anahtar oluşturamaz.
 
 Bir anahtar asla şu işleri yapamaz: yeni anahtar oluşturmak, bir uygulamaya OAuth onayı vermek, "Onun gözünden bak" kullanmak.
 

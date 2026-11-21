@@ -646,6 +646,7 @@ export default function OwnerOffice({
             <h3 id="of-a">{ow('now.approvals')}</h3>
             {pending.length ? (
               <button type="button" className="btn btn--small btn--quiet" onClick={() => setMode({ kind: 'approvals', i: 0 })}>
+                <Icon name="list" size={14} />
                 {ow('now.allApprovals')}
               </button>
             ) : null}

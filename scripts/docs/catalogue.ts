@@ -196,7 +196,7 @@ export const GROUPS: Group[] = [
       'Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yapabildiğini ve hangi şirkette olduğunu söyler; buradan başlayın.',
     ],
     routes: [
-      ['GET /me', 'The person behind the key: name, role, permissions, seat, language; and the company: name, time zone, currency, the word it uses for "customer", its customer fields.', 'Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.'],
+      ['GET /me', 'The person behind the key: name, role, permissions, seat, language; and the company: name, time zone, currency, the word it uses for "customer", its customer fields.', 'Anahtarın arkasındaki kişi: ad, rol, yetkiler, kullanıcı türü, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.'],
       ['PATCH /me', 'Changes your own name, language, notification choices and screen preferences.', 'Kendi adınızı, dilinizi, bildirim tercihlerinizi ve ekran tercihlerinizi değiştirir.'],
       ['GET /me/export', 'Downloads everything Curahold holds about you as one file (your right of access and portability); asks you to confirm it is you, at most three times a day, and each download is written to the activity log.', 'Curahold’un sizin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkınız); önce kimliğinizi doğrulamanızı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır.'],
       ['GET /me/start', 'What is left of the person\'s first steps in the product.', 'Kişinin üründeki ilk adımlarından geriye kalanlar.'],

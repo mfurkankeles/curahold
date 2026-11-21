@@ -42,12 +42,28 @@ interface PageConfig extends ConsentConfig {
     if (text != null) e.textContent = text;
     return e;
   };
-  const button = (cls: string, text: string | undefined, onClick: () => void) => {
+  const SVG = 'http://www.w3.org/2000/svg';
+  /** A 16 px line mark (the path data is ours) for the start of a button. */
+  const mark = (d: string): Element => {
+    const svg = document.createElementNS(SVG, 'svg');
+    for (const [k, v] of Object.entries({ viewBox: '0 0 20 20', width: '16', height: '16', 'aria-hidden': 'true', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) svg.setAttribute(k, v);
+    const path = document.createElementNS(SVG, 'path');
+    path.setAttribute('d', d);
+    svg.appendChild(path);
+    return svg;
+  };
+  const button = (cls: string, text: string | undefined, onClick: () => void, icon?: string) => {
     const b = el('button', cls, text ?? '');
     b.type = 'button';
+    // An icon before the label, as on every button (the app's banner uses the same three marks), built with DOM calls
+    // so no markup string is parsed.
+    if (icon && typeof document.createElementNS === 'function') b.insertBefore(mark(icon), b.firstChild);
     b.addEventListener('click', onClick);
     return b;
   };
+  const ICON_REJECT = 'M5.6 5.6l8.8 8.8M14.4 5.6l-8.8 8.8';
+  const ICON_ACCEPT = 'M5 10.6l3.2 3.2L15.2 6.6';
+  const ICON_MANAGE = 'M4 6h8M15 6h1M4 14h2M9 14h7M12 4.5v3M6 12.5v3';
 
   const host = el('div', 'cc-host');
   document.body.appendChild(host);
@@ -68,10 +84,10 @@ interface PageConfig extends ConsentConfig {
   // Accept, reject and choose: side by side, the same kind of button (equal weight).
   function actions(withSave: { a: HTMLInputElement | null; m: HTMLInputElement | null } | null) {
     const row = el('div', 'cc-actions');
-    row.appendChild(button('btn btn--ghost', S.rejectAll, () => decideNow(false, false)));
-    if (withSave) row.appendChild(button('btn btn--ghost', S.save, () => decideNow(!!withSave.a?.checked, !!withSave.m?.checked)));
-    else row.appendChild(button('btn btn--ghost', S.manage, showManage));
-    row.appendChild(button('btn btn--ghost', S.acceptAll, () => decideNow(true, true)));
+    row.appendChild(button('btn btn--ghost', S.rejectAll, () => decideNow(false, false), ICON_REJECT));
+    if (withSave) row.appendChild(button('btn btn--ghost', S.save, () => decideNow(!!withSave.a?.checked, !!withSave.m?.checked), ICON_ACCEPT));
+    else row.appendChild(button('btn btn--ghost', S.manage, showManage, ICON_MANAGE));
+    row.appendChild(button('btn btn--ghost', S.acceptAll, () => decideNow(true, true), ICON_ACCEPT));
     return row;
   }
 

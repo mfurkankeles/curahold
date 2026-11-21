@@ -644,6 +644,7 @@ function Handover({ seat, onDone, failed }: { seat: TeamSeat; onDone: () => void
         </label>
       ) : null}
       <button type="submit" className="btn btn--primary" disabled={done}>
+        <Icon name="send" size={16} />
         {w('handover.go')}
       </button>
       {done ? <p role="status">{w('handover.done')}</p> : null}
@@ -926,6 +927,7 @@ export function Messages({
           ) : null}
           {filter ? (
             <button type="button" className="btn btn--small btn--quiet" onClick={() => (setFilter(null), setQuery(''), setJumpTo(''), void load())}>
+              <Icon name="close" size={14} />
               {w('chat.clear')}
             </button>
           ) : null}
@@ -942,6 +944,7 @@ export function Messages({
       <div className="tm-msgs__list" aria-live="polite" ref={list}>
         {more && !filter ? (
           <button type="button" className="btn btn--small btn--quiet tm-older" onClick={older}>
+            <Icon name="history" size={14} />
             {w('chat.older')}
           </button>
         ) : null}
@@ -1035,9 +1038,11 @@ export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unkn
       />
       <span>
         <button type="submit" className="btn btn--small btn--primary">
+          <Icon name="check" size={14} />
           {w('mem.save')}
         </button>
         <button type="button" className="btn btn--small btn--quiet" onClick={() => setEdit(null)}>
+          <Icon name="close" size={14} />
           {w('mem.cancel')}
         </button>
       </span>
@@ -1051,6 +1056,7 @@ export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unkn
         <h3>
           {w('mem.summary')}
           <button type="button" className="btn btn--small btn--quiet" onClick={() => setEdit({ key: 'summary', value: mem.data?.summary?.value ?? '' })}>
+            <Icon name="edit" size={14} />
             {w('mem.edit')}
           </button>
         </h3>
@@ -1267,9 +1273,11 @@ export function CallMeeting({
       </div>
       <span className="tm-call__go">
         <button type="submit" className="btn btn--primary" disabled={who.size < 2}>
+          <Icon name="people" size={16} />
           {w('meet.form.go')}
         </button>
         <button type="button" className="btn btn--quiet" onClick={onCancel}>
+          <Icon name="close" size={16} />
           {w('meet.form.cancel')}
         </button>
       </span>

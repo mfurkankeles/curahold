@@ -242,6 +242,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
       <span className="u-display-flex u-gap-8">
         <input className="input" readOnly value={value} onFocus={(e) => e.currentTarget.select()} />
         <button className="btn btn--small" onClick={() => copy(value)}>
+          <Icon name="copy" size={14} />
           {t('devtools.copy')}
         </button>
       </span>
@@ -266,14 +267,17 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
           <p className="field__hint">{t(`hooks.scheme.${hook.auth.scheme}` as MessageKey)}</p>
           <div className="toolbar u-mt-12">
             <button className="btn btn--small" onClick={async () => (await patch(`/inbound-hooks/${hook.id}`, { enabled: !hook.enabled }).catch(fail), await onChanged())}>
+              <Icon name={hook.enabled ? 'pause' : 'play'} size={14} />
               {t(hook.enabled ? ('hooks.pause' as MessageKey) : ('hooks.resume' as MessageKey))}
             </button>
             {hook.secret && (
               <button className="btn btn--small btn--quiet" onClick={async () => (await patch(`/inbound-hooks/${hook.id}`, { rotate: true }).catch(fail), await onChanged(), toast(t('hooks.rotated' as MessageKey)))}>
+                <Icon name="refresh" size={14} />
                 {t('hooks.rotate' as MessageKey)}
               </button>
             )}
             <button className="btn btn--small btn--quiet" onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={14} />
               {t('hooks.remove' as MessageKey)}
             </button>
           </div>

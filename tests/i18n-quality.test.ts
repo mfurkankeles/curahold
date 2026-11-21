@@ -23,6 +23,7 @@ import { OWNER_EN, OWNER_TR } from '../shared/src/i18n/owner';
 import { OFFICE_EN, OFFICE_TR } from '../shared/src/i18n/ownerOffice';
 import { TEAM_EN, TEAM_TR } from '../shared/src/i18n/ownerTeam';
 import { CONSENT_STRINGS } from '../shared/src/consent/strings';
+import { resolveKoParticles } from '../shared/src/i18n/koParticles';
 import { GROUPS, INTERNAL } from '../scripts/docs/catalogue';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -251,6 +252,105 @@ describe('job titles stay English (owner, 19 Nov)', () => {
     const tr = OWNER_TR as Record<string, string>;
     const changed = Object.keys(en).filter((k) => titles.has(en[k]) && tr[k] !== en[k]);
     expect(changed.join('\n')).toBe('');
+  });
+});
+
+describe('Persian register', () => {
+  // Persian addresses the reader with formal "شما" and plural verbs (glossary REGISTER): the app, the help centre and
+  // the site. About 270 app strings and the help centre had slipped into "تو" (localisation review, 21 Nov 2026).
+  // JavaScript's \b does not know Persian letters, and the Arabic comma "،" sits in the same Unicode block, so the
+  // letter edges are written out. "بدهی" is the noun "debt", not a verb, so it is not listed.
+  const L = '[\\u0621-\\u063A\\u0641-\\u064A\\u064B-\\u0652\\u067E\\u0686\\u0698\\u06A9\\u06AF\\u06CC\\u06C0\\u0654\\u200c]';
+  const word = (alts: string) => new RegExp(`(?<!${L})(${alts})(?!${L})`, 'u');
+  const TO = [
+    // Second person singular verbs: می‌کنی, نمی‌توانی, هستی, داری, بخواهی, کرده‌ای.
+    word(`(?:می‌|نمی‌)${L}{1,14}ی|هستی|نیستی|داری|نداری|کردی|نکردی|شدی|خواستی|کنی|نکنی|شوی|خواهی|بخواهی|بتوانی|نتوانی|ببینی|بدانی|بزنی|بروی|بیایی|بگیری|بگذاری|بنویسی|بفرستی|بسازی|باشی|نباشی|کرده‌ای|داشته‌ای|دیده‌ای|ساخته‌ای|انداخته‌ای`),
+    // Bare imperatives: کن, بزن, بنویس (sentences say کنید; labels are nouns: ذخیره، افزودن).
+    word('کن|نکن|شو|بزن|بده|بنویس|ببین|بساز|بپرس|بیاور|بفرست|بکش|بگذار|ببر|برگرد|بردار|بپذیر|بچسبان|ببند|بمان|بگیر|بخوان|نخوان|بخواه|بگو|باش|برو|بیا'),
+    // The pronoun and "your" on a noun: تو, خودت, برایت, شرکتت, حسابت, مدیرت.
+    word('تو|خودت|برایت|توست|شرکتت|حسابت|مدیرت|تیمت|مرورگرت|مشتریانت|ایمیلت|نامت|آدرست|اتصالت|سؤالت|دستت|انتخابت|تنظیماتت|ورودت|همراهت|خانه‌ات|گذرواژه‌ات'),
+  ];
+  const informal = (s: string) => TO.some((re) => re.test(s));
+  it('no Persian app, help or site string says "تو"', () => {
+    const found: string[] = [];
+    for (const [k, v] of Object.entries(dict('fa'))) if (informal(v)) found.push(`${k}: ${v.slice(0, 80)}`);
+    for (const [file, text] of docsText('fa'))
+      text.split('\n').forEach((line, i) => {
+        if (informal(line)) found.push(`${file}:${i + 1}: ${line.trim().slice(0, 80)}`);
+      });
+    for (const [k, v] of siteText('fa')) if (informal(v)) found.push(`${k}: ${v.slice(0, 80)}`);
+    expect(found.join('\n')).toBe('');
+  });
+});
+
+describe('sentences with links are whole sentences', () => {
+  // The sign-up legal line was glued from four fragments, so Hebrew showed "ל תנאי השירות" and CJK and Hindi ended in
+  // a Latin full stop (review, 21 Nov 2026). It is one key with {terms} and {privacy}, ending as each script ends.
+  const END: Partial<Record<Locale, string>> = { ja: '。', 'zh-Hans': '。', 'zh-Hant': '。', hi: '।' };
+  it.each(LOCALES.map((l) => [l] as const))('%s: the sign-up legal line holds both links and its own full stop', (l) => {
+    const s = dict(l)['signup.agreeLine'];
+    expect(s).toContain('{terms}');
+    expect(s).toContain('{privacy}');
+    expect(s.endsWith(END[l] ?? '.')).toBe(true);
+    if (l === 'he') expect(s).toMatch(/ל\{terms\} ול\{privacy\}/);
+    if (l === 'ar') expect(s).toMatch(/ و\{privacy\}/);
+  });
+});
+
+describe('Korean particles and politeness', () => {
+  // A two-form particle ("을(를)") is written in the dictionary and resolved once the name is in
+  // (shared/src/i18n/koParticles.ts); the reader never sees the fallback (review, 21 Nov 2026: 178 shown).
+  it('picks 을/를, 이/가, 은/는, 과/와 and (으)로 by the sound before them', () => {
+    expect(resolveKoParticles('Acme을(를) 삭제')).toBe('Acme를 삭제');
+    expect(resolveKoParticles('Slack이(가) 연결')).toBe('Slack이 연결');
+    expect(resolveKoParticles('벨토은(는) 고객')).toBe('벨토는 고객');
+    expect(resolveKoParticles('서울(으)로, 미국(으)로')).toBe('서울로, 미국으로');
+    expect(resolveKoParticles('API과(와) 3과(와) Google은(는)')).toBe('API와 3과 Google은');
+    expect(resolveKoParticles('“보고서”을(를)')).toBe('“보고서”를');
+    expect(resolveKoParticles('🙂을(를)')).toBe('🙂을(를)');
+  });
+  it('no Korean string shows a two-form particle once its names are filled in', () => {
+    const d = dict('ko');
+    const shown = Object.keys(d)
+      .filter((k) => /\(를\)|\(가\)|\(는\)|\(으\)로|\(와\)|\(과\)/.test(d[k]))
+      .map((k) => {
+        const vars = Object.fromEntries([...d[k].matchAll(/\{(\w+)\}/g)].map((m) => [m[1], 'Acme']));
+        return [k, translate('ko', k as MessageKey, vars)] as const;
+      })
+      .filter(([, s]) => /[가-힣A-Za-z0-9](을\(를\)|이\(가\)|은\(는\)|\(으\)로|과\(와\)|와\(과\))/.test(s));
+    expect(shown.map(([k, s]) => `${k}: ${s.slice(0, 60)}`).join('\n')).toBe('');
+  });
+  it('speaks 합니다체: no 해요 sentence and no -ㄹ까요 confirmation', () => {
+    const d = dict('ko');
+    const bad = Object.keys(d).filter((k) => /(어요|아요|해요|에요|예요|겠어요|네요|까요\?)(?=[.!?,)\s]|$)/.test(d[k]));
+    expect(bad.map((k) => `${k}: ${d[k].slice(0, 60)}`).join('\n')).toBe('');
+  });
+});
+
+describe('Hebrew address', () => {
+  // Hebrew speaks to the reader in the plural ("אתם", "שלכם", "בדקו") on every first-contact surface (site, e-mails,
+  // consent, sign-up, trial, agreements), and no string or help line switches form half-way (localisation review,
+  // 21 Nov 2026: "אישרת … שמרו" in one mail). Only unambiguous words count: Hebrew without vowels makes many verb
+  // forms look like nouns (מפתח "key" / פתח "open"). The app's own menu label 'ההגדרות שלך' is quoted as it reads.
+  const H = '\\u05d0-\\u05ea';
+  const w = (alts: string) => new RegExp(`(?<![${H}])[ובלהשמכ]?(${alts})(?![${H}])`, 'u');
+  const SG = w('שלך|אתה|אותך|בשבילך|עליך|אליך|ממך|איתך|אצלך|בשמך|ביקשת|ציפית|אישרת|קיבלת|בחרת');
+  const PL = w('שלכם|אתם|אתכם|בשבילכם|עליכם|אליכם|מכם|איתכם|אצלכם|בשמכם|ביקשתם|ציפיתם|אישרתם|קיבלתם|בחרתם|תוכלו|בדקו|בחרו|הוסיפו|לחצו|נסו|שמרו|כתבו|הזינו|פתחו');
+  const FIRST = /^(email\.|trialMail\.|trial\.|signup\.|auth\.|agreements\.|assistConsent\.|legal\.)/;
+  const plain = (s: string) => s.replace(/\*\*[^*]+\*\*/g, ' ').replace(/'ההגדרות שלך'/g, ' ');
+  it('no Hebrew string mixes singular and plural address, and first-contact text is plural', () => {
+    const bad: string[] = [];
+    for (const [k, v] of Object.entries(dict('he'))) {
+      if (SG.test(v) && PL.test(v)) bad.push(`mixed ${k}: ${v.slice(0, 70)}`);
+      else if (FIRST.test(k) && SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
+    }
+    for (const [k, v] of siteText('he')) if (SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
+    for (const [k, v] of Object.entries(CONSENT_STRINGS.he as unknown as Record<string, string>)) if (SG.test(v)) bad.push(`singular consent ${k}`);
+    for (const [file, text] of docsText('he'))
+      text.split('\n').forEach((line, i) => {
+        if (SG.test(plain(line)) && PL.test(plain(line))) bad.push(`mixed ${file}:${i + 1}: ${line.trim().slice(0, 70)}`);
+      });
+    expect(bad.join('\n')).toBe('');
   });
 });
 

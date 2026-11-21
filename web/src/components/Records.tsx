@@ -138,10 +138,10 @@ function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: 
           <li key={k}>
             <span className="colpick__name">{label(k)}</span>
             <button className="btn btn--quiet btn--icon btn--small" disabled={i === 0} aria-label={t('records.columnUp', { name: label(k) })} onClick={() => move(k, -1)}>
-              ↑
+              <Icon name="chevronUp" size={14} />
             </button>
             <button className="btn btn--quiet btn--icon btn--small" disabled={i === keys.length - 1} aria-label={t('records.columnDown', { name: label(k) })} onClick={() => move(k, 1)}>
-              ↓
+              <Icon name="chevronDown" size={14} />
             </button>
             <button className="btn btn--quiet btn--icon btn--small" aria-label={t('records.columnRemove', { name: label(k) })} onClick={() => setKeys((list) => list.filter((x) => x !== k))}>
               <Icon name="close" size={13} />

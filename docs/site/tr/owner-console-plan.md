@@ -15,7 +15,7 @@ e-postadaki ya da anlık bildirimdeki bağlantı doğru görünümü açar.
 
 ## Hedefler ve görevler {#targets}
 
-Huninin aylık hedefleri (site ziyaretçisi, deneme talebi, onay, aktivasyon, ödeyen şirket, koltuk, MRR, ARR, fatura,
+Huninin aylık hedefleri (site ziyaretçisi, deneme talebi, onay, aktivasyon, ödeyen şirket, ücretli kullanıcı, MRR, ARR, fatura,
 kaybedilen şirket) ve bu ay gerçekte olanlar; geçen günlere göre gidişatıyla. Altında planın iki **kilometre taşı**
 bulunur; hedefleri burada girilir, ölçümleri **Bütçe ve yatırım** görünümündedir.
 

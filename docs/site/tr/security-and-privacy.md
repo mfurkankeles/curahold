@@ -42,7 +42,7 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 
 - **Verilerini indir:** o kişiyle ilgili kayıtlar tek dosyada.
 - **Kişisel verilerini sil:** ad ve e-posta kaldırılır; yaptığı işler anonim olarak kalır. Müşterilerini ve açık görevlerini önce başka birine devredebilirsiniz.
-- **Silme**, kişinin CuraAI'ye sorduklarını, bildirimlerini, sohbet bağlantılarını, geçiş anahtarlarını ve ikinci adımlarını, oturum kayıtlarını ve yapay zekâ ekibinin notlarında adresinin ya da tam adının geçtiği yerleri de kaldırır. Yasa gereği kalanlar: faturalar, şirket adına koşulları kimin kabul ettiğinin kaydı ve adres olmadan (yalnızca parmak iziyle) rıza kayıtları.
+- **Silme**, kişinin CuraAI'ye sorduklarını, bildirimlerini, sohbet bağlantılarını, passkey'lerini ve ikinci adımlarını, oturum kayıtlarını ve yapay zekâ ekibinin notlarında adresinin ya da tam adının geçtiği yerleri de kaldırır. Yasa gereği kalanlar: faturalar, şirket adına koşulları kimin kabul ettiğinin kaydı ve adres olmadan (yalnızca parmak iziyle) rıza kayıtları.
 - **Müşterilerinizdeki kişiler** (Ayarlar → Müşteri portalı → Giriş yapabilen kişiler): gizliliği yöneten bir yönetici **Verileri indir** ya da **Kişisel verileri sil** diyebilir. Silme, portal hesabının kendisini siler; yazdıkları adı olmadan kalır.
 
 ### Şirketin tamamını silmek

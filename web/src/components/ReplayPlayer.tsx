@@ -9,7 +9,7 @@ import rrwebPlayer from 'rrweb-player';
 import 'rrweb-player/dist/style.css';
 import type { ReplayMeta } from '../../../shared/src/replay';
 import { useI18n } from '../lib/i18n';
-import { Icon } from './icons';
+import { CloseButton } from './ui';
 
 /** base64url → bytes. */
 function fromBase64url(s: string): Uint8Array {
@@ -115,15 +115,19 @@ export default function ReplayPlayer({ reference, replay, onClose }: { reference
     };
   }, [reference, replay.id]);
 
+  // Esc closes, like every dialog (the shared Close shows the hint).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && (e.stopPropagation(), onClose());
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
     <div className="replaymodal" role="dialog" aria-modal="true" aria-label={t('desk.replay.watch')} onClick={onClose}>
       <div className="replaymodal__box" onClick={(e) => e.stopPropagation()}>
         <header className="replaymodal__head">
           <strong>{t('desk.replay.watch')}</strong>
-          <button className="btn btn--quiet btn--small" onClick={onClose}>
-            <Icon name="close" size={16} />
-            {t('common.close')}
-          </button>
+          <CloseButton onClick={onClose} />
         </header>
         {error ? <p className="center-note muted">{t('desk.replay.failed')}</p> : <div className="replaymodal__player" ref={host} />}
       </div>

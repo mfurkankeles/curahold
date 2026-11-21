@@ -26,11 +26,11 @@ Anda juga boleh menamakan semula "Pelanggan": "Akaun", "Jenama", "Rakan kongsi" 
 
 Simpan rekod di bawah pelanggan:
 
-- **Kenalan (pihak berkepentingan):** jawatan, peranan dalam keputusan (pembuat keputusan, pelulus bajet, pempengaruh, penilai, pengguna) dan pendirian terhadap anda (juara, penyokong, neutral, ragu-ragu, penghalang).
+- **Kenalan (pihak berkepentingan):** jawatan, peranan dalam keputusan (pembuat keputusan, pelulus bajet, pempengaruh, penilai, pengguna) dan pendirian terhadap anda (penyokong utama, penyokong, neutral, ragu-ragu, penghalang).
 - **Peluang:** amaun, tarikh tutup, peringkat dan status.
 - **Jenis rekod anda sendiri:** contohnya "Projek" atau "Kontrak".
 
-Rekod boleh mengisi medan pelanggan: "Saluran jualan terbuka", "Juara", "Penghalang". Medan dikemas kini dengan sendirinya apabila rekod berubah.
+Rekod boleh mengisi medan pelanggan: "Saluran jualan terbuka", "Penyokong utama", "Penghalang". Medan dikemas kini dengan sendirinya apabila rekod berubah.
 
 ## Paparan: kad, jadual, pembaharuan, produk
 

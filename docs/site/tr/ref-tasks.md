@@ -90,7 +90,7 @@ Kişinin görebildiği panolar; sütunları ve görev alanlarıyla.
 
 Bir departmanda (`departmentId`) pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu. Yalnızca yöneticiler ve o departmanın liderleri.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -109,7 +109,7 @@ Bir departmanda (`departmentId`) pano ekler: sütunları, kimin gördüğü, gö
 
 Panoyu değiştirir. İçinde görev olan sütun kaldırılamaz. `departmentId` onu başka departmana taşır (yalnızca yöneticiler).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -128,7 +128,7 @@ Panoyu değiştirir. İçinde görev olan sütun kaldırılamaz. `departmentId` 
 
 Panoyu görevleriyle birlikte arşivler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /boards/:id/tasks`
 
@@ -140,7 +140,7 @@ Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere isteyin: `per=N
 
 Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. Başka departmanın panosuna da gider (`GET /departments/desks`); `fromTaskId` kendi görevinize bağlar.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -155,7 +155,7 @@ Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan d�
 
 Bir dosyanın satırlarından tek bir panoya görev alır. Kimseye bildirim gitmez, kural çalışmaz.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -173,7 +173,7 @@ Bir panoya yaptığınız son görev içe aktarmaları; en yenisi başta.
 
 Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`); içe aktarma için açılıp boş kalan pano kaldırılır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /task-imports`
 
@@ -183,7 +183,7 @@ Herhangi bir panoya yaptığınız son görev içe aktarmaları; en yenisi başt
 
 Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevler, yorumlar, panonun kendi alanları ve “şunu bekliyor” bağlarıyla. `dryRun` ile yalnızca neyin gelip neyin gelmeyeceğini ve yeni bir panonun neyle açılacağını söyler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -200,7 +200,7 @@ Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevl
 
 Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -239,7 +239,7 @@ Eklenmek üzere olana benzeyen açık görevler (aynı kelimeler, aynı müşter
 
 Görev ekler. `parentId` verilirse alt görev olur.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -266,7 +266,7 @@ Tek bir görev; yorumları, dosyaları, alt görevleri, bağlantıları, süresi
 
 Görevi değiştirir. `baseVersion` gönderin; bu arada başkası başka alanları değiştirdiyse iki değişiklik de kalır, aynı alanı değiştirdiyse en güncel görevle birlikte `409` alırsınız.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -288,7 +288,7 @@ Görevi değiştirir. `baseVersion` gönderin; bu arada başkası başka alanlar
 
 Görevin ürün yönetimi alanlarını ayarlar: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 ya da fazlası, veya null) ve `epicId` (aynı panodaki bir epik, ya da null). `baseVersion` gönderin; eski sürüm en güncel görevle birlikte `409` alır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -307,7 +307,7 @@ Bir panonun sprintleri, sırayla. `state` (future, active, closed) listeyi daral
 
 Sprint ekler (`name`, isteğe bağlı `goal`, `startsOn`, `endsOn`). `future` olarak başlar.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -334,7 +334,7 @@ Bu panoda ürün yönetiminin (kayıt türleri, hikaye puanları, epikler, sprin
 
 Bir panoda ürün yönetimini açar ya da kapatır (`enabled`: true, false ya da panonun sütunlarını izlemek için null).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -348,7 +348,7 @@ Tek bir sprint.
 
 Sprintin adını, hedefini ya da tarihlerini değiştirir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -356,7 +356,7 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Sprinti `future`, `active` ya da `closed` durumuna alır. Panoda aynı anda yalnızca bir sprint aktif olabilir (`409`, `reason: sprint_active`). Kapatırken `moveIncompleteTo` bitmemiş kayıtları backlog'a (null) ya da başka bir sprinte taşır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -367,7 +367,7 @@ Sprinti `future`, `active` ya da `closed` durumuna alır. Panoda aynı anda yaln
 
 Sprinti arşivler; kayıtları backlog'a döner.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /sprints/:id/items`
 
@@ -377,7 +377,7 @@ Bir sprintteki görevler, sıra düzeninde.
 
 Aynı panodaki görevleri sprinte koyar (`taskIds`). Kapanmış sprint görev almaz.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -387,7 +387,7 @@ Aynı panodaki görevleri sprinte koyar (`taskIds`). Kapanmış sprint görev al
 
 Görevi sprintten çıkarıp backlog'a döndürür.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /sprints/:id/summary`
 
@@ -419,13 +419,13 @@ Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up
 
 Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. Yalnızca açan kişi ya da her görevi silebilen biri yapabilir. Cevapta `trashId` gelir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /tasks/bulk`
 
 Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. Cevapta bir geri alma kimliği gelir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -441,13 +441,13 @@ Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, ar
 
 Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /tasks/:id/comments`
 
 Göreve yorum yazar. `visibility: customer` yorumu müşteri portalında gösterir; `@ad` ile anılan kişiye bildirim gider.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -463,7 +463,7 @@ Bir göreve yazdığınız yorumu, içindeki dosyalarla birlikte siler.
 
 Göreve dosya ekler (multipart yükleme, istek başına bir dosya).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /files/:id`
 
@@ -479,7 +479,7 @@ Dosyayı siler.
 
 İki görevi bağlar: biri diğerini engeller ya da ilişkilidirler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -490,7 +490,7 @@ Dosyayı siler.
 
 İki görev arasındaki bağlantıyı kaldırır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 **Sorgu:** `kind`
 
@@ -498,7 +498,7 @@ Dosyayı siler.
 
 Göreve bir gün için dakika olarak süre girer.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -510,13 +510,13 @@ Göreve bir gün için dakika olarak süre girer.
 
 Kendi süre kaydınızı siler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /tasks/:id/checklist`
 
 Göreve adımları alt görev olarak ekler; elle ya da bir kontrol listesi şablonundan.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -543,7 +543,7 @@ Bir görev için yorum bildirimlerini durdurur ya da yeniden açar.
 
 Görevi portalda müşterisiyle paylaşır ya da paylaşmayı bırakır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -557,7 +557,7 @@ Kontrol listesi şablonları.
 
 Kontrol listesi şablonu kaydeder.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -568,7 +568,7 @@ Kontrol listesi şablonu kaydeder.
 
 Kontrol listesi şablonunu siler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /views`
 

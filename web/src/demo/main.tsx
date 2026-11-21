@@ -9,6 +9,7 @@ import { LOCALE_INFO, LOCALES, translate, type Locale, type MessageKey } from '.
 import { SEED_LOCALES, seedWords, type SeedWords } from '../../../scripts/seed-words';
 import { startTheme } from '../lib/theme';
 import { startTooltips } from '../lib/tooltips';
+import { Icon } from '../components/icons';
 import { breathe, DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
 
@@ -91,6 +92,13 @@ const stillTimer = setTimeout(() => {
 function DemoBar({ current, onSwitch, problem, words, onOwnFile }: { current: Key; onSwitch: (k: Key) => void; problem: string | null; words: SeedWords; onOwnFile: () => void }) {
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
+  // Esc closes the ideas list, like every popup.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
   // On a phone the strip has room for a short label: the given name and the role, not the full name.
   const [narrow, setNarrow] = useState(() => matchMedia('(max-width: 760px)').matches);
   useEffect(() => {
@@ -161,6 +169,12 @@ function DemoBar({ current, onSwitch, problem, words, onOwnFile }: { current: Ke
         </button>
         {open && (
           <div className="demobar__ideas" role="dialog" aria-label={say('demo.bar.tries')}>
+            {/* A visible Close at the end corner, as on every popup; Esc closes it too. */}
+            <div className="demobar__ideasHead">
+              <button type="button" className="closex" aria-label={say('common.close' as MessageKey)} title={`${say('common.close' as MessageKey)} (Esc)`} onClick={() => setOpen(false)}>
+                <Icon name="close" size={20} />
+              </button>
+            </div>
             <button type="button" className="demobar__reset demobar__ownIdea" onClick={() => (setOpen(false), onOwnFile())}>
               {say('demo.bar.ownFileLong')}
             </button>

@@ -20,7 +20,7 @@ export interface AgreementDoc {
 
 /** Bump a version on ANY change to a document's text (every language); a material change also needs a re-acceptance. */
 export const AGREEMENT_PACK: Record<AgreementDocId, AgreementDoc> = {
-  terms: { slug: 'legal-terms', version: '2026-11-21.draft6', acceptance: 'click', noticeDays: 30 },
+  terms: { slug: 'legal-terms', version: '2026-11-21.draft7', acceptance: 'click', noticeDays: 30 },
   dpa: { slug: 'legal-dpa', version: '2026-11-21.draft3', acceptance: 'click', noticeDays: 30 },
   sla: { slug: 'legal-sla', version: '2026-11-19.draft1', acceptance: 'reference', noticeDays: 30 },
   aup: { slug: 'legal-aup', version: '2026-11-21.draft3', acceptance: 'reference', noticeDays: 30 },

@@ -52,11 +52,22 @@ const RELATED: Record<DeptKey, FeatureKey[]> = {
   finance: ['reports', 'health', 'sync'],
 };
 
+/** The Back link every opened page starts with (owner rule: Back on every page, same place): home by default. */
+export function backLink(locale: SiteLocale, href = localeBase(locale), label = infoCopy(locale).common.home): string {
+  return `<a class="ip__back" href="${esc(href)}">${ICON_BACK}<span>${esc(label)}</span></a>`;
+}
+
+/** The Back bar for a page without the inner-page hero (/why/): the same crumbs, in the same place. */
+function backBar(locale: SiteLocale, crumb: string): string {
+  const c = infoCopy(locale);
+  return `<div class="wrap ip__bar"><nav class="ip__crumbs" aria-label="${esc(c.common.home)}">${backLink(locale)}<span aria-hidden="true">/</span><span>${esc(crumb)}</span></nav></div>`;
+}
+
 /** An inner page's header: the Back crumb, its title and lead, and (unless compact) the two calls to action. */
 export function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls; compact?: boolean }): string {
   const c = infoCopy(locale);
   // The first crumb is the page's Back, in the same place on every inner page.
-  const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}"><a class="ip__back" href="${localeBase(locale)}">${ICON_BACK}<span>${esc(c.common.home)}</span></a>${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
+  const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}">${backLink(locale)}${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
   return `<header class="ip__hero${o.compact ? ' ip__hero--compact' : ''}">
     <div class="wrap">
       ${crumbs}
@@ -110,7 +121,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
       crumb: d.name,
       description: c.seo[k][1],
       main: `${hero(locale, { crumb: d.name, title: d.title, lead: d.lead, glyph: GLYPH[k], soon: SOON_DEPTS.has(k), urls })}
-  <section class="ip__body"><div class="wrap">${points(d.points)}${d.next ? `<div class="ip__next"><span class="ip__soon">${esc(c.nav.soon)}</span><h2>${esc(d.next[0])}</h2><p>${esc(d.next[1])}</p></div>` : ''}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
+  <section class="ip__body"><div class="wrap">${points(d.next ? [...d.points, d.next] : d.points)}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
   ${featureLinks(locale, c.common.uses, RELATED[k])}
   ${closing(locale, urls)}`,
     });
@@ -224,7 +235,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     title: c.seo.why[0],
     crumb: c.why.title,
     description: c.seo.why[1],
-    main: whyHtml(locale, { headingLevel: 1, urls }),
+    main: `${backBar(locale, c.why.title)}${whyHtml(locale, { headingLevel: 1, urls })}`,
   });
 
   out.push({

@@ -20,6 +20,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, write
 import { join } from 'node:path';
 import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, intentTable, tourText } from '../shared/src/tours';
 import { FAVICON, MARK } from '../site/brand';
+import { ICON_GO } from './site-chrome';
 import { LOCALES, LOCALE_INFO, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { SEED_LOCALES } from './seed-words';
 // The hub is the product's try-it door: not for search engines or AI crawlers (shared/src/compliance/crawlers.ts).
@@ -51,6 +52,10 @@ const FONTS = [
  * The hub's own styles, never the sales site's: its base (tokens, header, buttons, footer; fonts beside
  * it in assets/), its page (tours, picker, cards), then the language and intent parts.
  */
+// Every action link on the hub carries an icon before its label, like the product (owner rule: icon + label on
+// every button). The arrow is mirrored in right-to-left pages by the hub's own CSS; these two are symmetric.
+const ICON_APP = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 6h11" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+const ICON_BOOK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 4.2C6.6 3.2 4.6 3 2.5 3.4v9c2.1-.4 4.1-.2 5.5.8 1.4-1 3.4-1.2 5.5-.8v-9C11.4 3 9.4 3.2 8 4.2zM8 4.2v9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 const CSS = ['web/src/demo/hub-base.css', 'web/src/demo/hub-page.css', 'web/src/demo/hub.css'].map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
 /** The languages of the hub: those the demo company is written in, English at the root. */
 const LANGS = LOCALES.filter((l) => SEED_LOCALES.includes(l)).sort((a, b) => Number(b === 'en') - Number(a === 'en'));
@@ -144,7 +149,7 @@ function page(locale: Locale): string {
             <div class="hub-card__foot">
               <span class="hub-card__meta">${esc(c.card.meta(t.minutes, t.steps.length))}</span>
               <span class="hub-trail" aria-hidden="true">${'<i></i>'.repeat(t.steps.length)}</span>
-              <a class="btn btn--primary" href="${tourHref(t.id)}" aria-label="${esc(`${c.card.start}: ${w.title(t)}`)}">${esc(c.card.start)}</a>
+              <a class="btn btn--primary" href="${tourHref(t.id)}" aria-label="${esc(`${c.card.start}: ${w.title(t)}`)}">${ICON_GO}${esc(c.card.start)}</a>
             </div>
           </article>`;
 
@@ -215,7 +220,7 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
     </nav>
     <div class="top__end">
       ${langMenu}
-      <a class="btn btn--primary" href="${signup}">${esc(c.nav.start)}</a>
+      <a class="btn btn--primary" href="${signup}">${ICON_GO}${esc(c.nav.start)}</a>
     </div>
   </div>
 </header>
@@ -225,8 +230,8 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
       <h1>${esc(c.hero.title)}</h1>
       <p class="hub-hero__lead">${esc(c.hero.lead)}</p>
       <div class="hub-hero__ctas">
-        <a class="btn btn--primary btn--big" href="${tourHref('overview')}">${esc(c.hero.primary)}</a>
-        <a class="btn btn--ghost btn--big" href="${app}${hash}">${esc(c.hero.secondary)}</a>
+        <a class="btn btn--primary btn--big" href="${tourHref('overview')}">${ICON_GO}${esc(c.hero.primary)}</a>
+        <a class="btn btn--ghost btn--big" href="${app}${hash}">${ICON_APP}${esc(c.hero.secondary)}</a>
       </div>
       <p class="hub-hero__note">${esc(c.hero.note(TOURS.length))}</p>
     </div>
@@ -265,8 +270,8 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
         <p>${esc(c.band.text)}</p>
       </div>
       <div class="hub-band__ctas">
-        <a class="btn btn--light btn--big" href="${signup}">${esc(c.band.primary)}</a>
-        <a class="btn btn--line btn--big" href="${docsAt()}"${away}>${esc(c.band.secondary)}</a>
+        <a class="btn btn--light btn--big" href="${signup}">${ICON_GO}${esc(c.band.primary)}</a>
+        <a class="btn btn--line btn--big" href="${docsAt()}"${away}>${ICON_BOOK}${esc(c.band.secondary)}</a>
       </div>
     </div>
   </section>

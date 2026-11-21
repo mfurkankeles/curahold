@@ -14,7 +14,7 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 
 | | |
 | --- | --- |
-| `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
+| `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, kullanıcı türü, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
 | `PATCH /me` | Kendi adınızı, dilinizi, bildirim tercihlerinizi ve ekran tercihlerinizi değiştirir. |
 | `GET /me/export` | Curahold’un sizin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkınız); önce kimliğinizi doğrulamanızı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır. |
 | `GET /me/start` | Kişinin üründeki ilk adımlarından geriye kalanlar. |
@@ -56,7 +56,7 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 
 ### `GET /me`
 
-Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.
+Anahtarın arkasındaki kişi: ad, rol, yetkiler, kullanıcı türü, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.
 
 ### `PATCH /me`
 
@@ -182,7 +182,7 @@ Takvim akışının kendisi (iCalendar): bitiş tarihi olan açık görevler. Gi
 
 Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında bandını hangi departmanların gördüğünü belirler (`bandView`, hepsi için null). Yalnızca yöneticiler; en az bir departman açık kalır.
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -193,7 +193,7 @@ Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında band
 
 Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi yöneticileri).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `users.manage`
+**Gerekenler:** tam kullanıcı · yetki `users.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi
 
 Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir. Departman lideri üye ekleyebilir; lider yapmak kişi yöneticisinin işidir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -214,7 +214,7 @@ Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir
 
 Bir kişiyi departmandan çıkarır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /departments/desks`
 
@@ -230,7 +230,7 @@ Departmanlara geçişte her panonun nereye gittiği ve nedeni (`sprints`, `name`
 
 Önerilen kişileri departmanlarına üye yapar (`suggestions` içindeki `ids`).
 
-**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+**Gerekenler:** tam kullanıcı · yetki `org.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
