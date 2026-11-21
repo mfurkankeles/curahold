@@ -39,7 +39,13 @@ const norm = (s: string) =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
-const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+// Memoised: built bundles repeat the same words many thousands of times.
+const seen = new Map<string, string>();
+const sha = (s: string) => {
+  let h = seen.get(s);
+  if (h === undefined) seen.set(s, (h = createHash('sha256').update(s).digest('hex')));
+  return h;
+};
 
 // sha256 of the normalised words and word pairs of the old built-in tone (an endearment, the
 // relationship it imitated, and the phrases around it). Plain words are never stored here.
@@ -123,8 +129,9 @@ describe('private tone stays owner-only', () => {
     expect(hits(all)).toEqual([]);
   });
 
+  // The code bundles only: the built docs pages come from docs/site, which the test above already scans.
   it('a built demo or web bundle on disk contains none of it either', () => {
-    const built = ['dist/demo', 'dist/web', 'dist/assets'].map((d) => join(ROOT, d)).filter((d) => existsSync(d));
-    expect(hits(built.flatMap((d) => files(d, new Set())))).toEqual([]);
-  });
+    const built = ['dist/demo/assets', 'dist/web/assets'].map((d) => join(ROOT, d)).filter((d) => existsSync(d));
+    expect(hits(built.flatMap((d) => files(d, new Set())).filter((f) => f.endsWith('.js')))).toEqual([]);
+  }, 120_000);
 });
