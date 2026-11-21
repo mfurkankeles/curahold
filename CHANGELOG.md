@@ -253,6 +253,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Database: the server's own work (sign-in look-ups, inbound hooks, the hourly jobs) no longer runs as the owner of the
+  tables. It runs as a role that can read and write rows but cannot change the schema, a policy or a trigger, and every
+  table now forces row security (migration 0254, ADR 0023). Operators: give migrations their own owner login with
+  `MIGRATION_DATABASE_URL` and let the application connect with a login that owns nothing (`db/ops/role-separation.sql`).
 - Privacy: the desk's draft first reply on a help request now asks the AI model only when the person who wrote the
   request has accepted CuraAI's notice; for anyone else support answers without a draft and nothing leaves Curahold
   (an operator setting can rest it on the company's switch instead, ADR 0021). A visitor's cookie choice is stored only
@@ -274,6 +278,6 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (add the two strings, e.g. with `npm run strings`) before the gate can go green.
 - `db/OPS-SECURITY.md` is referenced from `api/src/lib/headers.ts` and `tests/rls.test.ts` but does not exist; the content it was meant to
   hold is now in `SECURITY.md` ("Known operational requirements"). Update the two comments when convenient.
-- Edge rate limiting, database role separation (`FORCE ROW LEVEL SECURITY` with a non-owner login), an off-site backup with a rehearsed
+- Edge rate limiting, an off-site backup with a rehearsed
   restore, and a `SECRETS_KEY` re-seal tool are not in place yet; see `SECURITY.md` and `docs/RUNBOOK.md`.
 - Prettier has not been applied to the existing code; run it once in a dedicated PR.

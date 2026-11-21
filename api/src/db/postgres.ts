@@ -1,9 +1,10 @@
 // Production driver: Supabase Postgres (EU region) reached from Cloudflare
 // Workers through Hyperdrive, or any Postgres 15+ for a self-hosted install.
-// The login role must be allowed to `set role curahold_app` and
-// `set role curahold_portal` (see README).
+// The login role must be allowed to `set role curahold_app`, `curahold_portal`
+// and `curahold_system`, and should not own the tables (ADR 0023,
+// docs/ENVIRONMENT.md "Database roles"). Migrations use their own login.
 import postgres from 'postgres';
-import { PORTAL_SETUP_SQL, TENANT_SETUP_SQL, type Db, type Q } from './index';
+import { PORTAL_SETUP_SQL, SYSTEM_ROLE_SQL, TENANT_SETUP_SQL, type Db, type Q } from './index';
 
 // The code hands JSON to the database already written out (JSON.stringify),
 // which is what the in-memory database used by the tests expects. This driver
@@ -20,7 +21,8 @@ const NO_JIT = ", set_config('jit', 'off', true)";
 
 /**
  * The Db over a real Postgres (production and self-host). tenant() and portal() set the session variables row
- * security reads and switch to the restricted role; system() is the only path without row security (ADR 0004).
+ * security reads and switch to the restricted role; system() switches to curahold_system, whose own policy lets it
+ * across companies without owning anything; owner() is for migrations alone (ADR 0004, ADR 0023).
  * Prepared statements are off because pooled connections (Hyperdrive) cannot rely on them.
  */
 export function postgresDb(url: string, opts: { max?: number; idleTimeout?: number } = {}): Db {
@@ -53,6 +55,13 @@ export function postgresDb(url: string, opts: { max?: number; idleTimeout?: numb
       })) as any;
     },
     async system(fn) {
+      return (await sql.begin(async (tx) => {
+        // Never the owner (ADR 0023): this role can read and write rows but not alter tables, policies or triggers.
+        await tx.unsafe(SYSTEM_ROLE_SQL);
+        return fn(wrap(tx));
+      })) as any;
+    },
+    async owner(fn) {
       return (await sql.begin(async (tx) => fn(wrap(tx)))) as any;
     },
     async close() {

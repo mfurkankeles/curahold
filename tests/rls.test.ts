@@ -8,14 +8,15 @@
 //  2. Every table without org_id is on a short, explained list.
 //  3. Every SECURITY DEFINER function pins its search_path, pg_temp last.
 //  4. (static, best effort) A db.system() query that reads or writes a company's
-//     rows names org_id — system() runs as the owner, with row-level security
-//     out of the picture, so the query itself must say whose rows. Queries that
-//     are right without it (looked up by a key that already names one row, or
-//     deliberately across companies, like the hourly clean-up) are in the
+//     rows names org_id — system() runs as curahold_system, whose own policy
+//     lets it across companies, so the query itself must say whose rows. Queries
+//     that are right without it (looked up by a key that already names one row,
+//     or deliberately across companies, like the hourly clean-up) are in the
 //     reviewed baseline below; the list may only shrink.
-//
-// Role separation (FORCE ROW LEVEL SECURITY and a login role that does not own
-// the tables) is deployment, not schema: see db/OPS-SECURITY.md.
+//  5. Role separation (migration 0254, ADR 0023): every table with row security
+//     FORCES it, db.system() runs as curahold_system — which owns nothing, is no
+//     superuser and cannot bypass row security — and only db/migrate.ts uses the
+//     owner.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -120,11 +121,17 @@ describe('row-level security on every table', () => {
 
   it('a policy of a company table reads the company the request is for', async () => {
     const pol = await env.db.system((q) =>
-      q.query<{ tablename: string; qual: string | null; with_check: string | null }>(`select tablename, qual, with_check from pg_policies where schemaname = 'public'`),
+      q.query<{ tablename: string; policyname: string; roles: string[]; qual: string | null; with_check: string | null }>(
+        `select tablename, policyname, roles::text[] as roles, qual, with_check from pg_policies where schemaname = 'public'`,
+      ),
     );
     const own = new Set((await tables()).filter((t) => t.has_org).map((t) => t.name));
+    // The one policy that does not read the company: the server's own role's way in (0254). It must name exactly
+    // that role, so a request role can never be covered by it.
+    const systemOnly = (p: { policyname: string; roles: string[] }) => p.policyname === 'curahold_system_all' && p.roles.length === 1 && p.roles[0] === 'curahold_system';
+    expect(pol.filter((p) => p.policyname === 'curahold_system_all' && !systemOnly(p)).map((p) => p.tablename)).toEqual([]);
     const weak = pol
-      .filter((p) => own.has(p.tablename))
+      .filter((p) => own.has(p.tablename) && !systemOnly(p))
       // app_org(), a function built on it (app_can_see_board, app_sees_account…), or the portal's own scope.
       .filter((p) => !/app_org\(\)|app_[a-z_]+\(|portal_[a-z_]+\(|current_setting/.test(`${p.qual ?? ''} ${p.with_check ?? ''}`))
       .map((p) => p.tablename);
@@ -140,6 +147,72 @@ describe('row-level security on every table', () => {
     expect(fns.length).toBeGreaterThan(10);
     const bad = fns.filter((f) => !(f.cfg ?? []).some((c) => /^search_path=.*pg_temp\s*$/.test(c))).map((f) => f.name);
     expect(bad).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------- role separation (0254)
+
+describe('the server does not run as the table owner', () => {
+  it('every table with row security forces it and has the system role\'s own policy', async () => {
+    const rows = await env.db.system((q) =>
+      q.query<{ name: string; forced: boolean; system_policy: boolean }>(
+        `select c.relname as name, c.relforcerowsecurity as forced,
+                exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname
+                          and p.policyname = 'curahold_system_all' and p.roles::text[] = array['curahold_system']) as system_policy
+           from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          where n.nspname = 'public' and c.relkind in ('r', 'p') and c.relrowsecurity order by 1`,
+      ),
+    );
+    expect(rows.length).toBeGreaterThan(100);
+    const problems = rows.flatMap((r) => [
+      ...(r.forced ? [] : [`${r.name}: row security is not forced (call app_secure_table in the migration)`]),
+      ...(r.system_policy ? [] : [`${r.name}: no curahold_system_all policy (call app_secure_table in the migration)`]),
+    ]);
+    expect(problems).toEqual([]);
+  });
+
+  it('db.system() runs as curahold_system, which owns nothing and cannot bypass row security', async () => {
+    const [who] = await env.db.system((q) => q.query<{ me: string }>('select current_user as me'));
+    expect(who.me).toBe('curahold_system');
+    const [role] = await env.db.system((q) =>
+      q.query<{ super: boolean; bypass: boolean; login: boolean; owns: number }>(
+        `select r.rolsuper as super, r.rolbypassrls as bypass, r.rolcanlogin as login,
+                (select count(*)::int from pg_class c where c.relowner = r.oid) + (select count(*)::int from pg_proc p where p.proowner = r.oid) as owns
+           from pg_roles r where r.rolname = 'curahold_system'`,
+      ),
+    );
+    expect(role).toEqual({ super: false, bypass: false, login: false, owns: 0 });
+    // Rows yes; the schema, policies and triggers no.
+    await expect(env.db.system((q) => q.query('alter table tasks disable row level security'))).rejects.toThrow(/must be owner|permission denied/);
+    await expect(env.db.system((q) => q.query('drop policy curahold_system_all on tasks'))).rejects.toThrow(/must be owner|permission denied/);
+    await expect(env.db.system((q) => q.query('alter table audit_log disable trigger audit_log_no_update'))).rejects.toThrow(/must be owner|permission denied/);
+    // It still reaches every company's rows: the work across companies (scheduler, hooks) keeps working.
+    const [n] = await env.db.system((q) => q.query<{ n: number }>('select count(distinct org_id)::int as n from tasks'));
+    expect(n.n).toBeGreaterThanOrEqual(2);
+  });
+
+  it('the system role holds row privileges on every table, and no request role is a member of it', async () => {
+    const missing = await env.db.system((q) =>
+      q.query<{ name: string }>(
+        `select c.relname as name from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          where n.nspname = 'public' and c.relkind in ('r', 'p') and c.relname <> 'schema_migrations'
+            and not has_table_privilege('curahold_system', c.oid, 'select,insert,update,delete') order by 1`,
+      ),
+    );
+    expect(missing.map((m) => m.name)).toEqual([]);
+    for (const role of REQUEST_ROLES) {
+      const [m] = await env.db.system((q) => q.query<{ ok: boolean }>(`select pg_has_role($1, 'curahold_system', 'member') as ok`, [role]));
+      expect(m.ok, role).toBe(false);
+    }
+  });
+
+  it('only the migration runner uses the owner', () => {
+    const root = join(import.meta.dirname, '..', 'api', 'src');
+    const users = walk(root)
+      .filter((f) => /\.owner\(/.test(readFileSync(f, 'utf8')))
+      .map((f) => f.slice(root.length + 1).replace(/\\/g, '/'))
+      .filter((f) => !f.startsWith('db/'));
+    expect(users).toEqual([]);
   });
 });
 

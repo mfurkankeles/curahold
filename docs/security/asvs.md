@@ -26,7 +26,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | Ids | Result | Proof |
 | --- | --- | --- |
 | 1.1.1–1.1.7 secure SDLC, threat model, security stories | pass | `docs/security/threat-model.md`, this file, `SECURITY.md`; tests gate CI |
-| 1.2.x authentication architecture, least-privileged components | partial | request roles `curahold_app` / `curahold_portal`; the API login still owns the tables (SECURITY.md requirement 2) |
+| 1.2.x authentication architecture, least-privileged components | partial | request roles `curahold_app` / `curahold_portal`, server work as `curahold_system` (owns nothing), row security forced (0254, ADR 0023); the operator still has to split the API login from the owner (SECURITY.md requirement 2) |
 | 1.4.x access control architecture: enforced at a trusted service layer, single mechanism | pass | `requirePerm`/`requireWriter` + Postgres RLS; matrix test |
 | 1.5.x input/output architecture | pass | zod schemas on every body (`api/src/lib/validate.ts`); output escaped by React / `emailHtml.ts` |
 | 1.6.x cryptographic architecture, key management | partial | AES-256-GCM sealing with HKDF from `SECRETS_KEY`; no re-seal tool for key rotation (RUNBOOK) |
@@ -151,7 +151,8 @@ Not now, on purpose:
 1. **Downloads from the app's own origin (12.5.2)** — needs a separate files domain with short-lived signed links;
    waits for the owner's domain decision.
 2. **CSP `'unsafe-inline'` for styles (14.4.3)** — the design-system package removes the inline styles (another agent).
-3. **Owner login owns the tables (1.2.x, SECURITY.md req. 2)** — a separate migration role and `FORCE ROW LEVEL
-   SECURITY`; until then the database owner could also drop the audit trigger. An operations change, not code.
+3. **The API login is still the owner in a one-login install (1.2.x, SECURITY.md req. 2)** — row security is forced and
+   `system()` runs as a role that owns nothing (0254), but until the operator connects the Worker as `curahold_login` an
+   injected `reset role` reaches the owner, who could drop the audit trigger. An operations change, documented.
 4. **Email on a new sign-in (2.2.2)** — sessions are listed and can be ended; a notification email is a product choice.
 5. **DNS rebinding on self-host (API7)** — the check runs just before the call; an egress firewall closes the gap.

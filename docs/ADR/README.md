@@ -31,6 +31,7 @@ and QUALITY.md disagree, QUALITY.md's dated decision is the source and the ADR n
 | [0020](0020-site-seo-and-crawlers.md) | Sales site and docs indexed on purpose: per-language titles, honest markup, AI answer crawlers off by default | Accepted (AI answer crawlers: owner question open) |
 | [0021](0021-desk-first-reply-needs-requester-consent.md) | The desk's draft first reply asks the model only with the requester's own consent; the company switch as basis is an operator setting | Accepted (legal basis: owner question open) |
 | [0022](0022-cost-bounds-by-construction.md) | Cost bounds by construction: AI ceiling = seats × plan rate (fixed in the trial), public chat's own cap, minimum billed seats, 1 GB a trial seat | Accepted (numbers: owner decisions open) |
+| [0023](0023-server-work-not-as-table-owner.md) | The server's own work runs as `curahold_system` (owns nothing); every table forces row security; the owner only migrates | Accepted |
 
 0008-0019 were recorded on 19 November 2026 from the code and the dated decisions of 15-19 November, during the
 handover audit. They give product and engineering reasons only.

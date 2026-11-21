@@ -231,10 +231,15 @@ describe('break-glass on a self-hosted install', () => {
 
 describe('the activity log', () => {
   it('cannot be changed or removed, not even by the database owner, and exports with a fingerprint', async () => {
-    const sys = (sql: string) => env.db.system((q) => q.query(sql, [env.a.orgId]));
-    await expect(sys(`update audit_log set action = 'x' where org_id = $1`)).rejects.toThrow(/append-only/);
-    await expect(sys(`delete from audit_log where org_id = $1`)).rejects.toThrow(/append-only/);
-    await expect(env.db.system((q) => q.query('truncate audit_log'))).rejects.toThrow(/append-only/);
+    // Both the server's own role (db.system) and the table owner hit the append-only trigger.
+    for (const as of [env.db.system.bind(env.db), env.db.owner.bind(env.db)]) {
+      const sys = (sql: string) => as((q) => q.query(sql, [env.a.orgId]));
+      await expect(sys(`update audit_log set action = 'x' where org_id = $1`)).rejects.toThrow(/append-only/);
+      await expect(sys(`delete from audit_log where org_id = $1`)).rejects.toThrow(/append-only/);
+    }
+    await expect(env.db.owner((q) => q.query('truncate audit_log'))).rejects.toThrow(/append-only/);
+    // The server's role may not even try: it holds no TRUNCATE privilege (migration 0254).
+    await expect(env.db.system((q) => q.query('truncate audit_log'))).rejects.toThrow(/permission denied/);
     // The request role has no such privilege at all.
     const [priv] = await env.db.system((q) => q.query(`select has_table_privilege('curahold_app', 'audit_log', 'UPDATE') as u, has_table_privilege('curahold_app', 'audit_log', 'DELETE') as d`));
     expect(priv).toEqual({ u: false, d: false });

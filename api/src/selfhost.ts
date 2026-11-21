@@ -147,7 +147,16 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   const config = selfHostConfig(env);
   const root = env.APP_ROOT ?? process.cwd();
   const db = postgresDb(env.DATABASE_URL, { max: Number(env.DB_POOL || 10) });
-  await migrate(db, loadMigrations(join(root, 'db', 'migrations')));
+  // Migrations run as the table owner. With MIGRATION_DATABASE_URL the owner is a login of its own and the server's
+  // DATABASE_URL need not own anything (ADR 0023); without it the one login does both, as before.
+  if (env.MIGRATION_DATABASE_URL) {
+    const owner = postgresDb(env.MIGRATION_DATABASE_URL, { max: 1 });
+    try {
+      await migrate(owner, loadMigrations(join(root, 'db', 'migrations')));
+    } finally {
+      await owner.close();
+    }
+  } else await migrate(db, loadMigrations(join(root, 'db', 'migrations')));
   const slug = config.singleTenantSlug!;
   if ((await ensureCompany(db, env, slug)) === 'created') console.log(`[curahold] company "${slug}" created; sign in at ${env.PUBLIC_URL} with ${env.ADMIN_EMAIL}`);
   await breakGlass(db, slug, env.RESET_SECOND_STEP);

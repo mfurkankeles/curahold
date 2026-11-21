@@ -32,7 +32,7 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | A3 with `connections.manage` reads hidden fields through a webhook | payload filtered by the webhook creator's role | `tests/field-outs.test.ts` | held (fixed today) |
 | SSO set up to a private address so the server calls inside the network (SSRF) | token/key URLs must be public https on the shared service | `tests/hardening.test.ts` | held (fixed today) |
 | Admin locks everyone out with enforced SSO | server-side SSO enforcement; break-glass admin | `tests/sso.test.ts` | partial: no "test the connection" before enforcing |
-| Admin actions not attributable | audit_log, admin-readable, exportable with a SHA-256 chain; append-only trigger for every role | `tests/privacy-admin.test.ts`, `tests/identity.test.ts` | held (the database owner could drop the trigger: role separation is an ops step) |
+| Admin actions not attributable | audit_log, admin-readable, exportable with a SHA-256 chain; append-only trigger for every role | `tests/privacy-admin.test.ts`, `tests/identity.test.ts` | held (the server's own role cannot touch the trigger since 0254; the owner could: splitting the login is an ops step) |
 | A1 takes over an admin account | email link / code sign-in, passkeys, TOTP second step (company can require it), fresh confirmation before dangerous actions, device limit, session revoke, sign out other devices | `tests/auth.test.ts`, `tests/identity.test.ts` | held |
 
 ## 2. Employee screens (home, tasks, boards, customers, reports …)

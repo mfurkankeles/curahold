@@ -37,7 +37,8 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `DESK_HOST` | Host of Curahold's own support desk | No | `desk.<BASE_DOMAIN>`. |
 | `PORTAL_DOMAIN` | Customer portal's own registrable domain | No | Unset: no portal. Must be set on **both** Workers. Self-host: the portal is this address. |
 | `DEMO_CRM` | `1` offers the pretend CRM | No | Live demo only. Never set in production. |
-| `HYPERDRIVE` (binding) | Hyperdrive config, exposes `connectionString` | Yes (hosted) | Config id in `wrangler.toml` `[[hyperdrive]]`. |
+| `HYPERDRIVE` (binding) | Hyperdrive config, exposes `connectionString` | Yes (hosted) | Config id in `wrangler.toml` `[[hyperdrive]]`. Its login should own nothing and be a member of `curahold_app`, `curahold_portal` and `curahold_system` (RUNBOOK "Database roles", ADR 0023). |
+| `MIGRATION_DATABASE_URL` | The table owner's connection string for `npm run migrate` (superuser or BYPASSRLS) | Yes (deploy) | Falls back to `DATABASE_URL`. Never given to the Worker. |
 | `FILES` (binding) | R2 bucket for attachments and logos | Yes (hosted) | Bucket `curahold-files`. |
 | `ASSETS` (binding) | Static assets (the built web app) | Yes (hosted) | Provided by the `[assets]` block. |
 | `LIVE` (binding) | Durable Object class `LiveRoomDO`: the live channel (one room per company, plus the console's `platform` room) | Yes (hosted) | `[[durable_objects.bindings]]` in `wrangler.toml`. Without it the app polls. |
@@ -224,7 +225,8 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | Key | Purpose | Required | Default / notes |
 | --- | --- | --- | --- |
 | `PUBLIC_URL` | The address people open, exactly as in the browser (HTTPS in front) | **Yes** | App throws without it. Sets base domain, scheme and port. |
-| `DATABASE_URL` | Postgres connection string (16+; user must be able to create roles on first start) | **Yes** | Compose builds it from `DB_PASSWORD`. Also used by `npm run migrate`. |
+| `DATABASE_URL` | Postgres connection string (16+; user must be able to create roles on first start) | **Yes** | Compose builds it from `DB_PASSWORD`. Also used by `npm run migrate` when `MIGRATION_DATABASE_URL` is not set. |
+| `MIGRATION_DATABASE_URL` | The table owner's connection string, used only to migrate (on start and by `npm run migrate`); then `DATABASE_URL` can be a login that owns nothing (ADR 0023, `db/ops/role-separation.sql`) | No | Unset: `DATABASE_URL` migrates too, as before. The owner must be a superuser or have BYPASSRLS (migration 0254). |
 | `DB_PASSWORD` | Postgres password for `docker-compose.yml` | Yes (Compose) | Letters and digits only. |
 | `ADMIN_EMAIL` | First administrator (first start only) | **Yes on first start** | Signs in with an emailed link. |
 | `ADMIN_NAME` | Display name of the first administrator | No | Local part of `ADMIN_EMAIL`. |

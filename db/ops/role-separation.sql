@@ -1,47 +1,28 @@
 -- NOT a migration (the runner never reads db/ops). A reviewed template for the
--- production database, to be run once by a DBA — see db/OPS-SECURITY.md.
+-- production database, to be run once by a DBA — see db/OPS-SECURITY.md and
+-- ADR 0023. Migration 0254 already did the schema half: every table with row
+-- security FORCES it, and db.system() runs as curahold_system (owns nothing,
+-- reaches rows through its own policy). What is left is the logins:
 --
--- Goal: the connection the application logs in with must not OWN the tables, so
--- row-level security binds it unless a role is explicitly allowed to bypass it.
+--   owner            owns every table and function; runs migrations only
+--                    (MIGRATION_DATABASE_URL). Must be a superuser or have
+--                    BYPASSRLS (the definer functions run as it; 0254 checks).
+--   curahold_login   what the Worker / Hyperdrive / self-host server connects
+--                    as (DATABASE_URL). NOINHERIT, owns nothing, no BYPASSRLS.
+--                    May only `set role` to the three working roles.
 --
---   curahold_owner   owns every table and function; used ONLY to run migrations.
---   curahold_login   what the Worker / Hyperdrive connects as. NOINHERIT, no
---                    ownership. May `set role curahold_app` / `curahold_portal`
---                    (the request roles, which RLS binds) and is what db.system()
---                    runs as — that is the one path that must skip RLS, and it
---                    is the one the static test in tests/rls.test.ts watches.
---
--- Replace the passwords and run as a superuser (Supabase: the postgres role).
+-- Replace the password and run as the owner (Supabase: the postgres role).
 
--- 1. A migration/owner role, and hand it everything.
-create role curahold_owner nologin;
-do $$
-declare r record;
-begin
-  for r in select tablename from pg_tables where schemaname = 'public' loop
-    execute format('alter table public.%I owner to curahold_owner', r.tablename);
-  end loop;
-  for r in select sequencename from pg_sequences where schemaname = 'public' loop
-    execute format('alter sequence public.%I owner to curahold_owner', r.sequencename);
-  end loop;
-  for r in select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' loop
-    execute format('alter function %s owner to curahold_owner', r.sig);
-  end loop;
-end $$;
-
--- 2. The application's login: not the owner, may switch to the request roles.
-create role curahold_login login noinherit password 'CHANGE-ME' bypassrls;
-grant curahold_app, curahold_portal to curahold_login;
+-- 1. The application's login: not the owner, nothing of its own.
+create role curahold_login login noinherit password 'CHANGE-ME';
+grant curahold_app, curahold_portal, curahold_system to curahold_login;
 grant usage on schema public to curahold_login;
-grant select, insert, update, delete on all tables in schema public to curahold_login;
-grant usage, select on all sequences in schema public to curahold_login;
-grant execute on all functions in schema public to curahold_login;
 
--- 3. Only now is it safe to force the policies on the owner's own sessions too
---    (the SECURITY DEFINER functions are owned by curahold_owner, which must still
---    see across rows, so give it BYPASSRLS rather than forcing in front of it):
-alter role curahold_owner bypassrls;
--- Optional second belt, once the above has run for a while in production:
---   alter table <each tenant table> force row level security;
--- FORCE is only correct when every owner-run path (db.system(), the definer
--- functions) runs as a role that has BYPASSRLS, as above. Do NOT run it before.
+-- 2. Check (each must return no rows / false):
+--   select relname from pg_class where relowner = (select oid from pg_roles where rolname = 'curahold_login');
+--   select rolbypassrls or rolsuper from pg_roles where rolname = 'curahold_login';
+--   select relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+--    where n.nspname = 'public' and c.relrowsecurity and not c.relforcerowsecurity;
+--
+-- 3. Point Hyperdrive (or DATABASE_URL) at curahold_login and keep the owner's
+--    connection string for `MIGRATION_DATABASE_URL=… npm run migrate` only.
