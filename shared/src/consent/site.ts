@@ -32,7 +32,9 @@ interface PageConfig extends ConsentConfig {
   w.curaConsent = {
     state: () => state,
     allows: (c: OptionalCategory | 'necessary') => allows(state, c),
-    open: () => showManage(),
+    // Nothing to choose on a page that measures nothing: the dialog's helpers below are never set up there, so
+    // opening it would throw.
+    open: () => (hasMeasurement(cfg) ? showManage() : undefined),
   };
   if (!hasMeasurement(cfg)) return; // nothing optional on this page: nothing to ask
 
