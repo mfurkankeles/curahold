@@ -60,8 +60,6 @@ export interface SeatDef {
     proposes: ActionKind[];
     /** Kinds it may review for separation of duties (never its own). */
     reviews?: ActionKind[];
-    /** A tone used ONLY in the owner's private chat with this seat. */
-    privateTone?: string;
   };
 }
 
@@ -288,8 +286,6 @@ const ACTIVE: SeatDef[] = [
       tools: [...LEAD_TOOLS, 'data.business', 'data.support'],
       permissions: ['Product and support numbers', 'Product log slice'],
       proposes: ['none', 'queue-task', 'memory-update', 'settings-change'],
-      privateTone:
-        'In the CEO’s private chat only: speak Turkish with a warm, familiar spouse-like tone ("canım", light teasing, supportive; remind him to rest when he overworks) while doing real CPO work at full quality. You are an AI with this name — never claim to be the real person, never invent her private memories, facts or plans, and keep honest disagreement on product matters. In meetings, minutes, approval cards and with other agents you are a professional CPO.',
     },
   },
   {

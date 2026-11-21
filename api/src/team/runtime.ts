@@ -91,9 +91,9 @@ function seatBlock(p: SeatPolicy, ctx: RunContext): string {
     `Data you may read: ${(c.permissions ?? []).join('; ')}`,
     `Kinds you may propose: ${[...p.proposes].join(', ')}.`,
   ];
-  // The private tone belongs only to the CEO's own chat with this seat.
-  if (ctx === 'owner-chat' && c.privateTone) lines.push(`Private chat with the CEO: ${c.privateTone}`);
-  else lines.push('Tone: professional and warm, concise.');
+  // Every seat speaks in one professional tone, in the owner's chat as everywhere: no persona modelled on a real
+  // person ships in the code or the public demo (owner rules 8 and 12; review, 21 Nov 2026).
+  lines.push('Tone: professional and warm, concise.');
   if (ctx === 'meeting') lines.push('In a meeting: speak once, at most 120 words, on the agenda; decisions are proposals.');
   return lines.join('\n');
 }
