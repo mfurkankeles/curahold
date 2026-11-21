@@ -14,7 +14,7 @@ summary: अकाउंटिंग सॉफ़्टवेयर से स�
 | --- | --- | --- |
 | Zoho Books | Zoho से साइन इन | [Zoho Books](/docs/hi/accounting-zohobooks/) |
 | Xero | Xero से साइन इन | [Xero](/docs/hi/accounting-xero/) |
-| Odoo | पता, लॉगिन और API की | [Odoo](/docs/hi/accounting-odoo/) |
+| Odoo | पता, लॉगिन और API कुंजी | [Odoo](/docs/hi/accounting-odoo/) |
 | freee | freee से साइन इन | [freee](/docs/hi/accounting-freee/) |
 | Paraşüt | कंपनी नंबर, API क्लाइंट और एक यूज़र | [Paraşüt](/docs/hi/accounting-parasut/) |
 | QuickBooks Online | Intuit से साइन इन | [QuickBooks Online](/docs/hi/accounting-quickbooks/) |
