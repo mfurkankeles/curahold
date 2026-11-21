@@ -116,6 +116,9 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
   Check on a copy of production size with `scripts/perf.ts` (`PERF_DATABASE_URL`) before indexing the large tables.
 - The migrating user needs to be able to create roles on the first run (`curahold_app`, `curahold_portal`,
   `curahold_system`) and must be a superuser or have BYPASSRLS (migration 0254 stops with a message otherwise).
+- Keep migrating with the **same** owner login: 0254's default privileges (rights for `curahold_system` on new tables)
+  belong to the role that ran it. If the owner login ever changes, run the `alter default privileges … to
+  curahold_system` lines of 0254 as the new owner first; `tests/rls.test.ts` only sees the test database.
 
 ### Database roles
 

@@ -13,6 +13,10 @@
 --
 -- Replace the password and run as the owner (Supabase: the postgres role).
 
+-- 0. Nobody but the owner creates objects in the schema (the default on
+--    Postgres 15+; a database created earlier or upgraded may still allow it).
+revoke create on schema public from public;
+
 -- 1. The application's login: not the owner, nothing of its own.
 create role curahold_login login noinherit password 'CHANGE-ME';
 grant curahold_app, curahold_portal, curahold_system to curahold_login;

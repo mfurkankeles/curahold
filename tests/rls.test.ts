@@ -200,6 +200,9 @@ describe('the server does not run as the table owner', () => {
       ),
     );
     expect(missing.map((m) => m.name)).toEqual([]);
+    // Only the owner records migrations (0261).
+    const [log] = await env.db.system((q) => q.query<{ w: boolean; r: boolean }>(`select has_table_privilege('curahold_system', 'public.schema_migrations', 'insert,update,delete') as w, has_table_privilege('curahold_system', 'public.schema_migrations', 'select') as r`));
+    expect(log).toEqual({ w: false, r: true });
     for (const role of REQUEST_ROLES) {
       const [m] = await env.db.system((q) => q.query<{ ok: boolean }>(`select pg_has_role($1, 'curahold_system', 'member') as ok`, [role]));
       expect(m.ok, role).toBe(false);
