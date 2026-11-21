@@ -2,16 +2,16 @@
 title: Peranan dan akses
 section: help
 order: 6
-summary: Tempat duduk, peranan, akses pelanggan, akses bagi setiap medan dan “Lihat sebagai mereka”.
+summary: Pengguna, peranan, akses pelanggan, akses bagi setiap medan dan “Lihat sebagai mereka”.
 ---
 # Peranan dan akses
 
 Peranan menentukan siapa boleh melihat dan mengubah apa. Peraturan ini dikuatkuasakan dalam pangkalan data, bukan hanya pada antara muka: apa-apa yang tersembunyi pada skrin juga tersembunyi dalam API, dalam eksport dan daripada penyambung AI.
 
-## Tempat duduk
+## Pengguna
 
-- **Tempat duduk penuh:** boleh melihat dan mengubah.
-- **Tempat duduk pemerhati:** melihat sahaja. Sesuai untuk pengurus dan pihak pengurusan atasan.
+- **Pengguna penuh:** boleh melihat dan mengubah.
+- **Pemerhati:** melihat sahaja. Sesuai untuk pengurus dan pihak pengurusan atasan.
 
 ## Peranan terbina dalam: apa yang boleh dilihat dan dilakukan oleh setiap peranan
 

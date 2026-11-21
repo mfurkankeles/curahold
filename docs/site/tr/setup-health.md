@@ -152,7 +152,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |
 | Deneme süreniz … tarihinde bitiyor (Düzeltmeye değer) | Sonrasında bir plan seçilene kadar çalışma alanı salt okunur olur. Hiçbir şey silinmez. | **Plan seç** |
-| Denemedeki tüm koltuklar dolu (Düzeltmeye değer) | Yeni kişiler yalnızca izleyici olarak katılabilir. Daha fazla koltuk isteyin ya da birini boşaltın. | **Koltukları gör** |
+| Denemedeki tüm kullanıcı hakları dolu (Düzeltmeye değer) | Yeni kişiler yalnızca izleyici olarak katılabilir. Daha fazla kullanıcı hakkı isteyin ya da birinin hakkını boşaltın. | **Kullanıcıları gör** |
 
 ### Asistan
 

@@ -42,7 +42,7 @@ Apabila sesuatu di bawahnya telah kehilangan induknya secara kekal, selebihnya t
 
 - Anda melihat, dan boleh memulihkan, apa yang anda padam sendiri.
 - Orang yang boleh mengubah tetapan syarikat atau mengurus privasi melihat semua yang dipadam dalam syarikat, dan boleh memulihkan mana-mana daripadanya.
-- Orang dengan tempat duduk pemerhati tidak boleh memadam, jadi mereka tiada tong sampah.
+- Orang dengan pemerhati tidak boleh memadam, jadi mereka tiada tong sampah.
 
 ## Memadam secara kekal
 

@@ -26,6 +26,6 @@ Sambungkan Curahold kepada Claude, ChatGPT atau mana-mana pembantu yang memahami
 ## Keselamatan
 
 - Pembantu bekerja **sebagai anda**. Ia hanya melihat apa yang boleh anda lihat dan hanya mengubah apa yang boleh anda ubah. Peraturan peranan dan medan anda terpakai tanpa perubahan.
-- Nyahtanda "Benarkan perubahan juga" pada skrin kebenaran dan pembantu hanya membaca. Pada tempat duduk pemerhati, ia memang hanya membaca.
+- Nyahtanda "Benarkan perubahan juga" pada skrin kebenaran dan pembantu hanya membaca. Pada pemerhati, ia memang hanya membaca.
 - Putuskan sambungannya bila-bila masa di bawah Tetapan anda → Kunci API dan aplikasi yang disambungkan.
 - Pembantu berjalan pada pelan Claude atau ChatGPT anda sendiri; Curahold tidak mengenakan caj tambahan untuk AI.

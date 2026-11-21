@@ -152,7 +152,7 @@ Jadual ini ditulis daripada kata-kata produk itu sendiri, jadi ia sentiasa sepad
 | Apa yang kami perasan | Mengapa ia penting | Butang |
 | --- | --- | --- |
 | Percubaan anda tamat pada … (Patut dibetulkan) | Selepas itu ruang kerja hanya boleh dibaca sehingga pelan dipilih. Tiada apa yang dipadam. | **Pilih pelan** |
-| Setiap tempat duduk percubaan sudah diambil (Patut dibetulkan) | Orang baharu hanya boleh menyertai sebagai pemerhati. Minta lebih banyak tempat duduk, atau kosongkan satu. | **Lihat tempat duduk** |
+| Kuota pengguna percubaan sudah penuh (Patut dibetulkan) | Orang baharu hanya boleh menyertai sebagai pemerhati. Minta lebih banyak pengguna penuh, atau lepaskan satu. | **Lihat pengguna** |
 
 ### Pembantu
 

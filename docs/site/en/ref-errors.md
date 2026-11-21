@@ -21,7 +21,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `domain_public` | 400 | … is a public email service, so it cannot belong to one company. |
 | `free_mail_note` | 400 | Tell us in a sentence why you use a personal address for a company trial. |
 | `help_file_type` | 400 | … can't be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can. |
-| `help_too_many_files` | 400 | A request can carry up to … files. |
+| `help_too_many_files` | 400 | You can attach up to … files to a request. |
 | `human_check` | 400 | We could not confirm that a person sent this. Complete the check on the form and try again. |
 | `invalid_token` | 400 | This link or code is not valid any more. Request a new one. |
 | `link_loop` | 400 | These tasks would end up waiting for each other. |
@@ -95,7 +95,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `sso_untested` | 409 | Test sign-in through your identity provider with these details first; then SSO can be required. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |
-| `trash_conflict` | 409 | Something else has taken its place since (the same CRM id or email). Change or remove that first. |
+| `trash_conflict` | 409 | Something else has taken its place since (the same CRM ID or email). Change or remove that first. |
 | `trash_parent_first` | 409 | “…” is in the trash too. Put that back first. |
 | `trash_parent_gone` | 409 | What this belonged to no longer exists, so it cannot be put back. |
 | `type_not_empty` | 409 | There are still … records of this kind. Archive or delete them first. |
