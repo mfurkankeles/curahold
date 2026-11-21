@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { tourText, type Tour } from '../../../shared/src/tours';
 import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { Icon } from '../components/icons';
 
 export interface TourDeps {
   lang: Locale;
@@ -231,8 +232,8 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <div className="tour__top">
               <span className="tour__count">{ui.of(i + 1, total)}</span>
               <span className="tour__name">{words.title(tour)}</span>
-              <button type="button" className="tour__x" aria-label={ui.close} title={ui.close} onClick={onClose}>
-                ×
+              <button type="button" className="tour__x" aria-label={ui.close} title={`${ui.close} (Esc)`} onClick={onClose}>
+                <Icon name="close" size={18} />
               </button>
             </div>
             <div className="tour__bar" aria-hidden="true">

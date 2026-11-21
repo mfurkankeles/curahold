@@ -14,6 +14,8 @@
 .ip__crumbs a:hover { color: var(--ink); text-decoration: underline; }
 .ip__back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
 .ip__back svg { width: 16px; height: 16px; }
+.ip__bar { padding-top: 28px; }
+.ip__bar .ip__crumbs { margin-bottom: 0; }
 [dir='rtl'] .ip__back .ic-dir { transform: scaleX(-1); }
 .ip__glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 22px; border-radius: 16px; background: var(--iris-wash); color: var(--iris-ink); }
 .ip__glyph svg { width: 26px; height: 26px; }

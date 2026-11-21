@@ -971,8 +971,9 @@ html:not(.js) .story__steps { padding-block: 0; }
 .post-card__meta { color: var(--ink-3); font-size: 13.5px; }
 .post-wrap { padding: 36px 0 96px; }
 .post { width: min(100%, 680px); margin-inline: auto; }
-.post__back a { display: inline-flex; align-items: center; min-height: 44px; color: var(--iris-ink); font-size: 15px; font-weight: 600; text-decoration: none; }
+.post__back a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--iris-ink); font-size: 15px; font-weight: 600; text-decoration: none; }
 .post__back a:hover { text-decoration: underline; }
+.post__back svg { flex: none; width: 16px; height: 16px; }
 .post__head { margin-top: 10px; padding-bottom: 26px; border-bottom: 1px solid var(--line); }
 .post__head h1 { font-size: clamp(31px, 4.4vw, 48px); line-height: 1.1; letter-spacing: -0.028em; font-weight: 750; }
 .post__meta { margin: 16px 0 0; color: var(--ink-3); font-size: 14.5px; }

@@ -14,6 +14,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { FilterGroup, usePhone } from './FilterSheet';
 import { Icon } from './icons';
+import { CloseButton } from './ui';
 import { useDismiss } from './Menus';
 import '../surfaces/exports-views.css';
 import { useLeave } from '../lib/leave';
@@ -294,6 +295,11 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
       </button>
       {open && (
         <div ref={leavePop} className="popmenu filterpop" role="dialog" aria-label={t('views.title')} data-place={place}>
+          {/* A visible Close at the end corner, as on every popup (Esc and a click outside close it too). */}
+          <div className="filterpop__head">
+            <span className="filterpop__title">{t('views.title')}</span>
+            <CloseButton onClick={() => setOpen(false)} />
+          </div>
           {body}
         </div>
       )}
