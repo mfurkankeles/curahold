@@ -22,16 +22,19 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   published yet; the site names only what ships). The yearly-saving figure next to the monthly/yearly switch is now part
   of the price gate in every language, so it can only appear once prices are published.
 - Every language reads as one product (localisation review): Persian speaks formally ("شما") in the app and the whole
-  help centre; Hebrew uses the plural on the site, in e-mails, consent, sign-up and the trial, with one word each for
-  single sign-on, e-mail and trial; Korean shows the right particle after a name ("Acme를", not "Acme을(를)") and one
-  politeness level; Turkish says "siz" everywhere and "kullanıcı" for a seat outside the legal pages; Hindi writes
+  help centre; Hebrew uses the plural on the site, in e-mails (the customer portal's included), consent, sign-up and
+  the trial, with noun buttons and one word each for single sign-on, e-mail and trial (older in-app screens still use
+  the singular); Korean shows one particle after a name, chosen by how Korean reads it ("Acme를", "Slack을",
+  "Microsoft를", not "Acme을(를)"; a name whose ending cannot be read keeps the two-form fallback), and one politeness
+  level; Turkish says "siz" everywhere and "kullanıcı" for a seat outside the legal pages; Hindi writes
   "कुंजी" for a key; Malay no longer uses Indonesian or "tempat duduk". Seat, plan, viewer, record and e-mail are in the
   glossary for all eleven languages. Four translations that changed the meaning are fixed (a refund promised where the
   English says credit, in Turkish and Japanese; the Arabic AI-consent purpose; the Korean indemnity clause). The AI
   consent version moves on, so people are asked once more.
 - Sign-up: the line naming the terms and the privacy policy is one sentence in each language, so Hebrew prefixes, the
   Arabic "و" and the CJK and Hindi full stops sit right.
-- Every action button carries an icon; every popup shows a 44 × 44 Close and closes on Esc; the site's /why/ page and
+- Every action button, and every link styled as a button, carries an icon (a spinner alone does not count); every popup
+  shows its own 44 × 44 Close and closes on Esc, the site's privacy choices dialog included; the site's /why/ page and
   the blog index have Back. The help centre's getting-started page says how a trial starts in all eleven languages.
 - The site no longer marks the hand-over card, linked stories and linked work "Coming soon": they ship.
 - Yearly plans: the renewal e-mail is now sent a little more than 30 days before the renewal, so it always arrives at
