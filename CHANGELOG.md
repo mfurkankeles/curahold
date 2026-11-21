@@ -263,7 +263,8 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,
   not private boards or other departments' boards — and stops sending when that person leaves.
 - Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or
-  turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does; SCIM
+  turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does, also when
+  many arrive at once; SCIM
   answers `409 tooMany` and the sign-in page says the seats are full.
 - Billing: the checkout is now a Paddle transaction the server makes with the plan's price and the company's seats; the
   page only opens it, so neither can be changed in the browser. A new subscription for a price that is not in

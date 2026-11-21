@@ -75,3 +75,24 @@ describe('a full trial takes no more full seats', () => {
     expect((await scim('PATCH', `/Users/${id}`, { schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], Operations: [{ op: 'replace', path: 'active', value: true }] })).status).toBe(200);
   });
 });
+
+// Review S3: parallel ways in take one free seat once. (On the in-memory database transactions run one at a time
+// anyway; with TEST_DATABASE_URL on a real Postgres this fails without the lock in seatGuard.)
+describe('seats taken in parallel', () => {
+  it('six SCIM creates at once for one free seat add exactly one person', async () => {
+    const n = await fillTheTrial();
+    await env.db.system((q) => q.query(`update orgs set trial_seat_cap = $2 where id = $1`, [env.a.orgId, n + 1]));
+    const made = await Promise.all(
+      Array.from({ length: 6 }, (_, i) =>
+        authApp(env).request('https://x/api/scim/v2/Users', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${scimToken}`, 'content-type': 'application/scim+json' },
+          body: JSON.stringify({ schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], userName: `rush${i}@demo.example`, displayName: `Rush ${i}`, active: true }),
+        }),
+      ),
+    );
+    expect(made.map((r) => r.status).filter((s) => s === 201)).toHaveLength(1);
+    expect(await fullSeats()).toBe(n + 1);
+  });
+});
+
