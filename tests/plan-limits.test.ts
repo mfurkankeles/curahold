@@ -1,7 +1,7 @@
 // The settings that keep a small company from costing more than it pays (pricing audit, 20 Nov; ADR 0022): the
 // assistant's money ceiling (seats × the plan's rate, a trial's fixed amount; an administrator can only go lower, and
 // the model stops at it whatever is stored), the public chat's own cap, the fewest seats a subscription is billed for,
-// and the narrower trial (10 seats, 1 GB a seat). Billing is on, through a stubbed Paddle.
+// and the trial's width (25 seats as the owner approved, 1 GB a seat). Billing is on, through a stubbed Paddle.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CATALOGUE, capsOf, MIN_SEATS_DEFAULT, minSeatRulesFrom, minSeatsFor } from '../shared/src/billing';
 import { TRIAL_DEFAULTS } from '../shared/src/trialRequest';
@@ -160,10 +160,10 @@ describe('seats added during a period', () => {
 });
 
 describe('the trial', () => {
-  it('is 10 seats and 1 GB a seat by default, and the owner console starts from it', () => {
-    expect(CATALOGUE.trial.autoApproveSeats).toBe(10);
-    expect(TRIAL_DEFAULTS.seatCap).toBe(10);
-    expect(CONSOLE_SETTING_DEFAULTS['trial.seatCap']).toBe(10);
+  it('is 25 seats (the owner\'s approved default) and 1 GB a seat, and the owner console starts from it', () => {
+    expect(CATALOGUE.trial.autoApproveSeats).toBe(25);
+    expect(TRIAL_DEFAULTS.seatCap).toBe(25);
+    expect(CONSOLE_SETTING_DEFAULTS['trial.seatCap']).toBe(25);
     const caps = capsOf({ state: 'trial', plan: CATALOGUE.trial.plan }, 3);
     expect(caps.storageGbPerSeat).toBe(1);
     expect(caps.storageBytes).toBe(3 * 1024 ** 3);
@@ -174,12 +174,12 @@ describe('the trial', () => {
   it('the Billing screen shows the trial limits the terms point to: the approved seats and the space a seat', async () => {
     const org = (set: string) => env.db.system((q) => q.query(`update orgs set ${set} where id = $1`, [env.a.orgId]));
     await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.a.orgId]));
-    await org(`billing = '{}'::jsonb, trial_ends_at = now() + interval '30 days', trial_seat_cap = 10`);
+    await org(`billing = '{}'::jsonb, trial_ends_at = now() + interval '30 days', trial_seat_cap = 25`);
     const inTrial = (await ada.get('/api/billing')).json;
     expect(inTrial.access.state).toBe('trial');
-    expect(inTrial.trialLimits).toEqual({ seats: 10, storageGbPerSeat: 1 });
+    expect(inTrial.trialLimits).toEqual({ seats: 25, storageGbPerSeat: 1 });
     // The seat row counts against the trial's seats, not "no limit" from the Business plan behind the trial.
-    expect(inTrial.usage.seats.cap).toBe(10);
+    expect(inTrial.usage.seats.cap).toBe(25);
     // An older trial without a seat cap still shows the space a seat.
     await org(`trial_seat_cap = null`);
     const noCap = (await ada.get('/api/billing')).json;

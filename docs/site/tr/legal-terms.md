@@ -6,7 +6,7 @@ summary: Curahold ile müşteri şirket arasındaki sözleşme — deneme, planl
 ---
 # Kullanım koşulları (ana abonelik sözleşmesi)
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft5. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft6. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
 
 Bu koşullar **[Şirket unvanı]**, [merkez adresi], [MERSİS / vergi no.] ("Curahold", "biz") ile Curahold'u kullanan şirket ya da kuruluş ("Müşteri", "siz") arasındaki sözleşmedir. Koşulları kabul eden kişi, kutuyu işaretleyerek Müşteri'yi bağlamaya yetkili olduğunu beyan eder. Kendi kaydolan müşteriler bu koşulları tıklayarak kabul eder; kurumsal müşteriler bu koşullara atıf yapan bir **Sipariş formu** imzalar. **Veri işleme sözleşmesi (VİS)**, **Hizmet düzeyi sözleşmesi (SLA)** ve **Kabul edilebilir kullanım politikası** bu koşulların parçasıdır.
 
@@ -27,7 +27,7 @@ Müşteri, kullanıcılarından, giriş bilgilerinin güvenliğinden ve hesabın
 ## 4. Deneme
 
 - Deneme, deneme formuyla talep edilir ve **onayımızdan sonra açılır**; talebi gerekçe göstermeden reddedebiliriz.
-- Deneme ücretsizdir ve **varsayılan olarak 3 ay** sürer (yazılı olarak farklı bir süre kararlaştırılabilir); kayıt sırasında ve Abonelik sayfasında gösterilen **deneme sınırları** (koltuk ve depolama gibi) içinde kullanılır.
+- Deneme ücretsizdir ve **varsayılan olarak 3 ay** sürer (yazılı olarak farklı bir süre kararlaştırılabilir); kayıt sırasında ve Abonelik sayfasında gösterilen **deneme sınırları** (koltuk ve depolama gibi; varsayılan olarak 25 tam koltuk ve tam koltuk başına 1 GB depolama) içinde kullanılır.
 - Deneme bitmeden hatırlatmalar gönderilir. Deneme bittiğinde Müşteri verisi, bir plan seçilene ya da hesap kapatılana kadar **salt okunur ve dışa aktarılabilir** kalır, değiştirilemez (hesap kapanınca 13. madde uygulanır).
 - Deneme süresince Hizmet olduğu gibi sunulur; SLA'daki hizmet kredileri uygulanmaz.
 

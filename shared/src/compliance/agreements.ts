@@ -20,7 +20,7 @@ export interface AgreementDoc {
 
 /** Bump a version on ANY change to a document's text (every language); a material change also needs a re-acceptance. */
 export const AGREEMENT_PACK: Record<AgreementDocId, AgreementDoc> = {
-  terms: { slug: 'legal-terms', version: '2026-11-21.draft5', acceptance: 'click', noticeDays: 30 },
+  terms: { slug: 'legal-terms', version: '2026-11-21.draft6', acceptance: 'click', noticeDays: 30 },
   dpa: { slug: 'legal-dpa', version: '2026-11-21.draft3', acceptance: 'click', noticeDays: 30 },
   sla: { slug: 'legal-sla', version: '2026-11-19.draft1', acceptance: 'reference', noticeDays: 30 },
   aup: { slug: 'legal-aup', version: '2026-11-21.draft3', acceptance: 'reference', noticeDays: 30 },
@@ -52,7 +52,7 @@ export const ACCEPTANCE_TEXT: Partial<Record<Locale, AcceptanceText>> & { en: Ac
   en: {
     heading: 'Before you start: the key terms',
     keyTerms: [
-      'The trial is free, opens after our approval and lasts 3 months by default, within the trial limits (such as seats and storage) shown at sign-up and on the Billing page. After it ends the company can still read and export, but not change, its data until it subscribes or leaves.',
+      'The trial is free, opens after our approval and lasts 3 months by default, within the trial limits (by default 25 full seats and 1 GB of storage a full seat) shown at sign-up and on the Billing page. After it ends the company can still read and export, but not change, its data until it subscribes or leaves.',
       'Paid plans are monthly or yearly and renew automatically: a monthly plan can be ended at the end of any month, a yearly plan stops at the end of its year; prices can change with 30 days’ notice. Refunds follow the Refund policy.',
       'Our total liability is capped at the fees paid in the previous 12 months (a higher cap applies to data-protection breaches; no cap where the law forbids one).',
       'Customer data stays the customer’s. We process it only on the customer’s instructions (DPA); it is not used to train AI models.',
@@ -67,7 +67,7 @@ export const ACCEPTANCE_TEXT: Partial<Record<Locale, AcceptanceText>> & { en: Ac
   tr: {
     heading: 'Başlamadan önce: temel koşullar',
     keyTerms: [
-      'Deneme ücretsizdir, onayımızdan sonra açılır ve varsayılan olarak 3 ay sürer; kayıt sırasında ve Abonelik sayfasında gösterilen deneme sınırları (koltuk ve depolama gibi) içinde kullanılır. Bittiğinde şirket abone olana ya da ayrılana kadar verilerini okuyabilir ve dışa aktarabilir, ancak değiştiremez.',
+      'Deneme ücretsizdir, onayımızdan sonra açılır ve varsayılan olarak 3 ay sürer; kayıt sırasında ve Abonelik sayfasında gösterilen deneme sınırları (varsayılan olarak 25 tam koltuk ve tam koltuk başına 1 GB depolama) içinde kullanılır. Bittiğinde şirket abone olana ya da ayrılana kadar verilerini okuyabilir ve dışa aktarabilir, ancak değiştiremez.',
       'Ücretli planlar aylık ya da yıllıktır ve kendiliğinden yenilenir: aylık plan herhangi bir ayın sonunda sonlandırılabilir, yıllık plan yılının sonunda biter; fiyatlar 30 gün önceden bildirilerek değişebilir. İadeler İade politikasına göre yapılır.',
       'Toplam sorumluluğumuz önceki 12 ayda ödenen bedelle sınırlıdır (kişisel verilerin korunmasına ilişkin ihlallerde daha yüksek bir sınır uygulanır; kanunun yasakladığı hâllerde sınır yoktur).',
       'Müşteri verisi müşterinindir. Yalnızca müşterinin talimatıyla işleriz (VİS); yapay zekâ modellerini eğitmek için kullanılmaz.',

@@ -124,7 +124,7 @@ describe('trial requests', () => {
     expect(env.email.sent.some((m) => m.to === OWNER && m.subject.includes(first.ref))).toBe(true);
     const again = await insertTrialRequest(env.deps as never, request({ email: 'ops@northwind.example', name: 'Deniz Ok' }));
     const list = (await owner.req('GET', '/owner/requests')).json;
-    expect(list.settings).toEqual({ 'trial.seatCap': 10, 'trial.months': 3 });
+    expect(list.settings).toEqual({ 'trial.seatCap': 25, 'trial.months': 3 });
     expect(list.requests.find((r: any) => r.ref === again.ref).duplicateOf).toBe(first.ref);
 
     expect((await owner.req('POST', `/owner/requests/${first.id}/contacted`, { note: 'Called' })).status).toBe(200);

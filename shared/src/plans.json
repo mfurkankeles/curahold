@@ -4,11 +4,11 @@
   "status": "draft",
   "currency": "USD",
   "trial": {
-    "_source": "owner, 17 Nov (request form, his approval, 3 months; seats asked for). Width narrowed by the pricing audit (20 Nov): 10 seats by default (the owner console's trial.seatCap changes it) and 1 GB a seat, so a trial's worst-case cost no longer outweighs a small paying company; owner question open",
+    "_source": "owner, 17 Nov (request form, his approval, 3 months; seats asked for, auto-approvable up to 25; the owner console's trial.seatCap changes it). 1 GB a seat from the pricing audit (20 Nov), so a trial's file space stays bounded; the audit's 10-seat default is an open owner question, not applied",
     "months": 3,
     "approval": true,
     "plan": "business",
-    "autoApproveSeats": 10,
+    "autoApproveSeats": 25,
     "caps": { "aiQuestionsPerSeat": 10, "storageGbPerSeat": 1 }
   },
   "dunning": {

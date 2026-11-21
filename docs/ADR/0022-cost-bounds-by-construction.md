@@ -24,8 +24,9 @@ pays. And every trial was auto-approvable up to 25 seats on Business limits (10 
 - Every quantity sent to the payment provider goes through `billedSeats`: at least the minimum for the plan, interval
   and price region (`BILLING_MIN_SEATS`; default 3, India 5 / 6 a year, Malaysia 4 a year). The company still uses only
   the seats it has; the Billing screen says it is billed for at least that many.
-- The trial defaults to 10 seats (plans.json `trial.autoApproveSeats`, the owner console's `trial.seatCap`) and 1 GB a
-  seat (`trial.caps.storageGbPerSeat`).
+- The trial keeps the owner's approved 25 seats (plans.json `trial.autoApproveSeats`, the owner console's `trial.seatCap`)
+  and gets 1 GB a seat (`trial.caps.storageGbPerSeat`). The audit's 10-seat default was reverted on 21 Nov because the
+  owner had approved 25 on 17 Nov; narrowing it is his open question, and the console setting changes it without a release.
 
 ## Alternatives considered
 

@@ -6,7 +6,7 @@ summary: Perjanjian antara Curahold dan syarikat pelanggan — percubaan, pelan,
 ---
 # Terma perkhidmatan (perjanjian langganan induk)
 
-> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft5. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
+> **Draf — kelulusan peguam diperlukan.** Versi 2026-11-21.draft6. Ini ialah terjemahan teks bahasa Inggeris untuk memudahkan bacaan; jika terdapat sebarang perbezaan, teks bahasa Inggeris diguna pakai (antara syarikat Türkiye, teks bahasa Turki terpakai, seksyen 20). Teks dalam [kurungan siku] akan diisi kemudian. Bukan nasihat undang-undang.
 
 Terma ini ialah perjanjian antara **[Nama sah syarikat]**, [alamat berdaftar], [nombor pendaftaran / cukai] ("Curahold", "kami") dan syarikat atau organisasi yang menggunakan Curahold ("Pelanggan", "anda"). Orang yang menerimanya mengesahkan, dengan menanda kotak, bahawa dia diberi kuasa untuk mengikat Pelanggan. Pelanggan layan diri menerima terma ini dengan satu klik; pelanggan perusahaan menandatangani **Borang pesanan** yang merujuk kepadanya. **Perjanjian pemprosesan data**, **Perjanjian tahap perkhidmatan** dan **Dasar penggunaan yang boleh diterima** ialah sebahagian daripada terma ini.
 
@@ -27,7 +27,7 @@ Pelanggan bertanggungjawab ke atas penggunanya, menjaga keselamatan butiran log 
 ## 4. Percubaan
 
 - Percubaan diminta melalui borang percubaan dan **dibuka selepas kelulusan kami**; kami boleh menolak permintaan tanpa memberikan sebab.
-- Percubaan adalah percuma dan berlangsung **3 bulan secara lalai** (kami boleh bersetuju secara bertulis tentang tempoh yang berbeza), dalam **had percubaan** (seperti tempat duduk dan storan) yang ditunjukkan semasa pendaftaran dan di halaman Pengebilan.
+- Percubaan adalah percuma dan berlangsung **3 bulan secara lalai** (kami boleh bersetuju secara bertulis tentang tempoh yang berbeza), dalam **had percubaan** (seperti tempat duduk dan storan; secara lalai 25 tempat duduk penuh dan 1 GB storan bagi setiap tempat duduk penuh) yang ditunjukkan semasa pendaftaran dan di halaman Pengebilan.
 - Peringatan dihantar sebelum percubaan tamat. Apabila tamat, data Pelanggan kekal tersedia **untuk dibaca sahaja dan boleh dieksport**, tetapi tidak boleh diubah, sehingga pelan dipilih atau akaun ditutup (data kemudiannya dikendalikan di bawah seksyen 13).
 - Semasa percubaan, Perkhidmatan disediakan seadanya; kredit perkhidmatan SLA tidak terpakai.
 

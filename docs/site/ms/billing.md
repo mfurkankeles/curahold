@@ -11,7 +11,7 @@ summary: Percubaan percuma, pelan Team dan Business, tempat duduk, invois, menuk
 Percubaan bermula dengan permintaan: **Cuba percuma** di laman web membuka borang ringkas (e-mel kerja dengan kod, syarikat anda, pasukan dan tempat duduk yang anda mahu). Kami membaca setiap permintaan dan menjawab, biasanya dalam tempoh satu hari bekerja. Setelah diluluskan, syarikat anda dicipta dengan pasukan yang anda pilih dan pentadbir pertamanya menerima pautan log masuk.
 
 - **Tempoh:** tiga bulan secara lalai, dengan semua ciri dihidupkan dan tanpa kad. Tempoh ditetapkan semasa permintaan diluluskan, jadi perintis yang lebih besar boleh mendapat tempoh lebih panjang.
-- **Tempat duduk:** percubaan merangkumi tempat duduk penuh yang dipersetujui semasa kelulusan (10 secara lalai). Tempat duduk pemerhati adalah percuma dan tidak pernah dikira.
+- **Tempat duduk:** percubaan merangkumi tempat duduk penuh yang dipersetujui semasa kelulusan (25 secara lalai). Tempat duduk pemerhati adalah percuma dan tidak pernah dikira.
 - **Ruang fail:** 1 GB bagi setiap tempat duduk penuh sepanjang percubaan, dikongsi oleh syarikat. Tetapan → **Pengebilan** menunjukkan had percubaan dan jumlah yang digunakan.
 - **Log masuk pertama:** pentadbir menerima terma perkhidmatan dan perjanjian pemprosesan data dengan satu klik; kemudian pasukan boleh dijemput.
 - **Peringatan:** pentadbir menerima e-mel 14, 7 dan 1 hari sebelum tamat. Tetapan → **Pengebilan** menunjukkan berapa hari lagi; pada minggu terakhir, satu baris di bahagian atas aplikasi juga memaklumkannya.
