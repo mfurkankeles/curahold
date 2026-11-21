@@ -283,6 +283,20 @@ describe('Persian register', () => {
   });
 });
 
+describe('sentences with links are whole sentences', () => {
+  // The sign-up legal line was glued from four fragments, so Hebrew showed "ל תנאי השירות" and CJK and Hindi ended in
+  // a Latin full stop (review, 21 Nov 2026). It is one key with {terms} and {privacy}, ending as each script ends.
+  const END: Partial<Record<Locale, string>> = { ja: '。', 'zh-Hans': '。', 'zh-Hant': '。', hi: '।' };
+  it.each(LOCALES.map((l) => [l] as const))('%s: the sign-up legal line holds both links and its own full stop', (l) => {
+    const s = dict(l)['signup.agreeLine'];
+    expect(s).toContain('{terms}');
+    expect(s).toContain('{privacy}');
+    expect(s.endsWith(END[l] ?? '.')).toBe(true);
+    if (l === 'he') expect(s).toMatch(/ל\{terms\} ול\{privacy\}/);
+    if (l === 'ar') expect(s).toMatch(/ و\{privacy\}/);
+  });
+});
+
 describe('Korean particles and politeness', () => {
   // A two-form particle ("을(를)") is written in the dictionary and resolved once the name is in
   // (shared/src/i18n/koParticles.ts); the reader never sees the fallback (review, 21 Nov 2026: 178 shown).
