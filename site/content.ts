@@ -330,7 +330,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
-      lead: 'Her plan, her şeyin açık olduğu 3 aylık denemeyle başlar. Görüntüleyen kullanıcılar ücretsiz.',
+      lead: 'Her plan, her şeyin açık olduğu 3 aylık denemeyle başlar. İzleyiciler ücretsiz.',
       monthly: 'Aylık',
       yearly: 'Yıllık',
       save: '⟦price|yaklaşık %20 daha az|⟧',

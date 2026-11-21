@@ -55,7 +55,7 @@ Fiyatı düşük tutabilmek için her plan, çalıştırması bize maliyet çık
 
 | Sınır | Sınıra gelince ne olur |
 | --- | --- |
-| Tam kullanıcılar | Yeni kişiler yine görüntüleyen olarak (ücretsiz) katılabilir; daha fazla tam kullanıcı için daha büyük bir plan seçin. |
+| Tam kullanıcılar | Yeni kişiler yine izleyici olarak (ücretsiz) katılabilir; daha fazla tam kullanıcı için daha büyük bir plan seçin. |
 | Bağlı araçlar (CRM, tablolar, destek ve muhasebe araçları) | Yeni bir araç bağlarken birini kaldırmanız ya da daha büyük bir plan seçmeniz istenir. Zaten bağlı bir araca yeniden giriş yapmak her zaman mümkündür. |
 | Bağlı araçların ne sıklıkla eşitlendiği | Her plan kendi takvimiyle eşitler (Business’ta saatte bir); **Şimdi eşitle** her zaman vardır. |
 | Dosya alanı (tam kullanıcı başına, şirketçe ortak) | Eski dosyalar silinene ya da daha büyük bir plan seçilene kadar yeni yükleme yapılamaz. Hiçbir şey silinmez. |

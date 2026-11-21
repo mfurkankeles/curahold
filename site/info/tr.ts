@@ -235,7 +235,7 @@ export const tr: InfoCopy = {
     },
     missing: ['Listede yok mu?', 'API’si olan her araç, açık API ve webhook’larla Curahold’la konuşabilir.'],
   },
-  pricingPage: { title: 'Fiyatlar', lead: 'Kullanıcı başına; plandaki her özellik açık, başlangıçta üç ay ücretsiz. Yalnızca izleyiciler ücretsiz.',
+  pricingPage: { title: 'Fiyatlar', lead: 'Kullanıcı başına; plandaki her özellik açık, başlangıçta üç ay ücretsiz. İzleyiciler ve portaldaki müşterileriniz ücretsiz.',
     dontTitle: 'Saymadıklarımız',
     dont: [['Otomasyonlar', 'Otomasyon çalışmalarına aylık sayaç yok.'], ['Yapay zekâ kredisi', 'Yok: AI bağlayıcısı kendi asistanınızın planıyla çalışır.'], ['İzleyiciler', 'Ücretsiz, ihtiyacınız kadar.'], ['Müşteri portalı kişileri', 'Müşterileriniz kullanıcı sayılmaz.'], ['Kullanıcı paketi', 'Yok. Katılan kişi kadar ödersiniz; bekleyen davetler ücretsiz.'], ['Kurulum ücreti', 'Yok. Kendiniz kurarsınız, rehberli kurulum her adımı gösterir.']],
     compareTitle: 'Planları karşılaştırın', feature: 'Neler dahil', included: 'Dahil', notIncluded: 'Dahil değil',
@@ -243,7 +243,7 @@ export const tr: InfoCopy = {
     faqTitle: 'Fiyatlarla ilgili sorular',
     faq: [
       { q: 'Ücretsiz deneme nasıl işliyor?', a: '“Ücretsiz deneyin” düğmesinden kısa bir başvuru gönderin; bir kişi inceler ve e-postayla yanıt verir. Deneme üç ay sürer; her şey açıktır ve kart gerekmez. Bitmeden 14, 7 ve 1 gün önce yöneticilere hatırlatma gelir.' },
-      { q: 'Kimler kullanıcı olarak sayılır?', a: 'Tam kullanıcı olarak katılmış kişiler. Henüz kabul edilmemiş davetler, yalnızca izleyiciler ve portaldaki müşterileriniz ücretsizdir. Birini eklediğinizde ek kullanıcı dönemin geri kalanı için faturalanır; birini çıkardığınızda bir sonraki fatura düşer. Her plan en az birkaç tam kullanıcı üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla): bu sayıya kadar eklediğiniz kişiler ek ücrete yol açmaz, sayıyı da satın almadan önce Abonelik sayfasında görürsünüz.' },
+      { q: 'Kimler kullanıcı olarak sayılır?', a: 'Tam kullanıcı olarak katılmış kişiler. Henüz kabul edilmemiş davetler, izleyiciler ve portaldaki müşterileriniz ücretsizdir. Birini eklediğinizde ek kullanıcı dönemin geri kalanı için faturalanır; birini çıkardığınızda bir sonraki fatura düşer. Her plan en az birkaç tam kullanıcı üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla): bu sayıya kadar eklediğiniz kişiler ek ücrete yol açmaz, sayıyı da satın almadan önce Abonelik sayfasında görürsünüz.' },
       { q: 'Planı değiştirebilir ya da aylık ve yıllık ödeme arasında geçiş yapabilir miyiz?', a: 'Evet, istediğiniz zaman Ayarlar → Abonelik sayfasından. Aradaki fark, dönemin geri kalanı için faturalanır ya da alacak olarak yansıtılır.' },
       { q: 'Deneme bir plan seçilmeden biterse ne olur?', a: 'Hiçbir şey silinmez. Herkes her şeyi okumaya ve dışa aktarmaya devam eder; bir yönetici plan seçene kadar değişiklik yapılamaz, sonra iş kaldığı yerden sürer.' },
       { q: 'Ödemeyi nasıl yapıyoruz?', a: 'Satıcımız Paddle üzerinden, kartla. Fiyatlar ABD doları cinsindendir, vergiler ödeme sırasında eklenir; faturalar ödeme portalında yer alır.' },

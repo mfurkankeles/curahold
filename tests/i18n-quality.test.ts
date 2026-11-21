@@ -239,6 +239,23 @@ describe('one word per concept (shared/src/i18n/glossary.ts)', () => {
     }
     expect(found.join('\n')).toBe('');
   });
+
+  // The dictionary check above finds a concept by its English key; the site copy and the help pages have no English
+  // twin per line, so a stray avoided word there ("görüntüleyen" on the Turkish site lead and in the billing help,
+  // localisation review 21 Nov 2026) slipped past it. The viewer's avoided words never fit in any sense, so they are
+  // held across the whole site and help centre too (legal pages stay the lawyer's, as in docsText). Other concepts'
+  // avoid-lists can be right in another sense ("pano" is also a board, Korean 시트 a spreadsheet, an AI-team seat is
+  // "koltuk"), so they stay keyed to their English source.
+  const EVERY_LINE = new Set(['viewer']);
+  it.each(LOCALES.map((l) => [l] as const))('%s keeps avoided viewer words out of the site and the help centre', (l) => {
+    const found: string[] = [];
+    for (const c of GLOSSARY.filter((x) => EVERY_LINE.has(x.id))) {
+      const avoid = c.terms[l]?.avoid ?? [];
+      for (const m of [docsText(l), siteText(l)])
+        for (const [k, v] of m) for (const a of avoid) if (matcher(a).test(v)) found.push(`${c.id}: ${k} has "${a}" (write "${c.terms[l]!.use}")`);
+    }
+    expect(found.join('\n')).toBe('');
+  });
 });
 
 describe('job titles stay English (owner, 19 Nov)', () => {
