@@ -42,6 +42,7 @@ import { addHelpMessage, toHelpMessage } from '../lib/helpThread';
 import { deskFirstReply } from './assist';
 import { pushToOwner } from '../lib/ownerOutbox';
 import { ownerWord } from '../../../shared/src/i18n/owner';
+import { quarantine, released } from '../lib/uploadScan';
 
 export const helpRoutes = new Hono<AppEnv>();
 export const supportEntry = new Hono<AppEnv>();
@@ -324,6 +325,8 @@ helpRoutes.post('/help', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'help.created', entity: 'help_request', entityId: req.id, meta: { ref: req.ref } });
     return { req, saved, grant };
   });
+  // Support staff open these files: they wait for the upload scanner like a task's files do (security audit L7).
+  for (const f of saved) await quarantine(deps, org.id, f.storage_key);
 
   // The desk first, then a receipt with the reference for the person who asked.
   const locale = c.get('locale');
@@ -500,6 +503,8 @@ helpRoutes.get('/help/files/:id', async (c) => {
 });
 
 async function sendFile(c: C, row: Row) {
+  // Held while the scanner looks, and never after it found something (lib/uploadScan.ts).
+  if (!(await released(c.get('deps'), row.org_id, row.storage_key))) fail('file_quarantined');
   const obj = await c.get('deps').storage.get(row.storage_key);
   if (!obj) fail('not_found');
   return c.body(obj!.data, 200, {

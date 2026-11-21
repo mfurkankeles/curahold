@@ -100,6 +100,25 @@ describe('the quarantine, with a scanner configured', () => {
     expect((await ada.get(`/api/files/${f.id}`)).status).toBe(200);
   });
 
+  // Security audit L7: a help request's files are opened by support staff, so they wait for the scanner too.
+  it("a help request's files are held until clean, on the person's link and the desk's", async () => {
+    (env.deps as any).scanner = scanner;
+    verdicts.push({ verdict: 'error', note: 'scanner down' });
+    const form = new FormData();
+    form.set('data', JSON.stringify({ category: 'question', subject: 'A file for support', description: 'The export I mean is attached here.' }));
+    form.append('files', new File([strToU8('the export')], 'export.txt', { type: 'text/plain' }));
+    const made = await ada.req('POST', '/api/help', form);
+    expect(made.status).toBe(201);
+    await env.settle();
+    const [row] = await env.db.system((q) => q.query<{ id: string; org_id: string; storage_key: string }>(`select id, org_id, storage_key from help_files where request_id = $1`, [made.json.request.id]));
+    expect(await released(env.deps, row.org_id, row.storage_key)).toBe(false);
+    const held = await ada.get(`/api/help/files/${row.id}`);
+    expect([held.status, held.json.error]).toEqual([423, 'file_quarantined']);
+    verdicts.push({ verdict: 'clean' });
+    expect(await scanHeld(env.deps as any)).toBeGreaterThanOrEqual(1);
+    expect((await ada.get(`/api/help/files/${row.id}`)).status).toBe(200);
+  });
+
   it('infected: the bytes are deleted, it stays refused, and the owner console hears it', async () => {
     verdicts.push({ verdict: 'infected', signature: 'Eicar-Test-Signature' });
     const f = await upload();
