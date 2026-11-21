@@ -14,7 +14,8 @@ Ayarlar → Geliştirici → **Yeni webhook**. Bağlantıları yönetme izni ger
 
 Bir webhook yalnızca onu ekleyen kişinin görebildiklerini gönderir: açabildiği panolardaki görevler ve yorumlar (özel
 panolar ve başka departmanların panoları gönderilmez) ve rolünün görebildiği müşteri alanları. O kişi ayrılır ya da
-devre dışı bırakılırsa webhook göndermeyi bırakır; başka biri onu yeniden ekler.
+devre dışı bırakılırsa webhook kapatılır, etkinlik kaydı nedenini yazar ve bağlantıları yöneten kişilere bildirim
+gider; başka biri onu yeniden ekler.
 
 - Adres herkese açık bir `https` adresi olmalı. Yerel ve özel ağ adresleri kabul edilmez.
 - Hangi olaylarda gönderileceğini seçin.

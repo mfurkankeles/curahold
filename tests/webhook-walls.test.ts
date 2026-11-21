@@ -65,5 +65,16 @@ describe('webhooks keep to board visibility', () => {
     await deliver();
     expect(titlesTo('admin')).toContain('After leaving');
     expect(titlesTo('ops')).not.toContain('After leaving');
+    // Review S6: switched off where everyone can see it, written down once, and the administrators are told.
+    const [hook] = await env.db.system((q) => q.query(`select active from webhooks where org_id = $1 and url = 'https://ops.example.com/hook'`, [env.a.orgId]));
+    expect(hook.active).toBe(false);
+    const log = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'webhook.orphaned'`, [env.a.orgId]));
+    expect(log).toHaveLength(1);
+    const told = await env.db.system((q) => q.query<{ user_id: string }>(`select user_id from notifications where org_id = $1 and kind = 'webhook_orphaned'`, [env.a.orgId]));
+    expect(told.map((n) => n.user_id)).toContain(env.a.ids.ada);
+    // A second event changes nothing more.
+    await ada.post('/api/tasks', { boardId: board.id, title: 'Later still' });
+    await deliver();
+    expect((await env.db.system((q) => q.query(`select 1 from audit_log where org_id = $1 and action = 'webhook.orphaned'`, [env.a.orgId]))).length).toBe(1);
   });
 });

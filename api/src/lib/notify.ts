@@ -107,7 +107,7 @@ export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'handover', 'handover_owner', 'onboarding_mail', 'renewal_notice']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'webhook_orphaned', 'handover', 'handover_owner', 'onboarding_mail', 'renewal_notice']);
 // Contractual notices (terms §5: the yearly renewal notice): always by e-mail to the person, whatever their channel,
 // mutes or quiet hours, because a notice that only reached a muted chat was never given (billing/renewalNotice.ts).
 const NOTICE_KINDS = new Set(['renewal_notice']);
@@ -293,6 +293,14 @@ export function render(ctx: RenderCtx): ChatMessage {
         title: t('notify.syncFailed', { app: data.app ?? '' }),
         body: data.auth ? t('notify.syncFailedReconnect', { app: data.app ?? '' }) : t('notify.syncFailedRepeated', { app: data.app ?? '' }),
         url: `${ctx.base}/settings/sources`,
+        openLabel: t('notify.open'),
+      };
+    case 'webhook_orphaned':
+      // A webhook whose creator left was switched off (lib/webhooks.ts): the admins hear it once, with where to add it again.
+      return {
+        title: t('notify.webhookOrphaned', { url: data.url ?? '' }),
+        body: t('notify.webhookOrphanedBody'),
+        url: `${ctx.base}/settings/developer`,
         openLabel: t('notify.open'),
       };
     case 'renewal_notice': {
