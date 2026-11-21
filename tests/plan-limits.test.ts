@@ -108,6 +108,7 @@ describe('the fewest seats a subscription is billed for', () => {
   });
 
   it('checkout never asks the provider for fewer, and the Billing screen counts the total with it', async () => {
+    env.fetchHolder.impl = async () => new Response(JSON.stringify({ data: { id: 'txn_seats' } }), { status: 201 });
     await env.db.system((q) => q.query(`update orgs set billing = '{}'::jsonb, billing_country = null where id = $1`, [env.a.orgId]));
     const n = await fullSeats();
     const india = await ada.req('POST', '/api/billing/checkout', { plan: 'team', interval: 'year' }, { 'cf-ipcountry': 'IN' });

@@ -128,10 +128,22 @@ describe('the trial and the subscription', () => {
 });
 
 describe('checkout cannot be pointed at someone else’s company', () => {
-  it('the server signs the company id it hands the browser', async () => {
-    const b = (await ada.post('/api/billing/checkout', { plan: 'team', interval: 'year' })).json;
-    expect(b.checkout.customData).toEqual(signed);
-    expect(b.checkout.priceId).toBe('pri_team_y');
+  it('the server makes the transaction: price, seats and the signed company id never come from the browser', async () => {
+    const sent: { url: string; body: any }[] = [];
+    env.fetchHolder.impl = async (url, init) => {
+      sent.push({ url, body: JSON.parse(String(init?.body ?? '{}')) });
+      return new Response(JSON.stringify({ data: { id: 'txn_01' } }), { status: 201 });
+    };
+    const b = (await ada.post('/api/billing/checkout', { plan: 'team', interval: 'year', priceId: 'pri_cheap', quantity: 1 })).json;
+    expect(sent).toHaveLength(1);
+    expect(sent[0].url).toMatch(/\/transactions$/);
+    expect(sent[0].body.items[0].price_id).toBe('pri_team_y');
+    expect(sent[0].body.items[0].quantity).toBe(b.checkout.quantity);
+    expect(sent[0].body.custom_data).toEqual(signed);
+    // The page gets the transaction to open, and no signed company id it could reuse elsewhere.
+    expect(b.checkout.transactionId).toBe('txn_01');
+    expect(b.checkout.customData).toBeUndefined();
+    expect(JSON.stringify(b)).not.toContain(signed.sig);
     expect((await lena.post('/api/billing/checkout', { plan: 'team' })).status).toBe(403);
   });
 
@@ -210,5 +222,34 @@ describe('billing off', () => {
     expect(me.org.billing.state).toBe('free');
     expect((await zeynep.post('/api/tasks', { boardId: off.a.boards.csBoard, title: 'Still fine' })).status).toBe(201);
     expect((await off.app.request(`https://app.${BASE}/api/billing/webhook`, { method: 'POST', body: '{}' })).status).toBe(404);
+  });
+});
+
+// Security audit M2: what Paddle reports is checked against our own price list and the plan's seat limit.
+describe('a subscription the server did not offer', () => {
+  it('a new subscription for a price that is not ours is refused, and the trial stays a trial', async () => {
+    const theirs = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    const before = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [env.b.orgId])))[0].billing;
+    await paddleSays({ event_id: 'evt_odd_price', event_type: 'subscription.created', occurred_at: '2026-11-13T09:00:00Z', data: subscription({ id: 'sub_odd', customer_id: 'ctm_odd', custom_data: theirs, items: [{ price: { id: 'pri_other_product' }, quantity: 1 }] }) });
+    const after = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [env.b.orgId])))[0].billing;
+    expect(after).toEqual(before);
+    const log = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'billing.refused'`, [env.b.orgId]));
+    expect(log.map((r) => r.meta.why)).toContain('unknown_price');
+  });
+
+  it('a plan too small for the company is flagged when its subscription arrives', async () => {
+    await env.db.system((q) =>
+      q.query(
+        `insert into users (org_id, email, name, role_id, seat, status)
+         select $1, 'many' || g || '@beta.example', 'Many ' || g, (select id from roles where org_id = $1 and key = 'member'), 'full', 'active' from generate_series(1, 101) g`,
+        [env.b.orgId],
+      ),
+    );
+    const theirs = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    await paddleSays({ event_id: 'evt_small_plan', event_type: 'subscription.created', occurred_at: '2026-11-13T09:30:00Z', data: subscription({ id: 'sub_small', customer_id: 'ctm_small', custom_data: theirs, items: [{ price: { id: 'pri_team_m' }, quantity: 3 }] }) });
+    const flagged = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'billing.over_plan'`, [env.b.orgId]));
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].meta).toMatchObject({ plan: 'team', cap: 100 });
+    await env.db.system((q) => q.query(`delete from users where org_id = $1 and email like 'many%@beta.example'`, [env.b.orgId]));
   });
 });

@@ -17,13 +17,14 @@ export interface CheckoutHandle {
   env: 'sandbox' | 'live';
   /** Client-side token, safe to hand a browser. */
   clientToken: string;
+  /**
+   * The provider's transaction made on the server with the price, quantity and signed company id in it: the browser
+   * opens only this id, so it can change neither what is bought nor for whom (security audit M2).
+   */
+  transactionId: string;
+  /** For the screen only. */
   priceId: string;
   quantity: number;
-  /**
-   * Opaque data echoed back on the subscription's webhook. Carries the company id
-   * with a signature only the server can make, so the webhook trusts no raw id.
-   */
-  customData: Record<string, string>;
   email: string;
 }
 

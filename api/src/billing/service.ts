@@ -142,6 +142,7 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
          from subscriptions where provider_subscription_id = $1 limit 1`,
       [sub.providerSubscriptionId],
     );
+    const held = !!cur;
     if (cur) {
       // A subscription that belongs to a company stays there: custom data cannot re-point it, nor can a new customer take it.
       if (sub.signedOrgId && sub.signedOrgId !== cur.org_id) return refuse(cur.org_id, 'named_other_org');
@@ -156,12 +157,16 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
       if (cur?.provider_customer_id && sub.providerCustomerId && cur.provider_customer_id !== sub.providerCustomerId && LIVE.includes(cur.status)) return refuse(org.id, 'customer_changed');
     }
     const orgId = cur?.org_id ?? sub.signedOrgId!;
+    // Money (security audit M2): a new subscription must be for a price of ours (PADDLE_PRICES). Any other recurring
+    // price in the same Paddle account would otherwise end a trial as "paying" on the trial's plan.
+    if (!held && !sub.plan) return refuse(orgId, 'unknown_price');
     if (!(await firstTime(q, provider, event, orgId))) return orgId;
     // Paddle may deliver out of order: never let an older event overwrite a newer one.
     const last = iso(cur?.event_at);
     if (cur?.provider_subscription_id === sub.providerSubscriptionId && last && Date.parse(last) > Date.parse(event.occurredAt)) return orgId;
 
-    const plan = sub.plan ?? cur?.plan ?? CATALOGUE.trial.plan;
+    // An existing subscription whose price is no longer in the list keeps the plan it was bought on.
+    const plan = sub.plan ?? cur!.plan;
     const trial = sub.trialEndsAt ?? iso(cur?.trial_ends_at) ?? null;
     // Dunning: remember when the first failed payment happened; a payment that goes through clears it.
     const pastDueSince = sub.status === 'past_due' ? (iso(cur?.past_due_since) ?? event.occurredAt) : null;
@@ -183,6 +188,14 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
       [orgId, provider, sub.providerCustomerId, sub.providerSubscriptionId, plan, sub.status, trial, sub.currentPeriodEnd, sub.cancelAtPeriodEnd, sub.interval, sub.seats, sub.currency, pastDueSince, event.occurredAt],
     );
     await audit(q, { orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: orgId, meta: { status: sub.status, plan, seats: sub.seats } });
+    // The plan's seat limit, checked again here and not only at checkout: a checkout opened by hand can buy a plan too
+    // small for the company. Flagged in the activity log (the operator follows up); seatGuard then refuses every new
+    // full seat, and the hourly seat sync bills the real number of seats.
+    const cap = planOf(plan)?.caps.seatsMax ?? null;
+    if (cap != null && LIVE.includes(sub.status)) {
+      const [{ n }] = await q.query<{ n: number }>(`select ${SEATS_SQL} as n from orgs o where o.id = $1`, [orgId]);
+      if (Number(n) > cap) await audit(q, { orgId, actorId: null, action: 'billing.over_plan', entity: 'org', entityId: orgId, meta: { plan, seats: Number(n), cap, event: event.id } });
+    }
     await projectBillingQ(q, orgId);
     return orgId;
   });
