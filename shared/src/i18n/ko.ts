@@ -664,6 +664,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.field_locked': '귀하의 역할은 이 항목을 볼 수 있지만 변경할 수 없습니다 ({field}).',
   'errors.preview_read_only': '다른 사람으로 보고 있어 아무것도 변경할 수 없습니다. 먼저 자신의 보기로 돌아가세요.',
   'errors.read_only_token': '이 키 또는 앱은 읽기만 가능합니다. 변경할 수 있는 키를 만들거나, 앱을 다시 연결하고 변경을 허용하세요.',
+  'errors.session_required': '이 작업은 로그인한 사람만 할 수 있습니다. API 키와 연결된 앱은 어떤 권한을 받았든 할 수 없습니다.',
+  'errors.token_scope': '이 키 또는 앱은 다른 영역으로 제한되어 있습니다. 이 영역용 키를 만들거나, 앱을 다시 연결하고 이 영역을 허용하세요.',
   'errors.bad_webhook_url': 'webhook에는 공개 https 주소를 사용하세요.',
   'errors.support_ended': '이 지원 방문이 종료되었습니다: 접근이 닫혔거나 만료되었습니다.',
   'errors.support_blocked': '허가가 있어도 지원은 이 부분을 열 수 없습니다.',

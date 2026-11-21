@@ -75,6 +75,7 @@ import { identityRoutes } from './routes/identity';
 import { securityTxt } from './routes/securitytxt';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
+import { tokenReach } from './lib/tokenScope';
 import { analyticsRoutes, feedChallenge, feedCredential, isFeed } from './routes/analytics';
 import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
@@ -417,6 +418,10 @@ export function createApp(deps: Deps) {
       if (!t) fail('unauthenticated');
       // An analytics key opens the analytics feed and nothing else.
       if (t!.kind === 'analytics' && !feed) fail('forbidden');
+      // Administration, identity, billing and credentials are for a signed-in person only, and a token limited to
+      // areas stays inside them (security audit H1, ADR 0024).
+      const reach = tokenReach(c.req.path.slice('/api'.length), c.req.method, t!.areas);
+      if (reach !== 'ok') fail(reach);
       if (!t!.canWrite && c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('read_only_token');
       const u = t!.user;
       c.set('auth', {

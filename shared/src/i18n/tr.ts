@@ -1737,6 +1737,8 @@ export const tr: Record<MessageKey, string> = {
   'connect.deny': 'İzin verme',
   'connect.expired': 'Bu isteğin süresi doldu. Bağlanmayı uygulamadan yeniden başlatın.',
   'errors.read_only_token': 'Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluşturun ya da uygulamayı yeniden bağlayıp değişikliğe izin verin.',
+  'errors.session_required': 'Bunu yalnızca oturum açmış bir kişi yapabilir. API anahtarları ve bağlı uygulamalar, hangi izni almış olurlarsa olsunlar bunu yapamaz.',
+  'errors.token_scope': 'Bu anahtar ya da uygulama başka alanlarla sınırlı. Bu alan için bir anahtar oluşturun ya da uygulamayı yeniden bağlayıp bu alana izin verin.',
   'errors.bad_webhook_url': 'Webhook için herkese açık bir https adresi kullanın.',
   'audit.api_key.created': 'API anahtarı oluşturdu',
   'audit.api_key.revoked': 'API anahtarını iptal etti',

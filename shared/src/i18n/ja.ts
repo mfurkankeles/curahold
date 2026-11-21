@@ -664,6 +664,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.field_locked': 'あなたのロールはこの項目を閲覧できますが変更できません（{field}）。',
   'errors.preview_read_only': '別の人として見ているため、何も変更できません。先に自分のビューに戻ってください。',
   'errors.read_only_token': 'このキーまたはアプリは読み取り専用です。変更できるキーを作成するか、アプリを再接続して変更を許可してください。',
+  'errors.session_required': 'この操作はログインしている本人だけが行えます。API キーや連携アプリは、どの権限を与えられていても行えません。',
+  'errors.token_scope': 'このキーまたはアプリは別の範囲に限定されています。この範囲用のキーを作成するか、アプリを再接続してこの範囲を許可してください。',
   'errors.bad_webhook_url': 'webhook には公開された https アドレスを使用してください。',
   'errors.support_ended': 'このサポート訪問は終了しました：アクセスが閉じられたか期限切れです。',
   'errors.support_blocked': '許可があっても、サポートはこの部分を開けません。',

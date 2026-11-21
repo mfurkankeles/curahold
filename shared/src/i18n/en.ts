@@ -1751,6 +1751,8 @@ export const en = {
   'connect.deny': 'Don\'t allow',
   'connect.expired': 'This request has expired. Start connecting again from the app.',
   'errors.read_only_token': 'This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes.',
+  'errors.session_required': 'Only a signed-in person can do this. API keys and connected apps cannot, whatever they were allowed.',
+  'errors.token_scope': 'This key or app is limited to other areas. Make a key for this area, or reconnect the app and allow it.',
   'errors.bad_webhook_url': 'Use a public https address for webhooks.',
   'audit.api_key.created': 'created an API key',
   'audit.api_key.revoked': 'revoked an API key',

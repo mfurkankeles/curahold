@@ -43,7 +43,7 @@ MCP istemcilerinin çoğu bunu kendiliğinden yapar. Kendi istemcinizi yazıyors
 
 1. **Keşif:** `GET /.well-known/oauth-protected-resource`, ardından `GET /.well-known/oauth-authorization-server`.
 2. **Kayıt (RFC 7591):** `POST /oauth/register` ile `client_name` ve `redirect_uris` gönderin. Yönlendirme adresleri `https` ya da yerel (`http://127.0.0.1`, `http://localhost`) olmalı. Yanıtta `client_id` gelir; istemci gizli anahtarı yoktur.
-3. **Yetki:** kişiyi `GET /oauth/authorize` adresine gönderin: `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state`, isteğe bağlı `scope=read write`.
+3. **Yetki:** kişiyi `GET /oauth/authorize` adresine gönderin: `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state`, isteğe bağlı `scope=read write`. Uygulamayı alanlarla sınırlamak için alanları scope'a ekleyin: `scope=work:write customers:read` (alanlar [API anahtarlarındaki](/docs/tr/api-keys/) gibidir). Hiçbir uygulama belirteci yönetime, oturum açma ayarlarına ya da faturalamaya ulaşamaz (`403 session_required`).
 4. Kişi Curahold'da izin ekranını görür, giriş yapar ve onaylar. Tarayıcı `redirect_uri?code=…&state=…` adresine döner.
 5. **Anahtar:** `POST /oauth/token` ile `grant_type=authorization_code`, `code`, `client_id`, `redirect_uri`, `code_verifier`.
 6. **Yenileme:** erişim anahtarı 1 saat geçerlidir. `grant_type=refresh_token` ile yenileyin; her yenilemede yeni bir yenileme anahtarı gelir ve eskisi geçersiz olur. Yenileme anahtarı 90 gün kullanılmazsa düşer.

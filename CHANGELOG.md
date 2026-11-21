@@ -253,6 +253,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- API keys and connected apps (the AI connector included) can no longer administer the company: roles, people,
+  removing or exporting someone, company deletion, single sign-on and SCIM, billing, API keys, connected chat apps and
+  CRMs, security settings and support access answer `403 session_required` to every key and app token, whatever it was
+  allowed. A key or an app can also be limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`), each read
+  or write (ADR 0024). Subscribing outgoing webhooks with a key keeps working.
 - Database: the server's own work (sign-in look-ups, inbound hooks, the hourly jobs) no longer runs as the owner of the
   tables. It runs as a role that can read and write rows but cannot change the schema, a policy or a trigger, and every
   table now forces row security (migration 0254, ADR 0023). Operators: give migrations their own owner login with

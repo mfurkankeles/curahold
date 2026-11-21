@@ -221,6 +221,7 @@ export interface ApiTokensRow {
   datasets: string[] | null;
   departments: string[] | null;
   rotated_at: Date | null;
+  areas: string[] | null;
 }
 
 /** Table `approvals`. */
@@ -1103,6 +1104,7 @@ export interface OauthCodesRow {
   challenge: string;
   can_write: boolean;
   expires_at: Date;
+  areas: string[] | null;
 }
 
 /** Table `onboarding_checklists`. */

@@ -45,8 +45,10 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
    only as SHA-256 hashes; passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
 7. **Browser hardening**: strict CSP (scripts only from this site plus Paddle's checkout; one inline theme script by hash),
    HSTS, no framing, no content sniffing, on API answers and static files (kept in step by `tests/security.test.ts`).
-8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write; the
-   AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
+8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write, may be
+   limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`, each read or write), and never reach administration, SSO and
+   SCIM, billing, keys, connections, a person's own security settings or support access (`session_required`,
+   ADR 0024); a route that asks for a fresh sign-in refuses them too. The AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
    access, **read only** (no edit grants; the database refuses one, migration 0054), with the entry and what is read every
    five minutes written to the company's audit trail.
 10. **Identity**: passkeys (WebAuthn) and an authenticator-app second step (TOTP, RFC 6238) with ten one-time recovery

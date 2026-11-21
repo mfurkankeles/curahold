@@ -379,11 +379,12 @@ export async function registerPasskey(c: C, userId: string, challengeId: string,
 /**
  * Dangerous actions (roles, SSO and SCIM, API keys, exports, removing people,
  * the security settings themselves) need the person to have signed in or
- * confirmed it is them in the last ten minutes. API keys and app tokens are
- * their own credential and pass; support never reaches these addresses.
+ * confirmed it is them in the last ten minutes. An API key or an app token can
+ * never be that person confirming it (security audit H1, ADR 0024): it is refused,
+ * as support and "see it as them" are.
  */
 export async function requireFresh(c: C): Promise<void> {
-  if (c.get('tokenKind')) return;
+  if (c.get('tokenKind')) fail('session_required');
   if (c.get('supportBy') || c.get('previewBy')) fail('forbidden');
   const auth = c.get('auth');
   const [row] = await c.get('deps').db.system((q) =>

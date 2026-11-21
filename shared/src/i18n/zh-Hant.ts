@@ -664,6 +664,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.field_locked': '你的角色可以檢視此欄位但不能更改（{field}）。',
   'errors.preview_read_only': '你正以他人的視角檢視，因此無法更改任何內容。請先回到你自己的視圖。',
   'errors.read_only_token': '此金鑰或應用程式只能讀取。請建立可更改的金鑰，或重新連接應用程式並允許更改。',
+  'errors.session_required': '只有已登入的人才能執行此操作。無論獲得了什麼權限，API 金鑰和已連接的應用程式都無法執行。',
+  'errors.token_scope': '此金鑰或應用程式僅限於其他範圍。請為此範圍建立金鑰，或重新連接應用程式並允許此範圍。',
   'errors.bad_webhook_url': 'webhook 請使用公開的 https 網址。',
   'errors.support_ended': '此支援存取已結束：存取已關閉或已過期。',
   'errors.support_blocked': '即使獲得許可，支援也無法開啟此部分。',

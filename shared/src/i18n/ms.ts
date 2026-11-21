@@ -1710,6 +1710,8 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'connect.deny': "Jangan benarkan",
   'connect.expired': "Permintaan ini telah tamat tempoh. Mula menyambung semula daripada aplikasi.",
   'errors.read_only_token': "Kunci atau aplikasi ini hanya boleh membaca. Buat kunci yang boleh membuat perubahan, atau sambungkan semula aplikasi dan benarkan perubahan.",
+  'errors.session_required': "Hanya orang yang telah log masuk boleh melakukan ini. Kunci API dan aplikasi yang disambungkan tidak boleh, walau apa pun kebenaran yang diberikan.",
+  'errors.token_scope': "Kunci atau aplikasi ini terhad kepada bahagian lain. Buat kunci untuk bahagian ini, atau sambungkan semula aplikasi dan benarkan bahagian ini.",
   'errors.bad_webhook_url': "Gunakan alamat https awam untuk webhook.",
   'audit.api_key.created': "mencipta kunci API",
   'audit.api_key.revoked': "membatalkan kunci API",

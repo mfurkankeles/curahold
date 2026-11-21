@@ -664,6 +664,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'errors.field_locked': '你的角色可以查看此字段但不能更改（{field}）。',
   'errors.preview_read_only': '你正以他人的视角查看，因此无法更改任何内容。请先回到你自己的视图。',
   'errors.read_only_token': '此密钥或应用只能读取。请创建可更改的密钥，或重新连接应用并允许更改。',
+  'errors.session_required': '只有已登录的人才能执行此操作。无论获得了什么权限，API 密钥和已连接的应用都无法执行。',
+  'errors.token_scope': '此密钥或应用仅限于其他范围。请为此范围创建密钥，或重新连接应用并允许此范围。',
   'errors.bad_webhook_url': 'webhook 请使用公开的 https 地址。',
   'errors.support_ended': '此支持访问已结束：访问已关闭或已过期。',
   'errors.support_blocked': '即使获得许可，支持也无法打开此部分。',

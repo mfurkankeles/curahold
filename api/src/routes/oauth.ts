@@ -2,6 +2,7 @@
 // discovery documents, dynamic client registration, the consent step (in
 // the app, as the signed-in person) and tokens with PKCE. Every company is
 // its own issuer at its own address.
+import { parseAreas, TOKEN_AREAS } from '../lib/tokenScope';
 import type { OauthClientsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -19,6 +20,9 @@ const base = (c: C) => orgUrl(c.get('deps').config, c.get('org').slug);
 const open = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type, mcp-protocol-version', 'cache-control': 'no-store' };
 const oauthError = (c: C, error: string, description: string, status = 400) => c.json({ error, error_description: description }, status as 400, open);
 
+/** read, write and the area grants (ADR 0024): what discovery tells an app it may ask for. */
+const SCOPES = ['read', 'write', ...TOKEN_AREAS.flatMap((a) => [`${a}:read`, `${a}:write`])];
+
 interface AuthRequest {
   orgId: string;
   clientId: string;
@@ -26,6 +30,8 @@ interface AuthRequest {
   challenge: string;
   state: string | null;
   write: boolean;
+  /** Areas the app asked to be limited to (`work:write` …, lib/tokenScope.ts); null: every area a token may reach. */
+  areas?: string[] | null;
   exp: number;
 }
 
@@ -48,7 +54,7 @@ const okRedirect = (u: string) => {
 
 for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
   oauthRoutes.get(path, (c) =>
-    c.json({ resource: `${base(c)}/mcp`, authorization_servers: [base(c)], scopes_supported: ['read', 'write'], bearer_methods_supported: ['header'], resource_name: `Curahold — ${c.get('org').name}` }, 200, open),
+    c.json({ resource: `${base(c)}/mcp`, authorization_servers: [base(c)], scopes_supported: SCOPES, bearer_methods_supported: ['header'], resource_name: `Curahold — ${c.get('org').name}` }, 200, open),
   );
 }
 
@@ -64,7 +70,7 @@ oauthRoutes.get('/.well-known/oauth-authorization-server', (c) =>
       grant_types_supported: ['authorization_code', 'refresh_token'],
       code_challenge_methods_supported: ['S256'],
       token_endpoint_auth_methods_supported: ['none'],
-      scopes_supported: ['read', 'write'],
+      scopes_supported: SCOPES,
     },
     200,
     open,
@@ -112,7 +118,9 @@ oauthRoutes.get('/oauth/authorize', async (c) => {
     redirectUri: p('redirect_uri'),
     challenge: p('code_challenge'),
     state: p('state') || null,
-    write: !p('scope') || p('scope').split(/\s+/).includes('write'),
+    write: !p('scope') || p('scope').split(/\s+/).includes('write') || /:write\b/.test(p('scope')),
+    // `work:read customers:write`: the app limits itself to those areas (ADR 0024).
+    areas: parseAreas(p('scope').split(/\s+/).filter((s) => s.includes(':'))),
     exp: Date.now() + 15 * 60_000,
   };
   const token = await sign(req, c.get('deps').config.authSecret);
@@ -130,7 +138,7 @@ oauthApi.get('/oauth/request', async (c) => {
   const req = await readRequest(c, c.req.query('req') ?? '');
   const [client] = await c.get('deps').db.system((q) => q.query<Pick<OauthClientsRow, 'name'>>('select name from oauth_clients where id = $1', [req.clientId]));
   if (!client) fail('not_found');
-  return c.json({ app: client.name, redirectHost: new URL(req.redirectUri).host, write: req.write, canWrite: c.get('auth').seat === 'full' });
+  return c.json({ app: client.name, redirectHost: new URL(req.redirectUri).host, write: req.write, areas: req.areas ?? null, canWrite: c.get('auth').seat === 'full' });
 });
 
 /**
@@ -151,20 +159,22 @@ oauthApi.post('/oauth/approve', async (c) => {
   }
   const code = randomToken(32);
   const write = input.write && req.write && auth.seat === 'full';
+  // Approved for reading only: the area grants it asked to write in become reads.
+  const areas = req.areas ? [...new Set(req.areas.map((a) => (write ? a : a.replace(/:write$/, ':read'))))] : null;
   const codeHash = await sha256Hex(code);
   await c.get('deps').db.system((q) =>
     q.query(
-      `insert into oauth_codes (code_hash, org_id, user_id, client_id, redirect_uri, challenge, can_write, expires_at)
-       values ($1, $2, $3, $4, $5, $6, $7, now() + interval '5 minutes')`,
-      [codeHash, org.id, auth.userId, req.clientId, req.redirectUri, req.challenge, write],
+      `insert into oauth_codes (code_hash, org_id, user_id, client_id, redirect_uri, challenge, can_write, areas, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, now() + interval '5 minutes')`,
+      [codeHash, org.id, auth.userId, req.clientId, req.redirectUri, req.challenge, write, areas],
     ),
   );
-  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'app.connected', entity: 'app', meta: { client: req.clientId, write } }));
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'app.connected', entity: 'app', meta: { client: req.clientId, write, areas } }));
   u.searchParams.set('code', code);
   return c.json({ redirect: u.toString() });
 });
 
-type Grant = { org_id: string; user_id: string; client_id: string; can_write: boolean };
+type Grant = { org_id: string; user_id: string; client_id: string; can_write: boolean; areas: string[] | null };
 
 async function issue(c: C, row: Grant, name: string, replaceId?: string) {
   const access = await newSecret(ACCESS_PREFIX);
@@ -177,13 +187,14 @@ async function issue(c: C, row: Grant, name: string, replaceId?: string) {
           [replaceId, access.hash, refresh.hash, access.shown, ACCESS_TTL_S, REFRESH_TTL_DAYS],
         )
       : q.query(
-          `insert into api_tokens (org_id, user_id, kind, name, token_hash, refresh_hash, client_id, can_write, prefix, expires_at, refresh_expires_at)
-           values ($1, $2, 'oauth', $3, $4, $5, $6, $7, $8, now() + make_interval(secs => $9), now() + make_interval(days => $10))`,
-          [row.org_id, row.user_id, name, access.hash, refresh.hash, row.client_id, row.can_write, access.shown, ACCESS_TTL_S, REFRESH_TTL_DAYS],
+          `insert into api_tokens (org_id, user_id, kind, name, token_hash, refresh_hash, client_id, can_write, prefix, expires_at, refresh_expires_at, areas)
+           values ($1, $2, 'oauth', $3, $4, $5, $6, $7, $8, now() + make_interval(secs => $9), now() + make_interval(days => $10), $11)`,
+          [row.org_id, row.user_id, name, access.hash, refresh.hash, row.client_id, row.can_write, access.shown, ACCESS_TTL_S, REFRESH_TTL_DAYS, row.areas ?? null],
         ),
   );
+  const scope = [row.can_write ? 'read write' : 'read', ...(row.areas ?? [])].join(' ');
   return c.json(
-    { access_token: access.token, token_type: 'Bearer', expires_in: ACCESS_TTL_S, refresh_token: refresh.token, scope: row.can_write ? 'read write' : 'read' },
+    { access_token: access.token, token_type: 'Bearer', expires_in: ACCESS_TTL_S, refresh_token: refresh.token, scope },
     200,
     open,
   );
