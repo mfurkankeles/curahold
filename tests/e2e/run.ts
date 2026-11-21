@@ -2145,6 +2145,9 @@ await step('product team acceptance: pick 12 from the backlog by keyboard, start
   await page.waitForSelector('.pm-bd');
   const finished = [0, 1, 2, 3, 4];
   for (const i of finished) {
+    // Each tick leaves a "done, undo" toast; three or four stacked reach over the foot of the first column, where the
+    // next card's tick is, and how many are still up depends on timing. A click that lands on a toast ticks nothing.
+    await clearToasts(page);
     await page.click(`.board .tick[aria-label*="“Ödeme adımı ${i + 1}”"]`);
     await page.waitForFunction((n) => !!document.querySelector(`.tick[data-done][aria-label*="${n}"]`), { timeout: 5000 }, `“Ödeme adımı ${i + 1}”`);
   }
