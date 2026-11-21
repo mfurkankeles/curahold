@@ -79,7 +79,11 @@ export const TEAM_RULES = [
   'Finish every turn by calling the respond tool exactly once.',
 ].join('\n');
 
-function seatBlock(p: SeatPolicy, ctx: RunContext): string {
+/**
+ * The seat's part of the cached prompt: its card, and the tone for this context.
+ * Exported for tests (tests/private-tone.test.ts).
+ */
+export function seatBlock(p: SeatPolicy, ctx: RunContext): string {
   const c = p.card;
   const lines = [
     `Your seat: ${p.name} — ${p.title} (${p.team} team; reports to ${p.reportsTo ?? 'the CEO'}).`,
@@ -91,8 +95,11 @@ function seatBlock(p: SeatPolicy, ctx: RunContext): string {
     `Data you may read: ${(c.permissions ?? []).join('; ')}`,
     `Kinds you may propose: ${[...p.proposes].join(', ')}.`,
   ];
-  // The private tone belongs only to the CEO's own chat with this seat.
-  if (ctx === 'owner-chat' && c.privateTone) lines.push(`Private chat with the CEO: ${c.privateTone}`);
+  // The private tone belongs only to the CEO's own chat with this seat. It comes only from the owner's
+  // stored card (seats.card, owner door PUT /office/seats/:seat; seatPolicy merges it): the built-in org
+  // chart ships in the demo bundle and never carries one, so the demo and a fresh install stay professional.
+  const tone = typeof c.privateTone === 'string' ? c.privateTone.trim().slice(0, 2000) : '';
+  if (ctx === 'owner-chat' && tone) lines.push(`Private chat with the CEO: ${tone}`);
   else lines.push('Tone: professional and warm, concise.');
   if (ctx === 'meeting') lines.push('In a meeting: speak once, at most 120 words, on the agenda; decisions are proposals.');
   return lines.join('\n');
