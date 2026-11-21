@@ -86,7 +86,7 @@ Tek bir kayıt. `full=1` yorumlarını, dosyalarını ve bağlı görevlerini ek
 
 Bir müşterinin altına, bir türden kayıt ekler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -102,7 +102,7 @@ Bir müşterinin altına, bir türden kayıt ekler.
 
 Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived` ve/veya `fields` (kişinin düzenleyebildiği değerler). Yanıtta `updated` ve `POST /undo/:id` için `undoId` vardır; geri alma yalnızca bu değişikliğin dokunduğunu geri koyar.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -115,7 +115,7 @@ Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived`
 
 Bir kaydı değiştirir; yalnızca gönderdiğiniz alanlar değişir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kal
 
 Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -153,13 +153,13 @@ Bir kayıttaki kendi yorumunuzu siler.
 
 Bir kayda dosya ekler (multipart yükleme, istek başına bir dosya).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /records/:id/plans`
 
 Bir anlaşmaya ya da herhangi bir kayda plan uygular: görevleri kayda ve müşterisine bağlanır.
 
-**Gerekenler:** yazabilen bir koltuk · plan: `playbooks`
+**Gerekenler:** tam kullanıcı · plan: `playbooks`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -170,7 +170,7 @@ Bir anlaşmaya ya da herhangi bir kayda plan uygular: görevleri kayda ve müşt
 
 Kendi sisteminizin adı ve kimliğiyle bir destek kaydı oluşturur ya da günceller. Yeniden gönderince yalnızca gönderdiğiniz değişir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /inbound/tickets/:token`
 

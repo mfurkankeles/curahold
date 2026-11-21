@@ -82,7 +82,7 @@ Müşterileri listeler. `q` ada göre arar, `owner` bir kişi kimliği ya da `me
 
 Müşteri ekler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -100,7 +100,7 @@ Tek bir müşteri; kişinin görebildiği bütün alanlarıyla.
 
 Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. Yalnızca gönderdiğiniz alanlar değişir.
 
-**Gerekenler:** yazabilen bir koltuk · bazı değişiklikler için: yetki `accounts.manage`
+**Gerekenler:** tam kullanıcı · bazı değişiklikler için: yetki `accounts.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -185,7 +185,7 @@ Bir müşteriyle olan her şey, en yenisi başta: notlar, aramalar, toplantılar
 
 Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -203,7 +203,7 @@ Bir müşteri için departmanlar arası akış: her departmandaki sahibi, bekled
 
 Müşterinin bir departmandaki sahibini belirler (`userId: null` ile kaldırır). Müşteri yöneticileri, departman liderleri ve müşterinin sahibi yapabilir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -214,7 +214,7 @@ Müşterinin bir departmandaki sahibini belirler (`userId: null` ile kaldırır)
 
 Müşteriye verilen bir sözü kaydeder (`body`; isteğe bağlı `recordId`, `activityId`, `dueDate`). Devir kartı açık olanları listeler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -227,7 +227,7 @@ Müşteriye verilen bir sözü kaydeder (`body`; isteğe bağlı `recordId`, `ac
 
 Bir sözü değiştirir ya da tutuldu olarak işaretler (`kept: true`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -239,7 +239,7 @@ Bir sözü değiştirir ya da tutuldu olarak işaretler (`kept: true`).
 
 Bir sözü siler. Cevap sözü taşır; geri yazılabilir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /handovers`
 
@@ -255,7 +255,7 @@ Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleye
 
 Bir fırsatın devir kartını elle hazırlar (`sourceKind`: `record` ya da `task`, `sourceId`). Fırsat başına bir kez; kazanılan fırsat kendiliğinden alır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -266,7 +266,7 @@ Bir fırsatın devir kartını elle hazırlar (`sourceKind`: `record` ya da `tas
 
 Açık bir kartın özetini ya da önerilen planını değiştirir veya kartı kaldırır (`status: dismissed`).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -278,7 +278,7 @@ Açık bir kartın özetini ya da önerilen planını değiştirir veya kartı k
 
 Devri onaylar: `ownerId` devralan departmanda müşterinin sahibi olur, plan (`planId` ya da önerilen) uygulanır ve sahibe haber verilir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -296,7 +296,7 @@ Bir müşteri talebinin bağlanabileceği ürün işleri (`q` başlıklarda arar
 
 Bir müşteri talebini bir işe bağlar (`storyId`, `accountId`, `source`: account, ticket, meeting, portal ya da task; isteğe bağlı `sourceId` ve `note`). Aynı talep iki kez tek bağdır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -310,13 +310,13 @@ Bir müşteri talebini bir işe bağlar (`storyId`, `accountId`, `source`: accou
 
 Bir bağı kaldırır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `PATCH /request-links/:id`
 
 Bağla birlikte saklanan "yayında" mesaj taslağını düzenler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -326,13 +326,13 @@ Bağla birlikte saklanan "yayında" mesaj taslağını düzenler.
 
 Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendiniz gönderdiniz).
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /request-links/:id/close-portal`
 
 Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. İşin bitmesi bunu kendiliğinden yapmaz.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /flow/settings`
 
@@ -342,7 +342,7 @@ Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, por
 
 Bu ayarları değiştirir (`handover`, `handoverPlanId`, `loopBoardId`). Otomasyon yönetme yetkisi gerekir.
 
-**Gerekenler:** yazabilen bir koltuk · yetki `automations.manage`
+**Gerekenler:** tam kullanıcı · yetki `automations.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -354,7 +354,7 @@ Bu ayarları değiştirir (`handover`, `handoverPlanId`, `loopBoardId`). Otomasy
 
 Asistandan bir taslak (model yoksa ya da sınır aşıldıysa şablondan): `handover_note`, `shipped_message` ya da `meeting_promises`. Hiçbir şey kaydedilmez.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
@@ -362,7 +362,7 @@ Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak�
 
 Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -379,7 +379,7 @@ Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler.
 
 Kaydedilmiş bir etkinliği çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /accounts/:id/meetings`
 
@@ -391,7 +391,7 @@ Bir müşterinin toplantıları, değerlendirmeleri ve aramaları; sonraki adım
 
 Bir toplantıyı kimlerin katıldığı, ne konuşulduğu ve sonraki adımlarla kaydeder; her adım seçilen panoda bir görev olur.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -409,7 +409,7 @@ Bir toplantıyı kimlerin katıldığı, ne konuşulduğu ve sonraki adımlarla 
 
 Kaydedilmiş bir toplantıya yeni sonraki adımlar ekler.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -424,7 +424,7 @@ Bir müşterinin henüz yapılmamış toplantıları (`upcoming`) ve son yapıla
 
 Bir toplantı planlar: türü, ne zaman başladığı, iki taraftan kimlerin davet edildiği, gündemi ve tekrarlanıp tekrarlanmadığı. Yapılana kadar zaman çizelgesine düşmez.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -442,7 +442,7 @@ Bir toplantı planlar: türü, ne zaman başladığı, iki taraftan kimlerin dav
 
 Henüz yapılmamış bir toplantıyı değiştirir — zamanı, türü, kişileri, gündemi ya da tekrarı.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -460,7 +460,7 @@ Henüz yapılmamış bir toplantıyı değiştirir — zamanı, türü, kişiler
 
 Yapıldı olarak işaretler: kaydedilmiş toplantıyı zaman çizelgesine yazar ve ikisini bağlar. Tekrarlıysa bir sonraki planlanır. Sonraki adımlar aynı anda kararlaştırılabilir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -474,7 +474,7 @@ Yapıldı olarak işaretler: kaydedilmiş toplantıyı zaman çizelgesine yazar 
 
 Bir nedenle erteler (silinmez, kalır); isteğe bağlı olarak yeni bir gün için yenisini planlar.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -485,7 +485,7 @@ Bir nedenle erteler (silinmez, kalır); isteğe bağlı olarak yeni bir gün iç
 
 Bir nedenle iptal eder — iptal olarak kayıtta kalır; hiçbir şey silinmez.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -535,7 +535,7 @@ Yeni bir sağlık ayarının kaydetmeden önce ne vereceği: her bantta kaç mü
 
 Sağlık skoru ayarlarını kaydeder ve her müşteriyi yeniden hesaplar.
 
-**Gerekenler:** yazabilen bir koltuk · yetki `accounts.manage`
+**Gerekenler:** tam kullanıcı · yetki `accounts.manage`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -549,7 +549,7 @@ Bir müşterinin görevlerine girilen süre: toplam, son 30 gün ve kişi başı
 
 Bir müşteriye plan uygular: her adım bir görev olur; başlangıç gününden ileri ya da yenileme tarihinden geri tarihlenir.
 
-**Gerekenler:** yazabilen bir koltuk · plan: `playbooks`
+**Gerekenler:** tam kullanıcı · plan: `playbooks`
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -566,7 +566,7 @@ Bir müşteri listesi için: her birinin açık yenileme fırsatı ve anlaşmala
 
 Hedefler, müşterilerin ne sıklıkla değerlendirildiği ve hatırlatmaların ne zaman gittiği: tek bir şirket ayarı.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |

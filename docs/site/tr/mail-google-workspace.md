@@ -8,13 +8,13 @@ summary: Yöneticiler ve işletmeciler için — bir şirketin kendi e-postasın
 
 > Yöneticiler ve işletmeciler için. Google'ın ekranları ve sınırları değişir; aşağıdaki değerler 19 Kasım 2026'da bilinen Google yönetici yardımına göre yazıldı — ilerlerken Yönetici konsolunda teyit edin.
 
-## 1. Posta kutuları: az koltuk, çok adres
+## 1. Posta kutuları: az lisans, çok adres
 
 Workspace kullanıcı başına ücretlidir; kullanıcı sayısını az tutun, diğer her şeye **takma ad** ya da **grup** verin:
 
 | Adres | Nedir | Nasıl |
 | --- | --- | --- |
-| kendi adresiniz | şirket sahibi | kullanıcı (1 koltuk) |
+| kendi adresiniz | şirket sahibi | kullanıcı (1 lisans) |
 | hello@, billing@, security@, social@ | insanların yazdığı kutular | sahibin takma adları ya da gruplar |
 | support@ | ortak destek kutusu | "ortak çalışma gelen kutusu" açık Google Grubu |
 | no-reply@ | ürün e-postalarının göndericisi | aktarıcıya giriş yapan kullanıcının takma adı (sonraki rehber) |

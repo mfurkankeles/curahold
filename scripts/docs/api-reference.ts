@@ -27,7 +27,7 @@ const WORDS: Record<Lang, Record<string, string>> = {
     objects: 'The shapes are in', shapes: 'Objects',
   },
   tr: {
-    needs: 'Gerekenler', sometimes: 'bazı değişiklikler için:', writer: 'yazabilen bir koltuk', perm: 'yetki', plan: 'plan', query: 'Sorgu', field: 'Alan', type: 'Tür', notes: 'Not',
+    needs: 'Gerekenler', sometimes: 'bazı değişiklikler için:', writer: 'tam kullanıcı', perm: 'yetki', plan: 'plan', query: 'Sorgu', field: 'Alan', type: 'Tür', notes: 'Not',
     required: 'zorunlu', optional: 'isteğe bağlı', body: 'Gövde', bodyFree: 'Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.',
     generated: 'Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API\'nin kabul ettiğiyle her zaman aynıdır.',
     all: 'Bütün adresler', where: 'Ayrıntılar', internalTitle: 'API\'nin parçası olmayanlar', internalIntro: 'Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şey gizli kalmasın diye listelenir.',

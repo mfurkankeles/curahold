@@ -6,13 +6,13 @@ summary: Şirket adresiniz, giriş, ilk kurulum ve cihaz sınırı.
 ---
 # Başlarken
 
-Curahold, müşteri başarısı ve hesap yönetimi ekiplerinin müşterilerini, paydaşlarını ve günlük işlerini tek yerde yürüttüğü bir çalışma alanıdır. Bu sayfa ilk on beş dakikanı anlatır.
+Curahold, müşteri başarısı ve hesap yönetimi ekiplerinin müşterilerini, paydaşlarını ve günlük işlerini tek yerde yürüttüğü bir çalışma alanıdır. Bu sayfa ilk on beş dakikanızı anlatır.
 
 ![Curahold ana sayfası: Başlarken kartı, müşteri rakamları ve ekibin yükü](img/home.webp)
 
 ## Denemeye başlamak
 
-Web sitesindeki **Ücretsiz dene** şirketi hemen açmaz, deneme ister: kısa bir form, iş e-postanıza bir kod ve genelde bir iş günü içinde cevabımız. Onaylanınca şirketiniz açılır ve size giriş bağlantısı gelir; süre, koltuklar ve hatırlatmalar için [Planlar ve ödeme](/docs/tr/billing/) sayfasına bakın.
+Web sitesindeki **Ücretsiz dene** şirketi hemen açmaz, deneme ister: kısa bir form, iş e-postanıza bir kod ve genelde bir iş günü içinde cevabımız. Onaylanınca şirketiniz açılır ve size giriş bağlantısı gelir; süre, kullanıcı sayısı ve hatırlatmalar için [Planlar ve ödeme](/docs/tr/billing/) sayfasına bakın.
 
 ## Şirket adresiniz
 
@@ -22,7 +22,7 @@ Her şirketin kendi adresi vardır: `sirketiniz.curahold.com`. Ekibinizdeki herk
 
 - **E-posta bağlantısı:** e-posta adresinizi yazın, gelen bağlantıya tıklayın. Şifre yok.
 - **Google ya da Microsoft:** şirketiniz açtıysa tek tıkla girersiniz. Daha önce görmediğimiz bir cihazdan giriyorsanız e-postanıza gelen 6 haneli kodu da isteriz.
-- **Geçiş anahtarı:** ilk girişten sonra parmak izin, yüzün ya da cihaz PIN'inle.
+- **Passkey:** ilk girişten sonra parmak iziniz, yüzünüz ya da cihaz PIN'inizle.
 - **İkinci adım:** Ayarlarınız → **Giriş güvenliği**'nden bir doğrulama uygulaması ekleyebilirsiniz; yanında 10 kurtarma kodu gelir. Yönetici ikinci adımı yöneticilere ya da herkese zorunlu kılabilir.
 - Hassas işlemlerden önce (rol değiştirmek, API anahtarı, verilerinizi dışa aktarmak…) son on dakikada giriş yapmadıysanız kimliğinizi onaylamanız istenir.
 - Bir adrese 15 dakikada en fazla 5 giriş bağlantısı gönderilir.
@@ -50,7 +50,7 @@ Tarayıcınızdan hiçbir şey tahmin edilmez; aynı bağlantıyı açan herkes 
 
 ## Cihaz sınırı
 
-Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile 5 arasında değiştirebilir. Üçüncü cihazdan girildiğinde en eski oturum kapanır. Böylece bir koltuk birkaç kişi arasında paylaşılamaz.
+Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile 5 arasında değiştirebilir. Üçüncü cihazdan girildiğinde en eski oturum kapanır. Böylece bir kullanıcı hesabı birkaç kişi arasında paylaşılamaz.
 
 > **İpucu:** Ayarlarınız → Cihazlar sayfasından açık oturumlarınızı görebilir, istemediğinizi kapatabilirsiniz.
 

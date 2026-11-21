@@ -248,7 +248,7 @@ Bağlantısı olan, bir panodaki her görevin geliştirme özeti.
 
 Bir görevden tek bir bağlantıyı kaldırır.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `GET /analytics/odata`
 

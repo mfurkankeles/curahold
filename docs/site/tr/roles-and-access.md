@@ -2,16 +2,16 @@
 title: Roller ve erişim
 section: help
 order: 6
-summary: Koltuklar, roller, müşteri erişimi, alan bazında erişim ve “Onun gözünden bak”.
+summary: Kullanıcı türleri, roller, müşteri erişimi, alan bazında erişim ve “Onun gözünden bak”.
 ---
 # Roller ve erişim
 
 Kimin neyi görüp değiştirebileceğini roller belirler. Kurallar arayüzde değil veritabanında uygulanır: bir şey ekranda gizliyse API'de, dışa aktarmada ve AI bağlayıcısında da gizlidir.
 
-## Koltuklar
+## Kullanıcı türleri
 
-- **Tam koltuk:** görür ve değiştirir.
-- **İzleyici koltuğu:** yalnızca görür. Yöneticiler ve yönetim ekibi için uygundur.
+- **Tam kullanıcı:** görür ve değiştirir.
+- **İzleyici:** yalnızca görür. Yöneticiler ve yönetim ekibi için uygundur.
 
 ## Hazır roller: hangi rol neyi görür, ne yapar
 

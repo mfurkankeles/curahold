@@ -168,7 +168,7 @@ Tanımıyla birlikte tek bir kayıtlı rapor.
 
 Rapor kaydeder.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -181,7 +181,7 @@ Rapor kaydeder.
 
 Kayıtlı raporu değiştirir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -194,7 +194,7 @@ Kayıtlı raporu değiştirir.
 
 Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
-**Gerekenler:** yazabilen bir koltuk
+**Gerekenler:** tam kullanıcı
 
 ### `POST /exports`
 

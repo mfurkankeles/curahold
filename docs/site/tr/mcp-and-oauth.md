@@ -35,7 +35,7 @@ WWW-Authenticate: Bearer resource_metadata="https://sirketiniz.curahold.com/.wel
 | `add_note` | Müşterinin zaman çizelgesine not, görüşme, toplantı ya da e-posta ekler | Evet |
 | `update_task` | Sütun değiştirir ya da tamamlar, tarih ve öncelik değiştirir, yorum ekler | Evet |
 
-Yazan araçlar yalnızca kişi izin ekranında **Değişiklik yapmasına da izin ver** dediyse ve tam koltuktaysa listelenir. Her araç çağrısı uygulamanın kullandığı API'den geçer; rol, müşteri erişimi ve alan kuralları aynen uygulanır.
+Yazan araçlar yalnızca kişi izin ekranında **Değişiklik yapmasına da izin ver** dediyse ve kişi tam kullanıcıysa listelenir. Her araç çağrısı uygulamanın kullandığı API'den geçer; rol, müşteri erişimi ve alan kuralları aynen uygulanır.
 
 ## OAuth 2.1 akışı
 
