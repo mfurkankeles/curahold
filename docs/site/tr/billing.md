@@ -47,7 +47,7 @@ Yıllık plan kendiliğinden bir yıl daha yenilenir. Yenilenmeden **30 gün ön
 
 Abonelik sayfasındaki **Faturalar, ödeme ve iptal** Paddle’ın müşteri portalını, oturum açılmış olarak açar: faturaları indirin, kartı değiştirin, iptal edin. İptal edilen plan, ödenmiş dönemin sonuna kadar çalışmaya devam eder.
 
-Team ile Business ya da aylık ile yıllık arasında geçiş aynı sayfadadır; fark dönemin kalanı için faturalanır (ya da iade edilir).
+Team ile Business ya da aylık ile yıllık arasında geçiş aynı sayfadadır; fark dönemin kalanı için faturalanır (ya da sonraki faturanıza alacak olarak yansıtılır).
 
 ## Her planın sınırları
 

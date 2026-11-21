@@ -6,7 +6,7 @@ summary: Curahold ile müşteri şirket arasındaki sözleşme — deneme, planl
 ---
 # Kullanım koşulları (ana abonelik sözleşmesi)
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft6. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft7. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
 
 Bu koşullar **[Şirket unvanı]**, [merkez adresi], [MERSİS / vergi no.] ("Curahold", "biz") ile Curahold'u kullanan şirket ya da kuruluş ("Müşteri", "siz") arasındaki sözleşmedir. Koşulları kabul eden kişi, kutuyu işaretleyerek Müşteri'yi bağlamaya yetkili olduğunu beyan eder. Kendi kaydolan müşteriler bu koşulları tıklayarak kabul eder; kurumsal müşteriler bu koşullara atıf yapan bir **Sipariş formu** imzalar. **Veri işleme sözleşmesi (VİS)**, **Hizmet düzeyi sözleşmesi (SLA)** ve **Kabul edilebilir kullanım politikası** bu koşulların parçasıdır.
 

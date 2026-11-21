@@ -6,7 +6,7 @@ summary: The agreement between Curahold and a customer company — the trial, pl
 ---
 # Terms of service (master subscription agreement)
 
-> **Draft — lawyer approval required.** Version 2026-11-21.draft6. Text in [square brackets] is to be filled in. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-21.draft7. Text in [square brackets] is to be filled in. Not legal advice.
 
 These terms are an agreement between **[Company legal name]**, [registered address], [registry / tax number] ("Curahold", "we") and the company or organisation that uses Curahold ("the Customer", "you"). The person who accepts them confirms, by ticking the box, that they are authorised to bind the Customer. Self-serve customers accept these terms with a click; enterprise customers sign an **Order form** that refers to them. The **Data processing agreement**, the **Service level agreement** and the **Acceptable use policy** are part of these terms.
 

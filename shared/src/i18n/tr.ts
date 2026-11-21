@@ -3470,7 +3470,7 @@ export const tr: Record<MessageKey, string> = {
   'billing.switch': 'Bu plana geç',
   'billing.choose': '{plan} planını seç',
   'billing.switchTitle': '{plan} planına geçilsin mi?',
-  'billing.switchBody': 'Değişiklik içinde bulunulan dönemin kalanı için şimdi faturalanır (daha ucuzsa aradaki fark iade edilir).',
+  'billing.switchBody': 'Değişiklik içinde bulunulan dönemin kalanı için şimdi faturalanır (daha ucuzsa aradaki fark sonraki faturanıza alacak olarak yansıtılır).',
   'billing.fine': 'Fiyatlar tam kullanıcı başına, gösterilen para birimindedir; vergiler ödeme sırasında eklenir. Görüntüleyen kullanıcılar ücretsizdir. Kullanıcı sayısı katılan kişileri izler; birini ekleyip çıkardıkça fatura kendiliğinden güncellenir. Ödemeleri satıcımız Paddle alır.',
   'billing.welcome': 'Teşekkürler, planınız etkin.',
   'billing.slow': 'Ödeme alındı; plan bir dakika içinde burada görünür.',
