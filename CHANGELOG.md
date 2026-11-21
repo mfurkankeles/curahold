@@ -253,6 +253,8 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Customer portal: the six-digit e-mail code is checked one try at a time, even when many guesses arrive together, and
+  ten wrong codes in a row stop that person's codes for 15 minutes, however many new e-mails were asked for.
 - Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,
   not private boards or other departments' boards — and stops sending when that person leaves.
 - Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or

@@ -1557,6 +1557,8 @@ export interface PortalUsersRow {
   invited_by: string | null;
   created_at: Date;
   last_seen_at: Date | null;
+  code_failed: number;
+  code_locked_until: Date | null;
 }
 
 /** Table `privacy_requests`. */

@@ -47,6 +47,11 @@ const emailSchema = z.string().trim().toLowerCase().email().max(254);
 const MAX_CODE_TRIES = 5;
 const LOCK_AFTER = 5;
 const LOCK_MINUTES = 15;
+/**
+ * Wrong e-mail codes per person, across codes, before the person's codes stop working for LOCK_MINUTES (security
+ * audit M5): a new code every few minutes must not mean five new guesses every few minutes.
+ */
+const CODE_LOCK_AFTER = 10;
 
 async function input<T extends z.ZodTypeAny>(c: C, schema: T): Promise<z.infer<T>> {
   const parsed = schema.safeParse(await c.req.json().catch(() => ({})));
@@ -133,18 +138,35 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
     const p = await personByEmail(org.id, email);
     if (!p) fail('portal_bad_code');
     const ok = await deps.db.system(async (q) => {
-      const [t] = await q.query(
-        `select token_hash, code_hash, attempts from portal_tokens
-          where org_id = $1 and portal_user_id = $2 and kind = 'link' and code_hash is not null and used_at is null and expires_at > now()
-          order by created_at desc limit 1`,
-        [org.id, p!.id],
+      // One guess at a time per person (security audit M5): the row lock makes parallel guesses wait their turn, so
+      // each sees the count the one before left.
+      const [who] = await q.query<{ locked: boolean }>(
+        `select coalesce(code_locked_until > now(), false) as locked from portal_users where id = $1 and org_id = $2 for update`,
+        [p!.id, org.id],
       );
-      if (!t || t.attempts >= MAX_CODE_TRIES) return false;
+      if (!who || who.locked) return false;
+      // The try is counted before the code is compared, in the same statement that checks the limit.
+      const [t] = await q.query<{ token_hash: string; code_hash: string }>(
+        `update portal_tokens set attempts = attempts + 1
+          where token_hash = (select token_hash from portal_tokens
+                               where org_id = $1 and portal_user_id = $2 and kind = 'link' and code_hash is not null and used_at is null and expires_at > now()
+                               order by created_at desc limit 1)
+            and attempts < $3
+          returning token_hash, code_hash`,
+        [org.id, p!.id, MAX_CODE_TRIES],
+      );
+      if (!t) return false;
       if (!safeEqual(await sha256Hex(`${t.token_hash}.${code}`), t.code_hash)) {
-        await q.query('update portal_tokens set attempts = attempts + 1 where token_hash = $1', [t.token_hash]);
+        await q.query(
+          `update portal_users set code_failed = case when code_failed + 1 >= $3 then 0 else code_failed + 1 end,
+                  code_locked_until = case when code_failed + 1 >= $3 then now() + make_interval(mins => $4) else code_locked_until end
+            where id = $1 and org_id = $2`,
+          [p!.id, org.id, CODE_LOCK_AFTER, LOCK_MINUTES],
+        );
         return false;
       }
       const claimed = await q.query('update portal_tokens set used_at = now() where token_hash = $1 and used_at is null returning 1', [t.token_hash]);
+      if (claimed.length) await q.query('update portal_users set code_failed = 0, code_locked_until = null where id = $1 and org_id = $2', [p!.id, org.id]);
       return claimed.length > 0;
     });
     if (!ok) fail('portal_bad_code');
@@ -176,11 +198,12 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
       const flow = getCookie(c, FLOW_COOKIE);
       if (!flow || !safeEqual(await sha256Hex(flow), t.flow_hash ?? '')) fail('invalid_token');
       if (t.kind === 'oauth_confirm') {
-        if (!code || t.attempts >= MAX_CODE_TRIES) fail('portal_bad_code');
-        if (!safeEqual(await sha256Hex(`${hash}.${code}`), t.code_hash ?? '')) {
-          await deps.db.system((q) => q.query('update portal_tokens set attempts = attempts + 1 where token_hash = $1', [hash]));
-          fail('portal_bad_code');
-        }
+        if (!code) fail('portal_bad_code');
+        // Counted atomically before the compare (M5): parallel guesses cannot all see the same count.
+        const [counted] = await deps.db.system((q) =>
+          q.query<{ code_hash: string | null }>('update portal_tokens set attempts = attempts + 1 where token_hash = $1 and org_id = $2 and attempts < $3 returning code_hash', [hash, org.id, MAX_CODE_TRIES]),
+        );
+        if (!counted || !safeEqual(await sha256Hex(`${hash}.${code}`), counted.code_hash ?? '')) fail('portal_bad_code');
       }
       method = t.provider;
     }
