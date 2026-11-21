@@ -272,8 +272,9 @@ ssoAuthRoutes.get('/:slug/oidc/callback', async (c) => {
   try {
     const to = await completeLogin(c, org, state, identity);
     return c.redirect(to);
-  } catch {
-    return c.redirect(failBack(cfg, slug, state, 'no_account'));
+  } catch (e) {
+    // The seat reason, as on the SAML path (review S4).
+    return c.redirect(failBack(cfg, slug, state, refusedWhy(e)));
   }
 });
 
