@@ -161,6 +161,8 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   if ((await ensureCompany(db, env, slug)) === 'created') console.log(`[curahold] company "${slug}" created; sign in at ${env.PUBLIC_URL} with ${env.ADMIN_EMAIL}`);
   await breakGlass(db, slug, env.RESET_SECOND_STEP);
 
+  // Without SMTP every sign-in link is printed to the log: the log is then a credential store (security audit L11).
+  if (!env.SMTP_URL) console.warn('[curahold] SMTP_URL is not set: sign-in links are written to this log. Keep the log private, and set SMTP_URL before inviting people.');
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
   const deps: Deps = {

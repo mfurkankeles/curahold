@@ -11,7 +11,7 @@ import { setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { accountWords, intlTag, normalizeLocale, translate, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
-import { logoPath, maxDevices, nowOf, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
+import { defer, logoPath, maxDevices, nowOf, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
 import { buildIcs } from '../lib/ics';
 import { day } from '../lib/mappers';
 import { randomDigits, randomToken, sha256Hex, sign, verify } from '../lib/crypto';
@@ -154,24 +154,31 @@ authRoutes.post('/auth/start', async (c) => {
     return user ? { kind: 'magic' as const, token, user } : { kind: 'join' as const, token };
   });
   const base = orgUrl(deps.config, org.slug);
+  // Sent after the answer (security audit L13): a known address must not answer slower than an unknown one.
   if (result.kind === 'magic') {
     const locale = result.user.locale ?? org.locale;
     const link = `${base}/auth/verify#token=${result.token}`;
     const text = translate(locale, 'email.magic.body', { org: org.name, name: result.user.name, link });
-    await deps.email.send({
+    defer(
+      deps,
+      deps.email.send({
       to: input.email,
       subject: translate(locale, 'email.magic.subject', { org: org.name }),
       text,
       html: emailHtml({ org: org.name, logo: logoUrl(deps, org), text, link, cta: translate(locale, 'email.cta.signIn') }),
-    });
+      }),
+    );
   } else if (result.kind === 'join') {
     const locale = c.get('locale');
     const link = `${base}/join#token=${result.token}`;
-    await deps.email.send({
+    defer(
+      deps,
+      deps.email.send({
       to: input.email,
       subject: translate(locale, org.auto_join ? 'email.joinAuto.subject' : 'email.join.subject', { org: org.name }),
       text: translate(locale, org.auto_join ? 'email.joinAuto.body' : 'email.join.body', { org: org.name, link }),
-    });
+      }),
+    );
   }
   // Same answer whether or not the address has an account.
   const dev = deps.config.devExposeTokens && result.kind !== 'none';

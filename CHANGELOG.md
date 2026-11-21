@@ -253,6 +253,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Smaller hardening from the security audit: members see the plan on Billing but no longer the tax number, billing
+  address or the payment provider's ids; the sign-in e-mail is sent after the answer, so a known address answers as
+  fast as an unknown one; the AI connector's "open one item" takes only real ids; ten wrong authenticator codes in a
+  row stop that person's codes for 15 minutes (recovery codes still work); help-request files wait for the upload
+  scanner; error logs mask every token prefix and the portal's too; the portal sends HSTS; a self-hosted server
+  without SMTP warns at start that sign-in links go to its log.
 - Customer portal: the six-digit e-mail code is checked one try at a time, even when many guesses arrive together, and
   ten wrong codes in a row stop that person's codes for 15 minutes, however many new e-mails were asked for.
 - Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,

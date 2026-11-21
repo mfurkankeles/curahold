@@ -250,3 +250,28 @@ describe('Google sign-in', () => {
     expect(r.status).toBe(400);
   });
 });
+
+// Security audit L13: the sign-in mail goes out after the answer, so a known address answers as fast as an unknown one.
+describe('the sign-in mail and the answer', () => {
+  it('answers before the mail is sent', async () => {
+    const real = env.email.send.bind(env.email);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    env.email.send = async (m) => {
+      await gate;
+      return real(m);
+    };
+    try {
+      const c = new Client(env, 'acme');
+      const answer = c.post('/api/auth/start', { email: 'mert@demo.example' });
+      const first = await Promise.race([answer.then(() => 'answer'), new Promise((r) => setTimeout(() => r('timeout'), 2000))]);
+      expect(first).toBe('answer');
+      release();
+      await env.settle();
+      expect(env.email.last('mert@demo.example')?.subject).toContain('Demo Company');
+    } finally {
+      env.email.send = real;
+      release();
+    }
+  });
+});

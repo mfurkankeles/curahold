@@ -253,3 +253,19 @@ describe('a subscription the server did not offer', () => {
     await env.db.system((q) => q.query(`delete from users where org_id = $1 and email like 'many%@beta.example'`, [env.b.orgId]));
   });
 });
+
+// Security audit L1: every member sees the plan; the billing profile and the provider's ids are for administrators.
+describe('what a member sees of billing', () => {
+  it('the plan and its state, but no tax number, billing address or provider ids', async () => {
+    await env.db.system((q) => q.query(`update orgs set tax_number = 'TAX-ACME-1', billing_email = 'billing@demo.example' where id = $1`, [orgId]));
+    const member = (await lena.get('/api/billing')).json;
+    expect(member.subscription?.plan).toBeTruthy();
+    expect(member.profile).toEqual({ taxNumber: null, billingEmail: null, country: null });
+    expect(member.subscription.providerCustomerId).toBeNull();
+    expect(member.subscription.providerSubscriptionId).toBeNull();
+    expect(JSON.stringify(member)).not.toContain('TAX-ACME-1');
+    const admin = (await ada.get('/api/billing')).json;
+    expect(admin.profile.taxNumber).toBe('TAX-ACME-1');
+    expect(admin.subscription.providerSubscriptionId).toBe('sub_01');
+  });
+});
