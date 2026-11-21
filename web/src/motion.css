@@ -18,6 +18,12 @@
    start side — and an item opened from a list grows into its page title (the "hero", 280 ms). */
 :root[data-nav] .main { view-transition-name: page; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+/* While a transition runs, the whole document was captured as the "root" snapshot and its overlay took every click,
+   so a person who picked the next link while the page was still fading in (or while a busy machine stretched the
+   fade) saw nothing happen. Only the main area moves, so the root is not captured during a move between screens:
+   the shell stays live under the overlay, and the overlay lets clicks through to it. */
+:root[data-nav] { view-transition-name: none; }
+::view-transition { pointer-events: none; }
 ::view-transition-old(page) { animation: fade-out var(--dur-1) var(--ease-in) both; }
 ::view-transition-new(page) { animation: page-from-end var(--dur-2) var(--ease-out) both; }
 :root[data-nav='back']::view-transition-new(page) { animation-name: page-from-start; }

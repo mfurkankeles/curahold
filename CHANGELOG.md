@@ -217,6 +217,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Moving between screens: a click on the menu while the page was still fading in did nothing (the whole window
+  was a still picture for the length of the fade, longer on a busy computer). The menu and the rest of the frame now
+  stay live during the fade.
 - Requests about personal data: a GDPR or UK GDPR request's due date is one calendar month after receipt (it showed up
   to two days late in February), and moving a due date before the day the request came in is a clear error, not a
   server error.
