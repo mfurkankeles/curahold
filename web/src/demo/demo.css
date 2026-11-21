@@ -134,7 +134,9 @@
 .tour__nav, .tour__end { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
 .tour__end { justify-content: flex-start; flex-wrap: wrap; }
 .tour__end .tour__link { margin-inline-start: auto; }
+/* Icon and label side by side, as on every button (the icon came with the icon rule; review, 21 Nov 2026). */
 .tour__btn {
+  display: inline-flex; align-items: center; gap: var(--s-2);
   font: inherit; font-size: var(--fs-m); font-weight: 600; cursor: pointer; text-decoration: none;
   border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
   border-radius: var(--r-m); padding: 8px 12px;
