@@ -8,7 +8,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'billing.plan.team': 'تیم',
   'billing.plan.business': 'کسب‌وکار',
   'billing.point.boards': 'بردها، وظایف، چک‌لیست‌ها و خودکارسازی‌ها',
-  'billing.point.customers': 'مشتریان، مخاطبین، فرصت‌ها و رکوردها شما',
+  'billing.point.customers': 'مشتریان، مخاطبین، فرصت‌ها و رکوردهای شما',
   'billing.point.meetings': 'جلسات، خط زمانی، امتیاز سلامت و بازبینی‌های کسب‌وکار',
   'billing.point.reports': 'گزارش‌ها، داشبوردها و اهداف',
   'billing.point.chat': 'اعلان‌های Slack، Teams، Google Chat و ایمیل',
