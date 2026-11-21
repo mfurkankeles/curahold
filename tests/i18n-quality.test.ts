@@ -254,6 +254,34 @@ describe('job titles stay English (owner, 19 Nov)', () => {
   });
 });
 
+describe('Persian register', () => {
+  // Persian addresses the reader with formal "شما" and plural verbs (glossary REGISTER): the app, the help centre and
+  // the site. About 270 app strings and the help centre had slipped into "تو" (localisation review, 21 Nov 2026).
+  // JavaScript's \b does not know Persian letters, and the Arabic comma "،" sits in the same Unicode block, so the
+  // letter edges are written out. "بدهی" is the noun "debt", not a verb, so it is not listed.
+  const L = '[\\u0621-\\u063A\\u0641-\\u064A\\u064B-\\u0652\\u067E\\u0686\\u0698\\u06A9\\u06AF\\u06CC\\u06C0\\u0654\\u200c]';
+  const word = (alts: string) => new RegExp(`(?<!${L})(${alts})(?!${L})`, 'u');
+  const TO = [
+    // Second person singular verbs: می‌کنی, نمی‌توانی, هستی, داری, بخواهی, کرده‌ای.
+    word(`(?:می‌|نمی‌)${L}{1,14}ی|هستی|نیستی|داری|نداری|کردی|نکردی|شدی|خواستی|کنی|نکنی|شوی|خواهی|بخواهی|بتوانی|نتوانی|ببینی|بدانی|بزنی|بروی|بیایی|بگیری|بگذاری|بنویسی|بفرستی|بسازی|باشی|نباشی|کرده‌ای|داشته‌ای|دیده‌ای|ساخته‌ای|انداخته‌ای`),
+    // Bare imperatives: کن, بزن, بنویس (sentences say کنید; labels are nouns: ذخیره، افزودن).
+    word('کن|نکن|شو|بزن|بده|بنویس|ببین|بساز|بپرس|بیاور|بفرست|بکش|بگذار|ببر|برگرد|بردار|بپذیر|بچسبان|ببند|بمان|بگیر|بخوان|نخوان|بخواه|بگو|باش|برو|بیا'),
+    // The pronoun and "your" on a noun: تو, خودت, برایت, شرکتت, حسابت, مدیرت.
+    word('تو|خودت|برایت|توست|شرکتت|حسابت|مدیرت|تیمت|مرورگرت|مشتریانت|ایمیلت|نامت|آدرست|اتصالت|سؤالت|دستت|انتخابت|تنظیماتت|ورودت|همراهت|خانه‌ات|گذرواژه‌ات'),
+  ];
+  const informal = (s: string) => TO.some((re) => re.test(s));
+  it('no Persian app, help or site string says "تو"', () => {
+    const found: string[] = [];
+    for (const [k, v] of Object.entries(dict('fa'))) if (informal(v)) found.push(`${k}: ${v.slice(0, 80)}`);
+    for (const [file, text] of docsText('fa'))
+      text.split('\n').forEach((line, i) => {
+        if (informal(line)) found.push(`${file}:${i + 1}: ${line.trim().slice(0, 80)}`);
+      });
+    for (const [k, v] of siteText('fa')) if (informal(v)) found.push(`${k}: ${v.slice(0, 80)}`);
+    expect(found.join('\n')).toBe('');
+  });
+});
+
 describe('Turkish register', () => {
   // Turkish says "siz" everywhere, in the product as on the first-contact surfaces (owner, 20 Nov 2026;
   // shared/src/i18n/glossary.ts REGISTER). Short button and menu labels keep the bare verb Turkish
