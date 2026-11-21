@@ -232,7 +232,6 @@ export const ja: InfoCopy = {
       ai: { name: 'AI アシスタント', text: '顧客のことをふだんの言葉で、あなたの権限のままで。' },
       signin: { name: 'ログインとユーザー', text: 'シングルサインオンとユーザーの自動プロビジョニング。' },
       api: { name: 'API と Webhook', text: 'タスク、顧客、レコード向けの個人 API キーと Webhook。' },
-      automation: { name: '自動化プラットフォーム', text: 'ノーコード自動化ツール向けのトリガーとアクション。' },
     },
     missing: ['一覧にない場合は', 'API があるツールなら、オープン API と Webhook で Curahold とつながれます。'],
   },

@@ -232,7 +232,6 @@ export const zhHant: InfoCopy = {
       ai: { name: 'AI 助理', text: '用白話詢問客戶狀況，沿用你自己的權限。' },
       signin: { name: '登入與使用者', text: '單一登入與自動佈建使用者。' },
       api: { name: 'API 與 Webhook', text: '個人 API 金鑰，以及任務、客戶與紀錄的 Webhook。' },
-      automation: { name: '自動化平台', text: '為無程式碼自動化工具提供觸發條件與動作。' },
     },
     missing: ['清單上沒有？', '任何具備 API 的工具，都能透過開放 API 和 Webhook 與 Curahold 對接。'],
   },

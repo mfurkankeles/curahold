@@ -232,7 +232,6 @@ export const en: InfoCopy = {
       ai: { name: 'AI assistants', text: 'Ask about your customers in plain words, with your own permissions.' },
       signin: { name: 'Sign-in and users', text: 'Single sign-on and automatic user provisioning.' },
       api: { name: 'API and webhooks', text: 'Personal API keys and webhooks for tasks, customers and records.' },
-      automation: { name: 'Automation platforms', text: 'Triggers and actions for no-code automation tools.' },
     },
     missing: ['Not on the list?', 'Any tool with an API can talk to Curahold through the open API and webhooks.'],
   },

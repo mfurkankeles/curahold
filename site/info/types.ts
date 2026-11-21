@@ -3,8 +3,8 @@
 // FAQ, trust, "Why Curahold" and About. One file per language next to this one;
 // tests/site-info.test.ts holds every language to the English shape.
 //
-// Claims are about what the product really does today. Anything not shipped yet is
-// marked with `soon: true` and shown with the "Coming soon" label; nothing names a
+// Claims are about what the product really does today. Anything not shipped yet stays
+// off the public site (claims list B: no "Coming soon" promises either); nothing names a
 // competitor; nothing invents a customer, a number or a person.
 
 /** A short heading and the sentence under it. */
@@ -13,7 +13,7 @@ export type Point = [h: string, p: string];
 /** In the order of the customer's journey: inside sales → sales → onboarding (optional) → customer success and support, with product and finance connected throughout. */
 export type DeptKey = 'inside' | 'sales' | 'onboarding' | 'success' | 'product' | 'finance';
 export type FeatureKey = 'health' | 'meetings' | 'sprints' | 'portal' | 'renewals' | 'assistant' | 'reports' | 'sync';
-export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation';
+export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api';
 
 /** Every page that has its own search title and description. */
 export type SeoPage = 'home' | DeptKey | FeatureKey | 'solutions' | 'integrations' | 'pricing' | 'faq' | 'trust' | 'why' | 'about';

@@ -232,7 +232,6 @@ export const tr: InfoCopy = {
       ai: { name: 'AI asistanları', text: 'Müşterilerinizi düz cümlelerle sorun, kendi yetkinizle.' },
       signin: { name: 'Giriş ve kullanıcılar', text: 'Tek oturum açma ve kullanıcıların otomatik eklenmesi.' },
       api: { name: 'API ve webhook’lar', text: 'Görevler, müşteriler ve kayıtlar için kişisel API anahtarları ve webhook’lar.' },
-      automation: { name: 'Otomasyon platformları', text: 'Kodsuz otomasyon araçları için tetikleyiciler ve işlemler.' },
     },
     missing: ['Listede yok mu?', 'API’si olan her araç, açık API ve webhook’larla Curahold’la konuşabilir.'],
   },

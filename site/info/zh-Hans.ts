@@ -232,7 +232,6 @@ export const zhHans: InfoCopy = {
       ai: { name: 'AI 助手', text: '用大白话询问客户情况，沿用你自己的权限。' },
       signin: { name: '登录与用户', text: '单点登录和自动配置用户。' },
       api: { name: 'API 与 Webhook', text: '个人 API 密钥，以及任务、客户和记录的 Webhook。' },
-      automation: { name: '自动化平台', text: '为无代码自动化工具提供触发器和操作。' },
     },
     missing: ['列表里没有？', '任何有 API 的工具，都可以通过开放 API 和 Webhook 与 Curahold 对接。'],
   },

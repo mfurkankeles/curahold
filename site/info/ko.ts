@@ -232,7 +232,6 @@ export const ko: InfoCopy = {
       ai: { name: 'AI 어시스턴트', text: '고객에 대해 평소 말로, 내 권한 그대로 물어보세요.' },
       signin: { name: '로그인과 사용자', text: '싱글 사인온과 사용자 자동 프로비저닝.' },
       api: { name: 'API와 웹훅', text: '작업, 고객, 기록을 위한 개인 API 키와 웹훅.' },
-      automation: { name: '자동화 플랫폼', text: '노코드 자동화 도구를 위한 트리거와 액션.' },
     },
     missing: ['목록에 없나요?', 'API가 있는 도구라면 오픈 API와 웹훅으로 Curahold와 연결할 수 있습니다.'],
   },

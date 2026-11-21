@@ -236,10 +236,6 @@ export const ms: InfoCopy = {
         name: "API dan webhook",
         text: "Kunci API peribadi dan webhook untuk tugasan, pelanggan dan rekod.",
       },
-      automation: {
-        name: "Platform automasi",
-        text: "Pencetus dan tindakan untuk alat automasi tanpa kod.",
-      },
     },
     missing: ["Tiada dalam senarai?", "Mana-mana alat dengan API boleh berhubung dengan Curahold melalui API terbuka dan webhook."],
   },
