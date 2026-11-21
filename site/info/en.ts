@@ -316,7 +316,7 @@ export const en: InfoCopy = {
     onboarding: ['Customer onboarding plans with dates | Curahold', 'An onboarding playbook with dated steps and owners, shared with the customer in their portal, and a health score watching from the first day.'],
     success: ['Customer success software with a health score | Curahold', 'See the quiet customer before the renewal: a health score that lists its reasons, meetings that become tasks, and support tickets in view.'],
     product: ['Sprints and backlog linked to customer promises | Curahold', 'A backlog, sprints with a burndown and a code-review board, with every card that came from a customer linked back to that customer.'],
-    finance: ['Finance: contract value and renewals on one record | Curahold', 'Contract value and renewal dates on the customer page, seen only by the roles you choose, and a cost-to-serve report that sets hours against value.'],
+    finance: ['Finance: contract value and renewal on one record | Curahold', 'Contract value and renewal dates on the customer page, seen only by the roles you choose, and a cost-to-serve report that sets hours against value.'],
     health: ['Customer health score that explains why | Curahold', 'Score every customer from 0 to 100 with rules you set, read the reasons behind the number, and follow its trend over the last thirty days.'],
     meetings: ['Turn meeting notes into tasks with owners | Curahold', 'Log a meeting with who was there and its next steps; on save, each step becomes a task with an owner and a date, linked to the customer.'],
     sprints: ['Boards, sprints and burndown charts | Curahold', 'Team, company and private boards with your own columns, and sprints with capacity planning, story points and a burndown that draws itself.'],
