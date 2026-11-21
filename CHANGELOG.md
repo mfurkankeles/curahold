@@ -18,6 +18,17 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Yearly plans: the renewal e-mail is now sent a little more than 30 days before the renewal, so it always arrives at
+  least 30 days ahead, as the terms say; the billing help says "at least 30 days".
+- Plans: the seat minimum is stated on the pricing page, in the terms (§5) and in the refund policy, in all eleven
+  languages. The region it follows is fixed at checkout, so the hourly seat sync no longer lowers a subscription below
+  the minimum it was bought with, and a plan change starts from the seats in use. The CuraAI money limit counts the
+  seats paid for, the minimum included, and its field accepts cents.
+- Site: the finance pages speak only of what ships today (contract value for the roles you allow, renewals, the cost
+  to serve report); the accounting "coming soon" lines and the accounting integration group are gone.
+- Legal drafts: a broken sentence in the DPA's Annex 4 is fixed in all eleven languages.
+- AI team: no seat carries a private tone in the built-in org chart; only the owner's stored card can hold one, so the
+  demo and a fresh install use the professional tone.
 - Plans: a paying company's CuraAI money limit can no longer be set above its plan's allowance (full seats × the plan's
   rate; a fixed amount in the trial), and the public help chat has its own monthly cap. Every plan is billed for at
   least a few seats (3 by default; more in India and for some yearly plans), shown on the Billing page. A new trial keeps
