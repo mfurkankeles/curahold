@@ -1027,6 +1027,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': '刪除了一筆記錄上的留言',
   'audit.billing.changed': '訂閱已更改',
   'audit.billing.refused': '訂閱變更遭到拒絕',
+  'audit.billing.over_plan': '方案小於完整席次數',
   'audit.connection.reconnected': '重新連線了一項整合',
   'audit.connection.ticket_created': '建立了一張支援工單',
   'audit.trash.restored': '從回收筒還原了內容',

@@ -1027,6 +1027,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': 'レコードのコメントを削除した',
   'audit.billing.changed': 'サブスクリプションが変更された',
   'audit.billing.refused': 'サブスクリプションの変更が拒否された',
+  'audit.billing.over_plan': 'プランがフルシート数に対して小さい',
   'audit.connection.reconnected': '連携を再接続した',
   'audit.connection.ticket_created': 'サポートチケットを作成した',
   'audit.trash.restored': 'ゴミ箱から何かを戻した',

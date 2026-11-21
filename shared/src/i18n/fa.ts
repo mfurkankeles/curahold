@@ -1027,6 +1027,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': 'یک نظر روی رکورد را حذف کرد',
   'audit.billing.changed': 'اشتراک تغییر کرد',
   'audit.billing.refused': 'تغییر اشتراک رد شد',
+  'audit.billing.over_plan': 'طرح برای تعداد صندلی‌های کامل کوچک است',
   'audit.connection.reconnected': 'یک یکپارچه‌سازی را دوباره وصل کرد',
   'audit.connection.ticket_created': 'یک تیکت پشتیبانی ثبت کرد',
   'audit.trash.restored': 'چیزی را از سطل زباله برگرداند',

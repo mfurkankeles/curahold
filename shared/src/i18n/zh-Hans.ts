@@ -1027,6 +1027,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': '删除了一条记录上的评论',
   'audit.billing.changed': '订阅已更改',
   'audit.billing.refused': '订阅变更被拒绝',
+  'audit.billing.over_plan': '套餐小于完整席位数',
   'audit.connection.reconnected': '重新连接了一个集成',
   'audit.connection.ticket_created': '创建了一个支持工单',
   'audit.trash.restored': '从回收站还原了内容',

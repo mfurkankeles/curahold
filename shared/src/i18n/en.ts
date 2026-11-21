@@ -3452,6 +3452,7 @@ export const en = {
   'errors.billing_error': 'The payment provider did not answer as expected. Please try again in a minute.',
   'audit.billing.changed': 'subscription changed',
   'audit.billing.refused': 'subscription change refused',
+  'audit.billing.over_plan': 'plan too small for the full seats',
   'audit.connection.reconnected': 'reconnected an integration',
   'audit.connection.ticket_created': 'created a support ticket',
   'settings.tab.billing': 'Billing',

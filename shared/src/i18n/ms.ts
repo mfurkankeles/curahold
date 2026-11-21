@@ -3392,6 +3392,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'errors.billing_error': "Penyedia pembayaran tidak menjawab seperti yang dijangka. Sila cuba lagi dalam seminit.",
   'audit.billing.changed': "langganan diubah",
   'audit.billing.refused': "perubahan langganan ditolak",
+  'audit.billing.over_plan': "pelan terlalu kecil untuk tempat duduk penuh",
   'audit.connection.reconnected': "menyambung semula integrasi",
   'audit.connection.ticket_created': "mencipta tiket sokongan",
   'settings.tab.billing': "Pengebilan",

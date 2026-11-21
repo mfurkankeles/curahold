@@ -1027,6 +1027,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': '레코드의 댓글을 삭제함',
   'audit.billing.changed': '구독이 변경됨',
   'audit.billing.refused': '구독 변경이 거부됨',
+  'audit.billing.over_plan': '요금제가 전체 권한 좌석 수보다 작음',
   'audit.connection.reconnected': '연동을 다시 연결함',
   'audit.connection.ticket_created': '지원 티켓을 만듦',
   'audit.trash.restored': '휴지통에서 무언가를 복원함',

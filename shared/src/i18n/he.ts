@@ -1027,6 +1027,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': 'מחק תגובה על רשומה',
   'audit.billing.changed': 'המנוי השתנה',
   'audit.billing.refused': 'שינוי המנוי נדחה',
+  'audit.billing.over_plan': 'התוכנית קטנה ממספר המושבים המלאים',
   'audit.connection.reconnected': 'חיבר מחדש אינטגרציה',
   'audit.connection.ticket_created': 'פתח פנייה לתמיכה',
   'audit.trash.restored': 'החזיר משהו מהאשפה',

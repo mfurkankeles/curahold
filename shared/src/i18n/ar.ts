@@ -1027,6 +1027,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'audit.record_comment.deleted': 'حذف تعليقًا على سجل',
   'audit.billing.changed': 'تغيّر الاشتراك',
   'audit.billing.refused': 'رُفض تغيير الاشتراك',
+  'audit.billing.over_plan': 'الخطة أصغر من عدد المقاعد الكاملة',
   'audit.connection.reconnected': 'أعاد ربط تكامل',
   'audit.connection.ticket_created': 'أنشأ تذكرة دعم',
   'audit.trash.restored': 'أعاد شيئًا من سلة المهملات',

@@ -3438,6 +3438,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.billing_error': 'Ödeme sağlayıcısı beklendiği gibi yanıt vermedi. Bir dakika sonra yeniden deneyin.',
   'audit.billing.changed': 'aboneliği değişti',
   'audit.billing.refused': 'abonelik değişikliği reddedildi',
+  'audit.billing.over_plan': 'plan, tam kullanıcı sayısı için küçük',
   'audit.connection.reconnected': 'bir entegrasyonu yeniden bağladı',
   'audit.connection.ticket_created': 'bir destek talebi oluşturdu',
   'settings.tab.billing': 'Abonelik',

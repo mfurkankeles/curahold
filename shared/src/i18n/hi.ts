@@ -3392,6 +3392,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'errors.billing_error': "पेमेंट प्रोवाइडर ने उम्मीद के मुताबिक जवाब नहीं दिया। कृपया एक मिनट में फिर से कोशिश करें।",
   'audit.billing.changed': "सब्सक्रिप्शन बदला गया",
   'audit.billing.refused': "सब्सक्रिप्शन बदलाव अस्वीकार हुआ",
+  'audit.billing.over_plan': "प्लान पूरी सीटों के लिए छोटा है",
   'audit.connection.reconnected': "ने एक इंटीग्रेशन फिर से कनेक्ट किया",
   'audit.connection.ticket_created': "ने एक सपोर्ट टिकट बनाया",
   'settings.tab.billing': "बिलिंग",
