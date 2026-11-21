@@ -2655,7 +2655,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'myTasks.openN': "{n} 个未完成",
   'myTasks.add': "添加任务",
   "myTasks.addBar": "为自己添加任务…试试“发送提案 tomorrow”",
-  'myTasks.emptyTitle': "没有待办事项",
+  'myTasks.emptyTitle': '没有待办列表',
   'myTasks.emptyBody': "分配给你的任务会显示在这里，并按截止时间排序。按 N 即可添加。",
   'quick.unknown': "{what}：没有这个名字的人",
   'quick.unknownTitle': "{what}没有匹配到任何人，因此保留在标题中。输入时请从列表中选择姓名。",

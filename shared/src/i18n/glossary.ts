@@ -102,7 +102,7 @@ export const GLOSSARY: Concept[] = [
   },
   {
     id: 'backlog', en: 'backlog', match: /\bbacklog\b/i, scope: 'concept',
-    terms: { tr: t('Backlog', 'english'), ar: t('قائمة الأعمال المتراكمة'), he: t('בקלוג'), fa: t('بک‌لاگ'), ja: t('バックログ'), ko: t('백로그'), 'zh-Hans': t('待办事项'), 'zh-Hant': t('待辦事項'), hi: t('बैकलॉग', 'english'), ms: t('backlog', 'english') },
+    terms: { tr: t('Backlog', 'english'), ar: t('قائمة الأعمال المتراكمة'), he: t('בקלוג'), fa: t('بک‌لاگ'), ja: t('バックログ'), ko: t('백로그'), 'zh-Hans': t('待办列表'), 'zh-Hant': t('待辦清單'), hi: t('बैकलॉग', 'english'), ms: t('backlog', 'english') },
   },
   {
     id: 'onboarding', en: 'onboarding', match: /\bonboarding\b/i, scope: 'concept',

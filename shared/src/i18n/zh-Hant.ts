@@ -3786,7 +3786,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'ask.ai.hello': "你好，我是 CuraAI。你可以詢問如何在 Curahold 中完成某件事，或詢問此工作區的內容：客戶、續約、任務。我會閱讀說明文件與你的資料來作答，並標示答案的出處。",
   'ask.ai.example1': "哪些客戶需要關注？",
   'ask.ai.example2': "未來 90 天內有哪些續約？",
-  'ask.ai.example3': "我這週有哪些待辦事項？",
+  'ask.ai.example3': '我這週有哪些待辦清單？',
   'ask.ai.example4': "如何連接我的 CRM？",
   'ask.ai.thinking': "思考中…",
   'ask.ai.stop': "停止",
