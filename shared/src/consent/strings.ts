@@ -24,6 +24,8 @@ export interface ConsentStrings {
   bannerAria: string;
   /** The quiet line on the profile page when nothing is measured. */
   noneNote: string;
+  /** The choices dialog's Close at its end corner (an icon button; these words are its accessible name). */
+  close: string;
 }
 
 export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
@@ -46,6 +48,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'Open privacy and cookie choices',
     bannerAria: 'Privacy and cookie consent',
     noneNote: 'This installation measures nothing beyond what it needs to run, so there is nothing to choose.',
+    close: 'Close',
   },
   tr: {
     title: 'Gizliliğiniz, sizin seçiminiz',
@@ -66,6 +69,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'Gizlilik ve çerez tercihlerini aç',
     bannerAria: 'Gizlilik ve çerez onayı',
     noneNote: 'Bu kurulum çalışmak için gerekenin ötesinde hiçbir ölçüm yapmaz; seçilecek bir şey yok.',
+    close: 'Kapat',
   },
   ja: {
     title: 'プライバシーの設定はあなたが決めます',
@@ -86,6 +90,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'プライバシーと Cookie の設定を開く',
     bannerAria: 'プライバシーと Cookie の同意',
     noneNote: 'この環境では、動作に必要なもの以外は一切計測していないため、選択する項目はありません。',
+    close: '閉じる',
   },
   ko: {
     title: '개인정보, 직접 선택하세요',
@@ -106,6 +111,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: '개인정보 및 쿠키 설정 열기',
     bannerAria: '개인정보 및 쿠키 동의',
     noneNote: '이 설치 환경은 작동에 필요한 것 외에는 아무것도 측정하지 않으므로 선택할 항목이 없습니다.',
+    close: '닫기',
   },
   hi: {
     title: "आपकी गोपनीयता, आपकी पसंद",
@@ -126,6 +132,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: "गोपनीयता और कुकी की पसंद खोलें",
     bannerAria: "गोपनीयता और कुकी सहमति",
     noneNote: "यह इंस्टॉलेशन चलने के लिए ज़रूरी चीज़ों से ज़्यादा कुछ नहीं मापता, इसलिए चुनने के लिए कुछ नहीं है।",
+    close: 'बंद करें',
   },
   ms: {
     title: "Privasi anda, pilihan anda",
@@ -146,6 +153,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: "Buka pilihan privasi dan kuki",
     bannerAria: "Persetujuan privasi dan kuki",
     noneNote: "Pemasangan ini tidak mengukur apa-apa selain yang diperlukan untuk berjalan, jadi tiada apa untuk dipilih.",
+    close: 'Tutup',
   },
   'zh-Hans': {
     title: '你的隐私，由你决定',
@@ -166,6 +174,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: '打开隐私与 Cookie 选项',
     bannerAria: '隐私与 Cookie 同意',
     noneNote: '此安装除运行所必需的内容外不做任何统计，因此无需选择。',
+    close: '关闭',
   },
   'zh-Hant': {
     title: '你的隱私，由你決定',
@@ -186,6 +195,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: '開啟隱私權與 Cookie 選項',
     bannerAria: '隱私權與 Cookie 同意',
     noneNote: '此安裝除了運作所需之外不進行任何量測，因此沒有需要選擇的項目。',
+    close: '關閉',
   },
   ar: {
     title: 'خصوصيتك، واختيارك',
@@ -206,6 +216,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'فتح خيارات الخصوصية وملفات تعريف الارتباط',
     bannerAria: 'الموافقة على الخصوصية وملفات تعريف الارتباط',
     noneNote: 'لا يقيس هذا التثبيت أي شيء يتجاوز ما يلزم لتشغيله، لذا لا يوجد ما تختاره.',
+    close: 'إغلاق',
   },
   he: {
     title: 'הפרטיות שלכם, הבחירה שלכם',
@@ -226,6 +237,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'פתיחת הגדרות הפרטיות והעוגיות',
     bannerAria: 'הסכמה לפרטיות ולעוגיות',
     noneNote: 'ההתקנה הזו לא מודדת דבר מעבר למה שנדרש להפעלתה, ולכן אין מה לבחור.',
+    close: 'סגירה',
   },
   fa: {
     title: 'حریم خصوصی شما، انتخاب شما',
@@ -246,5 +258,6 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopenAria: 'باز کردن انتخاب‌های حریم خصوصی و کوکی',
     bannerAria: 'رضایت حریم خصوصی و کوکی',
     noneNote: 'این نصب چیزی فراتر از آنچه برای کارکردن لازم است اندازه‌گیری نمی‌کند؛ بنابراین چیزی برای انتخاب وجود ندارد.',
+    close: 'بستن',
   },
 };

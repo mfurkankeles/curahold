@@ -112,6 +112,7 @@
   }
 }
 .cc-dialog {
+  position: relative;
   width: min(560px, 100%);
   background: var(--paper);
   color: var(--ink);
@@ -120,7 +121,32 @@
   box-shadow: 0 40px 80px -30px rgba(23, 19, 58, 0.6);
   padding: 22px;
 }
+/* The dialog's Close: end corner, 44 × 44 (owner rule 15); the title leaves room for it. */
+.cc-x {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.cc-x:hover {
+  background: var(--mist);
+  color: var(--ink);
+}
+.cc-x:focus-visible {
+  outline: 2px solid var(--iris);
+  outline-offset: 2px;
+}
 .cc-dialog__title {
+  padding-inline-end: 44px;
   font-family: var(--display);
   font-size: 22px;
   font-weight: 700;

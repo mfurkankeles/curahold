@@ -77,11 +77,26 @@ describe('every popup has a visible Close (44 × 44) and closes on Esc', () => {
     const bad: string[] = [];
     for (const p of tsx) {
       const s = read(p);
-      if (!/role="dialog"/.test(s) || CHOICE_REQUIRED.has(p)) continue;
-      if (!CLOSE.test(s)) bad.push(`${p}: no visible Close`);
+      const dialogs = s.match(/role="dialog"/g)?.length ?? 0;
+      if (!dialogs || CHOICE_REQUIRED.has(p)) continue;
+      // One Close per dialog, not one per file: a second dialog in the same file (QuickAdd's "no boards yet") had
+      // none (localisation and UI review, 21 Nov 2026).
+      const closes = s.match(new RegExp(CLOSE.source, 'g'))?.length ?? 0;
+      if (closes < dialogs) bad.push(`${p}: ${dialogs} dialogs, ${closes} visible Close`);
       if (!ESC.test(s)) bad.push(`${p}: Esc does not close it`);
     }
     expect(bad.join('\n')).toBe('');
+  });
+  it('on the static site and the help centre: the privacy choices dialog', () => {
+    // Built from shared/src/consent/site.ts into site/consent.js. It returns to the banner, so it is not a forced
+    // choice, and it follows the rule like any popup.
+    const s = read('shared/src/consent/site.ts');
+    const manage = s.slice(s.indexOf('function showManage'), s.indexOf('function showReopen'));
+    expect(manage).toMatch(/setAttribute\('role', 'dialog'\)/);
+    expect(manage).toMatch(/button\('cc-x', '', \(\) => close\(\), ICON_\w+\)/);
+    expect(manage).toMatch(/x\.setAttribute\('aria-label', S\.close/);
+    expect(manage).toMatch(/e\.key === 'Escape'/);
+    expect(read('site/consent.css')).toMatch(/\.cc-x \{[^}]*inline-size: 44px;\s*block-size: 44px;/);
   });
   it('the shared Close and the tour Close are 44 × 44, and so is the toast Close', () => {
     expect(read('web/src/patterns.css')).toMatch(/\.closex \{[^}]*inline-size: var\(--tap\); block-size: var\(--tap\)/);

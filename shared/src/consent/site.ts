@@ -137,6 +137,12 @@ interface PageConfig extends ConsentConfig {
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-label', S.manageTitle ?? '');
     dialog.tabIndex = -1;
+    // A visible Close at the end corner, 44 × 44, like every popup (MASTER-RULES 15). It decides nothing: it goes back
+    // to the banner (or the reopen button once a choice is stored), as Esc and the scrim do, so the choice stays free.
+    const x = button('cc-x', '', () => close(), ICON_REJECT);
+    x.setAttribute('aria-label', S.close ?? '');
+    x.title = S.close ?? '';
+    dialog.appendChild(x);
     dialog.appendChild(el('h2', 'cc-dialog__title', S.manageTitle));
     dialog.appendChild(el('p', 'cc-dialog__lead', S.body));
     const list = el('ul', 'cc-cats');
