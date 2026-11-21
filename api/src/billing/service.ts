@@ -35,10 +35,25 @@ export const SEATS_SQL = `(select count(*)::int from users u where u.org_id = o.
  * The price region a company is billed in: its billing country, else the country it is seen from (checkout only),
  * else the one region that collects the subscription's currency. Null: the fallback region's rule applies.
  */
-export function billingRegionKey(country: string | null | undefined, currency?: string | null): string | null {
+function billingRegionKey(country: string | null | undefined, currency?: string | null): string | null {
   if (country) return regionFor(country)?.key ?? null;
   const byCurrency = currency ? CATALOGUE.regions.filter((r) => r.collect === currency.toUpperCase()) : [];
   return byCurrency.length === 1 ? byCurrency[0]!.key : null;
+}
+
+/**
+ * The one price region the fewest billed seats follow, for checkout, the Billing screen, a plan change and the hourly
+ * seat sync alike. Two answers for one company would bill it at checkout for one region's minimum and then, within
+ * the hour, move it to another's (independent review S2: a Malaysian company buying yearly without a billing
+ * country was billed 4 seats, then lowered to 3 because USD is collected in several regions). So checkout decides
+ * once and stores it (`stored`, orgs.settings.billingRegion), and everything after the purchase reads that value:
+ *   stored region, else the billing country, else the country the request comes from (checkout and the screen
+ *   before a purchase only), else the one region that collects the subscription's currency; null: the fallback.
+ * Checkout itself passes no `stored`: a new purchase decides again from what is known now.
+ */
+export function billingRegionOf(o: { stored?: string | null; country?: string | null; seenFrom?: string | null; currency?: string | null }): string | null {
+  if (o.stored && CATALOGUE.regions.some((r) => r.key === o.stored)) return o.stored;
+  return billingRegionKey(o.country ?? o.seenFrom, o.currency);
 }
 
 /**
@@ -219,9 +234,11 @@ const worth = (plan: PlanKey, interval: Interval) => PLANS[plan]?.price[interval
  * for the rest of the period; a downgrade is credited at the next bill (the
  * catalogue's proration settings). Shown at once; Paddle's webhook confirms it.
  */
-export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number, region: string | null = null): Promise<void> {
+export async function changePlan(deps: Deps, provider: PaymentProvider, orgId: string, sub: Subscription, plan: PlanKey, interval: Interval, fullSeats: number, region: string | null): Promise<void> {
   const up = worth(plan, interval) >= worth(sub.plan, sub.interval ?? interval);
-  const seats = billedSeats(deps, plan, interval, region ?? billingRegionKey(null, sub.currency), sub.seats ?? fullSeats);
+  // From the seats in use, not the old quantity: the old quantity may hold the previous interval's minimum
+  // (India yearly 6 → monthly must become 5, not stay 6 until the next hourly sync). `region` is billingRegionOf's.
+  const seats = billedSeats(deps, plan, interval, region, fullSeats);
   const next = await provider.changeItems(sub.providerSubscriptionId!, plan, interval, seats, up ? CATALOGUE.proration.upgrade : CATALOGUE.proration.downgrade);
   await deps.db.system(async (q) => {
     await q.query(`update subscriptions set plan = $2, billing_interval = $3, seats = coalesce($4, seats), updated_at = now() where org_id = $1`, [
@@ -244,8 +261,8 @@ export async function syncSeats(deps: Deps): Promise<number> {
   const provider = providerFor(deps);
   if (!provider) return 0;
   const rows = await deps.db.system((q) =>
-    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number; billing_country: string | null; currency: string | null }>(
-      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want, o.billing_country, s.currency
+    q.query<{ org_id: string; plan: string; billing_interval: Interval | null; seats: number | null; provider_subscription_id: string; want: number; billing_country: string | null; billing_region: string | null; currency: string | null }>(
+      `select s.org_id, s.plan, s.billing_interval, s.seats, s.provider_subscription_id, ${SEATS_SQL} as want, o.billing_country, o.settings->>'billingRegion' as billing_region, s.currency
          from subscriptions s join orgs o on o.id = s.org_id
         where s.provider_subscription_id is not null and s.status in ('active', 'trialing', 'past_due')`,
     ),
@@ -253,7 +270,7 @@ export async function syncSeats(deps: Deps): Promise<number> {
   let changed = 0;
   for (const r of rows) {
     if (!r.billing_interval || !planOf(r.plan)) continue;
-    const want = billedSeats(deps, r.plan, r.billing_interval, billingRegionKey(r.billing_country, r.currency), Number(r.want));
+    const want = billedSeats(deps, r.plan, r.billing_interval, billingRegionOf({ stored: r.billing_region, country: r.billing_country, currency: r.currency }), Number(r.want));
     if (r.seats === want) continue;
     try {
       const next = await provider.changeItems(r.provider_subscription_id, r.plan, r.billing_interval, want, want > (r.seats ?? 0) ? CATALOGUE.proration.seatsUp : CATALOGUE.proration.seatsDown);

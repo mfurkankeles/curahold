@@ -73,6 +73,27 @@ describe('the assistant’s money ceiling', () => {
     expect(overCap(await store.usage(), 100, 50)).toBe(false);
   });
 
+  it('paying: the ceiling counts the seats paid for, the minimum included, not only those in use', async () => {
+    const n = await fullSeats();
+    const billed = n + 4; // as when the plan's minimum is above the seats in use
+    await env.db.system((q) =>
+      q.query(
+        `insert into subscriptions (org_id, provider, provider_customer_id, provider_subscription_id, plan, status, billing_interval, seats)
+         values ($1, 'paddle', 'ctm_ai', 'sub_ai', 'team', 'active', 'month', $2)
+         on conflict (org_id) do update set provider_customer_id = 'ctm_ai', provider_subscription_id = 'sub_ai', plan = 'team', status = 'active', billing_interval = 'month', seats = $2`,
+        [env.a.orgId, billed],
+      ),
+    );
+    const ceiling = Math.round(billed * 0.55 * 100) / 100;
+    expect((await ada.get('/api/assist/settings')).json.engine.maxMonthlyCapUsd).toBe(ceiling);
+    const store = dbStore(env.db, { orgId: env.a.orgId, userId: env.a.ids.ada, surface: 'app', retentionDays: 0, billingOn: true, config: assistantConfigFrom({}) });
+    expect((await store.usage()).planCapUsd).toBe(ceiling);
+    // A quantity below the seats in use (the hourly sync has not caught up) never lowers it.
+    await env.db.system((q) => q.query(`update subscriptions set seats = 1 where org_id = $1`, [env.a.orgId]));
+    expect((await store.usage()).planCapUsd).toBe(Math.round(n * 0.55 * 100) / 100);
+    await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.a.orgId]));
+  });
+
   it('the public chat has its own cap and cannot use up what customers share', async () => {
     const store = dbStore(env.db, { orgId: null, userId: null, surface: 'docs', retentionDays: 0, config: assistantConfigFrom({}) });
     await store.record({ model: true, usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 }, micros: 10_000_000 });
@@ -120,7 +141,45 @@ describe('the fewest seats a subscription is billed for', () => {
     expect((await ada.req('POST', '/api/billing/checkout', { plan: 'team', interval: 'month' }, { 'cf-ipcountry': 'DE' })).json.checkout.quantity).toBe(Math.max(5, n));
     const overview = (await ada.get('/api/billing')).json;
     expect(overview.plans.find((p: { key: string }) => p.key === 'team').minSeats).toEqual({ month: 5, year: 6 });
-    await env.db.system((q) => q.query(`update orgs set billing_country = null where id = $1`, [env.a.orgId]));
+    await env.db.system((q) => q.query(`update orgs set billing_country = null, settings = settings - 'billingRegion' where id = $1`, [env.a.orgId]));
+  });
+});
+
+describe('one region for the minimum, from checkout to the hourly sync', () => {
+  it('a Malaysian company without a billing country, billed 4 a year at checkout, is not lowered to 3 by the sync', async () => {
+    await env.db.system((q) => q.query(`update orgs set billing = '{}'::jsonb, billing_country = null, settings = settings - 'billingRegion' where id = $1`, [env.a.orgId]));
+    const n = await fullSeats();
+    const want = Math.max(4, n);
+    const bought = await ada.req('POST', '/api/billing/checkout', { plan: 'team', interval: 'year' }, { 'cf-ipcountry': 'MY' });
+    expect(bought.json.checkout.quantity).toBe(want);
+    // Checkout stored the region it billed for.
+    const [o] = await env.db.system((q) => q.query(`select settings->>'billingRegion' as r from orgs where id = $1`, [env.a.orgId]));
+    expect(o.r).toBe('my');
+    // Paddle's subscription arrives in USD, which three regions collect: the currency alone could not say Malaysia.
+    const calls: { items: { quantity: number }[] }[] = [];
+    env.fetchHolder.impl = async (_url, init) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      calls.push(body);
+      return new Response(JSON.stringify({ data: { id: 'sub_my', status: 'active', customer_id: 'ctm_my', items: [{ price: { id: 'pri_team_m' }, quantity: body.items[0].quantity }], current_billing_period: { starts_at: '2026-11-01T00:00:00Z', ends_at: '2099-01-01T00:00:00Z' }, scheduled_change: null } }), { status: 200 });
+    };
+    await env.db.system((q) =>
+      q.query(
+        `insert into subscriptions (org_id, provider, provider_customer_id, provider_subscription_id, plan, status, billing_interval, seats, currency)
+         values ($1, 'paddle', 'ctm_my', 'sub_my', 'team', 'active', 'year', $2, 'USD')
+         on conflict (org_id) do update set provider_customer_id = 'ctm_my', provider_subscription_id = 'sub_my', plan = 'team', status = 'active', billing_interval = 'year', seats = $2, currency = 'USD'`,
+        [env.a.orgId, want],
+      ),
+    );
+    expect(await syncSeats(env.deps)).toBe(0);
+    expect(calls).toEqual([]);
+    // The Billing screen shows the same minimum, wherever the administrator looks from now.
+    const overview = (await ada.req('GET', '/api/billing', undefined, { 'cf-ipcountry': 'DE' })).json;
+    expect(overview.plans.find((p: { key: string }) => p.key === 'team').minSeats.year).toBe(4);
+    // A plan change to monthly starts from the seats in use with Malaysia's monthly minimum, not the old yearly quantity.
+    expect((await ada.req('POST', '/api/billing/change', { plan: 'team', interval: 'month' })).status).toBe(200);
+    expect(calls.at(-1)!.items[0].quantity).toBe(Math.max(3, n));
+    await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.a.orgId]));
+    await env.db.system((q) => q.query(`update orgs set settings = settings - 'billingRegion' where id = $1`, [env.a.orgId]));
   });
 });
 

@@ -24,7 +24,7 @@ import { body } from '../lib/validate';
 import type { PortalEnv } from '../lib/portal';
 import { answer, RETENTION_CHOICES, settingsOf, type AssistEnv, type CompanyAssistSettings } from '../assistant/core';
 import { ASSIST_BUDGETS, assistantConfigFrom, planAiCeilingUsd, type AssistantConfig } from '../assistant/cost';
-import { capsForOrg } from '../billing/entitlements';
+import { capsForOrg, paidSeats } from '../billing/entitlements';
 import { anthropicProvider, type LlmProvider } from '../assistant/provider';
 import { dbStore, docsIndex, monthUsage } from '../assistant/store';
 import { appConsent, portalConsent, publicConsent, setAppConsent, setPortalConsent, setPublicConsent } from '../assistant/consent';
@@ -213,16 +213,17 @@ const settingsInput = z.object({
 });
 
 /**
- * The highest monthly limit this company may set: the installation's maximum, and below it the plan's ceiling (seats ×
- * the plan's rate, a trial's fixed amount; cost.ts planAiCeilingUsd) when billing is on. Only the operator lifts it.
+ * The highest monthly limit this company may set: the installation's maximum, and below it the plan's ceiling (seats
+ * paid for × the plan's rate, a trial's fixed amount; cost.ts planAiCeilingUsd) when billing is on. Only the operator lifts it.
  */
 async function capCeilingUsd(c: C): Promise<number> {
   const deps = c.get('deps');
   const cfg = assistantConfig(deps);
   if (!deps.config.billing) return cfg.companyMaxUsd;
   const access = accessFor(c);
-  const caps = await run(c, (q) => capsForOrg(q, c.get('org').id, access));
-  const plan = planAiCeilingUsd(access, caps.fullSeats, cfg);
+  // Seats paid for, not only in use: the plan's minimum is billed, so its ceiling counts too (paidSeats).
+  const seats = await run(c, async (q) => paidSeats(q, c.get('org').id, (await capsForOrg(q, c.get('org').id, access)).fullSeats));
+  const plan = planAiCeilingUsd(access, seats, cfg);
   return plan == null ? cfg.companyMaxUsd : Math.min(cfg.companyMaxUsd, plan);
 }
 

@@ -69,7 +69,8 @@ export function AssistantSettings() {
             inputMode="decimal"
             min={0}
             max={view.engine.maxMonthlyCapUsd}
-            step={1}
+            // Cents: ceilings are seats × a fractional rate (1.65 $), which a whole-dollar step could not reach.
+            step={0.01}
             value={cap}
             onChange={(e) => setCap(e.target.value)}
             onBlur={() => {
