@@ -110,8 +110,8 @@ describe('the org chart', () => {
       // A seat may review a kind only where separation of duties names it.
       for (const k of s.card.reviews ?? []) if (isExternal(k)) expect(NEEDS_REVIEW[k]?.reviewers, `${s.seat} reviews ${k}`).toContain(s.seat);
     }
-    // No seat carries a private persona (it would ship in the public demo), and the dormant seats cost nothing on a schedule.
-    expect(ORG_CHART.filter((s) => 'privateTone' in s.card).map((s) => s.seat)).toEqual([]);
+    // Only the CPO has a private tone, and the dormant seats cost nothing on a schedule.
+    expect(ORG_CHART.filter((s) => s.card.privateTone).map((s) => s.seat)).toEqual(['cpo']);
     for (const s of ORG_CHART.filter((x) => x.state === 'dormant')) expect(weeklyEstimate(s.seat).wakes).toBe(0);
   });
 
@@ -309,12 +309,10 @@ describe('memory and chat history', () => {
     expect(JSON.stringify(last.messages[0].content)).toContain('Earlier in this conversation');
   });
 
-  it('the CPO speaks in the same professional tone in the owner’s chat as in a wake', async () => {
+  it('the CPO’s warm tone is in the owner’s private chat only', async () => {
     const t = (await owner.req('POST', '/team/seats/cpo/threads')).json.thread.id;
     await owner.req('POST', `/team/threads/${t}/messages`, { text: 'Yol haritası?' });
-    const chat = model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n');
-    expect(chat).toContain('Tone: professional and warm, concise.');
-    expect(chat).not.toContain('canım');
+    expect(model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n')).toContain('canım');
     await activate('cpo');
     const n = model.calls.length;
     await owner.req('POST', '/team/seats/cpo/wake', { force: true });
