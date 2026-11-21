@@ -170,12 +170,17 @@ After any rotation: run the deploy verification checklist, and record the date a
 - `scripts/backup/restore.ts <file>`: into an **empty** database only (refuses one with tables): checks the
   checksum, creates the request roles and extensions, `pg_restore`, then verifies every table's row count against
   the manifest and the row-level security gates (RLS on, no privileges without a policy, SECURITY DEFINER search
-  paths, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything differs.
+  paths, row security forced, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything
+  differs. It creates the three working roles (`curahold_app`, `curahold_portal`, `curahold_system`) before
+  `pg_restore`, because roles belong to the server and the dump's policies and grants name them.
 - `scripts/backup/restore-drill.ts` (`DRILL_PG=<throwaway server>`): build → back up → **wipe** → restore → verify,
   timed. **Rehearsed 19 Nov 2026 on local Postgres 16:** sample install (144 tables) passed in 4.1 s (backup 0.4 s,
   restore 1.4 s, verify 0.1 s); the large test company (473 MB, 90 tables, 1.29 million rows) backed up in 15 s
   (72 MB encrypted) and restored + verified in 161 s; `tests/rls.test.ts` passed on the same server. Repeat it
   quarterly and after big schema changes, and once against a copy of production (Supabase "restore to a new project").
+  `DRILL_TARGET_PG=<a second server>` restores onto a server that has never seen the roles, as a new project is.
+  **Rehearsed 21 Nov 2026** that way on two fresh local Postgres 16 servers after migration 0254: 157 tables, every
+  count equal, row security on and forced, cross-company read refused, 4.1 s.
 - Point-in-time recovery: decided to switch on with the first paying customer (about $105 per month fixed). Until
   then the recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
 

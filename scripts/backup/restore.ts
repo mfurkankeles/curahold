@@ -21,6 +21,13 @@ const run = (cmd: string, args: string[], env: Record<string, string> = {}) => {
 };
 
 /**
+ * The roles the migrations create (0001, 0011, 0254). They are per server, not in a dump, and the dump's policies and
+ * grants name them, so a restore onto a server that has never seen them must make them first (review B1).
+ * tests/backup-roles.test.ts keeps this list equal to the migrations' own.
+ */
+export const SERVER_ROLES = ['curahold_app', 'curahold_portal', 'curahold_system'] as const;
+
+/**
  * Restores a backup into an empty database and checks it against its manifest (checksum, row counts, last migration).
  * Creates the request roles first, because they belong to the server, not to the dump.
  */
@@ -33,9 +40,10 @@ export async function restore(opts: { url: string; file: string; passphrase?: st
   try {
     const [t] = await sql`select count(*)::int as n from pg_tables where schemaname = 'public'`;
     if (t.n > 0) throw new Error('the target database already has tables: restore only into an empty database');
-    // The request roles are per server, not in the dump: create them as the migrations would.
-    for (const role of ['curahold_app', 'curahold_portal']) await sql.unsafe(`do $$ begin if not exists (select 1 from pg_roles where rolname = '${role}') then create role ${role} nologin; end if; end $$`);
-    await sql.unsafe('grant curahold_app to current_user; grant curahold_portal to current_user;').catch(() => undefined);
+    // The working roles are per server, not in the dump: create them as the migrations would, and let this login
+    // become them (verify() runs db.system() as curahold_system and db.tenant() as curahold_app).
+    for (const role of SERVER_ROLES) await sql.unsafe(`do $$ begin if not exists (select 1 from pg_roles where rolname = '${role}') then create role ${role} nologin; end if; end $$`);
+    await sql.unsafe(SERVER_ROLES.map((r) => `grant ${r} to current_user;`).join(' ')).catch(() => undefined);
     for (const ext of m.extensions ?? []) {
       if (!/^[a-z0-9_]+$/.test(ext)) throw new Error(`unexpected extension name in the manifest: ${ext}`);
       await sql.unsafe(`create extension if not exists ${ext} with schema public`);
@@ -74,14 +82,15 @@ export async function verify(url: string, m: Manifest): Promise<Verification> {
   const rls: string[] = [];
   const sql = postgres(url, { max: 1, onnotice: () => undefined });
   try {
-    const tables = await sql<{ name: string; rls: boolean; has_org: boolean; policies: number }[]>`
-      select c.relname as name, c.relrowsecurity as rls,
+    const tables = await sql<{ name: string; rls: boolean; forced: boolean; has_org: boolean; policies: number }[]>`
+      select c.relname as name, c.relrowsecurity as rls, c.relforcerowsecurity as forced,
              exists (select 1 from information_schema.columns k where k.table_schema = 'public' and k.table_name = c.relname and k.column_name = 'org_id') as has_org,
              (select count(*)::int from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname) as policies
         from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' order by 1`;
     for (const t of tables) {
       if (t.name === 'schema_migrations') continue;
       if (!t.rls) rls.push(`${t.name}: row-level security is off`);
+      else if (!t.forced) rls.push(`${t.name}: row-level security is not forced (0254)`);
       if (!t.policies) {
         const [p] = await sql<{ ok: boolean }[]>`select has_table_privilege('curahold_app', ${'public.' + t.name}, 'select,insert,update,delete') or has_table_privilege('curahold_portal', ${'public.' + t.name}, 'select,insert,update,delete') as ok`;
         if (p.ok) rls.push(`${t.name}: no policy, yet a request role holds privileges`);
