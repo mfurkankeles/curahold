@@ -59,7 +59,7 @@ export const en: InfoCopy = {
         ['Your CRM, while you need it', 'Start in two-way sync with the CRM you have; Curahold has its own pipeline and records, so you can retire it when you are ready.'],
       ],
       forWho: 'Account executives, sales leads and whoever owns the renewal number.',
-      next: ['A hand-over packet on deal won', 'The moment a deal is won, its contacts, notes and promises go to onboarding together.'],
+      next: ['A hand-over card on deal won', 'The moment a deal is won, its contacts, notes and promises go to onboarding together.'],
     },
     onboarding: {
       name: 'Onboarding', short: 'A planned start for every new customer, where you need one.',
@@ -71,7 +71,7 @@ export const en: InfoCopy = {
         ['Health from day one', 'The score watches a new customer from the start, so a slow start shows early.'],
       ],
       forWho: 'Onboarding and implementation teams, or customer success if they run onboarding themselves.',
-      next: ['A hand-over packet when the deal is won', 'What sales learned — contacts, promises, notes — arrives with onboarding in one packet.'],
+      next: ['A hand-over card when the deal is won', 'What sales learned — contacts, promises, notes — arrives with onboarding on one card.'],
     },
     success: {
       name: 'Customer success and support', short: 'Health that says why, meetings that become tasks, tickets in view.',

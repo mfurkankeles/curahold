@@ -492,7 +492,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'settings.people.status.disabled': "Dinyahdayakan",
   'settings.people.status.deleted': "Dihapuskan",
   'settings.people.teams': "Pasukan",
-  'settings.people.seatsUsed': '{used} pengguna penuh digunakan',
+  'settings.people.seatsUsed': '{used} pengguna penuh',
   'settings.people.disable': "Nyahdayakan",
   'settings.people.enable': "Dayakan",
   'settings.people.devices': "Peranti",
