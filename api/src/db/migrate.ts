@@ -7,22 +7,22 @@ export interface Migration {
 }
 
 /**
- * Applies every migration not yet in schema_migrations, in file-name order, each in its own system transaction,
+ * Applies every migration not yet in schema_migrations, in file-name order, each in its own owner transaction,
  * and returns the names it applied. Applied files are never edited (CLAUDE.md); a change is a new numbered file.
  */
 export async function migrate(db: Db, migrations: Migration[]): Promise<string[]> {
   const applied: string[] = [];
-  await db.system(async (q) => {
+  await db.owner(async (q) => {
     await q.query(
       'create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())',
     );
   });
   const done = new Set(
-    (await db.system((q) => q.query<{ name: string }>('select name from schema_migrations'))).map((r) => r.name),
+    (await db.owner((q) => q.query<{ name: string }>('select name from schema_migrations'))).map((r) => r.name),
   );
   for (const m of [...migrations].sort((a, b) => a.name.localeCompare(b.name))) {
     if (done.has(m.name)) continue;
-    await db.system(async (q) => {
+    await db.owner(async (q) => {
       // Migration files hold many statements; run them as one script.
       for (const stmt of splitSql(m.sql)) await q.query(stmt);
       await q.query('insert into schema_migrations (name) values ($1)', [m.name]);

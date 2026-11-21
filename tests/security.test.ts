@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertOwnerConfigured } from '../api/src/context';
-import { APP_CSP, HSTS } from '../api/src/lib/headers';
+import { APP_CSP, HSTS, PORTAL_HEADERS } from '../api/src/lib/headers';
 import { supportBlocked } from '../api/src/lib/support';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
@@ -78,6 +78,9 @@ describe('browser protections', () => {
     expect(first).toContain(`Content-Security-Policy: ${APP_CSP}`);
     expect(first).toContain(`Strict-Transport-Security: ${HSTS}`);
     expect(first).toContain('X-Frame-Options: DENY');
+    // The portal is a sign-in surface of its own: HSTS there too, from both places (security audit L6).
+    expect(PORTAL_HEADERS['Strict-Transport-Security']).toBe(HSTS);
+    expect(readFileSync(join(import.meta.dirname, '..', 'web', 'portal', 'public', '_headers'), 'utf8')).toContain(`Strict-Transport-Security: ${HSTS}`);
     // The one inline script (light/dark) is allowed by its hash: the hash must match index.html.
     const html = readFileSync(join(import.meta.dirname, '..', 'web', 'index.html'), 'utf8');
     const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);

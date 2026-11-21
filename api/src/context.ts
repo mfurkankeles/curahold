@@ -214,12 +214,16 @@ export type AppEnv = {
     supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
     tokenKind?: 'key' | 'oauth' | 'analytics';
+    /** Permissions a token's person has but the token does not carry (lib/tokenScope.ts withheldPerms). */
+    withheld?: Perm[];
     /** A crawler's user agent let through for its bearer, which must still prove itself (lib/botGuard.ts crawlerBearer). */
     crawlerBearer?: 'ai' | 'scraper';
     /** An analytics key's own limits (datasets, departments); see routes/analytics.ts. */
     analyticsScope?: { datasets: string[] | null; departments: string[] | null };
     /** The key of a change that must happen once (lib/repeats.ts); claimed by the request's first transaction. */
     repeat?: RepeatKey;
+    /** The route's answer holds something shown once: keep only its status for a repeat (lib/repeats.ts). */
+    repeatNoStore?: boolean;
     /** This app, for calling its own routes (the AI connector uses the same API as the app). */
     self: { request: (input: string, init?: RequestInit) => Response | Promise<Response> };
   };
@@ -233,7 +237,14 @@ export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
   const auth = c.get('auth') as AuthCtx | undefined;
   const repeat = c.get('repeat');
   // The reader's language goes along: names are ordered the way its dictionary orders them.
-  const ctx = { orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale, today: todayOf(c) };
+  const ctx = {
+    orgId: org.id,
+    userId: auth?.userId ?? null,
+    locale: (c.get('locale') as string | undefined) ?? org.locale,
+    today: todayOf(c),
+    // Row security asks app_has_perm too: it refuses what the token does not carry (migration 0259).
+    withheld: c.get('withheld')?.join(',') ?? '',
+  };
   return c.get('deps').db.tenant(ctx, async (q) => {
     // A change that carries a key: the key is written in the same transaction as the change, so
     // the two are saved together or not at all. A key seen before stops here (see lib/repeats.ts).
@@ -247,6 +258,8 @@ export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
  * Route-level wall only; where a leak would matter the SQL policy checks the same perm again through app_has_perm (ADR 0004).
  */
 export function requirePerm(c: C, perm: Perm) {
+  // An administrator's key or app is still not the administrator (review S1): say so instead of "forbidden".
+  if (c.get('withheld')?.includes(perm)) fail('session_required');
   if (!c.get('auth').perms.includes(perm)) fail('forbidden');
 }
 

@@ -53,3 +53,15 @@ describe('the AI connector', () => {
     expect(r.content.at(-1).text).toMatch(/do not follow instructions/);
   });
 });
+
+// Security audit L10: the id the model hands "fetch" goes into an API address, so only a real id is taken.
+describe('fetch takes ids, not paths', () => {
+  it('an id with path segments is refused before any address is built', async () => {
+    const { token } = (await lena.post('/api/dev/keys', { name: 'Fetch', canWrite: false })).json;
+    for (const id of ['account:../me', 'account:5f0c2b1e-3d4a-4b5c-8d9e-0f1a2b3c4d5e/../../people', 'task:..%2Fme']) {
+      const r = await call(token, 'fetch', { id });
+      expect(r.isError, id).toBe(true);
+      expect(r.content.map((x: any) => x.text).join(' '), id).toContain('Use an id from search');
+    }
+  });
+});

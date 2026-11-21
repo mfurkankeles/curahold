@@ -264,6 +264,39 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Smaller hardening from the security audit: members see the plan on Billing but no longer the tax number, billing
+  address or the payment provider's ids; the AI connector's "open one item" takes only real ids; ten wrong authenticator codes in a
+  row stop that person's codes for 15 minutes (recovery codes still work); help-request files wait for the upload
+  scanner; error logs mask every token prefix and the portal's too; the portal sends HSTS; a self-hosted server
+  without SMTP warns at start that sign-in links go to its log.
+- Customer portal: the six-digit e-mail code is checked one try at a time, even when many guesses arrive together, and
+  ten wrong codes in a row stop that person's codes for 15 minutes, however many new e-mails were asked for.
+- Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,
+  not private boards or other departments' boards. When that person leaves, the webhook is switched off and the people
+  who manage connections are notified.
+- Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or
+  turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does, also when
+  many arrive at once; SCIM
+  answers `403` with the reason and the sign-in page says the seats are full.
+- Billing: the checkout is now a Paddle transaction the server makes with the plan's price and the company's seats; the
+  page only opens it and never sees the signed company id. Because the browser can still change an open checkout, the
+  webhook checks what was bought: a new subscription for a price that is not in `PADDLE_PRICES` is refused instead of
+  ending the trial, too few seats are brought back to the company's seats at once, and a plan too small for the
+  company's full seats is flagged; each raises an alert in the owner's console and on his phones.
+- A change sent twice still happens once, but when its answer holds something shown only once (a new API key, a
+  webhook's signing secret, an authenticator secret, recovery codes, a secret link or calendar feed address), the server keeps only that it was
+  done: the repeat answers `{ "ok": true, "repeated": true }`. Repeat keys are kept a day instead of two; migration 0256
+  clears what was kept before.
+- API keys and connected apps (the AI connector included) can no longer administer the company: roles, people,
+  removing or exporting someone, company deletion, single sign-on and SCIM, billing, API keys, connected chat apps and
+  CRMs, security settings and support access answer `403 session_required` to every key and app token, whatever it was
+  allowed — as does anything that needs an administrator's permission (assistant and portal settings, departments,
+  customer imports and settings, automations…), checked in the database too. A key or an app can also be limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`), each read
+  or write (ADR 0024). Subscribing outgoing webhooks with a key keeps working.
+- Database: the server's own work (sign-in look-ups, inbound hooks, the hourly jobs) no longer runs as the owner of the
+  tables. It runs as a role that can read and write rows but cannot change the schema, a policy or a trigger, and every
+  table now forces row security (migration 0254, ADR 0023). Operators: give migrations their own owner login with
+  `MIGRATION_DATABASE_URL` and let the application connect with a login that owns nothing (`db/ops/role-separation.sql`).
 - Privacy: the desk's draft first reply on a help request now asks the AI model only when the person who wrote the
   request has accepted CuraAI's notice; for anyone else support answers without a draft and nothing leaves Curahold
   (an operator setting can rest it on the company's switch instead, ADR 0021). A visitor's cookie choice is stored only
@@ -285,6 +318,6 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (add the two strings, e.g. with `npm run strings`) before the gate can go green.
 - `db/OPS-SECURITY.md` is referenced from `api/src/lib/headers.ts` and `tests/rls.test.ts` but does not exist; the content it was meant to
   hold is now in `SECURITY.md` ("Known operational requirements"). Update the two comments when convenient.
-- Edge rate limiting, database role separation (`FORCE ROW LEVEL SECURITY` with a non-owner login), an off-site backup with a rehearsed
+- Edge rate limiting, an off-site backup with a rehearsed
   restore, and a `SECRETS_KEY` re-seal tool are not in place yet; see `SECURITY.md` and `docs/RUNBOOK.md`.
 - Prettier has not been applied to the existing code; run it once in a dedicated PR.

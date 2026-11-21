@@ -31,7 +31,7 @@ export function redact(text: string): string {
       // Bearer and basic credentials, JWTs, Curahold's own key and secret prefixes.
       .replace(/\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi, '$1 [redacted]')
       .replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, '[redacted]')
-      .replace(/\b(chk|cho|whsec|scim|sk|pk|xox[abpr])_[A-Za-z0-9_-]{8,}/g, '$1_[redacted]')
+      .replace(/\b(ch[kabro]|whsec|scim|sk|pk|xox[abpr])_[A-Za-z0-9_-]{8,}/g, '$1_[redacted]')
       // name=value / "name": "value" for names that hold secrets.
       .replace(/(\b(?:token|secret|password|passwd|pwd|api[_-]?key|code|signature|authorization|cookie|session)[\w-]*["']?\s*[:=]\s*["']?)[^\s"'&,;}]+/gi, '$1[redacted]')
       // A long random path segment (a secret link), but not a UUID.

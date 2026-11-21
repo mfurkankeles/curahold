@@ -91,16 +91,20 @@ async function overview(c: C) {
     caps,
     usage,
     trialLimits,
-    subscription: sub,
-    profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null },
+    // The plan and its state are everyone's to see; the tax number, the billing address and the provider's ids are for
+    // the people who may pay (security audit L1).
+    subscription: sub && !isAdmin ? { ...sub, providerCustomerId: null, providerSubscriptionId: null } : sub,
+    profile: isAdmin
+      ? { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null, country: profile?.billing_country ?? null }
+      : { taxNumber: null, billingEmail: null, country: null },
     // Public values Paddle.js needs, for the people who may pay. Never a secret: the API key and webhook secret stay on the server.
     ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, email: c.get('auth').email } } : {}),
   });
 }
 
 /**
- * Where the company stands with billing: plan, status, usage against the plan's caps, the plans with regional prices,
- * and checkout values. Needs org.manage; 'billing_off' when the install has no payment provider (ADR 0019).
+ * Where the company stands with billing: plan, status, usage against the plan's caps and the plans with regional
+ * prices, for every member; the billing profile, the provider's ids and checkout values only with org.manage.
  */
 billingRoutes.get('/billing', overview);
 /** Same answer as GET /billing, kept for older clients. */
@@ -165,6 +169,7 @@ billingRoutes.post('/billing/portal', async (c) => {
   if (!provider) return fail('billing_off');
   const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
   if (!sub?.providerCustomerId) return fail('not_found');
+  c.set('repeatNoStore', true); // a signed-in link to the provider's portal: not kept for a repeat
   return c.json({ url: await provider.portalUrl(sub.providerCustomerId, sub.providerSubscriptionId) });
 });
 

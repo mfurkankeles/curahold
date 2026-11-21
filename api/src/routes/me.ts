@@ -431,6 +431,8 @@ meRoutes.post('/me/calendar', async (c) => {
   const token = randomToken(24);
   const hash = await sha256Hex(token);
   await run(c, (q) => q.query('update users set calendar_token_hash = $2 where id = $1', [auth.userId, hash]));
+  // The address is the secret (only its hash is kept): never stored for a repeat (review S2).
+  c.set('repeatNoStore', true);
   return c.json({ url: `${orgUrl(c.get('deps').config, org.slug)}/api/calendar/${token}.ics` });
 });
 

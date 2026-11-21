@@ -2,37 +2,25 @@
 
 These are things the code cannot do for itself. Each is a deployment requirement.
 
-## 1. Database roles (P1: the application's login role owns the tables)
+## 1. Database roles
 
-Today one login role both owns the tables and runs `db.system()` (198 call sites).
-Per request, `db.tenant()` does `set local role curahold_app`, so row-level security
-binds it; but `db.system()` runs as the owner with RLS out of the picture, relying
-on every statement naming `org_id` by hand. Nothing in the schema stops a mistake there.
+Since migration 0254 (ADR 0023) the schema half is done in code: every table with row security forces it, and
+`db.system()` runs as `curahold_system`, a role that owns nothing and reaches rows only through its own
+`curahold_system_all` policy. Migrations run as the owner through `db.owner()`, which nothing else calls.
 
-What the repository now enforces (tests that gate the build):
+What the repository enforces (tests that gate the build, `tests/rls.test.ts`):
 
-- `tests/rls.test.ts`: every table with an `org_id` has RLS on and a policy (or, for
-  server-only tables, no privileges for the request roles); every table without
-  `org_id` is on a reviewed list; every `SECURITY DEFINER` function pins
-  `search_path = public, pg_temp` (migration 0034).
-- A static check that `db.system()` statements on company tables name `org_id`.
-  Existing exceptions are in `tests/fixtures/system-sql-reviewed.json` (primary-key
-  lookups, external-id hooks, the hourly clean-up, the owner's metrics). The list may
-  only shrink: a new unscoped statement fails the build.
+- every table with an `org_id` has RLS on and a policy (or, for server-only tables, no privileges for the request
+  roles); every table without `org_id` is on a reviewed list; every `SECURITY DEFINER` function pins `search_path`;
+- every RLS table is FORCED and has the system role's policy, which names only that role; `db.system()` runs as
+  `curahold_system`, which is no superuser, has no BYPASSRLS and owns nothing; only `db/` calls `owner()`;
+- a static check that `db.system()` statements on company tables name `org_id`, with a reviewed baseline
+  (`tests/fixtures/system-sql-reviewed.json`) that may only shrink.
 
-What was deliberately NOT done in code: `FORCE ROW LEVEL SECURITY`. With it the owner
-role is bound by the policies too, and `db.system()` plus all the definer functions
-(owned by the same role) would see no rows, because they run without `app.org_id`.
-That breaks the in-memory demo, the tests (PGlite has a single role) and the e2e.
-It is only correct together with a separate login role.
-
-**Production requirement:** apply `db/ops/role-separation.sql` once (reviewed template):
-`curahold_owner` owns objects and runs migrations only; the Worker/Hyperdrive connects as
-`curahold_login` (not the owner, can `set role curahold_app`/`curahold_portal`; `bypassrls`
-is what `db.system()` needs and is why the static test above matters). Point the migration
-job at `curahold_owner` and the Worker at `curahold_login`. Verify afterwards:
-`select relname from pg_class where relowner = (select oid from pg_roles where rolname = 'curahold_login')`
-returns nothing.
+**Production requirement (left to the operator):** apply `db/ops/role-separation.sql` once so the Worker/Hyperdrive
+connects as `curahold_login` (NOINHERIT, owns nothing, member of the three working roles) and only
+`MIGRATION_DATABASE_URL` holds the owner. The owner must be a superuser or have BYPASSRLS (0254 checks). Verify
+afterwards with the queries at the end of that file.
 
 ## 2. Cloudflare rate limiting (at the edge, on top of the app's own limits)
 

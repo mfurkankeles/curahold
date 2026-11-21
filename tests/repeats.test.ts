@@ -87,10 +87,69 @@ describe('a key means one change', () => {
 });
 
 describe('keys do not pile up', () => {
-  it('are cleared after two days', async () => {
-    await env.db.system((q) => q.query(`update idempotency_keys set created_at = now() - interval '3 days' where key = 'key-sent-twice-0001'`));
+  it('are cleared after a day', async () => {
+    await env.db.system((q) => q.query(`update idempotency_keys set created_at = now() - interval '25 hours' where key = 'key-sent-twice-0001'`));
     await cleanUp(env.deps);
     const left = await env.db.system((q) => q.query(`select key from idempotency_keys where key in ('key-sent-twice-0001', 'key-meant-twice-01') order by 1`));
     expect(left.map((r: any) => r.key)).toEqual(['key-meant-twice-01']);
+  });
+});
+
+// Security audit M1: what is shown once is never kept for a repeat.
+describe('an answer with a secret in it', () => {
+  const kept = async (key: string) =>
+    (await env.db.system((q) => q.query<{ status: number | null; response: unknown }>(`select status, response from idempotency_keys where key = $1`, [key])))[0];
+
+  it('a new API key: only the status is kept, and the repeat does not show the key again', async () => {
+    const body = { name: 'Kept once', canWrite: false };
+    const one = await send(ada, 'key-api-key-once-01', body, '/api/dev/keys');
+    expect(one.status).toBe(201);
+    expect(one.json.token).toMatch(/^chk_/);
+    const row = await kept('key-api-key-once-01');
+    expect(row).toEqual({ status: 201, response: null });
+    const two = await send(ada, 'key-api-key-once-01', body, '/api/dev/keys');
+    expect(two.status).toBe(201);
+    expect(two.json).toEqual({ ok: true, repeated: true });
+    expect(JSON.stringify(two.json)).not.toContain('chk_');
+    const keys = (await ada.get('/api/dev/keys')).json.keys.filter((k: any) => k.name === 'Kept once');
+    expect(keys).toHaveLength(1);
+  });
+
+  it('an authenticator secret and recovery codes are not kept either', async () => {
+    const totp = await send(mert, 'key-totp-start-0001', {}, '/api/me/security/totp');
+    expect(totp.status).toBe(200);
+    expect(totp.json.secret).toBeTruthy();
+    // (This route writes outside the request transaction, so it may claim no key at all: either way nothing is kept.)
+    expect((await kept('key-totp-start-0001'))?.response ?? null).toBeNull();
+    const hook = await send(ada, 'key-webhook-made-01', { url: 'https://hooks.example.com/in', events: ['task.created'] }, '/api/dev/webhooks');
+    expect(hook.status).toBe(201);
+    expect((await kept('key-webhook-made-01')).response).toBeNull();
+  });
+
+  // Review S2: the personal calendar feed address is a secret too (only its hash is stored on the person).
+  it('a calendar feed address is not kept', async () => {
+    const r = await send(mert, 'key-calendar-link-01', {}, '/api/me/calendar');
+    expect(r.status).toBe(200);
+    expect(r.json.url).toMatch(/\/api\/calendar\/[A-Za-z0-9_-]{16,}\.ics$/);
+    expect(await kept('key-calendar-link-01')).toEqual({ status: 200, response: null });
+    const again = await send(mert, 'key-calendar-link-01', {}, '/api/me/calendar');
+    expect(again.json).toEqual({ ok: true, repeated: true });
+  });
+
+  it('ordinary answers are still kept whole', async () => {
+    await send(ada, 'key-ordinary-kept-1', { boardId: board, title: 'Kept whole' });
+    expect((await kept('key-ordinary-kept-1')).response).toMatchObject({ task: { title: 'Kept whole' } });
+  });
+
+  it('the detector finds secrets by name and by shape, at any depth', async () => {
+    const { holdsSecret } = await import('../api/src/lib/repeats');
+    expect(holdsSecret({ key: { id: 'x' }, token: 'abc' })).toBe(true);
+    expect(holdsSecret({ list: [{ deep: { recoveryCodes: ['a1'] } }] })).toBe(true);
+    expect(holdsSecret({ note: 'use chr_abcdefgh12345678 now' })).toBe(true);
+    expect(holdsSecret({ uri: 'otpauth://totp/x?secret=Y' })).toBe(true);
+    expect(holdsSecret({ url: 'https://acme.example/api/inbound/tickets/AbCdEfGhIjKlMnOpQr' })).toBe(true);
+    expect(holdsSecret({ url: 'https://acme.example/api/calendar/AbCdEfGhIjKlMnOpQr.ics' })).toBe(true);
+    expect(holdsSecret({ url: 'https://acme.example/support/enter#token=AbCdEfGhIjKlMnOpQr' })).toBe(true);
+    expect(holdsSecret({ task: { title: 'Call Ada', token: null } })).toBe(false);
   });
 });

@@ -51,9 +51,10 @@ interface BillingInfo {
 interface CheckoutHandle {
   env: 'sandbox' | 'live';
   clientToken: string;
+  /** The transaction the server made (price, seats, the signed company id); the page opens only this. */
+  transactionId: string;
   priceId: string;
   quantity: number;
-  customData: Record<string, string>;
   email: string;
 }
 
@@ -204,15 +205,14 @@ export function BillingSettings() {
     if (!info.checkout) return;
     setBusy(plan);
     try {
-      // The server signs the company id; this page never makes one up.
+      // The server makes the transaction (price, seats, the signed company id); this page only opens it.
       const { checkout: h } = await post<{ checkout: CheckoutHandle }>('/billing/checkout', { plan, interval });
       const P = await loadPaddle(h.env, h.clientToken, (e) => {
         if (e.name === 'checkout.completed') void waitForSubscription();
       });
       P.Checkout.open({
-        items: [{ priceId: h.priceId, quantity: h.quantity }],
+        transactionId: h.transactionId,
         customer: { email: h.email },
-        customData: h.customData,
         // Paddle's own code for the language where it has one (zh-Hant is zh-TW there); otherwise it follows the browser.
         settings: PADDLE_LOCALE[locale] ? { locale: PADDLE_LOCALE[locale] } : {},
       });

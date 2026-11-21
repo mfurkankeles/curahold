@@ -35,7 +35,7 @@ npm run lint                       # warnings are fine, errors are not
 npm run build                      # app + portal + help pages
 
 # 1. Database first (additive migrations are safe while the old code still runs; see "Migrations").
-DATABASE_URL='<owner connection string>' npm run migrate
+MIGRATION_DATABASE_URL='<owner connection string>' npm run migrate   # the owner; the Worker's own login is not (ADR 0023)
 
 # 2. The Worker (app, API, cron) and then the portal Worker.
 npx wrangler deploy
@@ -109,11 +109,30 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
 - Files `db/migrations/NNNN_name.sql`, applied in name order, once each, recorded in `schema_migrations`.
   `api/src/db/migrate.ts` runs each file's statements in one transaction.
 - **Never edit an applied migration.** Add a new number. Both hosted (`npm run migrate`) and self-host (on start) use the same files.
-- Every new company table: `org_id`, `enable row level security`, a policy on `app_org()`, grants for `curahold_app`.
+- Every new company table: `org_id`, `select app_secure_table('<table>');` (row security on and forced, plus the
+  server role's own policy, migration 0254), a policy on `app_org()`, grants for `curahold_app`.
   `tests/rls.test.ts` fails the build otherwise.
 - Big tables: use `create index concurrently` outside a transaction only if you split the file; otherwise expect a brief lock.
   Check on a copy of production size with `scripts/perf.ts` (`PERF_DATABASE_URL`) before indexing the large tables.
-- The migrating user needs to be able to create roles on the first run (`curahold_app`, `curahold_portal`).
+- The migrating user needs to be able to create roles on the first run (`curahold_app`, `curahold_portal`,
+  `curahold_system`) and must be a superuser or have BYPASSRLS (migration 0254 stops with a message otherwise).
+- Keep migrating with the **same** owner login: 0254's default privileges (rights for `curahold_system` on new tables)
+  belong to the role that ran it. If the owner login ever changes, run the `alter default privileges … to
+  curahold_system` lines of 0254 as the new owner first; `tests/rls.test.ts` only sees the test database.
+
+### Database roles
+
+| Role | Login | What it is for |
+| --- | --- | --- |
+| owner (Supabase: `postgres`) | yes, `MIGRATION_DATABASE_URL` | Owns the schema; runs migrations only. Superuser or BYPASSRLS. |
+| `curahold_login` | yes, `DATABASE_URL` / Hyperdrive | The application. NOINHERIT, owns nothing; member of the three roles below (`db/ops/role-separation.sql`). |
+| `curahold_app` | no | Every person's request (`db.tenant`); row security by company, person and department. |
+| `curahold_portal` | no | Customer portal requests; only the `portal_*` functions. |
+| `curahold_system` | no | `db.system()`: rows of every company through its own policy, no schema, policy or trigger rights. |
+
+Check after any restore or role change: `select relname from pg_class where relowner = (select oid from pg_roles where
+rolname = 'curahold_login')` returns nothing, and `select relname from pg_class c join pg_namespace n on n.oid =
+c.relnamespace where n.nspname = 'public' and c.relrowsecurity and not c.relforcerowsecurity` returns nothing.
 
 ## Rotating secrets
 
@@ -154,12 +173,17 @@ After any rotation: run the deploy verification checklist, and record the date a
 - `scripts/backup/restore.ts <file>`: into an **empty** database only (refuses one with tables): checks the
   checksum, creates the request roles and extensions, `pg_restore`, then verifies every table's row count against
   the manifest and the row-level security gates (RLS on, no privileges without a policy, SECURITY DEFINER search
-  paths, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything differs.
+  paths, row security forced, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything
+  differs. It creates the three working roles (`curahold_app`, `curahold_portal`, `curahold_system`) before
+  `pg_restore`, because roles belong to the server and the dump's policies and grants name them.
 - `scripts/backup/restore-drill.ts` (`DRILL_PG=<throwaway server>`): build → back up → **wipe** → restore → verify,
   timed. **Rehearsed 19 Nov 2026 on local Postgres 16:** sample install (144 tables) passed in 4.1 s (backup 0.4 s,
   restore 1.4 s, verify 0.1 s); the large test company (473 MB, 90 tables, 1.29 million rows) backed up in 15 s
   (72 MB encrypted) and restored + verified in 161 s; `tests/rls.test.ts` passed on the same server. Repeat it
   quarterly and after big schema changes, and once against a copy of production (Supabase "restore to a new project").
+  `DRILL_TARGET_PG=<a second server>` restores onto a server that has never seen the roles, as a new project is.
+  **Rehearsed 21 Nov 2026** that way on two fresh local Postgres 16 servers after migration 0254: 157 tables, every
+  count equal, row security on and forced, cross-company read refused, 4.1 s.
 - Point-in-time recovery: decided to switch on with the first paying customer (about $105 per month fixed). Until
   then the recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
 
@@ -170,8 +194,8 @@ After any rotation: run the deploy verification checklist, and record the date a
 2. In Supabase: Database > Backups > pick the backup (or PITR time) > **restore to a new project** (never over the live one first).
 3. In the restored project check: `select count(*) from orgs;`, latest `audit_log.at`, latest `tasks.updated_at`,
    `select name from schema_migrations order by name desc limit 3;`. Re-run `npm run migrate` against it if the backup predates a migration.
-4. Run `curahold_app` / `curahold_portal` role checks: `select rolname from pg_roles where rolname like 'curahold_%';` (both exist) and that
-   your login role is a member of both.
+4. Run the role checks: `select rolname from pg_roles where rolname like 'curahold_%';` (`curahold_app`, `curahold_portal`,
+   `curahold_system` exist) and that your application login is a member of all three (see "Database roles").
 5. Point **a staging Worker** (or a preview Hyperdrive config) at it and run the deploy verification checklist.
 6. Cut over: update the Hyperdrive config's connection string to the restored database, verify, announce.
 7. Single-company recovery (someone deleted data inside one company): prefer the **in-product trash** (30 days) or import undo first. Otherwise
@@ -221,6 +245,9 @@ cosmetic. QUALITY.md targets uptime >= 99.9% with the app still opening and show
 | `PLATFORM_OWNER (or SUPPORT_STAFF) must be set` at start | Multi-company install without an owner (deliberately fail-closed) | Set `PLATFORM_OWNER` secret/var. |
 | `AUTH_SECRET must be at least 32 characters` | Secret missing or shortened | `wrangler secret put AUTH_SECRET`. |
 | `PADDLE_PRICES needs team.month ...` | Malformed JSON | Fix the four price ids. |
+| Console alert `billing:unknown_price:…` (a phone push too) | A new subscription for a price not in `PADDLE_PRICES` (a checkout changed in the browser, or a price changed in Paddle first) | Nothing was applied; the company keeps its state. The buyer **was charged**: refund the transaction in Paddle (Transactions → refund) and cancel that subscription, then tell the company to buy from the Billing page. If the price is ours, add it to `PADDLE_PRICES` and replay the event. |
+| Console alert `billing:over_plan:…` | A plan smaller than the company's full seats | New full seats are refused (seatGuard). Contact the company: a larger plan, or fewer full seats. |
+| Console alert `billing:too_few_seats:…` | Fewer seats bought than the company has | The server already changed the subscription back to the billed seats (`fixed: true` in the alert); if `fixed` is false, the hourly seat sync retries. |
 | No digests / reminders | Cron not firing or the job failing | Check cron events and `wrangler tail` around the top of the hour; run `runScheduled` locally against a copy if needed. |
 | Stuck notifications | Chat provider failing or token revoked | Rows in `notifications` with attempts and last error; the hourly job retries; fix the connection. |
 | One CRM not syncing | Expired refresh token, revoked app, remote rate limit | `sync_runs` error, the product's connection status; the company reconnects. Backoff schedule: 1, 5, 30, 120, 720, 1440 min. |

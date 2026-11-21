@@ -88,8 +88,10 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
     const code = params.get('error');
     if (!code) return null;
     const provider = params.get('provider') === 'microsoft' ? 'Microsoft' : 'Google';
-    const key = `errors.${code}` as any;
-    return t(key, { provider, email: params.get('email') ?? '' });
+    // A seat limit met while signing in is told to the person signing in, not in the inviter's words (review nit).
+    const key = (code === 'seat_cap_reached' || code === 'plan_limit_seats' ? 'auth.seatsFull' : `errors.${code}`) as any;
+    // `cap`: the seat limit a refused single sign-on ran into (api/src/routes/sso.ts refusedWhy).
+    return t(key, { provider, email: params.get('email') ?? '', cap: params.get('cap') ?? '' });
   });
   const [busy, setBusy] = useState(false);
   // A company that requires SSO: its provider is the way in; the emailed link is only for its backup administrators.

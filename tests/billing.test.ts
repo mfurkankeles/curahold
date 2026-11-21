@@ -128,10 +128,22 @@ describe('the trial and the subscription', () => {
 });
 
 describe('checkout cannot be pointed at someone else’s company', () => {
-  it('the server signs the company id it hands the browser', async () => {
-    const b = (await ada.post('/api/billing/checkout', { plan: 'team', interval: 'year' })).json;
-    expect(b.checkout.customData).toEqual(signed);
-    expect(b.checkout.priceId).toBe('pri_team_y');
+  it('the server makes the transaction: price, seats and the signed company id never come from the browser', async () => {
+    const sent: { url: string; body: any }[] = [];
+    env.fetchHolder.impl = async (url, init) => {
+      sent.push({ url, body: JSON.parse(String(init?.body ?? '{}')) });
+      return new Response(JSON.stringify({ data: { id: 'txn_01' } }), { status: 201 });
+    };
+    const b = (await ada.post('/api/billing/checkout', { plan: 'team', interval: 'year', priceId: 'pri_cheap', quantity: 1 })).json;
+    expect(sent).toHaveLength(1);
+    expect(sent[0].url).toMatch(/\/transactions$/);
+    expect(sent[0].body.items[0].price_id).toBe('pri_team_y');
+    expect(sent[0].body.items[0].quantity).toBe(b.checkout.quantity);
+    expect(sent[0].body.custom_data).toEqual(signed);
+    // The page gets the transaction to open, and no signed company id it could reuse elsewhere.
+    expect(b.checkout.transactionId).toBe('txn_01');
+    expect(b.checkout.customData).toBeUndefined();
+    expect(JSON.stringify(b)).not.toContain(signed.sig);
     expect((await lena.post('/api/billing/checkout', { plan: 'team' })).status).toBe(403);
   });
 
@@ -183,6 +195,9 @@ describe('plans and seats', () => {
       return new Response(JSON.stringify({ data: { ...subscription(), items: [{ price: { id: 'pri_biz_y' }, quantity: body.items[0].quantity }] } }), { status: 200 });
     };
     const [{ n }] = await env.db.system((q) => q.query(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status = 'active'`, [orgId]));
+    // A webhook with too few seats is already brought back when it arrives (review S5); people joining afterwards are
+    // what the hourly sync is for: as if the subscription was set for fewer than are here now.
+    await env.db.system((q) => q.query(`update subscriptions set seats = 1 where org_id = $1`, [orgId]));
     expect(await syncSeats(env.deps)).toBe(1);
     expect(calls[0].url).toBe('https://sandbox-api.paddle.com/subscriptions/sub_01');
     expect(calls[0].body).toEqual({ items: [{ price_id: 'pri_biz_y', quantity: n }], proration_billing_mode: n > 3 ? 'prorated_immediately' : 'prorated_next_billing_period' });
@@ -212,3 +227,79 @@ describe('billing off', () => {
     expect((await off.app.request(`https://app.${BASE}/api/billing/webhook`, { method: 'POST', body: '{}' })).status).toBe(404);
   });
 });
+
+// Security audit M2: what Paddle reports is checked against our own price list and the plan's seat limit.
+describe('a subscription the server did not offer', () => {
+  it('a new subscription for a price that is not ours is refused, and the trial stays a trial', async () => {
+    const theirs = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    const before = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [env.b.orgId])))[0].billing;
+    await paddleSays({ event_id: 'evt_odd_price', event_type: 'subscription.created', occurred_at: '2026-11-13T09:00:00Z', data: subscription({ id: 'sub_odd', customer_id: 'ctm_odd', custom_data: theirs, items: [{ price: { id: 'pri_other_product' }, quantity: 1 }] }) });
+    const after = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [env.b.orgId])))[0].billing;
+    expect(after).toEqual(before);
+    const log = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'billing.refused'`, [env.b.orgId]));
+    expect(log.map((r) => r.meta.why)).toContain('unknown_price');
+    // Paid at Paddle all the same: the owner's console has an alert to refund it (review S5).
+    const [alert] = await env.db.system((q) => q.query(`select body from company_log where kind = 'alert' and ref = 'billing:unknown_price:sub_odd'`));
+    expect(alert?.body).toContain('unknown price');
+  });
+
+  it('a plan too small for the company is flagged when its subscription arrives', async () => {
+    await env.db.system((q) =>
+      q.query(
+        `insert into users (org_id, email, name, role_id, seat, status)
+         select $1, 'many' || g || '@beta.example', 'Many ' || g, (select id from roles where org_id = $1 and key = 'member'), 'full', 'active' from generate_series(1, 101) g`,
+        [env.b.orgId],
+      ),
+    );
+    const theirs = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    await paddleSays({ event_id: 'evt_small_plan', event_type: 'subscription.created', occurred_at: '2026-11-13T09:30:00Z', data: subscription({ id: 'sub_small', customer_id: 'ctm_small', custom_data: theirs, items: [{ price: { id: 'pri_team_m' }, quantity: 3 }] }) });
+    const flagged = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'billing.over_plan'`, [env.b.orgId]));
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].meta).toMatchObject({ plan: 'team', cap: 100 });
+    const [alert] = await env.db.system((q) => q.query(`select meta from company_log where kind = 'alert' and ref = 'billing:over_plan:sub_small'`));
+    expect(alert?.meta).toMatchObject({ why: 'over_plan', cap: 100 });
+    await env.db.system((q) => q.query(`delete from users where org_id = $1 and email like 'many%@beta.example'`, [env.b.orgId]));
+  });
+});
+
+// Security audit L1: every member sees the plan; the billing profile and the provider's ids are for administrators.
+describe('what a member sees of billing', () => {
+  it('the plan and its state, but no tax number, billing address or provider ids', async () => {
+    await env.db.system((q) => q.query(`update orgs set tax_number = 'TAX-ACME-1', billing_email = 'billing@demo.example' where id = $1`, [orgId]));
+    const member = (await lena.get('/api/billing')).json;
+    expect(member.subscription?.plan).toBeTruthy();
+    expect(member.profile).toEqual({ taxNumber: null, billingEmail: null, country: null });
+    expect(member.subscription.providerCustomerId).toBeNull();
+    expect(member.subscription.providerSubscriptionId).toBeNull();
+    expect(JSON.stringify(member)).not.toContain('TAX-ACME-1');
+    const admin = (await ada.get('/api/billing')).json;
+    expect(admin.profile.taxNumber).toBe('TAX-ACME-1');
+    expect(admin.subscription.providerSubscriptionId).toBe('sub_01');
+  });
+});
+
+// Review S5: a checkout changed in the browser to fewer seats than the company has is brought back at once and the
+// owner is told, not only written to the activity log.
+describe('a subscription with fewer seats than the company', () => {
+  it('is changed back to the billed seats and raises an alert', async () => {
+    const [{ n }] = await env.db.system((q) => q.query<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status = 'active'`, [env.b.orgId]));
+    const want = Math.max(3, n);
+    const calls: { url: string; body: any }[] = [];
+    env.fetchHolder.impl = async (url, init) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      calls.push({ url, body });
+      return new Response(JSON.stringify({ data: { id: 'sub_few', status: 'active', customer_id: 'ctm_few', items: [{ price: { id: 'pri_team_m' }, quantity: body.items?.[0]?.quantity ?? 1 }], current_billing_period: { starts_at: '2026-11-01T00:00:00Z', ends_at: '2099-01-01T00:00:00Z' }, scheduled_change: null } }), { status: 200 });
+    };
+    await env.db.system((q) => q.query(`delete from subscriptions where org_id = $1`, [env.b.orgId]));
+    const theirs = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    await paddleSays({ event_id: 'evt_few_seats', event_type: 'subscription.created', occurred_at: '2026-11-13T10:30:00Z', data: subscription({ id: 'sub_few', customer_id: 'ctm_few', custom_data: theirs, items: [{ price: { id: 'pri_team_m' }, quantity: 1 }] }) });
+    await env.settle();
+    const patch = calls.find((c) => c.url.endsWith('/subscriptions/sub_few'));
+    expect(patch?.body.items[0]).toEqual({ price_id: 'pri_team_m', quantity: want });
+    const [row] = await env.db.system((q) => q.query(`select seats from subscriptions where org_id = $1`, [env.b.orgId]));
+    expect(row.seats).toBe(want);
+    const [alert] = await env.db.system((q) => q.query(`select meta from company_log where kind = 'alert' and ref = 'billing:too_few_seats:sub_few'`));
+    expect(alert?.meta).toMatchObject({ why: 'too_few_seats', seats: 1, want, fixed: true });
+  });
+});
+

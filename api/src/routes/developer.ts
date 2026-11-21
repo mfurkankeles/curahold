@@ -1,5 +1,6 @@
 // Settings for builders: personal API keys, apps connected with OAuth
 // (AI assistants among them) and the company's webhooks.
+import { parseAreas, TOKEN_AREAS } from '../lib/tokenScope';
 import type { ApiTokensRow, WebhooksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -23,6 +24,7 @@ const toKey = (r: Row): ApiKeyInfo => ({
   kind: r.kind,
   prefix: r.prefix,
   canWrite: r.can_write,
+  areas: r.areas ?? null,
   userId: r.user_id,
   clientId: r.client_id ?? null,
   createdAt: iso(r.created_at)!,
@@ -51,18 +53,31 @@ developerRoutes.get('/dev/keys', async (c) => {
 developerRoutes.post('/dev/keys', async (c) => {
   if (c.get('tokenKind')) fail('forbidden'); // a key cannot make more keys
   await requireFresh(c);
-  const input = await body(c, z.object({ name: z.string().trim().min(1).max(80), canWrite: z.boolean().default(false), expiresInDays: z.number().int().min(1).max(730).nullable().default(365) }));
+  const input = await body(
+    c,
+    z.object({
+      name: z.string().trim().min(1).max(80),
+      canWrite: z.boolean().default(false),
+      // Optional limit to areas, each read or write (lib/tokenScope.ts); none: every area a key may reach.
+      areas: z.array(z.string().max(30)).max(TOKEN_AREAS.length * 2).optional(),
+      expiresInDays: z.number().int().min(1).max(730).nullable().default(365),
+    }),
+  );
   const auth = c.get('auth');
   const org = c.get('org');
+  const areas = parseAreas(input.areas);
+  if (input.areas?.length && (!areas || areas.length !== new Set(input.areas.map((a) => a.trim().toLowerCase())).size)) fail('validation', { fields: 'areas' }, { fields: ['areas'] });
+  // A write grant in any area is a key that writes; a key that only reads cannot carry one.
+  if (areas && !input.canWrite && areas.some((a) => a.endsWith(':write'))) fail('validation', { fields: 'areas' }, { fields: ['areas'] });
   if (input.canWrite && auth.seat !== 'full') fail('read_only_seat');
   const s = await newSecret(KEY_PREFIX);
   const row = await run(c, async (q) => {
     const [r] = await q.query<ApiTokensRow>(
-      `insert into api_tokens (org_id, user_id, kind, name, token_hash, can_write, prefix, expires_at)
-       values ($1, $2, 'key', $3, $4, $5, $6, case when $7::int is null then null else now() + make_interval(days => $7::int) end) returning *`,
-      [org.id, auth.userId, input.name, s.hash, input.canWrite, s.shown, input.expiresInDays],
+      `insert into api_tokens (org_id, user_id, kind, name, token_hash, can_write, prefix, expires_at, areas)
+       values ($1, $2, 'key', $3, $4, $5, $6, case when $7::int is null then null else now() + make_interval(days => $7::int) end, $8) returning *`,
+      [org.id, auth.userId, input.name, s.hash, input.canWrite, s.shown, input.expiresInDays, areas],
     );
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'api_key.created', entity: 'api_key', entityId: r.id, meta: { name: input.name, write: input.canWrite } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'api_key.created', entity: 'api_key', entityId: r.id, meta: { name: input.name, write: input.canWrite, areas } });
     return r;
   });
   // The only time the key is shown.

@@ -25,7 +25,8 @@ const ids: Record<string, string> = {};
 const boards: Record<string, string> = {};
 let before: Record<string, string[]>;
 
-const sys = (fn: (q: any) => Promise<any>): Promise<any> => db.system(fn);
+// A database from before 0254 has no curahold_system role yet: the old company is built and checked as the owner.
+const sys = (fn: (q: any) => Promise<any>): Promise<any> => db.owner(fn);
 async function seesAll(): Promise<Record<string, string[]>> {
   const out: Record<string, string[]> = {};
   for (const [k, id] of Object.entries(ids)) {

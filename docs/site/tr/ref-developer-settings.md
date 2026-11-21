@@ -72,6 +72,7 @@ Anahtar üretir (yalnızca tarayıcıda). Anahtar bir kez gösterilir.
 | --- | --- | --- | --- |
 | `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
 | `canWrite` | evet/hayır | isteğe bağlı | varsayılan false |
+| `areas` | metin listesi | isteğe bağlı | en çok TOKEN_AREAS.length * 2 öğe |
 | `expiresInDays` | tam sayı | isteğe bağlı | en az 1; en çok 730; boş (null) olabilir; varsayılan 365 |
 
 ### `DELETE /dev/keys/:id`

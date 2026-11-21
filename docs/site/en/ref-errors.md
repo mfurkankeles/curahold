@@ -66,6 +66,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `read_only_token` | 403 | This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes. |
 | `reauth_required` | 403 | Confirm it's you to continue. |
 | `robot_refused` | 403 | Automated access to Curahold needs our written permission. To connect a tool, use the API with a key. |
+| `session_required` | 403 | Only a signed-in person can do this. API keys and connected apps cannot, whatever they were allowed. |
 | `sso_required` | 403 | This company requires single sign-on. Use your organization's SSO to sign in. |
 | `staff_second_step` | 403 | Curahold staff open the console with a passkey or a second step. Add one in My devices, then sign in again. |
 | `support_blocked` | 403 | Support can't open this part, even with permission. |
@@ -73,6 +74,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `support_not_allowed` | 403 | Your company doesn't allow you to let support in. |
 | `support_read_only` | 403 | This support visit is read only. |
 | `terms_required` | 403 | Accept the terms of service and the DPA first — an administrator can do it in one click. |
+| `token_scope` | 403 | This key or app is limited to other areas. Make a key for this area, or reconnect the app and allow it. |
 | `form_off` | 404 | This board does not take requests through a form. |
 | `no_account` | 404 | There is no account for … in this workspace. Ask your administrator to invite you. |
 | `not_found` | 404 | Not found. |

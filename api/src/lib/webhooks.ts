@@ -12,6 +12,8 @@ import { toTask } from './mappers';
 import { fail } from './errors';
 import { privateHost } from '../connectors/messaging/webhook';
 import { hiddenKeys, stripFields, type Viewer } from './fieldAccess';
+import { audit } from './audit';
+import { enqueue, kick } from './notify';
 
 const BACKOFF_MIN = [1, 5, 30, 120, 360];
 const MAX_ATTEMPTS = 6;
@@ -135,9 +137,26 @@ export async function postWebhook(deps: Deps, hook: Row, body: string, event: st
   }
 }
 
+/** Switches off a hook whose creator is gone, once: audit line and a notification to those who manage connections. */
+async function orphan(deps: Deps, orgId: string, h: Row): Promise<void> {
+  const told = await deps.db.system(async (q) => {
+    const off = await q.query(`update webhooks set active = false, last_at = now() where id = $1 and org_id = $2 and active returning id`, [h.id, orgId]);
+    if (!off.length) return false;
+    await audit(q, { orgId, actorId: null, action: 'webhook.orphaned', entity: 'webhook', entityId: h.id, meta: { url: h.url, createdBy: h.created_by ?? null } });
+    const managers = await q.query<{ id: string }>(
+      `select u.id from users u join roles r on r.id = u.role_id
+        where u.org_id = $1 and u.status = 'active' and ('org.manage' = any (r.perms) or 'connections.manage' = any (r.perms))`,
+      [orgId],
+    );
+    await enqueue(q, managers.map((m) => ({ orgId, userId: m.id, kind: 'webhook_orphaned', data: { url: String(h.url).slice(0, 200) } })));
+    return managers.length > 0;
+  });
+  if (told) kick(deps);
+}
+
 /**
- * Sends up to `limit` queued outgoing webhooks (claimed so two workers never send one twice), each body filtered to the
- * fields its company's viewers may see; returns how many were sent.
+ * Sends up to `limit` queued outgoing webhooks (claimed so two workers never send one twice), each body read as the
+ * person who set the hook up (their boards, departments and fields); returns how many were claimed.
  */
 export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
   const claimed = await deps.db.system((q) =>
@@ -149,11 +168,15 @@ export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
     ),
   );
   for (const e of claimed) {
-    const { hooks, data, slug, defs, viewers } = await deps.db.system(async (q) => {
+    const { hooks, data, slug, defs, viewers, active } = await deps.db.system(async (q) => {
       // Only the hooks that do not have this event yet: a retry never sends it twice to one that answered (0247).
       const hooks = await q.query('select * from webhooks where org_id = $1 and active and $2 = any (events) and not (id = any ($3::uuid[]))', [e.org_id, e.event, e.sent_to ?? []]);
       const data = await payloadOf(q, e.org_id, e.event, e.entity_id);
-      return { hooks, data, slug: (await q.query('select slug from orgs where id = $1', [e.org_id]))[0]?.slug, ...(await fieldRules(q, e.org_id, data, hooks)) };
+      const ids = hooks.map((h) => h.created_by).filter(Boolean);
+      const active = new Set(
+        (ids.length ? await q.query<{ id: string }>(`select id from users where org_id = $1 and id = any ($2::uuid[]) and status = 'active'`, [e.org_id, ids]) : []).map((r) => r.id),
+      );
+      return { hooks, data, active, slug: (await q.query('select slug from orgs where id = $1', [e.org_id]))[0]?.slug, ...(await fieldRules(q, e.org_id, data, hooks)) };
     });
     if (!hooks.length || !data) {
       await deps.db.system((q) => q.query(`update webhook_events set state = 'sent' where id = $1`, [e.id]));
@@ -161,8 +184,23 @@ export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
     }
     let allOk = true;
     for (const h of hooks) {
-      // A webhook carries what the person who set it up may see: fields hidden from their role stay out.
-      const body = JSON.stringify({ id: e.id, event: e.event, occurredAt: e.created_at, company: slug, url: orgUrl(deps.config, slug), data: forViewer(data, defs, viewers.get(h.created_by) ?? null) });
+      // A webhook carries only what the person who set it up may see (security audit M4): the row is read again as
+      // them, under row security, so private boards and other departments' boards (ADR 0009) stay out. A hook whose
+      // creator has left sends nothing. Either way the hook counts as done for this event, so it is not retried.
+      if (!active.has(h.created_by)) {
+        // The creator has left (review S6): the hook is switched off, the activity log says why, and the people who
+        // manage connections are told, so a quiet integration does not look healthy for ever. Added again by someone else.
+        await orphan(deps, e.org_id, h);
+        await deps.db.system((q) => q.query('update webhook_events set sent_to = array_append(sent_to, $2::uuid) where id = $1 and org_id = $3', [e.id, h.id, e.org_id]));
+        continue;
+      }
+      const seen = await deps.db.tenant({ orgId: e.org_id, userId: h.created_by }, (q) => payloadOf(q, e.org_id, e.event, e.entity_id));
+      if (!seen) {
+        await deps.db.system((q) => q.query('update webhook_events set sent_to = array_append(sent_to, $2::uuid) where id = $1 and org_id = $3', [e.id, h.id, e.org_id]));
+        continue;
+      }
+      // Fields hidden from their role stay out too.
+      const body = JSON.stringify({ id: e.id, event: e.event, occurredAt: e.created_at, company: slug, url: orgUrl(deps.config, slug), data: forViewer(seen, defs, viewers.get(h.created_by) ?? null) });
       const status = await postWebhook(deps, h, body, e.event);
       const ok = status >= 200 && status < 300;
       // 410 Gone: the receiver says the subscription no longer exists (Zapier's and Make's answer for a deleted Zap or

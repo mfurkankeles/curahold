@@ -98,6 +98,35 @@ describe('OIDC login', () => {
     expect((await me.json()).user.email).toBe('newhire@demo.example');
   });
 
+  // Review S4: a first sign-in refused for the seat limit says so on the login page, as SAML does.
+  it('a first sign-in when the trial is full goes back to the login page with the seat reason', async () => {
+    const [{ n }] = await env.db.system((q) => q.query(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status in ('active', 'invited')`, [env.a.orgId]));
+    await env.db.system((q) => q.query(`update orgs set billing = '{}'::jsonb, trial_seat_cap = $2 where id = $1`, [env.a.orgId, n]));
+    const oidp = await newDemoOidp();
+    const org = await orgRowOf(env, env.a.orgId);
+    await adminApp(env, org, adminAuth(env.a.ids.ada)).request('https://x/api/sso/settings', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ protocol: 'oidc', enabled: true, issuer: oidp.issuer, ssoUrl: 'https://oidc.demo.example/authorize', tokenUrl: 'https://oidc.demo.example/token', jwksUrl: 'https://oidc.demo.example/jwks', clientId: oidp.clientId, clientSecret: 'demo-secret', attrEmail: 'email', attrName: 'name' }),
+    });
+    const app = authApp(env);
+    const start = await app.request(url('acme', `/api/sso/acme/start?device=${newDevice()}`));
+    const loc = new URL(start.headers.get('location')!);
+    const state = loc.searchParams.get('state')!;
+    const nonce = loc.searchParams.get('nonce')!;
+    env.fetchHolder.impl = async (u: string) => {
+      if (u === 'https://oidc.demo.example/token') return new Response(JSON.stringify({ id_token: await oidp.sign(oidp.claims({ nonce, email: 'one-more@demo.example', name: 'One More' })) }), { headers: { 'content-type': 'application/json' } });
+      if (u === 'https://oidc.demo.example/jwks') return new Response(JSON.stringify(oidp.jwks), { headers: { 'content-type': 'application/json' } });
+      return new Response('no', { status: 404 });
+    };
+    const cb = await app.request(url('acme', `/api/sso/acme/oidc/callback?code=abc124&state=${encodeURIComponent(state)}`));
+    const back = new URL(cb.headers.get('location')!);
+    expect(back.pathname).toBe('/login');
+    expect(back.searchParams.get('error')).toBe('seat_cap_reached');
+    expect(back.searchParams.get('cap')).toBe(String(n));
+    await env.db.system((q) => q.query(`update orgs set trial_seat_cap = null where id = $1`, [env.a.orgId]));
+  });
+
   it('rejects an id_token whose nonce does not match (no session)', async () => {
     const oidp = await newDemoOidp();
     const org = await orgRowOf(env, env.a.orgId);

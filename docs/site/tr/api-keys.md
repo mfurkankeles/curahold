@@ -33,6 +33,25 @@ Anahtarla yapılan istekler, anahtarın sahibinin yaptığı istekler gibi işle
 
 Bir anahtar asla şu işleri yapamaz: yeni anahtar oluşturmak, bir uygulamaya OAuth onayı vermek, "Onun gözünden bak" kullanmak.
 
+## Yalnızca oturum açmış kişinin yapabildikleri
+
+Bir anahtara ya da uygulamaya hangi izin verilmiş olursa olsun şu adresler `403 session_required` döner: yönetim (roller,
+kişiler, birini kaldırmak ya da verisini dışa aktarmak, şirketi silme, alan adları, etkinlik kaydı, güvenlik ayarları),
+tek oturum açma (SSO) ve SCIM, faturalama, API anahtarları, bağlı sohbet uygulamaları ve CRM'ler, kendi
+oturum açma güvenliğiniz ve oturumlarınız, destek erişimi. Bunlar için oturum açmış olmanız gerekir; bazıları sizden
+kimliğinizi yeniden doğrulamanızı ister. Yönetici izni gerektiren her şey de (şirket, kişiler ve ekipler, etkinlik
+kaydı, gizlilik, müşteri ayarları ve içe aktarma, otomasyonlar, bağlantılar), adresi ne olursa olsun, yalnızca oturum
+açmış kişiye açıktır. Tek istisna bir webhook'a abone olmaktır (`/api/dev/webhooks`).
+
+## Anahtarı alanlarla sınırlamak
+
+API ile oluşturulan bir anahtar (`POST /api/dev/keys`) `areas` taşıyabilir; her biri okuma ya da yazma içindir: `work`
+(panolar, görevler, sayfalar, otomasyonlar), `customers` (müşteriler, kayıtlar, talepler, portal, onboarding), `reports`
+(raporlar, arama, dışa aktarma, analiz) `people` (kişi listesi ve kendi profiliniz) ve `webhooks` (otomasyon platformlarının yaptığı gibi giden webhook'lara
+abone olmak). Örneğin
+`"areas": ["work:write", "customers:read"]`. Bu alanların dışındaki her şey `403 token_scope` döner; `GET /api/me` her
+zaman çalışır. Yazma izni için **Değişiklik yapabilir** işaretli olmalıdır. `areas` olmadan anahtar her alana ulaşır.
+
 ## İptal ve gözetim
 
 - Anahtarlarınızı Ayarlarınız sayfasından görür, istediğinizi **İptal et** ile hemen kapatabilirsiniz.

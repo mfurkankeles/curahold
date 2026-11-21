@@ -66,6 +66,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `read_only_token` | 403 | Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluşturun ya da uygulamayı yeniden bağlayıp değişikliğe izin verin. |
 | `reauth_required` | 403 | Devam etmek için kimliğinizi onaylayın. |
 | `robot_refused` | 403 | Curahold'a otomatik erişim için yazılı iznimiz gerekir. Bir aracı bağlamak için API'yi bir anahtarla kullanın. |
+| `session_required` | 403 | Bunu yalnızca oturum açmış bir kişi yapabilir. API anahtarları ve bağlı uygulamalar, hangi izni almış olurlarsa olsunlar bunu yapamaz. |
 | `sso_required` | 403 | Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO'sunu kullanın. |
 | `staff_second_step` | 403 | Curahold çalışanları konsolu passkey ya da ikinci adımla açar. Cihazlarım sayfasından bir tane ekleyin, sonra yeniden giriş yapın. |
 | `support_blocked` | 403 | Destek, izin olsa da bu bölümü açamaz. |
@@ -73,6 +74,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `support_not_allowed` | 403 | Şirketiniz desteğe erişim vermenize izin vermiyor. |
 | `support_read_only` | 403 | Bu destek oturumu yalnızca okuma için. |
 | `terms_required` | 403 | Önce hizmet koşullarını ve DPA'yı kabul et — bir yönetici tek tıkla yapabilir. |
+| `token_scope` | 403 | Bu anahtar ya da uygulama başka alanlarla sınırlı. Bu alan için bir anahtar oluşturun ya da uygulamayı yeniden bağlayıp bu alana izin verin. |
 | `form_off` | 404 | Bu pano formla talep almıyor. |
 | `no_account` | 404 | Bu çalışma alanında … için hesap yok. Yöneticinizden sizi davet etmesini isteyin. |
 | `not_found` | 404 | Bulunamadı. |

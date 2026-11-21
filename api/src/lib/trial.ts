@@ -138,6 +138,9 @@ export async function seatGuard(q: Q, orgId: string, adding: number, seat: strin
   // A paying company: its plan's seat limit (shared/src/plans.json → caps.seatsMax; null: none).
   const planCap = paying ? (planOf(o.plan)?.caps.seatsMax ?? null) : null;
   if (paying ? planCap == null : o.cap == null) return;
+  // One seat decision at a time per company, until the caller's transaction ends (review S3): SCIM pushes, domain
+  // joins and first sign-ins arrive in parallel, and each would otherwise count the same free seats.
+  await q.query(`select pg_advisory_xact_lock(hashtext('seats:' || $1::text))`, [orgId]);
   const [n] = await q.query<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status in ('active', 'invited')`, [
     orgId,
   ]);

@@ -47,6 +47,8 @@ export type ErrorCode =
   | 'field_locked'
   | 'preview_read_only'
   | 'read_only_token'
+  | 'session_required'
+  | 'token_scope'
   | 'bad_webhook_url'
   | 'support_ended'
   | 'support_blocked'
@@ -145,6 +147,8 @@ const STATUS: Record<ErrorCode, number> = {
   handover_confirmed: 409,
   preview_read_only: 403,
   read_only_token: 403,
+  session_required: 403,
+  token_scope: 403,
   bad_webhook_url: 400,
   support_ended: 401,
   support_blocked: 403,

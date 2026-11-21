@@ -37,7 +37,8 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `DESK_HOST` | Host of Curahold's own support desk | No | `desk.<BASE_DOMAIN>`. |
 | `PORTAL_DOMAIN` | Customer portal's own registrable domain | No | Unset: no portal. Must be set on **both** Workers. Self-host: the portal is this address. |
 | `DEMO_CRM` | `1` offers the pretend CRM | No | Live demo only. Never set in production. |
-| `HYPERDRIVE` (binding) | Hyperdrive config, exposes `connectionString` | Yes (hosted) | Config id in `wrangler.toml` `[[hyperdrive]]`. |
+| `HYPERDRIVE` (binding) | Hyperdrive config, exposes `connectionString` | Yes (hosted) | Config id in `wrangler.toml` `[[hyperdrive]]`. Its login should own nothing and be a member of `curahold_app`, `curahold_portal` and `curahold_system` (RUNBOOK "Database roles", ADR 0023). |
+| `MIGRATION_DATABASE_URL` | The table owner's connection string for `npm run migrate` (superuser or BYPASSRLS) | Yes (deploy) | Falls back to `DATABASE_URL`. Never given to the Worker. |
 | `FILES` (binding) | R2 bucket for attachments and logos | Yes (hosted) | Bucket `curahold-files`. |
 | `ASSETS` (binding) | Static assets (the built web app) | Yes (hosted) | Provided by the `[assets]` block. |
 | `LIVE` (binding) | Durable Object class `LiveRoomDO`: the live channel (one room per company, plus the console's `platform` room) | Yes (hosted) | `[[durable_objects.bindings]]` in `wrangler.toml`. Without it the app polls. |
@@ -104,7 +105,7 @@ customer is the controller of where it is.
 | `PADDLE_API_KEY` **(S)** | Server-side API key | For billing | Unset: billing off, everything open. |
 | `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies Paddle webhook signatures (`/api/inbound/billing/paddle`, also the older `/api/billing/webhook`) | For billing | |
 | `PADDLE_CLIENT_TOKEN` | Client-side token for Paddle.js (safe in browsers) | For billing | |
-| `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. |
+| `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. Checkout is a transaction the server makes with these prices and the company's seats; a **new** subscription for any other price is refused (`billing.refused`, `unknown_price`), so change a price here before or with Paddle. |
 | `BILLING_MIN_SEATS` | The fewest seats a subscription is billed for, JSON by plan (or `*`), interval and price region key (or `*`): `{"*":{"month":{"*":3,"in":5},"year":{"*":3,"my":4,"in":6}}}`. Checkout, plan changes and the hourly seat sync never send fewer (`billedSeats`, api/src/billing/service.ts); the Billing screen counts the total with it | No | The JSON shown (pricing audit, option B; owner decision open, ADR 0022). Unreadable JSON keeps the defaults. |
 | Trial width | Not an environment key: the owner console's **trial.seatCap** (default `trial.autoApproveSeats` in shared/src/plans.json, 25) and `trial.caps.storageGbPerSeat` in plans.json (1 GB a seat) | — | 25 seats (the owner's approved default; 10 is an open owner question), 1 GB a seat (was the Business plan's 10 GB; ADR 0022). |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |
@@ -224,7 +225,8 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | Key | Purpose | Required | Default / notes |
 | --- | --- | --- | --- |
 | `PUBLIC_URL` | The address people open, exactly as in the browser (HTTPS in front) | **Yes** | App throws without it. Sets base domain, scheme and port. |
-| `DATABASE_URL` | Postgres connection string (16+; user must be able to create roles on first start) | **Yes** | Compose builds it from `DB_PASSWORD`. Also used by `npm run migrate`. |
+| `DATABASE_URL` | Postgres connection string (16+; user must be able to create roles on first start) | **Yes** | Compose builds it from `DB_PASSWORD`. Also used by `npm run migrate` when `MIGRATION_DATABASE_URL` is not set. |
+| `MIGRATION_DATABASE_URL` | The table owner's connection string, used only to migrate (on start and by `npm run migrate`); then `DATABASE_URL` can be a login that owns nothing (ADR 0023, `db/ops/role-separation.sql`) | No | Unset: `DATABASE_URL` migrates too, as before. The owner must be a superuser or have BYPASSRLS (migration 0254). |
 | `DB_PASSWORD` | Postgres password for `docker-compose.yml` | Yes (Compose) | Letters and digits only. |
 | `ADMIN_EMAIL` | First administrator (first start only) | **Yes on first start** | Signs in with an emailed link. |
 | `ADMIN_NAME` | Display name of the first administrator | No | Local part of `ADMIN_EMAIL`. |

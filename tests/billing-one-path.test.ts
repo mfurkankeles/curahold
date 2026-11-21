@@ -209,12 +209,14 @@ describe('caps on what costs money', () => {
   });
 
   it('checkout refuses a plan whose seat limit is below the company’s full seats', async () => {
+    env.fetchHolder.impl = async () => new Response(JSON.stringify({ data: { id: 'txn_one_path' } }), { status: 201 });
     const [{ n }] = await sys<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status = 'active'`, [orgId]);
     expect(n).toBeGreaterThan(0);
     expect((await ada.post('/api/billing/checkout', { plan: 'business', interval: 'year' })).status).toBe(200);
   });
 
   it('never sells where Curahold is never offered: billing country, checkout and the connection (NEVER_OFFERED)', async () => {
+    env.fetchHolder.impl = async () => new Response(JSON.stringify({ data: { id: 'txn_one_path' } }), { status: 201 });
     const refused = await ada.patch('/api/billing/profile', { taxNumber: null, billingEmail: null, country: 'IR' });
     expect(refused.status).toBe(451);
     expect(refused.json.error).toBe('country_not_offered');

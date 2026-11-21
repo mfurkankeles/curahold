@@ -33,19 +33,26 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
    or change, whatever the SQL says.
 3. **The customer portal** is a separate deployment on a separate registrable domain, uses its own people and sessions,
    and reaches the database as `curahold_portal`, which has no table privileges and can only call `portal_*` functions.
-4. **`db.system()` is the exception, and the sharp edge.** It runs as the connecting (owner) database user and **bypasses RLS**.
-   It is used for migrations, sign-in lookups before a company is known, inbound webhooks, the hourly scheduler, CRM sync
-   and error recording. Every such query must itself filter by `org_id`, taken from a trusted source.
+4. **`db.system()` is the exception, and the sharp edge.** It runs as `curahold_system`, which reaches **every company's rows**
+   through its own policy but owns nothing (no schema, policy or trigger changes; migration 0254, ADR 0023). It is used for
+   sign-in lookups before a company is known, inbound webhooks, the hourly scheduler, CRM sync and error recording. Every
+   such query must itself filter by `org_id`, taken from a trusted source. Migrations alone run as the owner (`db.owner()`).
 5. **Automated gates** (required CI checks): `tests/rls.test.ts` (every company table has RLS and a policy or no privileges,
    definer functions pin `search_path`, static scan of `system()` queries against a baseline that can only shrink),
    `tests/isolation.test.ts`, and `tests/isolation-routes.test.ts` (every id-taking route is called as another company's
    admin and must answer 404 and leave all rows unchanged).
 6. **Credentials at rest**: connector tokens and secrets are sealed (AES-256-GCM, HKDF from `SECRETS_KEY`); sign-in and API tokens are stored
-   only as SHA-256 hashes; passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
+   only as SHA-256 hashes, and the answer kept for a repeated request never holds a key, secret, code or secret link
+   (only its status; kept a day, `lib/repeats.ts`); passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
 7. **Browser hardening**: strict CSP (scripts only from this site plus Paddle's checkout; one inline theme script by hash),
-   HSTS, no framing, no content sniffing, on API answers and static files (kept in step by `tests/security.test.ts`).
-8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write; the
-   AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
+   HSTS, no framing, no content sniffing, on API answers and static files of the app and the portal (kept in step by
+   `tests/security.test.ts`).
+8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write, may be
+   limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`, each read or write), and never reach administration, SSO and
+   SCIM, billing, keys, connections, a person's own security settings or support access (`session_required`,
+   ADR 0024). Administrator-level permissions are withheld from every token, in the route and in row security
+   (`app_has_perm`, migration 0259), so any route needing one is for a signed-in person; a route that asks for a fresh
+   sign-in refuses tokens too. The AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
    access, **read only** (no edit grants; the database refuses one, migration 0054), with the entry and what is read every
    five minutes written to the company's audit trail.
 10. **Identity**: passkeys (WebAuthn) and an authenticator-app second step (TOTP, RFC 6238) with ten one-time recovery
@@ -63,10 +70,10 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 
 ### What this model does NOT give you
 
-- RLS defends against **application bugs**. Because the API connects as the user that owns the tables (so it can `set role` and
-  run `system()` work) and no table uses `FORCE ROW LEVEL SECURITY`, an attacker who achieves **arbitrary SQL execution** as that login (SQL
-  injection, a compromised database credential) can `reset role` and read every company. Parameterised queries everywhere are not
-  optional, and the hardening in the next section reduces the blast radius.
+- RLS defends against **application bugs**. Every table forces row security and the server's own work runs as a role that owns
+  nothing (ADR 0023), but the application's login may still become `curahold_system`, so an attacker who achieves **arbitrary SQL
+  execution** on that login (SQL injection, a compromised database credential) can read every company — and, until the operator
+  splits the login from the owner (row 2 below), change the schema too. Parameterised queries everywhere are not optional.
 - Anything done through `db.system()` is only as safe as its `where org_id = ...`.
 - A compromised `AUTH_SECRET` allows forging state tokens, sign-up tickets and file-download links; a compromised `SECRETS_KEY`
   exposes stored CRM and chat credentials. See rotation in the runbook.
@@ -78,7 +85,7 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 - **Authorisation matrix**: `tests/isolation-routes.test.ts` calls every API address as five roles (admin, manager, member,
   read-only seat, a role with no permission). A new address without a classification fails the test.
 - **Field permissions on every way out**: list, one record, export pages, search, API keys, the AI connector, webhooks
-  (filtered by the role of the person who set the webhook up), health reasons, timeline, the weekly email and the
+  (read again as the person who set the webhook up: their boards, departments and fields; nothing once they have left), health reasons, timeline, the weekly email and the
   whitespace table (`tests/field-outs.test.ts`).
 - **Versions** on tasks, customers and records: a save naming the version it started from is refused (409, with the
   current value) only when the same field changed meanwhile; different fields merge. Writers that send no version
@@ -102,7 +109,7 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
   addresses (`redact()` in `api/src/lib/errlog.ts`, `tests/redact.test.ts`).
 
 Still open (details in asvs.md): a separate files domain (needs the owner's domain), `'unsafe-inline'` styles in the CSP
-(the design package removes them), and role separation (row 2 below).
+(the design package removes them), and the operator's half of role separation (row 2 below).
 
 ## Robots, scrapers and bots
 
@@ -149,7 +156,7 @@ honestly; items marked OPEN are not done today.
 | # | Requirement | Why | Status |
 | --- | --- | --- | --- |
 | 1 | **Request limits** | Flooding, brute force, email bombing. | **Done in the application** (`api/src/lib/ratelimit.ts`): token buckets per network address, per person, per company, with tighter budgets for sign-in steps, invitations, search, exports and the AI connector; 429 with `Retry-After`. On Workers the buckets live per isolate (approximate under a spread-out attack); self-hosted, one process sees all and the limit is exact. Invitations per company per hour are counted in the database (exact everywhere). Optional extra: one free Cloudflare rate rule on `POST /api/auth/*` and `/papi/auth/*`. |
-| 2 | **Role separation**: a separate login role for the API that does not own the tables, with `FORCE ROW LEVEL SECURITY` for the request roles, plus a distinct, tightly guarded owner/migration role used only by `system()` work | Limits the damage of SQL injection or a leaked DB credential (see above). The current model uses one owner login; README "Database roles" describes the minimum. | **OPEN** (deployment, not schema). Design needed because `system()` paths currently share the connection. |
+| 2 | **Role separation**: the API's login does not own the tables; `FORCE ROW LEVEL SECURITY` on every table; `system()` work as a role that owns nothing; the owner only migrates | Limits the damage of SQL injection or a leaked DB credential (see above). | **Schema and code: DONE** (migration 0254, ADR 0023; `tests/rls.test.ts` asserts FORCE, the system role and that only `db/migrate.ts` uses the owner). **Operator: OPEN** until the Worker connects as `curahold_login` and only `MIGRATION_DATABASE_URL` holds the owner (`db/ops/role-separation.sql`, RUNBOOK "Database roles"). |
 | 3 | `PLATFORM_OWNER` (or `SUPPORT_STAFF`) set in every multi-company install | Owner-only metrics fail closed; the app refuses to start without it. | Enforced at start. |
 | 4 | Per-person support keys (`STAFF_KEYS`) in production, shared `STAFF_KEY` disabled in practice | Every support entry must be attributable; one leaver = one key removed. | Supported; operator must configure. |
 | 5 | Secrets only as Worker secrets (`wrangler secret put`), never in `[vars]`, git, logs or tickets; `AUTH_SECRET` >= 32 random chars | Basic hygiene; `.env`, `.env.*`, `.dev.vars` are git-ignored. | Operator. |

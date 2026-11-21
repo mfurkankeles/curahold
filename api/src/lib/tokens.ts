@@ -1,6 +1,7 @@
 // API keys and OAuth tokens: random, shown once, stored as hashes. A token
 // always acts as the person it belongs to (their role, reach and fields);
-// a read-only token cannot change anything even if the person could.
+// a read-only token cannot change anything even if the person could, and no
+// token reaches administration or identity (lib/tokenScope.ts, ADR 0024).
 import type { Db } from '../db';
 import { randomToken, sha256Hex } from './crypto';
 
@@ -22,6 +23,8 @@ export interface TokenUser {
   tokenId: string;
   kind: 'key' | 'oauth' | 'analytics';
   canWrite: boolean;
+  /** The areas the token is limited to (lib/tokenScope.ts); null: every area a token may reach. */
+  areas: string[] | null;
   /** Analytics keys only: the datasets and departments the key is limited to (null = no limit). */
   scope?: { datasets: string[] | null; departments: string[] | null };
   user: Record<string, any>;
@@ -37,7 +40,7 @@ export async function resolveToken(db: Db, orgId: string, token: string, opts: {
   const hash = await sha256Hex(token);
   const rows = await db.system((q) =>
     q.query(
-      `select t.id as token_id, t.kind, t.can_write, t.datasets, t.departments, t.last_used_at < now() - interval '5 minutes' or t.last_used_at is null as stale,
+      `select t.id as token_id, t.kind, t.can_write, t.areas, t.datasets, t.departments, t.last_used_at < now() - interval '5 minutes' or t.last_used_at is null as stale,
               u.id as user_id, u.name, u.email, u.seat, u.status, u.locale, r.id as role_id, r.key as role_key, app_perms_of(u.id, r.perms) as perms,
               array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
          from api_tokens t join users u on u.id = t.user_id and u.org_id = t.org_id join roles r on r.id = u.role_id
@@ -51,5 +54,5 @@ export async function resolveToken(db: Db, orgId: string, token: string, opts: {
   if ((t.kind === 'analytics') !== token.startsWith(ANALYTICS_PREFIX)) return null;
   if (t.stale) await db.system((q) => q.query('update api_tokens set last_used_at = now() where id = $1', [t.token_id]));
   const scope = t.kind === 'analytics' ? { datasets: t.datasets ?? null, departments: t.departments ?? null } : undefined;
-  return { tokenId: t.token_id, kind: t.kind, canWrite: t.kind === 'analytics' ? false : t.can_write, scope, user: t };
+  return { tokenId: t.token_id, kind: t.kind, canWrite: t.kind === 'analytics' ? false : t.can_write, areas: t.areas ?? null, scope, user: t };
 }

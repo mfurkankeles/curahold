@@ -188,6 +188,39 @@ describe('email: a link and a code', () => {
     expect((await again.get('/papi/me')).status).toBe(200);
   });
 
+  // Security audit M5: guesses are counted one by one even when they arrive together, and a person's codes lock after
+  // ten wrong tries in a row, however many new codes were asked for.
+  it('parallel guesses count one by one; ten wrong codes in a row lock the person for a while', async () => {
+    const fresh = async () => {
+      await later();
+      const p = new PortalClient();
+      await p.post('/papi/auth/start', { email: SELIN });
+      await env.settle();
+      const code = codeIn(lastMail(SELIN).subject);
+      return { p, code, wrong: code === '000000' ? '111111' : '000000' };
+    };
+    const one = await fresh();
+    const all = await Promise.all(Array.from({ length: 20 }, () => one.p.post('/papi/auth/code', { email: SELIN, code: one.wrong })));
+    expect(all.every((r) => r.json.error === 'portal_bad_code')).toBe(true);
+    const [spent] = await env.db.system((q) =>
+      q.query<{ attempts: number }>(
+        `select t.attempts from portal_tokens t join portal_users pu on pu.id = t.portal_user_id where pu.email = $1 and t.kind = 'link' order by t.created_at desc limit 1`,
+        [SELIN],
+      ),
+    );
+    expect(spent.attempts).toBe(5);
+    const two = await fresh();
+    for (let i = 0; i < 5; i++) expect((await two.p.post('/papi/auth/code', { email: SELIN, code: two.wrong })).json.error).toBe('portal_bad_code');
+    // Ten wrong in a row: even the right code of a new e-mail does not open the portal now.
+    const three = await fresh();
+    expect((await three.p.post('/papi/auth/code', { email: SELIN, code: three.code })).json.error).toBe('portal_bad_code');
+    // Once the lock has run out, it does.
+    await env.db.system((q) => q.query(`update portal_users set code_locked_until = now() - interval '1 minute' where email = $1`, [SELIN]));
+    expect((await three.p.post('/papi/auth/code', { email: SELIN, code: three.code })).status).toBe(200);
+    const [after] = await env.db.system((q) => q.query<{ code_failed: number }>(`select code_failed from portal_users where email = $1`, [SELIN]));
+    expect(after.code_failed).toBe(0);
+  });
+
   it('sends at most five emails an hour to one address, and answers the same', async () => {
     await later();
     const p = new PortalClient();

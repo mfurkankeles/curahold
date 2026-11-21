@@ -43,7 +43,7 @@ Most MCP clients do this by themselves. If you are writing your own:
 
 1. **Discovery:** `GET /.well-known/oauth-protected-resource`, then `GET /.well-known/oauth-authorization-server`.
 2. **Registration (RFC 7591):** `POST /oauth/register` with `client_name` and `redirect_uris`. Redirect addresses must be `https`, or loopback (`http://127.0.0.1`, `http://localhost`). The answer carries a `client_id`; there is no client secret.
-3. **Authorisation:** send the person to `GET /oauth/authorize` with `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state` and, optionally, `scope=read write`.
+3. **Authorisation:** send the person to `GET /oauth/authorize` with `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state` and, optionally, `scope=read write`. To limit the app to areas, add them to the scope: `scope=work:write customers:read` (areas as for [API keys](/docs/en/api-keys/)). No app token reaches administration, sign-in settings or billing (`403 session_required`).
 4. The person sees Curahold's consent screen, signs in and approves. The browser returns to `redirect_uri?code=…&state=…`.
 5. **Token:** `POST /oauth/token` with `grant_type=authorization_code`, `code`, `client_id`, `redirect_uri`, `code_verifier`.
 6. **Refresh:** access tokens last 1 hour. Refresh with `grant_type=refresh_token`; each refresh returns a new refresh token and retires the old one. A refresh token unused for 90 days lapses.

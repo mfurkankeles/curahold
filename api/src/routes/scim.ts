@@ -16,6 +16,8 @@
 import type { UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { orgUrl, type AppEnv, type C, type OrgRow } from '../context';
+import { HttpError } from '../lib/errors';
+import { seatGuard } from '../lib/trial';
 import { audit } from '../lib/audit';
 import { sha256Hex } from '../lib/crypto';
 
@@ -36,6 +38,7 @@ interface UserRow {
   email: string;
   name: string;
   status: string;
+  seat: string;
   created_at: string;
   last_active_at: string | null;
 }
@@ -59,7 +62,7 @@ function toScimUser(c: C, slug: string, u: UserRow) {
   };
 }
 
-const COLS = 'id, email, name, status, created_at, last_active_at';
+const COLS = 'id, email, name, status, seat, created_at, last_active_at';
 const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
 // ---------------------------------------------------------- authenticate
@@ -158,9 +161,11 @@ scimRoutes.post('/Users', async (c) => {
   if (!validEmail(email)) return scimError(c, 400, 'A valid userName / email is required', 'invalidValue');
   const name = nameOf(b, email);
   const active = b.active !== false;
-  const result = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
+  const result = await seatRefused(c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
     const [existing] = await q.query<{ id: string }>(`select id from users where email = $1`, [email]);
     if (existing) return { conflict: true as const };
+    // Money (security audit M3): an identity provider adds seats like an invitation does, within the trial's or the plan's limit.
+    if (active) await seatGuard(q, org.id, 1);
     const [role] = await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
     const [u] = await q.query<UserRow>(
       `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, 'full', $5) returning ${COLS}`,
@@ -168,7 +173,8 @@ scimRoutes.post('/Users', async (c) => {
     );
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.provisioned', entity: 'user', entityId: u.id, meta: { via: 'scim' } });
     return { user: u };
-  });
+  }));
+  if ('seats' in result) return scimError(c, 403, result.seats);
   if ('conflict' in result) return scimError(c, 409, 'A user with this userName already exists', 'uniqueness');
   return scimJson(c, 201, toScimUser(c, org.slug, result.user));
 });
@@ -184,16 +190,19 @@ scimRoutes.put('/Users/:id', async (c) => {
   } catch {
     return scimError(c, 400, 'Invalid JSON', 'invalidSyntax');
   }
-  const out = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
+  const out = await seatRefused(c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
     const [cur] = await q.query<UserRow>(`select ${COLS} from users where id = $1 and status <> 'deleted'`, [id]);
     if (!cur) return { missing: true as const };
     const name = nameOf(b, cur.email);
     const off = b.active === false || String(b.active).toLowerCase() === 'false';
     const status = off ? 'disabled' : cur.status === 'disabled' ? (b.active === true || String(b.active).toLowerCase() === 'true' ? 'active' : 'disabled') : cur.status;
+    // Turning a disabled full seat back on takes a seat again (M3).
+    if (cur.status === 'disabled' && status === 'active' && cur.seat === 'full') await seatGuard(q, org.id, 1);
     const [u] = await q.query<UserRow>(`update users set name = $2, status = $3 where id = $1 returning ${COLS}`, [id, name, status]);
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.updated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return { user: u };
-  });
+  }));
+  if ('seats' in out) return scimError(c, 403, out.seats);
   if ('missing' in out) return scimError(c, 404, 'User not found');
   return scimJson(c, 200, toScimUser(c, org.slug, out.user));
 });
@@ -218,7 +227,7 @@ scimRoutes.patch('/Users/:id', async (c) => {
     return scimError(c, 400, 'Invalid JSON', 'invalidSyntax');
   }
   const ops = Array.isArray(b.Operations) ? b.Operations : [];
-  const out = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
+  const out = await seatRefused(c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
     const [cur] = await q.query<UserRow>(`select ${COLS} from users where id = $1 and status <> 'deleted'`, [id]);
     if (!cur) return { missing: true as const };
     let name = cur.name;
@@ -254,10 +263,12 @@ scimRoutes.patch('/Users/:id', async (c) => {
       name = [given ?? first, family ?? rest.join(' ')].filter(Boolean).join(' ').trim() || name;
     }
     const status = active ? (cur.status === 'invited' ? 'invited' : 'active') : 'disabled';
+    if (cur.status === 'disabled' && status === 'active' && cur.seat === 'full') await seatGuard(q, org.id, 1);
     const [u] = await q.query<UserRow>(`update users set name = $2, status = $3 where id = $1 returning ${COLS}`, [id, name, status]);
     await audit(q, { orgId: org.id, actorId: null, action: active ? 'sso.updated' : 'sso.deactivated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return { user: u };
-  });
+  }));
+  if ('seats' in out) return scimError(c, 403, out.seats);
   if ('missing' in out) return scimError(c, 404, 'User not found');
   return scimJson(c, 200, toScimUser(c, org.slug, out.user));
 });
@@ -276,6 +287,21 @@ scimRoutes.delete('/Users/:id', async (c) => {
   if ('missing' in out) return scimError(c, 404, 'User not found');
   return c.body(null, 204);
 });
+
+/**
+ * A seat limit or the unaccepted terms (seatGuard) as a SCIM answer instead of an exception: the identity provider
+ * shows the reason and retries later, nothing was written (the transaction rolled back).
+ */
+async function seatRefused<T>(work: Promise<T>): Promise<T | { seats: string }> {
+  try {
+    return await work;
+  } catch (e) {
+    // 403 with a plain reason (review nit): a 409 on create reads as "already exists" to some identity providers.
+    if (e instanceof HttpError && e.code === 'terms_required') return { seats: 'The company has not accepted the terms yet: an administrator does it in Curahold first.' };
+    if (e instanceof HttpError && ['seat_cap_reached', 'plan_limit_seats'].includes(e.code)) return { seats: 'No seat left for a new person: the company is at its seat limit.' };
+    throw e;
+  }
+}
 
 scimRoutes.all('*', (c) => scimError(c, 404, 'Not found'));
 
