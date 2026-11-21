@@ -102,7 +102,7 @@ The current list is the **Sub-processors** page, generated from Curahold's data 
 
 ## Annex 4 — Transfer riders
 
-Attach the rider for the Customer's country to be completed by the lawyer):
+Attach the rider for the Customer's country (to be completed by the lawyer):
 
 | Customer in | Rider |
 | --- | --- |

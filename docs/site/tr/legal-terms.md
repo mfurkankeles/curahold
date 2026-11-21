@@ -36,9 +36,10 @@ Müşteri, kullanıcılarından, giriş bilgilerinin güvenliğinden ve hesabın
 - Ücretli planlar, ödeme ekranında ya da Sipariş formunda seçildiği gibi **aylık ya da yıllık** faturalanır ve sona erdirilene kadar aynı uzunlukta yeni bir dönem için kendiliğinden yenilenir.
 - **Aylık** plan herhangi bir ayın sonunda sona erdirilebilir (aylık çıkış hakkı). **Yıllık** plan ödenen yıl boyunca sürer: sona erdirmek bir sonraki yenilemeyi durdurur ve plan o yılın sonuna kadar etkin kalır. Yıllık plan yenilenmeden en az [30] gün önce yöneticilere haber veririz.
 - Daha büyük bir plan ya da ek koltuk, dönemin kalanı için kıst olarak hemen faturalanır; daha küçük bir plan ya da daha az koltuk, kıst tutar olarak bir sonraki faturada mahsup edilir.
+- Her plan en az **asgari sayıda tam koltuk** üzerinden faturalanır (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla). Bu sayı satın almadan önce Abonelik sayfasında gösterilir; bu sayıya kadar olan tam koltuklar ek ücrete yol açmaz.
 - İadeler **İade politikasına** göre yapılır: başlamış bir dönemin kullanılmayan kısmı iade edilmez; politikada sayılan hâller (2. ve 19. maddeler dahil) ve emredici hukukun gerektirdiği durumlar saklıdır.
 - Fiyatları en az **30 gün** önceden bildirerek değiştirebiliriz; değişiklik bildirim süresinin bittiği sonraki dönemden itibaren uygulanır, yani yıllık plan yenilenene kadar fiyatını korur.
-- **Satıcı:** kendi yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den, onun alıcı koşullarına göre yapılır; faturayı Paddle keser ve vergiyi o tahsil eder. Hizmet'i kullanma hakkı, VİS ve SLA Müşteri ile Curahold arasında kalır. Doğrudan faturalanan kurumsal müşteriler Sipariş formu kullanır.
+- **Satıcı:** uygulama üzerinden doğrudan yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den, onun alıcı koşullarına göre yapılır; faturayı Paddle keser ve vergiyi o tahsil eder. Hizmet'i kullanma hakkı, VİS ve SLA Müşteri ile Curahold arasında kalır. Doğrudan faturalanan kurumsal müşteriler Sipariş formu kullanır.
 
 ## 6. Vergiler
 

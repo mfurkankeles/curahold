@@ -33,7 +33,7 @@ Pelan tahunan dibayar untuk setahun penuh. Menamatkannya menghentikan pembaharua
 
 ## Menukar pelan atau tempat duduk
 
-Pelan yang lebih besar atau lebih banyak tempat duduk dibilkan serta-merta, secara pro rata bagi baki tempoh. Pelan yang lebih kecil atau kurang tempat duduk tidak dibayar balik dalam bentuk wang: perbezaannya dikreditkan secara pro rata pada bil seterusnya.
+Pelan yang lebih besar atau lebih banyak tempat duduk dibilkan serta-merta, secara pro rata bagi baki tempoh. Pelan yang lebih kecil atau kurang tempat duduk tidak dibayar balik dalam bentuk wang: perbezaannya dikreditkan secara pro rata pada bil seterusnya. Mengurangkan tempat duduk tidak sekali-kali menurunkan bil di bawah bilangan minimum tempat duduk penuh pelan (biasanya 3; lebih di sesetengah rantau dan untuk bil tahunan), yang ditunjukkan di halaman Pengebilan.
 
 ## Kredit perkhidmatan
 

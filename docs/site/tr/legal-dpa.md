@@ -102,7 +102,7 @@ Güncel liste, Curahold'un veri envanterinden üretilen **Alt işleyenler** sayf
 
 ## Ek 4 — Aktarım ekleri
 
-Müşteri'nin ülkesine ait ek eklenir avukat tamamlayacak):
+Müşteri'nin ülkesine ait ek eklenir (avukat tamamlayacak):
 
 | Müşteri nerede | Ek |
 | --- | --- |

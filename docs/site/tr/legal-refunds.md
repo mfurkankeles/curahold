@@ -8,7 +8,7 @@ summary: Aylık ya da yıllık bir Curahold planı için yapılan ödemenin ne z
 
 > **Taslak — avukat onayı gerekli.** Sürüm 2026-11-21.draft1. Kullanım koşullarının parçasıdır (5. madde). [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
 
-Bu politika, bir şirketin satın aldığı ücretli Curahold planlarını kapsar. Kendi yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den yapılır; iadeleri de Paddle öder. Sipariş formunda farklı bir hüküm varsa Sipariş formu uygulanır.
+Bu politika, bir şirketin satın aldığı ücretli Curahold planlarını kapsar. Uygulama üzerinden doğrudan yapılan satın almalar, satıcımız ve "merchant of record"umuz Paddle.com Market Ltd'den yapılır; iadeleri de Paddle öder. Sipariş formunda farklı bir hüküm varsa Sipariş formu uygulanır.
 
 ## Deneme
 
@@ -33,7 +33,7 @@ Yıllık plan bütün yıl için ödenir. Sona erdirmek bir sonraki yenilemeyi d
 
 ## Plan ya da koltuk değişikliği
 
-Daha büyük bir plan ya da ek koltuk, dönemin kalanı için kıst olarak hemen faturalanır. Daha küçük bir plan ya da daha az koltuk para olarak iade edilmez: fark, kıst tutar olarak bir sonraki faturada mahsup edilir.
+Daha büyük bir plan ya da ek koltuk, dönemin kalanı için kıst olarak hemen faturalanır. Daha küçük bir plan ya da daha az koltuk para olarak iade edilmez: fark, kıst tutar olarak bir sonraki faturada mahsup edilir. Daha az koltuk, faturayı planın asgari tam koltuk sayısının (genelde 3; bazı bölgelerde ve yıllık ödemede daha fazla) altına indirmez; bu sayı Abonelik sayfasında gösterilir.
 
 ## Hizmet kredileri
 
