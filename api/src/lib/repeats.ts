@@ -14,7 +14,12 @@
 //      for the first to finish, because both try to write the same row.
 //   4. The same key on a different request is refused (repeat_mismatch): a key means one change.
 //
-// Keys are per person and per company, and are cleared after two days (lib/scheduler.ts).
+// Keys are per person and per company, and are cleared after a day (lib/scheduler.ts).
+//
+// An answer that carries a secret is never kept (security audit M1): a new API key, a webhook's signing secret, an
+// authenticator secret, recovery codes, a secret link. Each is designed to be shown once and stored only as a hash;
+// keeping the answer would leave it readable in the database and its backups. For those only the status is kept, and
+// a repeat is told the work was done ({ ok: true, repeated: true }) without the secret again.
 import type { IdempotencyKeysRow } from '../db/rows.gen';
 import type { Context } from 'hono';
 import type { Q } from '../db';
@@ -81,13 +86,30 @@ export async function claimRepeat(q: Q, r: RepeatKey): Promise<void> {
 export const storedAnswer = async (q: Q, key: string): Promise<Stored | undefined> =>
   (await q.query<Stored>(`select method, path, body_hash, status, response from idempotency_keys where key = $1`, [key]))[0];
 
-/** After the request has answered: keep the answer for whoever sends the key again. */
+/** Names of fields that hold something shown once (keys, secrets, codes); found at any depth. */
+const SECRET_FIELD = /^(token|secret|signingSecret|recoveryCodes|codes|devToken|devCode|password|clientSecret|accessToken|refreshToken|access_token|refresh_token)$/i;
+/** Values that are secrets whatever their field is called: our token prefixes, authenticator links, secret addresses. */
+const SECRET_VALUE = /\bch[kabr]_[A-Za-z0-9_-]{8,}|otpauth:\/\/|\/api\/inbound\/[a-z-]+\/[A-Za-z0-9_-]{16,}|\/r\/onboarding\/[A-Za-z0-9_-]{16,}/;
+
+/** True when an answer carries a secret and must not be kept (see the header). */
+export function holdsSecret(value: unknown, depth = 0): boolean {
+  if (depth > 12) return true; // deeper than any answer of ours: do not keep what cannot be checked
+  if (typeof value === 'string') return SECRET_VALUE.test(value);
+  if (Array.isArray(value)) return value.some((v) => holdsSecret(v, depth + 1));
+  if (value && typeof value === 'object') {
+    return Object.entries(value).some(([k, v]) => (SECRET_FIELD.test(k) && v != null && v !== '' && v !== false) || holdsSecret(v, depth + 1));
+  }
+  return false;
+}
+
+/** After the request has answered: keep the answer for whoever sends the key again, unless it carries a secret. */
 export async function rememberAnswer(q: Q, r: RepeatKey, res: Response): Promise<void> {
   let body: unknown = null;
   if ((res.headers.get('content-type') ?? '').includes('application/json')) {
     const text = await res.clone().text();
     // A very long answer is not kept; the repeat is then told only that the work was done.
     if (text.length <= 200_000) body = JSON.parse(text);
+    if (holdsSecret(body)) body = null;
   }
   await q.query(`update idempotency_keys set status = $2, response = $3::jsonb where key = $1`, [r.key, res.status, body === null ? null : JSON.stringify(body)]);
 }

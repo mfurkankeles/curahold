@@ -242,7 +242,7 @@ These rules come from QUALITY.md ("Güvenilirlik", reliability). Most are implem
 | Guarantee | Mechanism |
 | --- | --- |
 | No lost concurrent edits | Tasks carry a `version`; edits to different fields merge, the same field conflicting returns a "changed just now" answer with undo (`shared/src/merge.ts`). Extending version checks to customers and records is on the QUALITY.md list. |
-| A repeated request does its work once | `Idempotency-Key` header; the key is written in the request's **first transaction**, answer stored on it, a retry gets the first answer (`lib/repeats.ts`). Keys purge after 2 days. |
+| A repeated request does its work once | `Idempotency-Key` header; the key is written in the request's **first transaction**, answer stored on it, a retry gets the first answer (`lib/repeats.ts`), except an answer with a secret in it (a new key, codes, a secret link), of which only the status is kept. Keys purge after a day. |
 | Side effects never lost or doubled | Notifications, chat messages, emails and webhooks are written to an **outbox** (`notifications`, `webhook_events`) **in the same transaction** as the change, with a `dedupe_key`; delivery happens after the response (`defer`) and is retried hourly (`lib/notify.ts`, `lib/webhooks.ts`). |
 | Offline edits survive | **Planned, not built yet**: queue writes while offline and replay them with the same idempotency keys (the keys already make that safe). Today an offline write shows an "offline" error. |
 | Nothing is deleted for good immediately | `trash*` keep deleted rows 30 days; imports are undoable for 30 days. |

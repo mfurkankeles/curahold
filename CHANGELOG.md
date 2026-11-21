@@ -253,6 +253,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- A change sent twice still happens once, but when its answer holds something shown only once (a new API key, a
+  webhook's signing secret, an authenticator secret, recovery codes, a secret link), the server keeps only that it was
+  done: the repeat answers `{ "ok": true, "repeated": true }`. Repeat keys are kept a day instead of two; migration 0256
+  clears what was kept before.
 - API keys and connected apps (the AI connector included) can no longer administer the company: roles, people,
   removing or exporting someone, company deletion, single sign-on and SCIM, billing, API keys, connected chat apps and
   CRMs, security settings and support access answer `403 session_required` to every key and app token, whatever it was

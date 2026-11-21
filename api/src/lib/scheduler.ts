@@ -115,7 +115,8 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from sync_runs where started_at < now() - interval '90 days'`);
     await q.query(`delete from oauth_codes where expires_at < now()`);
     // Keys of changes that must happen once: a retry comes within minutes, not days.
-    await q.query(`delete from idempotency_keys where created_at < now() - interval '2 days'`);
+    // A day covers every retry the app makes (a lost answer, the offline queue); less kept, less to leak (audit M1).
+    await q.query(`delete from idempotency_keys where created_at < now() - interval '1 day'`);
     await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
     // Errors are kept long enough to find and fix a fault, then let go.
     await q.query(`delete from error_log where at < now() - interval '30 days'`);

@@ -42,7 +42,8 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
    `tests/isolation.test.ts`, and `tests/isolation-routes.test.ts` (every id-taking route is called as another company's
    admin and must answer 404 and leave all rows unchanged).
 6. **Credentials at rest**: connector tokens and secrets are sealed (AES-256-GCM, HKDF from `SECRETS_KEY`); sign-in and API tokens are stored
-   only as SHA-256 hashes; passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
+   only as SHA-256 hashes, and the answer kept for a repeated request never holds a key, secret, code or secret link
+   (only its status; kept a day, `lib/repeats.ts`); passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
 7. **Browser hardening**: strict CSP (scripts only from this site plus Paddle's checkout; one inline theme script by hash),
    HSTS, no framing, no content sniffing, on API answers and static files (kept in step by `tests/security.test.ts`).
 8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write, may be
