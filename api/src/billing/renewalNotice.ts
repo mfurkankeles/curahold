@@ -12,6 +12,9 @@
 // below what the texts promise in spirit nor send it a season early.
 // LEGAL: the number in the terms and the refund policy is "[30]" until the
 // lawyer confirms it; keep this default and those texts in step.
+// The texts promise "at least N days", so the job queues the notice a margin
+// earlier (NOTICE_MARGIN_DAYS): the hourly cadence, outbox retries and the
+// reader's time zone on the date shown can never bring it under N whole days.
 import type { Deps } from '../context';
 import { enqueue } from '../lib/notify';
 
@@ -19,6 +22,11 @@ import { enqueue } from '../lib/notify';
 export const RENEWAL_NOTICE_DEFAULT_DAYS = 30;
 const MIN_DAYS = 7;
 const MAX_DAYS = 90;
+/**
+ * Days added to the window before queueing. Without it the notice went out when N days or a little less were
+ * left (an hourly job, then delivery), which breaks "at least N days"; with it the reader has N + 1 to N + 2 days.
+ */
+export const NOTICE_MARGIN_DAYS = 2;
 
 /** RENEWAL_NOTICE_DAYS as a whole number of days within 7–90; anything else falls back to the default. */
 export function renewalNoticeDaysOf(raw: string | number | undefined | null): number {
@@ -36,7 +44,7 @@ interface Due {
 }
 
 /**
- * Queues the renewal notice for every yearly plan renewing within the window (billing on only). Returns how many
+ * Queues the renewal notice for every yearly plan renewing within the window plus the margin (billing on only). Returns how many
  * notices were newly queued; delivery is the outbox's (lib/notify.ts), by e-mail whatever the person's preferences,
  * because it is a contractual notice.
  */
@@ -50,7 +58,7 @@ export async function queueRenewalNotices(deps: Deps, now: Date): Promise<number
         where billing_interval = 'year' and status = 'active' and not cancel_at_period_end
           and current_period_end > $1::timestamptz
           and current_period_end <= $1::timestamptz + make_interval(days => $2)`,
-      [now.toISOString(), days],
+      [now.toISOString(), days + NOTICE_MARGIN_DAYS],
     ),
   );
   let queued = 0;
