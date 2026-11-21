@@ -42,7 +42,7 @@ export function postgresDb(url: string, opts: { max?: number; idleTimeout?: numb
   return {
     async tenant(ctx, fn) {
       return (await sql.begin(async (tx) => {
-        await tx.unsafe(TENANT_SETUP_SQL + NO_JIT, [ctx.orgId ?? '', ctx.userId ?? '', ctx.locale ?? '', ctx.today ?? '']);
+        await tx.unsafe(TENANT_SETUP_SQL + NO_JIT, [ctx.orgId ?? '', ctx.userId ?? '', ctx.locale ?? '', ctx.today ?? '', ctx.withheld ?? '']);
         await tx.unsafe('set local role curahold_app');
         return fn(wrap(tx));
       })) as any;

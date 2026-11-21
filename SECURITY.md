@@ -50,7 +50,9 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write, may be
    limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`, each read or write), and never reach administration, SSO and
    SCIM, billing, keys, connections, a person's own security settings or support access (`session_required`,
-   ADR 0024); a route that asks for a fresh sign-in refuses them too. The AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
+   ADR 0024). Administrator-level permissions are withheld from every token, in the route and in row security
+   (`app_has_perm`, migration 0259), so any route needing one is for a signed-in person; a route that asks for a fresh
+   sign-in refuses tokens too. The AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
    access, **read only** (no edit grants; the database refuses one, migration 0054), with the entry and what is read every
    five minutes written to the company's audit trail.
 10. **Identity**: passkeys (WebAuthn) and an authenticator-app second step (TOTP, RFC 6238) with ten one-time recovery

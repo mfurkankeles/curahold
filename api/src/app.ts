@@ -75,7 +75,7 @@ import { identityRoutes } from './routes/identity';
 import { securityTxt } from './routes/securitytxt';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
-import { tokenReach } from './lib/tokenScope';
+import { tokenReach, withheldPerms } from './lib/tokenScope';
 import { analyticsRoutes, feedChallenge, feedCredential, isFeed } from './routes/analytics';
 import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
@@ -424,6 +424,9 @@ export function createApp(deps: Deps) {
       if (reach !== 'ok') fail(reach);
       if (!t!.canWrite && c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('read_only_token');
       const u = t!.user;
+      // Administrator-level permissions stay with the signed-in person (review S1, lib/tokenScope.ts).
+      const withheld = withheldPerms(c.req.path.slice('/api'.length));
+      c.set('withheld', withheld);
       c.set('auth', {
         userId: u.user_id,
         sessionId: t!.tokenId,
@@ -431,7 +434,7 @@ export function createApp(deps: Deps) {
         email: u.email,
         roleId: u.role_id,
         roleKey: u.role_key,
-        perms: (u.perms ?? []) as Perm[],
+        perms: ((u.perms ?? []) as Perm[]).filter((p) => !withheld.includes(p)),
         seat: t!.canWrite ? u.seat : 'viewer',
         locale: u.locale ? normalizeLocale(u.locale) : null,
         depts: u.dept_keys ?? [],

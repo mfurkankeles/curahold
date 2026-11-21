@@ -112,6 +112,9 @@ oauthRoutes.get('/oauth/authorize', async (c) => {
   };
   if (p('response_type') !== 'code') return back('unsupported_response_type');
   if (!p('code_challenge') || p('code_challenge_method') !== 'S256') return back('invalid_request');
+  // An area the app asked for that does not exist is refused, never widened to every area (review nit).
+  const asked = p('scope').split(/\s+/).filter((s) => s.includes(':'));
+  if (asked.length && (parseAreas(asked)?.length ?? 0) !== new Set(asked.map((s) => s.toLowerCase())).size) return back('invalid_scope');
   const req: AuthRequest = {
     orgId: c.get('org').id,
     clientId: client.id,

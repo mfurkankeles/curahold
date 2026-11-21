@@ -38,7 +38,9 @@ A key can never: make another key, give an app OAuth consent, or use "See it as 
 Whatever a key or an app was allowed, it gets `403 session_required` on administration (roles, people, removing someone
 or exporting their data, company deletion, domains, the activity log, security settings), single sign-on and SCIM,
 billing, API keys, connected chat apps and CRMs, your own sign-in security and sessions, and support
-access. Those need you, signed in, and some ask you to confirm it is you.
+access. The same goes for anything that needs an administrator's permission (company, people and teams, the
+activity log, privacy, customer settings and imports, automations, connections), wherever it is: those need you,
+signed in, and some ask you to confirm it is you. The one exception is subscribing a webhook (`/api/dev/webhooks`).
 
 ## Limiting a key to areas
 

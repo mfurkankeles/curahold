@@ -7,11 +7,20 @@
 // that was allowed to write must not be able to point the company at another
 // identity provider and sign in as everyone.
 //
+// Two rules close administration (review S1). One: the administrator-level
+// permissions (shared/src/model.ts ADMIN_PERMS) are withheld from every token —
+// in the route (requirePerm answers session_required) and in SQL (app_has_perm
+// reads app.withheld, migration 0259) — so any route that needs one is for a
+// signed-in person, whatever its path. Two: the addresses below, which need no
+// such permission but change identity, credentials, money or legal acts.
+//
 // On top of that a token may be limited to areas, each read or write
 // (`work:write`, `customers:read`): an app that files tasks need not read the
 // customer list. No areas (null) means every area below, as before.
 
 /** The areas a key or an app can be limited to. Words for each are the API reference's (docs/site/<lang>/api.md). */
+import { ADMIN_PERMS, type Perm } from '../../../shared/src/model';
+
 export const TOKEN_AREAS = ['work', 'customers', 'reports', 'people', 'webhooks'] as const;
 export type TokenArea = (typeof TOKEN_AREAS)[number];
 /** One grant: an area and whether it may change things there. */
@@ -41,7 +50,17 @@ const SESSION_ONLY: RegExp[] = [
   /^\/replay(\/|$)/, // session recordings
   /^\/desk(\/|$)/,
   /^\/agent(\/|$)/,
+  /^\/portal\/(settings|users)(\/|$)/, // who may sign in to the customer portal, and how
 ];
+
+/**
+ * The permissions a token never carries (the first rule above). The one exception: subscribing outgoing webhooks
+ * needs connections.manage, and automation platforms do it with a key (REST hooks); every delivery still carries only
+ * what the hook's creator may see (lib/webhooks.ts).
+ */
+export function withheldPerms(path: string): Perm[] {
+  return /^\/dev\/webhooks(\/|$)/.test(path) ? ADMIN_PERMS.filter((p) => p !== 'connections.manage') : [...ADMIN_PERMS];
+}
 
 /** First segment after /api → its area. Anything not here is closed to a token limited to areas. */
 const AREA_OF: Record<string, TokenArea> = {

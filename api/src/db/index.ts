@@ -14,6 +14,8 @@ export interface TenantCtx {
   locale?: string | null;
   /** The company's day (YYYY-MM-DD), by its own time zone: what app_today() answers in this transaction. */
   today?: string | null;
+  /** Permissions an API key or app token does not carry (comma-separated); app_has_perm refuses them (0259). */
+  withheld?: string | null;
 }
 
 export interface Db {
@@ -51,4 +53,4 @@ export const PORTAL_SETUP_SQL =
   "select set_config('app.org_id', $1, true), set_config('app.user_id', '', true), set_config('app.portal_user', $2, true)";
 
 export const TENANT_SETUP_SQL =
-  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true), set_config('app.locale', $3, true), set_config('app.today', $4, true)";
+  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true), set_config('app.locale', $3, true), set_config('app.today', $4, true), set_config('app.withheld', $5, true)";

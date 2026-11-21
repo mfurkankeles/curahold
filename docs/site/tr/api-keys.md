@@ -39,7 +39,9 @@ Bir anahtara ya da uygulamaya hangi izin verilmiş olursa olsun şu adresler `40
 kişiler, birini kaldırmak ya da verisini dışa aktarmak, şirketi silme, alan adları, etkinlik kaydı, güvenlik ayarları),
 tek oturum açma (SSO) ve SCIM, faturalama, API anahtarları, bağlı sohbet uygulamaları ve CRM'ler, kendi
 oturum açma güvenliğiniz ve oturumlarınız, destek erişimi. Bunlar için oturum açmış olmanız gerekir; bazıları sizden
-kimliğinizi yeniden doğrulamanızı ister.
+kimliğinizi yeniden doğrulamanızı ister. Yönetici izni gerektiren her şey de (şirket, kişiler ve ekipler, etkinlik
+kaydı, gizlilik, müşteri ayarları ve içe aktarma, otomasyonlar, bağlantılar), adresi ne olursa olsun, yalnızca oturum
+açmış kişiye açıktır. Tek istisna bir webhook'a abone olmaktır (`/api/dev/webhooks`).
 
 ## Anahtarı alanlarla sınırlamak
 
