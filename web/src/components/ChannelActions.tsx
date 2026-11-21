@@ -89,6 +89,7 @@ export function WhatsAppReply({ connectionId, accountId, activity, onSent }: { c
           {busy ? t('mailbox.reply.sending' as MessageKey) : t('mailbox.reply.send' as MessageKey)}
         </button>
         <button type="button" className="btn btn--quiet btn--small" onClick={() => (setOpen(false), setError(null))}>
+          <Icon name="close" size={14} />
           {t('common.cancel')}
         </button>
         <span className="field__hint">{t('whatsapp.reply.hint' as MessageKey)}</span>
@@ -178,6 +179,7 @@ export function CalendarPlan({ connectionId, app, accountId, guests }: { connect
           {t('calendar.plan.send' as MessageKey, { app })}
         </button>
         <button type="button" className="btn btn--quiet btn--small" onClick={() => setOpen(false)}>
+          <Icon name="close" size={14} />
           {t('common.cancel')}
         </button>
       </div>
