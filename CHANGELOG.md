@@ -220,6 +220,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Help centre search: typing fast on a slow connection could leave the results of the first letters on screen
+  (each keystroke loaded the search index again, and an early load could finish last). The index loads once and the
+  results always answer what is in the box.
 - Moving between screens: a click on the menu while the page was still fading in did nothing (the whole window
   was a still picture for the length of the fade, longer on a busy computer). The menu and the rest of the frame now
   stay live during the fade.
