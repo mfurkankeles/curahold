@@ -173,7 +173,7 @@ export const GLOSSARY: Concept[] = [
   {
     id: 'viewer', en: 'viewer (the free read-only person)', match: /\bviewers?\b/i, scope: 'concept',
     terms: {
-      tr: t('izleyici', 'translate', ['/[Gg]örüntüleyici/']), ar: t('مشاهد'), he: t('צופה'), fa: t('بیننده', 'translate', ['مشاهده‌گر']), ja: t('閲覧者'), ko: t('뷰어'),
+      tr: t('izleyici', 'translate', ['/[Gg]örüntüleyici|[Gg]örüntüleyen/']), ar: t('مشاهد'), he: t('צופה'), fa: t('بیننده', 'translate', ['مشاهده‌گر']), ja: t('閲覧者'), ko: t('뷰어'),
       'zh-Hans': t('查看者'), 'zh-Hant': t('檢視者', 'translate', ['查看者']), hi: t('व्यूअर', 'english'), ms: t('pemerhati', 'translate', ['penonton']),
     },
   },

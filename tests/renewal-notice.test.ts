@@ -5,7 +5,7 @@
 // twice however often the job runs.
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Deps } from '../api/src/context';
-import { queueRenewalNotices, renewalNoticeDaysOf, RENEWAL_NOTICE_DEFAULT_DAYS } from '../api/src/billing/renewalNotice';
+import { NOTICE_MARGIN_DAYS, queueRenewalNotices, renewalNoticeDaysOf, RENEWAL_NOTICE_DEFAULT_DAYS } from '../api/src/billing/renewalNotice';
 import { deliverPending } from '../api/src/lib/notify';
 import { setup, type Env } from './helpers';
 
@@ -104,6 +104,23 @@ describe('the yearly renewal notice', () => {
     // The same plan, now inside the window: the notice comes.
     await subscribe(orgId, { interval: 'year', endsInDays: 29 }, now);
     expect(await queueRenewalNotices(deps, now)).toBe((await admins(orgId)).length);
+  });
+
+  it('arrives at least the promised days before renewal: queued with a margin, never at N days or fewer', async () => {
+    const now = new Date();
+    const orgId = env.b.orgId;
+    const n = await admins(orgId);
+    expect(NOTICE_MARGIN_DAYS).toBeGreaterThanOrEqual(1);
+    // Just outside window + margin: not yet.
+    await subscribe(orgId, { interval: 'year', endsInDays: 30 + NOTICE_MARGIN_DAYS + 0.05 }, now);
+    expect(await queueRenewalNotices(deps, now)).toBe(0);
+    // Window + margin exactly, and an hour past the promised 30 days: queued in both cases. The hourly job
+    // first sees a plan at about 32 days out, so the reader gets more than 30 whole days.
+    for (const endsInDays of [30 + NOTICE_MARGIN_DAYS, 30 + 1 / 24]) {
+      await env.db.system((q) => q.query(`delete from notifications where org_id = $1 and kind = 'renewal_notice'`, [orgId]));
+      await subscribe(orgId, { interval: 'year', endsInDays }, now);
+      expect(await queueRenewalNotices(deps, now), String(endsInDays)).toBe(n.length);
+    }
   });
 
   it('a new year is a new notice', async () => {

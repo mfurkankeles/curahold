@@ -24,6 +24,19 @@ export async function capsForOrg(q: Q, orgId: string, access: Pick<Access, 'stat
   return { ...capsOf(access, fullSeats), fullSeats };
 }
 
+/**
+ * The seats the company pays for now: the full seats in use, or the subscription's billed quantity when that is
+ * higher (the plan's minimum, billing/service.ts billedSeats). The AI money ceiling counts these: a one-person
+ * company billed for 3 seats gets the ceiling of 3 (independent review nit). Row security scopes the read.
+ */
+export async function paidSeats(q: Q, orgId: string, fullSeats: number): Promise<number> {
+  const [r] = await q.query<{ seats: number | null }>(
+    `select seats from subscriptions where org_id = $1 and provider_subscription_id is not null and status in ('active', 'trialing', 'past_due', 'paused')`,
+    [orgId],
+  );
+  return Math.max(fullSeats, Number(r?.seats ?? 0) || 0);
+}
+
 /** As capsForOrg, from the company's row (billing snapshot + trial end), for code without a request. */
 export async function capsForOrgRow(q: Q, org: { id: string; billing: OrgBilling | null; trial_ends_at: unknown }, billingOn: boolean, now: Date): Promise<OrgCaps> {
   const trial = org.trial_ends_at ? new Date(org.trial_ends_at as string).toISOString() : null;

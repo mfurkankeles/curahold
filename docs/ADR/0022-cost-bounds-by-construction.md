@@ -15,7 +15,8 @@ pays. And every trial was auto-approvable up to 25 seats on Business limits (10 
 
 ## Decision
 
-- The assistant's money ceiling is set by the plan: full seats × a per-plan rate (`ASSISTANT_USD_PER_SEAT`, default
+- The assistant's money ceiling is set by the plan: seats paid for (the full seats in use, or the subscription's billed
+  quantity when that is higher, so the minimum counts; `paidSeats`) × a per-plan rate (`ASSISTANT_USD_PER_SEAT`, default
   0.55 $ Team, 1.10 $ Business), one fixed amount in the trial (`ASSISTANT_TRIAL_USD`, 5 $). An administrator can set a
   lower limit, never a higher one (`plan_limit_ai`); the model stops at the ceiling whatever is stored (`overCap`).
   Only the operator lifts it. With billing off (self-hosted, demo) the old installation maximum applies.
@@ -23,7 +24,13 @@ pays. And every trial was auto-approvable up to 25 seats on Business limits (10 
   0253), inside the installation cap.
 - Every quantity sent to the payment provider goes through `billedSeats`: at least the minimum for the plan, interval
   and price region (`BILLING_MIN_SEATS`; default 3, India 5 / 6 a year, Malaysia 4 a year). The company still uses only
-  the seats it has; the Billing screen says it is billed for at least that many.
+  the seats it has; the Billing screen says it is billed for at least that many. The price region is decided once, at
+  checkout (billing country, else the country the buyer is seen from), and stored with the company
+  (`orgs.settings.billingRegion`); the Billing screen, a plan change and the hourly seat sync read that stored value
+  (`billingRegionOf`). Re-deriving it later from the currency could not tell Malaysia from the other USD regions and
+  lowered a 4-seat yearly subscription to 3 within the hour (independent review, 21 Nov). Trade-off: a billing country
+  entered after the purchase does not move the minimum until the next checkout; a jsonb key, not a column, so no
+  migration was needed beside another branch's.
 - The trial keeps the owner's approved 25 seats (plans.json `trial.autoApproveSeats`, the owner console's `trial.seatCap`)
   and gets 1 GB a seat (`trial.caps.storageGbPerSeat`). The audit's 10-seat default was reverted on 21 Nov because the
   owner had approved 25 on 17 Nov; narrowing it is his open question, and the console setting changes it without a release.

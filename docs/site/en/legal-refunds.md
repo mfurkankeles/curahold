@@ -33,7 +33,7 @@ A yearly plan is paid for the whole year. Ending it stops the next renewal, and 
 
 ## Changing plan or seats
 
-A larger plan or more seats is billed at once, pro rata for the rest of the period. A smaller plan or fewer seats is not paid back in money: the difference is credited pro rata on the next bill.
+A larger plan or more seats is billed at once, pro rata for the rest of the period. A smaller plan or fewer seats is not paid back in money: the difference is credited pro rata on the next bill. Fewer seats never bring the bill below the plan's minimum number of full seats (usually 3; more in some regions and for yearly billing), which the Billing page shows.
 
 ## Service credits
 

@@ -11,7 +11,7 @@ summary: Ücretsiz deneme, Team ve Business planları, kullanıcı sayısı, fat
 Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form açar (kodla doğrulanan iş e-postası, şirketiniz, istediğiniz ekipler ve kullanıcı sayısı). Her isteği kendimiz okur, genelde bir iş günü içinde döneriz. Onaylanınca şirketiniz seçtiğiniz ekiplerle açılır ve ilk yöneticiye giriş bağlantısı gider.
 
 - **Süre:** varsayılan üç ay; her şey açık, kart gerekmez. Süre onay sırasında belirlenir, daha büyük bir pilot daha uzun olabilir.
-- **Kullanıcılar:** deneme, onayda belirlenen sayıda tam kullanıcı içerir (varsayılan olarak 25). İzleyiciler ücretsizdir ve sayılmaz.
+- **Tam kullanıcılar:** deneme, onayda belirlenen sayıda tam kullanıcı içerir (varsayılan olarak 25). İzleyiciler ücretsizdir ve sayılmaz.
 - **Dosya alanı:** deneme boyunca tam kullanıcı başına 1 GB; şirketçe ortak kullanılır. Ayarlar → **Abonelik** deneme sınırlarını ve ne kadarının kullanıldığını gösterir.
 - **İlk giriş:** yönetici hizmet koşullarını ve veri işleme sözleşmesini tek tıkla kabul eder; sonra ekip davet edilebilir.
 - **Hatırlatmalar:** yöneticilere bitişten 14, 7 ve 1 gün önce e-posta gider. Ayarlar → **Abonelik** kaç gün kaldığını gösterir; son haftada uygulamanın üstündeki bir satır da hatırlatır.
@@ -29,7 +29,7 @@ Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form a�
 | Müşteri portalı | | ✓ |
 | Playbook’lar ve kendiliğinden başlayan yenilemeler | | ✓ |
 
-Fiyatlar **tam kullanıcı** başına, aylıktır; yerel fiyatımız olan bölgelerde o bölgenin para biriminde (Hindistan rupisi, Singapur doları, Türk lirası), diğer yerlerde ABD dolarıyla gösterilir ve yıllık ödemede daha düşüktür. Geçerli olduğu yerde vergi (KDV, GST, SST) ödeme sırasında eklenir; Paddle tahsil eder ve öder. **Görüntüleyen kullanıcılar ücretsizdir.**
+Fiyatlar **tam kullanıcı** başına, aylıktır; yerel fiyatımız olan bölgelerde o bölgenin para biriminde (Hindistan rupisi, Singapur doları, Türk lirası), diğer yerlerde ABD dolarıyla gösterilir ve yıllık ödemede daha düşüktür. Geçerli olduğu yerde vergi (KDV, GST, SST) ödeme sırasında eklenir; Paddle tahsil eder ve öder. **İzleyiciler ücretsizdir.**
 
 ## Plan seçmek
 
@@ -41,7 +41,7 @@ Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir
 
 ## Yıllık planlar: yenileme bildirimi
 
-Yıllık plan kendiliğinden bir yıl daha yenilenir. Yenilenmeden **30 gün önce** her yöneticiye tarihi, planı ve koltuk sayısını yazan, Ayarlar → **Abonelik** bağlantılı bir e-posta gelir. Koşullar gereği verilen bir bildirim olduğu için diğer bildirimleri kapatmış olsanız da e-postayla gelir. Planı ya da koltuk sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Abonelik sayfasını kullanın: iptal yenilemeyi durdurur, plan ödenen yılın sonuna kadar çalışmaya devam eder. Neyin ne zaman iade edildiği [iade politikasında](/docs/tr/legal-refunds/) yazar.
+Yıllık plan kendiliğinden bir yıl daha yenilenir. Yenilenmeden **en az 30 gün önce** her yöneticiye tarihi, planı ve kullanıcı sayısını yazan, Ayarlar → **Abonelik** bağlantılı bir e-posta gelir. Koşullar gereği verilen bir bildirim olduğu için diğer bildirimleri kapatmış olsanız da e-postayla gelir. Planı ya da kullanıcı sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Abonelik sayfasını kullanın: iptal yenilemeyi durdurur, plan ödenen yılın sonuna kadar çalışmaya devam eder. Neyin ne zaman iade edildiği [iade politikasında](/docs/tr/legal-refunds/) yazar.
 
 ## Faturalar, ödeme yöntemi, iptal
 

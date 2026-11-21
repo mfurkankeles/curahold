@@ -41,7 +41,7 @@ Bil mengikut orang yang telah **menyertai** dengan pengguna penuh: jemputan yang
 
 ## Pelan tahunan: notis pembaharuan
 
-Pelan tahunan diperbaharui sendiri untuk setahun lagi. **30 hari sebelum** itu, setiap pentadbir menerima e-mel dengan tarikh, pelan dan bilangan pengguna, serta pautan ke Tetapan → **Pengebilan**. E-mel ini tetap sampai walaupun anda mematikan pemberitahuan lain, kerana ia notis di bawah terma. Untuk menukar pelan atau bilangan pengguna, atau menghentikan pembaharuan, lakukannya di halaman Pengebilan sebelum tarikh itu: membatalkan menghentikan pembaharuan, dan pelan terus berfungsi hingga akhir tahun yang telah dibayar. Apa yang dibayar balik dan bila, ada dalam [dasar bayaran balik](/docs/ms/legal-refunds/).
+Pelan tahunan diperbaharui sendiri untuk setahun lagi. **Sekurang-kurangnya 30 hari sebelum** itu, setiap pentadbir menerima e-mel dengan tarikh, pelan dan bilangan pengguna, serta pautan ke Tetapan → **Pengebilan**. E-mel ini tetap sampai walaupun anda mematikan pemberitahuan lain, kerana ia notis di bawah terma. Untuk menukar pelan atau bilangan pengguna, atau menghentikan pembaharuan, lakukannya di halaman Pengebilan sebelum tarikh itu: membatalkan menghentikan pembaharuan, dan pelan terus berfungsi hingga akhir tahun yang telah dibayar. Apa yang dibayar balik dan bila, ada dalam [dasar bayaran balik](/docs/ms/legal-refunds/).
 
 ## Invois, kaedah pembayaran, pembatalan
 

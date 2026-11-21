@@ -25,8 +25,11 @@ export const DEPTS: DeptKey[] = ['inside', 'sales', 'onboarding', 'success', 'pr
 export const CHAIN: DeptKey[] = ['inside', 'sales', 'onboarding', 'success'];
 export const OPTIONAL_DEPTS = new Set<DeptKey>(['onboarding']);
 export const FEATURES: FeatureKey[] = ['health', 'meetings', 'sprints', 'portal', 'renewals', 'assistant', 'reports', 'sync'];
-/** What is not shipped yet carries the "Coming soon" label wherever it appears. */
-export const SOON_DEPTS = new Set<DeptKey>(['finance']);
+/**
+ * What is not shipped yet carries the "Coming soon" label wherever it appears. Empty: the finance pages speak only
+ * of what finance has today (contract value, renewals, cost to serve), not of the unshipped accounting connectors.
+ */
+export const SOON_DEPTS = new Set<DeptKey>([]);
 export const PAGE = {
   why: 'why/', about: 'about/', pricing: 'pricing/', faq: 'faq/', trust: 'trust/', integrations: 'integrations/', solutions: 'solutions/',
   dept: (k: DeptKey) => `teams/${DEPT_SLUG[k]}/`,
@@ -56,7 +59,8 @@ export const INTEGRATION_GROUPS: { key: IntegrationGroup; names: string[]; soon?
   { key: 'signin', names: ['Google', 'Microsoft', 'SAML 2.0', 'OpenID Connect', 'SCIM'] },
   { key: 'api', names: ['REST API', 'Webhooks'] },
   { key: 'automation', names: ['Zapier', 'Make'], soon: true },
-  { key: 'accounting', names: [], soon: true },
+  // No accounting group: those connectors are not shipped, and claims list B #20 keeps them out of public
+  // text until they are (CLAUDE.md: claims only about shipped features). Add it back with its copy then.
 ];
 
 // Small line glyphs, drawn for Curahold (16 × 16, currentColor).

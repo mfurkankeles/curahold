@@ -102,7 +102,7 @@ Senarai semasa ialah halaman **Subpemproses**, yang dijana daripada inventori da
 
 ## Lampiran 4 — Penunggang pemindahan
 
-Lampirkan penunggang bagi negara Pelanggan untuk dilengkapkan oleh peguam):
+Lampirkan penunggang bagi negara Pelanggan (untuk dilengkapkan oleh peguam):
 
 | Pelanggan di | Penunggang |
 | --- | --- |

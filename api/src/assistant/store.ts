@@ -6,7 +6,7 @@ import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/
 import type { AssistReply } from '../../../shared/src/assist';
 import type { Db, Q } from '../db';
 import { accessOf, type OrgBilling } from '../../../shared/src/billing';
-import { capsForOrg } from '../billing/entitlements';
+import { capsForOrg, paidSeats } from '../billing/entitlements';
 import { CACHE_TTL_DAYS, type AssistStore, type Spend } from './core';
 import { AI_CEILING_DEFAULTS, planAiCeilingUsd, type AssistantConfig } from './cost';
 
@@ -27,11 +27,11 @@ export function dbStore(
         const base = { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0) };
         if (!o) return { ...base, publicMicros: Number(g?.public_cost_micros ?? 0), publicCapUsd: ctx.orgId ? null : (ctx.config?.publicMonthlyUsd ?? AI_CEILING_DEFAULTS.publicMonthlyUsd) };
         // The plan's caps: model-answered questions (plans.json → caps.aiQuestionsPerSeat × full seats) and money
-        // (cost.ts planAiCeilingUsd: seats × the plan's rate, a trial's fixed amount).
+        // (cost.ts planAiCeilingUsd: seats paid for × the plan's rate, a trial's fixed amount).
         const trial = o.trial_ends_at ? new Date(o.trial_ends_at as unknown as string).toISOString() : null;
         const access = accessOf(!!ctx.billingOn, o.billing as OrgBilling | null, trial, new Date());
         const caps = await capsForOrg(q, o.id, access);
-        const planCapUsd = planAiCeilingUsd(access, caps.fullSeats, ctx.config ?? {});
+        const planCapUsd = planAiCeilingUsd(access, await paidSeats(q, o.id, caps.fullSeats), ctx.config ?? {});
         return { ...base, companyQuestions: Number(c?.model_questions ?? 0), questionCap: caps.aiQuestionsPerMonth, planCapUsd };
       });
     },

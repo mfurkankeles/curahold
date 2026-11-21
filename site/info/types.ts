@@ -13,7 +13,7 @@ export type Point = [h: string, p: string];
 /** In the order of the customer's journey: inside sales → sales → onboarding (optional) → customer success and support, with product and finance connected throughout. */
 export type DeptKey = 'inside' | 'sales' | 'onboarding' | 'success' | 'product' | 'finance';
 export type FeatureKey = 'health' | 'meetings' | 'sprints' | 'portal' | 'renewals' | 'assistant' | 'reports' | 'sync';
-export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation' | 'accounting';
+export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation';
 
 /** Every page that has its own search title and description. */
 export type SeoPage = 'home' | DeptKey | FeatureKey | 'solutions' | 'integrations' | 'pricing' | 'faq' | 'trust' | 'why' | 'about';

@@ -253,7 +253,6 @@ a{color:inherit}
 .dept__txt{position:absolute;left:-130px;width:260px;text-align:center}
 .dept__txt h3{font:650 21px/1.15 var(--display);letter-spacing:-.02em}
 .dept__txt p{margin-top:6px;color:var(--ink-2);font-size:15px;line-height:1.45;text-wrap:balance}
-.dept__txt .soon{display:inline-block;margin:0 0 6px;padding:3px 10px;border-radius:999px;background:rgba(209,69,106,.18);color:#ff9fb6;font-size:12.5px;font-weight:700}
 .dept:focus-visible .dept__txt{outline:2px solid var(--iris-ink);outline-offset:6px;border-radius:10px}
 .dept__halo{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--ac) 45%,transparent),transparent);opacity:.35;transition:opacity .55s var(--ease)}
 .on .dept{cursor:default}
@@ -274,7 +273,6 @@ a{color:inherit}
 .ol.hl li>*{grid-row:1;grid-column:auto}
 .sk{display:grid;gap:8px}
 .sk i{display:block;height:46px;border-radius:12px;background:linear-gradient(90deg,#211f38,#28264a,#211f38)}
-.soonb{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);padding:9px 16px;border-radius:999px;background:#2b1630;color:#ff9fb6;box-shadow:inset 0 0 0 1px rgba(209,69,106,.55);font:700 14px/1 var(--text);white-space:nowrap}
 .fin .scr{filter:none}
 .fin .sk,.fin .ah{opacity:.5}
 
@@ -604,12 +602,11 @@ html:not(.js) .giant{font-size:12vw;white-space:normal}
         <div class="dept__lift"><div class="dept__halo" aria-hidden="true"></div>
           <div data-tab="-1" class="dept__dev wa" aria-hidden="true"><div class="rot wa"><i class="edge"></i><i class="edge r"></i><i class="edge t"></i><i class="edge b"></i><div class="face front"><i class="veil"></i><div class="screen"><div class="sb"><span>09:41</span><i></i></div>
             <div class="scr">
-              <div class="ah"><b data-t="d_inv">Faturalar</b></div>
+              <div class="ah"><b data-t="d_val">Sözleşme değeri</b></div>
               <div class="sk"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              <span class="soonb" data-t="d_soon">Yakında</span>
             </div></div></div></div></div>
         </div>
-        <div class="dept__txt"><span class="soon" data-t="d4s">Yakında</span><h3 data-t="d4h">Finans</h3><p data-t="d4p">Muhasebe bağlantıları üzerinde çalışıyoruz.</p></div>
+        <div class="dept__txt"><h3 data-t="d4h">Finans</h3><p data-t="d4p">Sözleşme değeri ve yenilemeler; yalnızca seçtiğiniz roller görür.</p></div>
       </article>
     </div>
 
@@ -633,7 +630,7 @@ html:not(.js) .giant{font-size:12vw;white-space:normal}
             <div class="tm"><span class="av g">ZT</span><div><b>Zeynep Tunç</b><span data-t="r_cs">Müşteri başarısı</span></div></div>
             <div class="tm"><span class="av">AD</span><div><b>Ada Demir</b><span data-t="r_sales">Satış</span></div></div>
             <div class="tm"><span class="av w">MA</span><div><b>Mert Aksoy</b><span data-t="r_prod">Ürün</span></div></div>
-            <div class="tm f"><span class="av" style="background:#3a1a2c;color:#ff9fb6">F</span><div><b data-t="r_fin">Finans</b><span data-t="r_soon">Yakında</span></div></div>
+            <div class="tm f"><span class="av" style="background:#3a1a2c;color:#ff9fb6">F</span><div><b data-t="r_fin">Finans</b><span data-t="r_val">Sözleşme değeri</span></div></div>
           </div>
           <div class="r-col rc-c"><h5 data-t="r_ren">Yenileme</h5>
             <div class="rcard" data-band="good"><span class="tag" data-t="r_won">Kazanıldı</span><b data-t="r_rname">Yıllık yenileme</b><span data-t="r_early">Tarihinden 41 gün önce kapandı</span></div>
