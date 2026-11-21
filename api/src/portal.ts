@@ -3,6 +3,7 @@
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
 import { PORTAL_HEADERS } from './lib/headers';
+import { redact } from './lib/errlog';
 import { clientIp, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
 import { turnstileSiteKey } from './lib/humanCheck';
@@ -87,7 +88,8 @@ export function createPortalApp(deps: Deps) {
       if (hit) e = new HttpError(DB_ERRORS[hit]);
     }
     if (e) return c.json({ error: e.code, message: translate(locale, e.key, e.vars, org?.terms) }, e.status as any);
-    console.error('[curahold] portal', err);
+    // Masked like the app's own log (lib/errlog.ts): a token or an address in an error message stays out of the log.
+    console.error('[curahold] portal', redact(err instanceof Error ? `${err.message}\n${err.stack ?? ''}` : String(err)));
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 

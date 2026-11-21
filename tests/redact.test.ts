@@ -13,6 +13,10 @@ describe('masking what an error record keeps', () => {
     ['callback ?code=4/0AbCdEf123&state=xyz', '4/0AbCdEf123'],
     ['id_token eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.c2lnbmF0dXJlLXZhbHVl rejected', 'eyJhbGciOiJSUzI1NiJ9'],
     ['no user selin.kaya@quillfield.example', 'selin.kaya'],
+    // Every prefix Curahold's own tokens use (lib/tokens.ts), outside a "Bearer" too (security audit L4).
+    ['refresh rejected: chr_Zq8Xw2Vu4Ts6Rq0Po9Nm', 'chr_Zq8Xw2Vu4Ts6Rq0Po9Nm'],
+    ['app token cha_Lk3Jh5Gf7Ds9Ap1Oi2Uy expired', 'cha_Lk3Jh5Gf7Ds9Ap1Oi2Uy'],
+    ['analytics key chb_Mn4Bv6Cx8Za0Sd2Fg4Hj in the address', 'chb_Mn4Bv6Cx8Za0Sd2Fg4Hj'],
   ])('%s', (text, secret) => {
     expect(redact(text)).not.toContain(secret);
   });

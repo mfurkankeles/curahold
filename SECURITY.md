@@ -45,7 +45,8 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
    only as SHA-256 hashes, and the answer kept for a repeated request never holds a key, secret, code or secret link
    (only its status; kept a day, `lib/repeats.ts`); passwords (portal) are hashed; sessions are host-only `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
 7. **Browser hardening**: strict CSP (scripts only from this site plus Paddle's checkout; one inline theme script by hash),
-   HSTS, no framing, no content sniffing, on API answers and static files (kept in step by `tests/security.test.ts`).
+   HSTS, no framing, no content sniffing, on API answers and static files of the app and the portal (kept in step by
+   `tests/security.test.ts`).
 8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write, may be
    limited to areas (`work`, `customers`, `reports`, `people`, `webhooks`, each read or write), and never reach administration, SSO and
    SCIM, billing, keys, connections, a person's own security settings or support access (`session_required`,

@@ -54,6 +54,8 @@ export const PORTAL_HEADERS: Record<string, string> = {
   'X-Frame-Options': 'DENY',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), display-capture=()',
   'Cross-Origin-Opener-Policy': 'same-origin',
+  // The portal is a sign-in surface of its own domain: it gets HSTS like the app (security audit L6).
+  'Strict-Transport-Security': HSTS,
 };
 
 /** Adds the headers to every answer that does not set its own (a route may tighten or relax one on purpose). */
