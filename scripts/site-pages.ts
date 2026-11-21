@@ -110,7 +110,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
       crumb: d.name,
       description: c.seo[k][1],
       main: `${hero(locale, { crumb: d.name, title: d.title, lead: d.lead, glyph: GLYPH[k], soon: SOON_DEPTS.has(k), urls })}
-  <section class="ip__body"><div class="wrap">${points(d.points)}${d.next ? `<div class="ip__next"><span class="ip__soon">${esc(c.nav.soon)}</span><h2>${esc(d.next[0])}</h2><p>${esc(d.next[1])}</p></div>` : ''}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
+  <section class="ip__body"><div class="wrap">${points(d.next ? [...d.points, d.next] : d.points)}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
   ${featureLinks(locale, c.common.uses, RELATED[k])}
   ${closing(locale, urls)}`,
     });

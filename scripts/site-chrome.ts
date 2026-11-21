@@ -286,6 +286,6 @@ export function flowHtml(locale: SiteLocale, current?: DeptKey): string {
   <ol class="fl__chain">${CHAIN.map(chip).join('')}</ol>
   <ul class="fl__under">${DEPTS.filter((k) => !CHAIN.includes(k)).map(chip).join('')}</ul>
   <p class="fl__note">${esc(c.nav.flowNote)}</p>
-  <p class="fl__soon"><span class="hx__soon">${esc(c.nav.soon)}</span><b>${esc(sh)}</b> ${esc(sp)}</p>
+  <p class="fl__soon"><b>${esc(sh)}</b> ${esc(sp)}</p>
 </div>`;
 }

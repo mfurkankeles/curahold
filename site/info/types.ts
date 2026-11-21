@@ -81,7 +81,10 @@ export interface InfoCopy {
     flow: string;
     flowNote: string;
     optional: string;
-    /** Planned for the whole flow; shown with "Coming soon" until it ships. */
+    /**
+     * Linked work across the flow. Shipped (claims list A #3), so it is shown as a plain line, no "Coming soon"
+     * label; the field keeps its old name so the copy files merge cleanly (rename with the next copy edit).
+     */
     flowSoon: Point;
   };
   /** Shared blocks on the inner pages. */
@@ -96,7 +99,10 @@ export interface InfoCopy {
     /** Heading of the features list on a department page. */
     uses: string;
   };
-  /** `next`: planned work for this team, shown with "Coming soon" until it ships. */
+  /**
+   * `next`: the hand-over card and linked stories. Shipped (claims list A #1 and #2), so it is shown as the last of
+   * the points, with no "Coming soon" label (owner: talk only about shipped features; 21 Nov 2026).
+   */
   depts: Record<DeptKey, { name: string; short: string; title: string; lead: string; points: Point[]; forWho: string; next?: Point }>;
   features: Record<FeatureKey, { name: string; short: string; title: string; lead: string; points: Point[] }>;
   solutions: {
