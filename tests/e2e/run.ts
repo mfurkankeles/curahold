@@ -183,7 +183,7 @@ await step('a viewer seat sees everything but cannot write', async () => {
   await sofia.page.goto(`${s.origin}/b/${s.demo.boards.renewals}`, { waitUntil: 'networkidle0' });
   await sofia.page.waitForSelector('.card');
   expect((await sofia.page.$$('.toolbar .btn--primary')).length === 0, 'viewer sees New task');
-  expect(await sofia.page.evaluate(() => document.body.innerText.includes('Salt okunur koltuk')), 'read-only label missing');
+  expect(await sofia.page.evaluate(() => document.body.innerText.includes('Salt okunur kullanıcı')), 'read-only label missing');
   await shot(sofia.page, 'e2e-06-viewer');
   await sofia.page.browserContext().close();
 });
@@ -1046,7 +1046,7 @@ await step('the console: staff sign in with two steps, see the business today ch
   await d.waitForFunction(() => !!document.querySelector('.replaymodal .rr-player, .replaymodal .center-note'), { timeout: 15000 });
   expect((await d.$('.replaymodal .rr-player')) !== null, 'the recording did not play');
   await shot(d, 'p7-10-desk-replay');
-  await d.click('.replaymodal__head .btn');
+  await d.click('.replaymodal__head .closex');
   await d.waitForFunction(() => !document.querySelector('.replaymodal'));
 
   // A note for the team: stays with the team.
