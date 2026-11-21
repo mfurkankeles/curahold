@@ -253,6 +253,8 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Webhooks: a webhook now sends only what the person who added it can see — tasks and comments on boards they can open,
+  not private boards or other departments' boards — and stops sending when that person leaves.
 - Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or
   turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does; SCIM
   answers `409 tooMany` and the sign-in page says the seats are full.

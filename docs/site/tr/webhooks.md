@@ -12,6 +12,10 @@ Webhook ile Curahold'da bir şey değişince adresinize saniyeler içinde bir me
 
 Ayarlar → Geliştirici → **Yeni webhook**. Bağlantıları yönetme izni gerekir.
 
+Bir webhook yalnızca onu ekleyen kişinin görebildiklerini gönderir: açabildiği panolardaki görevler ve yorumlar (özel
+panolar ve başka departmanların panoları gönderilmez) ve rolünün görebildiği müşteri alanları. O kişi ayrılır ya da
+devre dışı bırakılırsa webhook göndermeyi bırakır; başka biri onu yeniden ekler.
+
 - Adres herkese açık bir `https` adresi olmalı. Yerel ve özel ağ adresleri kabul edilmez.
 - Hangi olaylarda gönderileceğini seçin.
 - Eklerken bir **gizli anahtar** (`whsec_…`) gösterilir. Bir kez gösterilir; saklayın.

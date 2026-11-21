@@ -18,6 +18,10 @@ Settings → Developers → **New webhook**. You need permission to manage conne
 
 **Send a test** posts a `ping` event to your address and shows the answer.
 
+A webhook sends only what the person who added it can see: tasks and comments on boards they can open (private boards
+and other departments' boards stay out), and only the customer fields their role may see. If that person leaves or is
+deactivated, the webhook stops sending; someone else adds it again.
+
 ## Events
 
 | Event | When |

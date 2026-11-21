@@ -82,7 +82,7 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 - **Authorisation matrix**: `tests/isolation-routes.test.ts` calls every API address as five roles (admin, manager, member,
   read-only seat, a role with no permission). A new address without a classification fails the test.
 - **Field permissions on every way out**: list, one record, export pages, search, API keys, the AI connector, webhooks
-  (filtered by the role of the person who set the webhook up), health reasons, timeline, the weekly email and the
+  (read again as the person who set the webhook up: their boards, departments and fields; nothing once they have left), health reasons, timeline, the weekly email and the
   whitespace table (`tests/field-outs.test.ts`).
 - **Versions** on tasks, customers and records: a save naming the version it started from is refused (409, with the
   current value) only when the same field changed meanwhile; different fields merge. Writers that send no version
