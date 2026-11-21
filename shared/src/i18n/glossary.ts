@@ -177,7 +177,7 @@ export const REGISTER: Record<GlossaryLocale, string> = {
   en: 'plain, direct second person',
   tr: '"siz" everywhere: the product, e-mails, the portal, the docs and the sales site (owner, 20 Nov 2026). Sentences say "deneyin", "seçin", "hesabınız"; short button and menu labels keep the bare verb Turkish interfaces use ("Kaydet", "Görev ekle"). tests/i18n-quality.test.ts guards it',
   ar: 'Modern Standard Arabic, polite imperative addressed to one person (masculine default)',
-  he: 'second person; gender-neutral where cheap ("אפשר ל…", plural "בדקו"), masculine singular otherwise',
+  he: 'second person plural ("אתם", "שלכם", "בדקו"), gender-neutral, on every first-contact surface (site, e-mails, consent, sign-up, trial, agreements) and in the help centre; impersonal "אפשר ל…" where it reads better; never two forms in one string or mail. Buttons are nouns ("אישור", "שמירה"). Older in-app screens still use masculine singular: move them to plural when touched (owner/native-check item, 21 Nov 2026). tests/i18n-quality.test.ts guards it',
   fa: 'formal "شما" with plural verbs (کنید)',
   ja: 'です/ます; buttons as plain nouns or verbs (保存, 送信)',
   ko: '합니다/하세요 in sentences, 해요 never; buttons as nouns (저장)',

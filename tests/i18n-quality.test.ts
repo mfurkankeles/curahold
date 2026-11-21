@@ -282,6 +282,33 @@ describe('Persian register', () => {
   });
 });
 
+describe('Hebrew address', () => {
+  // Hebrew speaks to the reader in the plural ("אתם", "שלכם", "בדקו") on every first-contact surface (site, e-mails,
+  // consent, sign-up, trial, agreements), and no string or help line switches form half-way (localisation review,
+  // 21 Nov 2026: "אישרת … שמרו" in one mail). Only unambiguous words count: Hebrew without vowels makes many verb
+  // forms look like nouns (מפתח "key" / פתח "open"). The app's own menu label 'ההגדרות שלך' is quoted as it reads.
+  const H = '\\u05d0-\\u05ea';
+  const w = (alts: string) => new RegExp(`(?<![${H}])[ובלהשמכ]?(${alts})(?![${H}])`, 'u');
+  const SG = w('שלך|אתה|אותך|בשבילך|עליך|אליך|ממך|איתך|אצלך|בשמך|ביקשת|ציפית|אישרת|קיבלת|בחרת');
+  const PL = w('שלכם|אתם|אתכם|בשבילכם|עליכם|אליכם|מכם|איתכם|אצלכם|בשמכם|ביקשתם|ציפיתם|אישרתם|קיבלתם|בחרתם|תוכלו|בדקו|בחרו|הוסיפו|לחצו|נסו|שמרו|כתבו|הזינו|פתחו');
+  const FIRST = /^(email\.|trialMail\.|trial\.|signup\.|auth\.|agreements\.|assistConsent\.|legal\.)/;
+  const plain = (s: string) => s.replace(/\*\*[^*]+\*\*/g, ' ').replace(/'ההגדרות שלך'/g, ' ');
+  it('no Hebrew string mixes singular and plural address, and first-contact text is plural', () => {
+    const bad: string[] = [];
+    for (const [k, v] of Object.entries(dict('he'))) {
+      if (SG.test(v) && PL.test(v)) bad.push(`mixed ${k}: ${v.slice(0, 70)}`);
+      else if (FIRST.test(k) && SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
+    }
+    for (const [k, v] of siteText('he')) if (SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
+    for (const [k, v] of Object.entries(CONSENT_STRINGS.he as unknown as Record<string, string>)) if (SG.test(v)) bad.push(`singular consent ${k}`);
+    for (const [file, text] of docsText('he'))
+      text.split('\n').forEach((line, i) => {
+        if (SG.test(plain(line)) && PL.test(plain(line))) bad.push(`mixed ${file}:${i + 1}: ${line.trim().slice(0, 70)}`);
+      });
+    expect(bad.join('\n')).toBe('');
+  });
+});
+
 describe('Turkish register', () => {
   // Turkish says "siz" everywhere, in the product as on the first-contact surfaces (owner, 20 Nov 2026;
   // shared/src/i18n/glossary.ts REGISTER). Short button and menu labels keep the bare verb Turkish
