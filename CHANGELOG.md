@@ -270,7 +270,7 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   `PADDLE_PRICES` is refused instead of ending the trial, and a plan too small for the company's full seats is flagged
   in the activity log (`billing.over_plan`) when its subscription arrives.
 - A change sent twice still happens once, but when its answer holds something shown only once (a new API key, a
-  webhook's signing secret, an authenticator secret, recovery codes, a secret link), the server keeps only that it was
+  webhook's signing secret, an authenticator secret, recovery codes, a secret link or calendar feed address), the server keeps only that it was
   done: the repeat answers `{ "ok": true, "repeated": true }`. Repeat keys are kept a day instead of two; migration 0256
   clears what was kept before.
 - API keys and connected apps (the AI connector included) can no longer administer the company: roles, people,

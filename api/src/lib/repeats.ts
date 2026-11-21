@@ -89,7 +89,8 @@ export const storedAnswer = async (q: Q, key: string): Promise<Stored | undefine
 /** Names of fields that hold something shown once (keys, secrets, codes); found at any depth. */
 const SECRET_FIELD = /^(token|secret|signingSecret|recoveryCodes|codes|devToken|devCode|password|clientSecret|accessToken|refreshToken|access_token|refresh_token)$/i;
 /** Values that are secrets whatever their field is called: our token prefixes, authenticator links, secret addresses. */
-const SECRET_VALUE = /\bch[kabr]_[A-Za-z0-9_-]{8,}|otpauth:\/\/|\/api\/inbound\/[a-z-]+\/[A-Za-z0-9_-]{16,}|\/r\/onboarding\/[A-Za-z0-9_-]{16,}/;
+const SECRET_VALUE =
+  /\bch[kabr]_[A-Za-z0-9_-]{8,}|otpauth:\/\/|\/api\/inbound\/[a-z-]+\/[A-Za-z0-9_-]{16,}|\/r\/onboarding\/[A-Za-z0-9_-]{16,}|\/api\/calendar\/[A-Za-z0-9_-]{16,}|#token=[A-Za-z0-9_-]{16,}/;
 
 /** True when an answer carries a secret and must not be kept (see the header). */
 export function holdsSecret(value: unknown, depth = 0): boolean {
@@ -102,10 +103,14 @@ export function holdsSecret(value: unknown, depth = 0): boolean {
   return false;
 }
 
-/** After the request has answered: keep the answer for whoever sends the key again, unless it carries a secret. */
-export async function rememberAnswer(q: Q, r: RepeatKey, res: Response): Promise<void> {
+/**
+ * After the request has answered: keep the answer for whoever sends the key again, unless it carries a secret or the
+ * route said not to (`noStore`, set with c.set('repeatNoStore', true) by routes that hand out a secret link: sturdier
+ * than recognising its shape).
+ */
+export async function rememberAnswer(q: Q, r: RepeatKey, res: Response, noStore = false): Promise<void> {
   let body: unknown = null;
-  if ((res.headers.get('content-type') ?? '').includes('application/json')) {
+  if (!noStore && (res.headers.get('content-type') ?? '').includes('application/json')) {
     const text = await res.clone().text();
     // A very long answer is not kept; the repeat is then told only that the work was done.
     if (text.length <= 200_000) body = JSON.parse(text);

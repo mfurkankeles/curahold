@@ -152,6 +152,7 @@ billingRoutes.post('/billing/portal', async (c) => {
   if (!provider) return fail('billing_off');
   const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
   if (!sub?.providerCustomerId) return fail('not_found');
+  c.set('repeatNoStore', true); // a signed-in link to the provider's portal: not kept for a repeat
   return c.json({ url: await provider.portalUrl(sub.providerCustomerId, sub.providerSubscriptionId) });
 });
 

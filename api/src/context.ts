@@ -222,6 +222,8 @@ export type AppEnv = {
     analyticsScope?: { datasets: string[] | null; departments: string[] | null };
     /** The key of a change that must happen once (lib/repeats.ts); claimed by the request's first transaction. */
     repeat?: RepeatKey;
+    /** The route's answer holds something shown once: keep only its status for a repeat (lib/repeats.ts). */
+    repeatNoStore?: boolean;
     /** This app, for calling its own routes (the AI connector uses the same API as the app). */
     self: { request: (input: string, init?: RequestInit) => Response | Promise<Response> };
   };

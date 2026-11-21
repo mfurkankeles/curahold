@@ -536,7 +536,7 @@ export function createApp(deps: Deps) {
       const auth = c.get('auth');
       await c
         .get('deps')
-        .db.tenant({ orgId: c.get('org').id, userId: auth.userId }, (q) => rememberAnswer(q, repeat, res))
+        .db.tenant({ orgId: c.get('org').id, userId: auth.userId }, (q) => rememberAnswer(q, repeat, res, !!c.get('repeatNoStore')))
         .catch((e) => console.error('[curahold] could not keep the answer of a repeatable request', e));
     }
   });

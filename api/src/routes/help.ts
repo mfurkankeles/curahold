@@ -652,6 +652,7 @@ supportEntry.post('/support/enter-link', async (c) => {
     return true;
   });
   if (!ok) fail('support_ended');
+  c.set('repeatNoStore', true); // a sign-in link for support: shown once, never kept for a repeat
   return c.json({ url: `${orgUrl(deps.config, org.slug)}/support/enter#token=${entry}`, validMinutes: ENTRY_LINK_MINUTES }, 201);
 });
 

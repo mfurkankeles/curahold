@@ -126,6 +126,16 @@ describe('an answer with a secret in it', () => {
     expect((await kept('key-webhook-made-01')).response).toBeNull();
   });
 
+  // Review S2: the personal calendar feed address is a secret too (only its hash is stored on the person).
+  it('a calendar feed address is not kept', async () => {
+    const r = await send(mert, 'key-calendar-link-01', {}, '/api/me/calendar');
+    expect(r.status).toBe(200);
+    expect(r.json.url).toMatch(/\/api\/calendar\/[A-Za-z0-9_-]{16,}\.ics$/);
+    expect(await kept('key-calendar-link-01')).toEqual({ status: 200, response: null });
+    const again = await send(mert, 'key-calendar-link-01', {}, '/api/me/calendar');
+    expect(again.json).toEqual({ ok: true, repeated: true });
+  });
+
   it('ordinary answers are still kept whole', async () => {
     await send(ada, 'key-ordinary-kept-1', { boardId: board, title: 'Kept whole' });
     expect((await kept('key-ordinary-kept-1')).response).toMatchObject({ task: { title: 'Kept whole' } });
@@ -138,6 +148,8 @@ describe('an answer with a secret in it', () => {
     expect(holdsSecret({ note: 'use chr_abcdefgh12345678 now' })).toBe(true);
     expect(holdsSecret({ uri: 'otpauth://totp/x?secret=Y' })).toBe(true);
     expect(holdsSecret({ url: 'https://acme.example/api/inbound/tickets/AbCdEfGhIjKlMnOpQr' })).toBe(true);
+    expect(holdsSecret({ url: 'https://acme.example/api/calendar/AbCdEfGhIjKlMnOpQr.ics' })).toBe(true);
+    expect(holdsSecret({ url: 'https://acme.example/support/enter#token=AbCdEfGhIjKlMnOpQr' })).toBe(true);
     expect(holdsSecret({ task: { title: 'Call Ada', token: null } })).toBe(false);
   });
 });
