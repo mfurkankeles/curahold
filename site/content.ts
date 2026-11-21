@@ -403,7 +403,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         { tab: 'الصحة', title: 'اعرف من يحتاج إليك', text: 'لكل عميل مؤشر من 0 إلى 100 مع أسبابه، فيتقدّم العميل الذي خفت صوته من تلقاء نفسه.' },
         { tab: 'الوعود', title: 'أوفِ بكل وعد', text: 'سجّل الاجتماع فتتحول خطواته التالية إلى مهام، لكل منها مالك وتاريخ. لا يضيع شيء مما قيل.' },
         { tab: 'التجديدات', title: 'ابدأ التجديد مبكرًا', text: 'قبل الموعد بتسعين يومًا يفتح كتيب عمل التجديد مهامه وفرصة تجديد. لا حاجة لأن يتذكر أحد.' },
-        { tab: 'السبرنتات', title: 'أنجز العمل في سبرنتات', text: 'الإيبكات ونقاط القصة والمهام المترابطة على اللوحات نفسها، ومخطط الاحتراق يرسم نفسه كلما أُغلقت البطاقات.' },
+        { tab: 'السبرنتات', title: 'أنجز العمل في سبرنتات', text: 'الإيبكات ونقاط القصة والمهام المترابطة على اللوحات نفسها، ومخطط العمل المتبقي (Burndown) يرسم نفسه كلما أُغلقت البطاقات.' },
       ],
       ui: {
         chips: { review: 'مراجعة الأعمال متأخرة 14 يومًا', renewal: 'التجديد بعد 94 يومًا' },
@@ -450,13 +450,13 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'تبدأ كل خطة بتجربة مجانية لكل شيء لمدة 3 أشهر. مقاعد المشاهدة مجانية.',
       monthly: 'شهري',
       yearly: 'سنوي',
-      save: 'أقل بنحو 20%',
+      save: 'أقل بنحو 20٪',
       summary: '⟦price|تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.|تُعلَن الأسعار عند الإطلاق. وتبدأ كل خطة بثلاثة أشهر مجانًا بعد الموافقة، دون بطاقة دفع.⟧',
       see: 'قارن بين الخطط',
       perSeat: 'لكل مقعد شهريًا',
       perSeatYearly: 'لكل مقعد شهريًا، بدفع سنوي',
       business: 'كل ما في الفريق، بالإضافة إلى',
-      fine: '⟦price|الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.|تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.⟧',
+      fine: '⟦price|الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات بائعنا المعتمد Paddle.|تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات بائعنا المعتمد Paddle.⟧',
       announced: 'يُعلَن السعر عند الإطلاق',
     },
     faq: {
@@ -812,7 +812,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         { q: '可以在我们自己的服务器上运行吗？', a: '可以。单公司版在你自己的服务器或云上运行，拥有独立数据库；没有订阅计费。' },
         { q: '需要 CRM 吗？', a: '不需要。客户可以从电子表格导入，或手动添加。如果你有 CRM，Curahold 会与它双向保持同步。' },
         { q: '可以随时取消吗？', a: '可以。取消的套餐会运行到已付费周期结束，且一切都可导出。' },
-        { q: '可以使用我们自己的称呼吗？', a: '可以。把你的客户称作账户、合作伙伴或客户，整个界面都会随之变化。应用、帮助中心和在线演示都支持十一种语言。' },
+        { q: '可以使用我们自己的称呼吗？', a: '可以。把你的客户称作账户、合作伙伴或委托方，整个界面都会随之变化。应用、帮助中心和在线演示都支持十一种语言。' },
         { q: '如何完成设置？', a: '选择你的地址，从电子表格导入客户，邀请你的团队。引导式设置会带你完成每一步。' },
       ],
     },
@@ -912,7 +912,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
         { q: '可以在我們自己的伺服器上執行嗎？', a: '可以。單公司版在你自己的伺服器或雲端上執行，擁有獨立資料庫；沒有訂閱計費。' },
         { q: '需要 CRM 嗎？', a: '不需要。客戶可以從試算表匯入，或手動新增。如果你有 CRM，Curahold 會與它雙向保持同步。' },
         { q: '可以隨時取消嗎？', a: '可以。取消的方案會運作到已付費週期結束，且一切都可匯出。' },
-        { q: '可以使用我們自己的稱呼嗎？', a: '可以。把你的客戶稱作帳戶、夥伴或客戶，整個介面都會隨之改變。應用程式、說明中心與線上展示都支援十一種語言。' },
+        { q: '可以使用我們自己的稱呼嗎？', a: '可以。把你的客戶稱作帳戶、夥伴或委託方，整個介面都會隨之改變。應用程式、說明中心與線上展示都支援十一種語言。' },
         { q: '如何完成設定？', a: '選擇你的網址，從試算表匯入客戶，邀請你的團隊。引導式設定會帶你完成每一步。' },
       ],
     },
@@ -1371,7 +1371,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
           text: "Sembilan puluh hari sebelum tarikh, playbook pembaharuan membuka tugasannya dan peluang pembaharuan. Tiada sesiapa perlu mengingatinya.",
         }, {
           tab: "Sprint",
-          title: "Keluarkan dalam sprint",
+          title: "Hantar hasil dalam sprint",
           text: "Epik, mata cerita dan tugasan yang dipautkan pada papan yang sama, dengan burndown yang terlukis sendiri apabila kad ditutup.",
         }],
       ui: {
@@ -1734,7 +1734,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: "Ikuti Marevo sepanjang satu suku tahun: satu amaran, satu janji, kerja yang menunaikannya, dan pembaharuan yang diselamatkan.",
     steps: [{
         title: "Skor jatuh, dan menyatakan sebabnya",
-        text: "Marevo merosot dari 60 ke 48 dan menjadi berisiko. Buka Mengapa? dan sebab-sebabnya disenaraikan: tiada hubungan selama 38 hari, tiga tugasan lewat, tiada juara.",
+        text: "Marevo merosot dari 60 ke 48 dan menjadi berisiko. Buka Mengapa? dan sebab-sebabnya disenaraikan: tiada hubungan selama 38 hari, tiga tugasan lewat, tiada penyokong utama.",
       }, {
         title: "Janji dibuat dalam bilik mesyuarat",
         text: "Pada semakan perniagaan S3, Selin meminta laporan penggunaan untuk pasukan kewangan mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",

@@ -104,7 +104,7 @@ export const ms: InfoCopy = {
       short: "Kesihatan yang menyatakan sebabnya, mesyuarat yang menjadi tugasan, tiket kelihatan.",
       title: "Lihat pelanggan yang senyap sebelum pembaharuan",
       lead: "Skor kesihatan yang boleh dijelaskan meletakkan pelanggan yang memerlukan anda di hadapan, dan setiap janji daripada mesyuarat menjadi tugasan dengan pemilik.",
-      points: [["Skor yang menerangkan dirinya", "Kesihatan dari 0 hingga 100, dibina daripada peraturan yang anda tetapkan: hubungan terakhir, tugasan lewat, juara, penghalang terbuka."], ["Mesyuarat yang meninggalkan kerja", "Langkah seterusnya yang ditulis dalam mesyuarat menjadi tugasan dengan pemilik dan tarikh, dipautkan kepada pelanggan."], ["Portal untuk pelanggan", "Mereka melihat tugasan yang anda kongsi, permintaan mereka dan balasan anda, dengan pautan dalam e-mel mereka."], ["Tiket sokongan dalam gambaran", "Tiket daripada meja sokongan anda masuk ke pelanggan dan dikira dalam skor kesihatan."]],
+      points: [["Skor yang menerangkan dirinya", "Kesihatan dari 0 hingga 100, dibina daripada peraturan yang anda tetapkan: hubungan terakhir, tugasan lewat, penyokong utama, penghalang terbuka."], ["Mesyuarat yang meninggalkan kerja", "Langkah seterusnya yang ditulis dalam mesyuarat menjadi tugasan dengan pemilik dan tarikh, dipautkan kepada pelanggan."], ["Portal untuk pelanggan", "Mereka melihat tugasan yang anda kongsi, permintaan mereka dan balasan anda, dengan pautan dalam e-mel mereka."], ["Tiket sokongan dalam gambaran", "Tiket daripada meja sokongan anda masuk ke pelanggan dan dikira dalam skor kesihatan."]],
       forWho: "Pengurus kejayaan pelanggan, pasukan onboarding dan pengurusan akaun.",
       next: ["Banyak permintaan, satu cerita produk", "Permintaan daripada beberapa pelanggan bergabung dalam satu cerita, dengan hasil di sebaliknya."],
     },
@@ -132,7 +132,7 @@ export const ms: InfoCopy = {
       short: "Dari 0 hingga 100, dengan sebabnya disenaraikan.",
       title: "Skor kesihatan yang memberitahu sebabnya",
       lead: "Setiap pelanggan mendapat skor dari 0 hingga 100 dan sebab di sebaliknya, jadi langkah seterusnya jelas.",
-      points: [["Peraturan anda", "Pilih apa yang dikira dan berapa banyak: hubungan, tugasan lewat, juara, penghalang, permintaan sokongan."], ["Sebabnya, dalam bahasa mudah", "Buka skor dan baca sebabnya, setiap satu dengan bahagiannya daripada jumlah."], ["Trend", "Lihat bagaimana skor bergerak dalam tiga puluh hari lepas, dan bila ia bertukar jalur."]],
+      points: [["Peraturan anda", "Pilih apa yang dikira dan berapa banyak: hubungan, tugasan lewat, penyokong utama, penghalang, permintaan sokongan."], ["Sebabnya, dalam bahasa mudah", "Buka skor dan baca sebabnya, setiap satu dengan bahagiannya daripada jumlah."], ["Trend", "Lihat bagaimana skor bergerak dalam tiga puluh hari lepas, dan bila ia bertukar jalur."]],
     },
     meetings: {
       name: "Mesyuarat dan janji",

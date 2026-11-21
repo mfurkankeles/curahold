@@ -672,7 +672,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'errors.support_edit_admins': 'فقط مدیران می‌توانند به پشتیبانی اجازه تغییر بدهند.',
   'errors.support_too_many': 'شما همین حالا پنج دسترسی پشتیبانی باز دارید. ابتدا یکی را ببندید.',
   'errors.support_link_used': 'این پیوند ورود استفاده شده یا منقضی شده است. یک پیوند جدید بخواهید.',
-  'errors.help_too_many_files': 'یک درخواست می‌تواند تا {n} فایل داشته باشد.',
+  'errors.help_too_many_files': 'می‌توانید حداکثر {n} فایل به یک درخواست پیوست کنید.',
   'errors.help_file_type': '{name} قابل پیوست نیست. تصاویر، PDF، متن، CSV، JSON، Excel و ویدیوهای کوتاه قابل پیوست‌اند.',
   'errors.portal_file_type': "{name} را نمی‌توان پیوست کرد. تصویر، PDF، Word، Excel، PowerPoint، OpenDocument، متن، CSV و ZIP را می‌توان پیوست کرد.",
   'errors.portal_file_unsafe': "{name} را نمی‌توان پیوست کرد: محتوای آن امن به نظر نمی‌رسد (بایگانی‌ای بزرگ‌تر از آنکه باز شود، برنامه یا ماکرو درون آن، یا PDF که کد اجرا می‌کند). آن را به‌صورت فایل ساده بفرستید.",

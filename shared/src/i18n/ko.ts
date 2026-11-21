@@ -672,7 +672,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.support_edit_admins': '관리자만 지원에 변경을 허용할 수 있습니다.',
   'errors.support_too_many': '이미 다섯 개의 열린 지원 접근이 있습니다. 먼저 하나를 닫으세요.',
   'errors.support_link_used': '이 입장 링크는 사용되었거나 만료되었습니다. 새로 요청하세요.',
-  'errors.help_too_many_files': '한 요청에 최대 {n}개의 파일을 담을 수 있습니다.',
+  'errors.help_too_many_files': '한 요청에 파일을 최대 {n}개까지 첨부할 수 있습니다.',
   'errors.help_file_type': '{name}은(는) 첨부할 수 없습니다. 이미지, PDF, 텍스트, CSV, JSON, Excel, 짧은 동영상을 첨부할 수 있습니다.',
   'errors.portal_file_type': "{name}은(는) 첨부할 수 없습니다. 이미지, PDF, Word, Excel, PowerPoint, OpenDocument, 텍스트, CSV, ZIP 파일을 첨부할 수 있습니다.",
   'errors.portal_file_unsafe': "{name}은(는) 첨부할 수 없습니다. 내용이 안전하지 않아 보입니다(열 수 없을 만큼 큰 압축 파일, 프로그램이나 매크로가 포함된 파일, 코드를 실행하는 PDF). 일반 파일로 보내 주세요.",
@@ -703,7 +703,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.repeat_mismatch': '이 요청은 이미 다른 변경에 속한 키로 전송되었습니다. 아무것도 변경되지 않았습니다.',
   'errors.trash_parent_first': '"{name}"도 휴지통에 있습니다. 먼저 그것을 복원하세요.',
   'errors.trash_parent_gone': '이것이 속했던 것이 더 이상 존재하지 않아 복원할 수 없습니다.',
-  'errors.trash_conflict': '그 이후로 다른 것이 그 자리를 차지했습니다 (같은 CRM id 또는 이메일). 먼저 그것을 변경하거나 제거하세요.',
+  'errors.trash_conflict': '그 이후로 다른 것이 그 자리를 차지했습니다 (같은 CRM ID 또는 이메일). 먼저 그것을 변경하거나 제거하세요.',
 
   // Permissions.
   'perm.org.manage': '회사 설정, 역할, 권한 변경',
