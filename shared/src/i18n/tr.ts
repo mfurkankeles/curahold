@@ -612,7 +612,7 @@ export const tr: Record<MessageKey, string> = {
   'notify.testBody': 'Bunu görüyorsanız {org} bağlandı.',
   'notify.syncFailed': 'Eşitleme sorunu: {app}',
   'notify.renewal': "{org}: yıllık planınız {date} tarihinde yenilenecek",
-  'notify.renewalBody': "{plan} planınız ({seats} koltuk) {date} tarihinde bir yıl daha yenilenecek. Planı ya da koltuk sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Plan ve ödeme sayfasını açın: planı sona erdirmek yenilemeyi durdurur, plan {date} tarihine kadar etkin kalır. İadeler İade politikasına göre yapılır.",
+  'notify.renewalBody': "{plan} planınız ({seats} tam kullanıcı) {date} tarihinde bir yıl daha yenilenecek. Planı ya da kullanıcı sayısını değiştirmek veya yenilemeyi durdurmak için bu tarihten önce Ayarlar → Abonelik sayfasını açın: planı sona erdirmek yenilemeyi durdurur, plan {date} tarihine kadar etkin kalır. İadeler İade politikasına göre yapılır.",
   'notify.syncFailedReconnect': 'Curahold artık {app} bağlantısına ulaşamıyor. Eşitlemeyi sürdürmek için yeniden bağlayın.',
   'notify.syncFailedRepeated': '{app} birkaç kez eşitlenemedi. Bağlantılar sayfasını açıp göz atın.',
   'notify.syncRecovered': '{app} yeniden eşitleniyor.',
@@ -7049,5 +7049,5 @@ export const tr: Record<MessageKey, string> = {
   'sync.keyed.noteMessages': 'Erişim anahtarı şifreli saklanır ve istediğiniz an kaldırılabilir. Sonraki ekranda {app} uygulamanıza yapıştıracağınız geri çağırma adresini ve doğrulama anahtarını alırsınız; alan eşleme ya da geri yazma yoktur.',
   'billing.trialLimits': 'Deneme sınırları: en fazla {seats} tam kullanıcı ve tam kullanıcı başına {gb} GB dosya alanı.',
   'billing.trialLimitsSpace': 'Deneme sınırı: tam kullanıcı başına {gb} GB dosya alanı.',
-  'trial.hint.space': 'Deneme boyunca her tam koltuk için {gb} GB dosya alanı vardır.',
+  'trial.hint.space': 'Deneme boyunca her tam kullanıcı için {gb} GB dosya alanı vardır.',
 };
