@@ -52,7 +52,6 @@ const RELATED: Record<DeptKey, FeatureKey[]> = {
   finance: ['reports', 'health', 'sync'],
 };
 
-/** An inner page's header: the Back crumb, its title and lead, and (unless compact) the two calls to action. */
 /** The Back link every opened page starts with (owner rule: Back on every page, same place): home by default. */
 export function backLink(locale: SiteLocale, href = localeBase(locale), label = infoCopy(locale).common.home): string {
   return `<a class="ip__back" href="${esc(href)}">${ICON_BACK}<span>${esc(label)}</span></a>`;
@@ -64,6 +63,7 @@ function backBar(locale: SiteLocale, crumb: string): string {
   return `<div class="wrap ip__bar"><nav class="ip__crumbs" aria-label="${esc(c.common.home)}">${backLink(locale)}<span aria-hidden="true">/</span><span>${esc(crumb)}</span></nav></div>`;
 }
 
+/** An inner page's header: the Back crumb, its title and lead, and (unless compact) the two calls to action. */
 export function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls; compact?: boolean }): string {
   const c = infoCopy(locale);
   // The first crumb is the page's Back, in the same place on every inner page.
