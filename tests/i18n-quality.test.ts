@@ -358,20 +358,26 @@ describe('Korean particles and politeness', () => {
 
 describe('Hebrew address', () => {
   // Hebrew speaks to the reader in the plural ("אתם", "שלכם", "בדקו") on every first-contact surface (site, e-mails,
-  // consent, sign-up, trial, agreements), and no string or help line switches form half-way (localisation review,
+  // consent, sign-up, trial, agreements, the customer portal's mails), and no string or help line switches form half-way (localisation review,
   // 21 Nov 2026: "אישרת … שמרו" in one mail). Only unambiguous words count: Hebrew without vowels makes many verb
   // forms look like nouns (מפתח "key" / פתח "open"). The app's own menu label 'ההגדרות שלך' is quoted as it reads.
   const H = '\\u05d0-\\u05ea';
   const w = (alts: string) => new RegExp(`(?<![${H}])[ובלהשמכ]?(${alts})(?![${H}])`, 'u');
   const SG = w('שלך|אתה|אותך|בשבילך|עליך|אליך|ממך|איתך|אצלך|בשמך|ביקשת|ציפית|אישרת|קיבלת|בחרת');
   const PL = w('שלכם|אתם|אתכם|בשבילכם|עליכם|אליכם|מכם|איתכם|אצלכם|בשמכם|ביקשתם|ציפיתם|אישרתם|קיבלתם|בחרתם|תוכלו|בדקו|בחרו|הוסיפו|לחצו|נסו|שמרו|כתבו|הזינו|פתחו');
-  const FIRST = /^(email\.|trialMail\.|trial\.|signup\.|auth\.|agreements\.|assistConsent\.|legal\.)/;
+  // Masculine singular imperatives and second-person future/past forms. Several are also nouns or other words
+  // elsewhere (פתח "opening", ספר "book", אשר "which"), so they count on first-contact surfaces only, where every
+  // instruction is plural and every button a noun ("פתיחה", "התחלה מחדש"). "המשך" stays: it is the noun
+  // "continuation", the usual label of a Continue button.
+  // An imperative takes no prefix but "and" (ו), so the prefixes of w() would turn "לאשר" or "מספר" into hits.
+  const SG_IMPERATIVE = new RegExp(`(?<![${H}])ו?(פתח|התחל|צור|אשר|כתוב|הזן|התעלם|לחץ|נסה|שמור|הוסף|בדוק|בחר|ספר|תתבקש|היית|רצית|התחברת)(?![${H}])`, 'u');
+  const FIRST = /^(email\.|trialMail\.|trial\.|signup\.|auth\.|agreements\.|assistConsent\.|legal\.|portal\.email\.)/;
   const plain = (s: string) => s.replace(/\*\*[^*]+\*\*/g, ' ').replace(/'ההגדרות שלך'/g, ' ');
   it('no Hebrew string mixes singular and plural address, and first-contact text is plural', () => {
     const bad: string[] = [];
     for (const [k, v] of Object.entries(dict('he'))) {
       if (SG.test(v) && PL.test(v)) bad.push(`mixed ${k}: ${v.slice(0, 70)}`);
-      else if (FIRST.test(k) && SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
+      else if (FIRST.test(k) && (SG.test(v) || SG_IMPERATIVE.test(v))) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
     }
     for (const [k, v] of siteText('he')) if (SG.test(v)) bad.push(`singular ${k}: ${v.slice(0, 70)}`);
     for (const [k, v] of Object.entries(CONSENT_STRINGS.he as unknown as Record<string, string>)) if (SG.test(v)) bad.push(`singular consent ${k}`);
