@@ -253,6 +253,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Seat limits now hold on every way in: joining by the company's domain, a first single sign-on and SCIM (adding or
+  turning a person back on) stop at the trial's approved seats or the plan's limit, like an invitation does; SCIM
+  answers `409 tooMany` and the sign-in page says the seats are full.
 - Billing: the checkout is now a Paddle transaction the server makes with the plan's price and the company's seats; the
   page only opens it, so neither can be changed in the browser. A new subscription for a price that is not in
   `PADDLE_PRICES` is refused instead of ending the trial, and a plan too small for the company's full seats is flagged

@@ -15,6 +15,7 @@
 //
 // Session handling is deliberately NOT here: the routes call openSession() and
 // setSessionCookie() exactly as the email-link and OAuth flows do.
+import { seatGuard } from './trial';
 import type { SsoSeenAssertionsRow } from '../db/rows.gen';
 import type { Q } from '../db';
 import type { Config } from '../context';
@@ -202,6 +203,8 @@ export async function findOrProvisionUser(q: Q, orgId: string, id: { email: stri
     if (existing.status === 'invited') await q.query(`update users set status = 'active' where id = $1`, [existing.id]);
     return { userId: existing.id, provisioned: false };
   }
+  // Money (security audit M3): a first sign-in adds a full seat, within the trial's or the plan's limit like an invitation.
+  await seatGuard(q, orgId, 1);
   const [role] = await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
   const [u] = await q.query<{ id: string }>(
     `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, 'full', 'active') returning id`,
