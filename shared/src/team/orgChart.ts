@@ -6,8 +6,12 @@
 // Lean by rule: ~15 ACTIVE seats cover the launch work; every other role is a
 // DORMANT seat with a written trigger and costs nothing until it wakes.
 // The advisory board sits beside the CEO and runs only when asked.
-// Names are invented (easy in Turkish and English); the CPO's name, Gülco, is
-// the owner's own choice. Every agent wears an "AI" badge wherever it shows.
+// Names are invented (easy in Turkish and English), every one of them: this file
+// ships in the public demo bundle, so no real person's name or nickname belongs
+// here (CLAUDE.md "no real names"; owner rule 12). A display name the owner
+// chooses for a seat is his data: it is stored with the seat's agent (agents.name,
+// owner door PUT /office/seats/:seat) and never written in code; seeding keeps it.
+// Every agent wears an "AI" badge wherever it shows.
 import type { ActionKind, ToolId } from './gate';
 
 /** A clear seniority ladder, top first; the job descriptions use the same titles. */
@@ -262,7 +266,7 @@ const ACTIVE: SeatDef[] = [
   },
   {
     seat: 'cpo',
-    name: 'Gülco',
+    name: 'Öykü',
     title: 'Chief Product Officer',
     level: 'C-level',
     titleTr: 'Ürünün ne yapacağına ve nasıl hissettireceğine karar önerir; yol haritası, tasarım ve dokümantasyon ondan sorulur.',

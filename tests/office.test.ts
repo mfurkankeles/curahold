@@ -64,7 +64,7 @@ describe('office floor plan', () => {
 
 describe('office search', () => {
   const people: Findable[] = [
-    { seat: 'cpo', name: 'Gülco', title: 'Chief Product Officer', titleTr: 'Ürün direktörü', team: 'product', teamName: 'Ürün ve tasarım', tasks: [] },
+    { seat: 'cpo', name: 'Öykü', title: 'Chief Product Officer', titleTr: 'Ürün direktörü', team: 'product', teamName: 'Ürün ve tasarım', tasks: [] },
     {
       seat: 'content-marketing',
       name: 'Ilgın',
@@ -77,10 +77,10 @@ describe('office search', () => {
     { seat: 'cfo', name: 'Ozan', title: 'Chief Financial Officer', titleTr: 'Finans direktörü', team: 'finance', teamName: 'Finans', tasks: [] },
   ];
   it('ignores accents and case in Turkish and English', () => {
-    expect(fold('GÜLCO')).toBe('gulco');
+    expect(fold('ÖYKÜ')).toBe('oyku');
     expect(fold('Ilgın')).toBe(fold('ilgin'));
     expect(fold('İçerik')).toBe('icerik');
-    expect(searchPeople(people, 'gulco')[0].seat).toBe('cpo');
+    expect(searchPeople(people, 'oyku')[0].seat).toBe('cpo');
     expect(searchPeople(people, 'ılgın')[0].seat).toBe('content-marketing');
   });
   it('finds by title, Turkish title, team and current task, name first', () => {

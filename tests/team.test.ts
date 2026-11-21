@@ -97,7 +97,8 @@ describe('the org chart', () => {
     const ids = new Set(ORG_CHART.map((s) => s.seat));
     expect(ids.size).toBe(ORG_CHART.length);
     expect(new Set(ORG_CHART.map((s) => s.name)).size).toBe(ORG_CHART.length);
-    expect(ORG_CHART.find((s) => s.seat === 'cpo')!.name).toBe('Gülco');
+    // No real person's name or nickname in the public org chart: names are invented (orgChart.ts header; tests/leak.test.ts guards it).
+    expect(ORG_CHART.find((s) => s.seat === 'cpo')!.name).toBe('Öykü');
     for (const s of ORG_CHART) {
       expect(s.reportsTo === null || ids.has(s.reportsTo), s.seat).toBe(true);
       expect(LADDER).toContain(s.level);
@@ -308,7 +309,7 @@ describe('memory and chat history', () => {
     expect(JSON.stringify(last.messages[0].content)).toContain('Earlier in this conversation');
   });
 
-  it('Gülco’s warm tone is in the owner’s private chat only', async () => {
+  it('the CPO’s warm tone is in the owner’s private chat only', async () => {
     const t = (await owner.req('POST', '/team/seats/cpo/threads')).json.thread.id;
     await owner.req('POST', `/team/threads/${t}/messages`, { text: 'Yol haritası?' });
     expect(model.calls[model.calls.length - 1].system.map((b) => b.text).join('\n')).toContain('canım');
