@@ -326,6 +326,18 @@ describe('Korean particles and politeness', () => {
     expect(resolveKoParticles('“보고서”을(를)')).toBe('“보고서”를');
     expect(resolveKoParticles('🙂을(를)')).toBe('🙂을(를)');
   });
+  it('reads Latin names the way Korean writes them as loanwords', () => {
+    // A consonant cluster, a voiced stop or a silent e changes the ending (review, 21 Nov 2026).
+    const obj = (name: string) => resolveKoParticles(`${name}을(를)`).slice(name.length);
+    const expected: Record<string, string> = {
+      Microsoft: '를', Zendesk: '를', Curahold: '를', Northwind: '를', GitHub: '를', 'Acme Ltd': '를', 'demo.org': '를', Meet: '를', Make: '를', Acme: '를',
+      Prime: '을', Line: '을', Home: '을', Stone: '을', Slack: '을', Notion: '을', Hubspot: '을', Facebook: '을', Zoom: '을', 'Monday.com': '을',
+      Excel: '을', Google: '을',
+    };
+    for (const [name, particle] of Object.entries(expected)) expect(`${name}${obj(name)}`).toBe(`${name}${particle}`);
+    expect(resolveKoParticles('Excel(으)로, Slack(으)로, Microsoft(으)로')).toBe('Excel로, Slack으로, Microsoft로');
+    expect(resolveKoParticles('Zendesk이(가) Prime과(와) Notion은(는)')).toBe('Zendesk가 Prime과 Notion은');
+  });
   it('no Korean string shows a two-form particle once its names are filled in', () => {
     const d = dict('ko');
     const shown = Object.keys(d)

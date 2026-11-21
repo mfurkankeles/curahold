@@ -34,12 +34,31 @@ function finalBefore(text: string, end: number): Final {
     while (s > 0 && /[A-Za-z]/.test(text[s - 1]!)) s--;
     const word = text.slice(s, i + 1);
     if (/^[A-Z]{1,6}$/.test(word)) return LETTER[ch] ?? 'none';
-    const w = word.toLowerCase();
-    if (/le$/.test(w) || /l$/.test(w)) return 'rieul';
-    if (/(ng|[mnkptbdgc])$/.test(w)) return 'other';
-    return 'none';
+    return latinFinal(word.toLowerCase());
   }
   return 'unknown';
+}
+
+/**
+ * How a Latin word ends in its Korean reading (loanword spelling). Korean adds a vowel after a consonant cluster or a
+ * voiced stop, so only a few endings keep a final consonant (localisation review, 21 Nov 2026: "Microsoft을" and
+ * "Prime를" were wrong):
+ * - `l`, `le` → ㄹ (Excel 엑셀, Google 구글);
+ * - `m`, `n`, `ng`, and a vowel + `me`/`ne` with a silent e → final (Notion 노션, Prime 프라임, Stone 스톤; but Acme 애크미);
+ * - one stop `k p t c` (or `ck`) right after a single vowel, or `ook` → final (Slack 슬랙, Hubspot 허브스팟, Facebook 페이스북);
+ * - everything else ends in a vowel: a stop after a consonant (Microsoft 마이크로소프트, Zendesk 젠데스크, Curahold
+ *   큐라홀드), after a long vowel (Meet 미트), `d g b` (GitHub 깃허브), `r s x z h w f v y`, and other silent-e words.
+ */
+function latinFinal(w: string): Final {
+  if (/l$|le$/.test(w)) return 'rieul';
+  if (/[aeiou][mn]e$/.test(w) || /(ng|m|n)$/.test(w)) return 'other';
+  const s = w.replace(/ck$/, 'k');
+  if (/[kptc]$/.test(s)) {
+    const before = s.slice(0, -1);
+    if (s.endsWith('ook')) return 'other';
+    if (/[aeiou]$/.test(before) && !/[aeiou]{2}$/.test(before)) return 'other';
+  }
+  return 'none';
 }
 
 // Fallback written in the dictionary → [form after a consonant, form after a vowel, form after ㄹ].
